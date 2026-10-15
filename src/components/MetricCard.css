@@ -1,0 +1,45 @@
+.vc-metric {
+  background: var(--vc-surface);
+  border: 1px solid var(--vc-border);
+  border-radius: var(--vc-radius);
+  box-shadow: var(--vc-shadow);
+  padding: 16px 18px;
+  min-width: 0;
+}
+
+.vc-metric-value {
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--vc-text);
+}
+
+.vc-metric-label {
+  margin-top: 4px;
+  font-size: 14px;
+  color: var(--vc-text-muted);
+}
+
+.vc-metric-hint {
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--vc-text-muted);
+}
+
+.vc-metric[data-tone='allow'] .vc-metric-value {
+  color: var(--vc-allow);
+}
+.vc-metric[data-tone='deny'] .vc-metric-value {
+  color: var(--vc-deny);
+}
+.vc-metric[data-tone='warn'] .vc-metric-value {
+  color: var(--vc-warn);
+}
+.vc-metric[data-tone='accent'] .vc-metric-value {
+  color: var(--vc-accent);
+}
+/* Reassign reuses the blue accent, matching the DecisionBar reassign bar and
+   the reassign action button, so the third outcome reads consistently. */
+.vc-metric[data-tone='reassign'] .vc-metric-value {
+  color: var(--vc-accent);
+}

@@ -1,0 +1,26 @@
+{
+    "version": 1,
+    "manifest": {
+        "alias": "visual-certs",
+        "name": {
+            "en": "Access Review"
+        },
+        "description": {
+            "en": "A guided, visual way for managers to complete access certification campaigns."
+        },
+        "apiScopes": ["sp:scopes:all"],
+        "contentSecurityPolicies": {},
+        "permissionPolicy": {},
+        "iframeAllow": {},
+        "state": null,
+        "slots": [
+            {
+                "slotId": "full-page"
+            }
+        ]
+    },
+    "build": {
+        "outDir": "./dist",
+        "port": 1573
+    }
+}

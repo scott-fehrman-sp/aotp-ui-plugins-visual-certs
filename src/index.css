@@ -1,0 +1,94 @@
+/*
+ * Base styles and design tokens for the Visual Certifications plugin.
+ * Tokens are prefixed `--vc-` so they never collide with host ISC styles when
+ * the plugin is mounted inside the App Shell iframe.
+ */
+:root {
+  --vc-bg: #ffffff;
+  --vc-surface: #ffffff;
+  --vc-surface-alt: #f6f7f9;
+  --vc-border: #e2e5ea;
+  --vc-text: #1f2733;
+  --vc-text-muted: #5b6472;
+
+  /* Decision + status colors, chosen for color-blind-friendly contrast. */
+  --vc-allow: #1f8a4c; /* approve / keep access */
+  --vc-allow-bg: rgba(31, 138, 76, 0.12);
+  --vc-deny: #c0392b; /* revoke / remove access */
+  --vc-deny-bg: rgba(192, 57, 43, 0.12);
+  --vc-accent: #2d6cdf;
+  --vc-accent-bg: rgba(45, 108, 223, 0.1);
+  --vc-warn: #c77700;
+  --vc-warn-bg: rgba(199, 119, 0, 0.12);
+
+  /* Priority levels used by charts and reason chips. */
+  --vc-pri-high: #c0392b;
+  --vc-pri-medium: #c77700;
+  --vc-pri-low: #4a81e0;
+  --vc-pri-none: #8a93a0;
+
+  --vc-shadow: 0 1px 3px rgba(16, 24, 40, 0.08), 0 1px 2px rgba(16, 24, 40, 0.06);
+  --vc-radius: 10px;
+
+  --vc-sans: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+  font-family: var(--vc-sans);
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--vc-text);
+  background: var(--vc-bg);
+  color-scheme: light dark;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --vc-bg: #14161c;
+    --vc-surface: #1b1e26;
+    --vc-surface-alt: #212530;
+    --vc-border: #2e333f;
+    --vc-text: #e8eaee;
+    --vc-text-muted: #9aa3b2;
+
+    --vc-allow: #3cb371;
+    --vc-allow-bg: rgba(60, 179, 113, 0.16);
+    --vc-deny: #e5695b;
+    --vc-deny-bg: rgba(229, 105, 91, 0.16);
+    --vc-accent: #6ea0ff;
+    --vc-accent-bg: rgba(110, 160, 255, 0.16);
+    --vc-warn: #e0a53a;
+    --vc-warn-bg: rgba(224, 165, 58, 0.16);
+
+    --vc-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--vc-bg);
+}
+
+h1,
+h2,
+h3 {
+  color: var(--vc-text);
+  font-weight: 600;
+}
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+}
+
+button:focus-visible,
+a:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--vc-accent);
+  outline-offset: 2px;
+}

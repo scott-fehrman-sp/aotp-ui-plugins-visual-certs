@@ -1,0 +1,53 @@
+.vc-dashboard-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.vc-dashboard-title {
+  margin: 0;
+  font-size: 22px;
+}
+
+.vc-dashboard-desc {
+  margin: 4px 0 0;
+  color: var(--vc-text-muted);
+}
+
+.vc-cta {
+  font-size: 16px;
+  padding: 11px 22px;
+  white-space: nowrap;
+}
+
+.vc-guidance {
+  margin: 16px 0 20px;
+  padding: 12px 16px;
+  background: var(--vc-accent-bg);
+  border-radius: 8px;
+  color: var(--vc-text);
+}
+
+.vc-metrics-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.vc-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 860px) {
+  .vc-metrics-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .vc-charts-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,39 @@
+.vc-why {
+  margin: 4px 0 16px;
+}
+
+.vc-why-toggle {
+  background: none;
+  border: none;
+  color: var(--vc-accent);
+  font-weight: 600;
+  padding: 4px 0;
+}
+
+.vc-why-toggle:hover {
+  text-decoration: underline;
+}
+
+.vc-why-panel {
+  margin-top: 8px;
+  padding: 14px 16px;
+  background: var(--vc-surface-alt);
+  border: 1px solid var(--vc-border);
+  border-radius: 8px;
+  color: var(--vc-text);
+  font-size: 15px;
+}
+
+.vc-why-list {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.vc-why-list li {
+  margin-bottom: 4px;
+}
+
+.vc-why-note {
+  margin: 8px 0 0;
+  color: var(--vc-text-muted);
+}

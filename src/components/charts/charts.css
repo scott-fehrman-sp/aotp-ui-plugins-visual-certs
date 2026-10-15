@@ -1,0 +1,92 @@
+.vc-chart {
+  margin: 0;
+  background: var(--vc-surface);
+  border: 1px solid var(--vc-border);
+  border-radius: var(--vc-radius);
+  box-shadow: var(--vc-shadow);
+  padding: 16px 18px;
+  min-width: 0;
+}
+
+.vc-chart-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--vc-text-muted);
+  margin-bottom: 8px;
+}
+
+.vc-chart-area {
+  position: relative;
+  width: 100%;
+  height: 150px;
+}
+
+.vc-chart-area-tall {
+  height: 200px;
+}
+
+/* Donut center overlay */
+.vc-donut-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.vc-donut-percent {
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--vc-text);
+  line-height: 1;
+}
+
+.vc-donut-sub {
+  font-size: 13px;
+  color: var(--vc-text-muted);
+}
+
+/* Deadline gauge */
+.vc-gauge-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 6px;
+  pointer-events: none;
+}
+
+.vc-gauge-text {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--vc-text);
+}
+
+.vc-gauge-text[data-overdue='true'] {
+  color: var(--vc-deny);
+}
+
+.vc-gauge-empty,
+.vc-gauge-empty-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--vc-text-muted);
+}
+
+/* Accessible visually-hidden text (kept in the a11y tree for screen readers) */
+.vc-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

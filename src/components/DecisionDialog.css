@@ -1,0 +1,90 @@
+.vc-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(16, 24, 40, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 1000;
+}
+
+.vc-dialog {
+  background: var(--vc-surface);
+  border-radius: 14px;
+  box-shadow: 0 20px 48px rgba(16, 24, 40, 0.3);
+  max-width: 460px;
+  width: 100%;
+  padding: 24px;
+  outline: none;
+}
+
+.vc-dialog-title {
+  margin: 0 0 10px;
+  font-size: 20px;
+}
+
+.vc-dialog-meaning {
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.vc-dialog-meaning[data-choice='allow'] {
+  background: var(--vc-allow-bg);
+  color: var(--vc-allow);
+}
+
+.vc-dialog-meaning[data-choice='remove'] {
+  background: var(--vc-deny-bg);
+  color: var(--vc-deny);
+}
+
+.vc-dialog-meaning[data-choice='reassign'] {
+  background: var(--vc-accent-bg);
+  color: var(--vc-accent);
+}
+
+.vc-dialog-detail {
+  margin: 0 0 16px;
+  color: var(--vc-text);
+}
+
+.vc-dialog-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--vc-text);
+}
+
+.vc-dialog-select,
+.vc-dialog-textarea {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--vc-border);
+  border-radius: 8px;
+  background: var(--vc-bg);
+  color: var(--vc-text);
+  font-family: inherit;
+  font-size: 15px;
+}
+
+.vc-dialog-textarea {
+  margin-top: 8px;
+  resize: vertical;
+}
+
+.vc-dialog-hint {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--vc-warn);
+}
+
+.vc-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}

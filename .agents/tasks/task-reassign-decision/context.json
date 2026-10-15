@@ -1,0 +1,39 @@
+{
+  "project_type": "SailPoint ISC full-page UI plugin: React 19 + TypeScript + Vite SPA that runs inside the ISC App Shell iframe. All data flows through the generated sailpoint-api-client, authenticated via the @sailpoint/ui-plugin-sdk handshake.",
+  "language": "TypeScript (React 19, .tsx components)",
+  "build_system": "Vite 8 + tsc. `npm run build` runs `tsc -b && vite build`. ESLint 10 flat config via `npm run lint`.",
+  "test_framework": "Vitest 3 + @testing-library/react + @testing-library/user-event + jsdom. Test files are co-located as *.test.ts(x). Setup file: src/test/setup.ts.",
+  "build_command": "npm run build",
+  "test_command": "npm test   (= vitest run; use `npx vitest run <path>` to scope to a module)",
+  "verification_instructions": "Baseline is GREEN: `npm test` = 67 tests pass. After changes: (1) `npx vitest run <changed-module-dir>` while iterating, (2) `npm test` for the whole suite, (3) `npm run lint` clean, (4) `npm run build` succeeds (type-check + bundle). There is NO git repository in this workspace, so do NOT run git commands and do NOT commit — rely on npm test/build as the proof each feature works.",
+  "snapshot_or_generated_files": null,
+  "environment_constraints": "NO git repo in the worktree (git rev-parse fails) — skip all commit/push steps from generic instructions; verification is npm test/build only. node_modules is already installed. The sailpoint-api-client sub-path modules are the source of API truth (dist/*.d.ts); do NOT invent endpoints. Do NOT modify sp-ui-plugin.json apiScopes, vite.config.ts, or the handshake logic in sdkClient.ts (only add a SearchApi to PluginRuntime).",
+  "contribution_requirements": "No AGENTS.md/CONTRIBUTING/.kiro steering exists. Follow README.md conventions: keep SailPoint jargon out of user-facing strings (use plain language like 'Reassign', not 'delegate'); keep the data layer (src/sailpoint) mapping raw DTOs into decoupled view-model types (src/sailpoint/types.ts) and returning FriendlyError; keep domain logic pure in src/domain. Match the existing high comment density that explains WHY.",
+  "key_patterns": "Decision flow: ReviewQueue -> ReviewItemCard button -> onDecide(itemId, choice) -> CertApp.CampaignRoute.handleDecide -> useDecisions.open(item, choice) -> DecisionDialog -> useDecisions.confirm(comment) -> certifications.decide(...) with OPTIMISTIC update (review.applyDecision) + rollback (review.revertDecision) on FriendlyError. DecisionChoice is the union 'allow' | 'remove' used as a Record key in language.ts (DECISION_LABEL, DECISION_MEANING, CANNED_COMMENTS) and branched on in DecisionDialog/ReviewItemCard — adding 'reassign' forces all those sites to update (compiler finds them). API wrappers (certifications.ts) use the request-OBJECT call style, e.g. api.makeIdentityDecisionV1({ id, reviewDecision }); the reassign method is api.reassignIdentityCertificationsV1({ id, reviewReassign }) returning AxiosPromise<IdentityCertificationDto> (.data is the DTO). API classes are built from one Configuration in sdkClient.ts initPlugin and stored on PluginRuntime. Enum/type values are imported from the SUBPATH 'sailpoint-api-client/certifications/api' (CertificationDecision is imported as a value there today); SearchApi/Index come from 'sailpoint-api-client/search/api' and SearchApi is also re-exported from the package root.",
+  "relevant_files": [
+    "src/sailpoint/types.ts  (view models: DecisionChoice union, ReviewItemVM, CampaignVM — EDIT: add 'reassign', add IdentityOption, add reassigned flag)",
+    "src/sailpoint/certifications.ts  (EDIT: add reassignReviewItem wrapper following decide/signOff; import ReassignReferenceTypeEnum as a value)",
+    "src/sailpoint/identities.ts  (NEW: searchIdentities(searchApi, query) via SearchApi.searchPostV1)",
+    "src/sailpoint/sdkClient.ts  (EDIT: add searchApi:SearchApi to PluginRuntime + build it in initPlugin from the same Configuration)",
+    "src/domain/language.ts  (EDIT: add reassign to CANNED_COMMENTS/DECISION_LABEL/DECISION_MEANING)",
+    "src/domain/metrics.ts  (EDIT: count reassigned as reviewed, not kept/removed; document decision)",
+    "src/domain/priority.ts  (EDIT: reassigned sinks + excluded from outstanding counts like decided)",
+    "src/state/useDecisions.ts  (EDIT: add confirmReassign path)",
+    "src/state/useReviewItems.ts  (EDIT: add applyReassign optimistic updater)",
+    "src/components/DecisionDialog.tsx + .css  (EDIT: reassign mode = IdentityPicker + comment, both required)",
+    "src/components/IdentityPicker.tsx + .css  (NEW: debounced searchable combobox, a11y)",
+    "src/components/ReviewItemCard.tsx + .css  (EDIT: third 'Reassign' button + 'Reassigned' badge)",
+    "src/components/ReviewQueue.tsx  (pass-through; onDecide now accepts 'reassign')",
+    "src/components/DrillDownTable.tsx  (EDIT: show 'Reassigned' decision cell)",
+    "src/CertApp.tsx  (EDIT: thread runtime.searchApi into DecisionDialog, wire confirmReassign)",
+    "org-graph/src/data/sailpoint-directory.ts  (STUDY ONLY: reference for SearchApi.searchPostV1 + buildNameQuery/escapeSearchTerm)",
+    "org-graph/src/data/map-identity.ts  (STUDY ONLY: reference for defensive identity field mapping)",
+    "node_modules/sailpoint-api-client/dist/certifications/api.d.ts  (API truth: ReviewReassign, ReassignReference(TypeEnum), reassignIdentityCertificationsV1)",
+    "node_modules/sailpoint-api-client/dist/search/api.d.ts  (API truth: SearchApi.searchPostV1, Search, Index.Identities)"
+  ],
+  "directory_structure": "src/sailpoint = data layer (sdkClient handshake, certifications wrappers, view-model types). src/domain = pure logic (priority scoring, metrics, plain-language labels/presets). src/state = React data hooks (useCampaigns, useCampaign, useReviewItems, useDecisions). src/components = reusable UI (DecisionDialog, ReviewItemCard, ReviewQueue, DrillDownTable, charts/, states). src/views = screens (CampaignPicker, CampaignDashboard, ReviewView, SignOffView). src/CertApp.tsx = routing + decision wiring. Tests are co-located *.test.ts(x). A sibling plugin lives at ../org-graph (study its src/data for the Search API identity-search pattern).",
+  "api_ground_truth": {
+    "reassign": "import { ReassignReferenceTypeEnum } from 'sailpoint-api-client/certifications/api' (VALUE import, like CertificationDecision). Build body: { reassign: [{ id: itemId, type: ReassignReferenceTypeEnum.Item }], reassignTo: reassignToId, reason: comment }. Call: api.reassignIdentityCertificationsV1({ id: certificationId, reviewReassign }). Returns AxiosPromise<IdentityCertificationDto>; map res.data via toCampaignVM. ReassignReferenceTypeEnum = { TargetSummary:'TARGET_SUMMARY', Item:'ITEM', IdentitySummary:'IDENTITY_SUMMARY' }.",
+    "search": "import { Index, SearchApi } from 'sailpoint-api-client/search/api' (SearchApi also at package root). Call: api.searchPostV1({ search: { indices: [Index.Identities], query: { query: nameQuery }, sort: ['name'] }, limit: 25, count: false }). Response .data is Array<object> (untyped rows) — read id/displayName/name/email/emailAddress defensively (see org-graph map-identity.ts). Index.Identities === 'identities'."
+  }
+}

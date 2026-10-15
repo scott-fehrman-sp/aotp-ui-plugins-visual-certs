@@ -1,0 +1,112 @@
+/*
+ * The whole picker panel (heading, subtitle, and the card grid) is inset from
+ * the left and right edges of the page/iframe. The gutter scales with viewport
+ * width so there is always a comfortable margin on both sides.
+ */
+.vc-picker {
+  padding-left: clamp(24px, 6vw, 96px);
+  padding-right: clamp(24px, 6vw, 96px);
+}
+
+.vc-picker-title {
+  margin: 0 0 4px;
+  font-size: 22px;
+}
+
+.vc-picker-sub {
+  margin: 0 0 20px;
+  color: var(--vc-text-muted);
+}
+
+/*
+ * Business-card grid. Cards flow left-to-right then wrap top-down via
+ * auto-fill, each sized between a readable min and an even 1fr share so rows
+ * stay tidy. The grid scrolls vertically when there are more cards than fit;
+ * side padding gives the margin on the sides and `gap` the space between cards.
+ */
+.vc-picker-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 8px 8px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+  /* Scroll the grid rather than the whole page when cards overflow. The header
+   * above stays put; 60vh keeps a healthy margin below inside the iframe. */
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.vc-picker-card {
+  /* Business-card proportion: a comfortable minimum height with content
+   * stacked top (name/description) and the meta pinned to the bottom. */
+  width: 100%;
+  min-height: 150px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+  background: var(--vc-surface);
+  border: 1px solid var(--vc-border);
+  border-radius: var(--vc-radius);
+  box-shadow: var(--vc-shadow);
+  padding: 18px;
+  transition: border-color 0.15s, transform 0.05s, box-shadow 0.15s;
+}
+
+.vc-picker-card:hover {
+  border-color: var(--vc-accent);
+  box-shadow: 0 4px 12px rgba(16, 24, 40, 0.1), 0 2px 4px rgba(16, 24, 40, 0.06);
+}
+
+.vc-picker-card:active {
+  transform: translateY(1px);
+}
+
+.vc-picker-card-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.vc-picker-name {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--vc-text);
+}
+
+.vc-picker-desc {
+  font-size: 14px;
+  color: var(--vc-text-muted);
+  /* Keep descriptions from blowing out card height; clamp to a few lines. */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.vc-picker-meta {
+  /* Pin the progress + deadline to the bottom edge of the card. */
+  margin-top: auto;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  white-space: nowrap;
+}
+
+.vc-picker-progress {
+  font-weight: 600;
+  color: var(--vc-text);
+}
+
+.vc-picker-deadline {
+  font-size: 14px;
+  color: var(--vc-text-muted);
+}
+
+.vc-picker-deadline[data-overdue='true'] {
+  color: var(--vc-deny);
+  font-weight: 600;
+}

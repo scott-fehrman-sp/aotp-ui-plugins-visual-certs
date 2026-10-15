@@ -1,0 +1,7 @@
+{
+  "task_id": "task-reassign-decision",
+  "task_description": "Add a third 'Reassign' decision option to the Access Review ISC UI plugin (visual-certs). A reviewer can hand a review item to another identity (searchable name/email picker) with a required comment (preset-or-custom), via CertificationsApi.reassignIdentityCertificationsV1. Reassigned items leave the queue and count as resolved. Decomposed into a data+domain foundation feature and a UI+wiring feature.",
+  "status": "completed",
+  "feature_order": ["FEAT-001", "FEAT-002"],
+  "blocked_reason": null
+}

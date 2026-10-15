@@ -1,0 +1,69 @@
+.vc-app {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 20px 64px;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+.vc-header {
+  margin-bottom: 24px;
+}
+
+.vc-title {
+  margin: 0 0 4px;
+  font-size: 32px;
+  letter-spacing: -0.5px;
+}
+
+.vc-subtitle {
+  margin: 0;
+  color: var(--vc-text-muted);
+  font-size: 16px;
+}
+
+.vc-main {
+  margin-top: 8px;
+}
+
+.vc-connected {
+  color: var(--vc-text-muted);
+}
+
+.vc-link-btn {
+  background: none;
+  border: none;
+  color: var(--vc-accent);
+  padding: 4px 0;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.vc-link-btn:hover {
+  text-decoration: underline;
+}
+
+.vc-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.vc-banner-error {
+  background: var(--vc-deny-bg);
+  color: var(--vc-deny);
+  font-weight: 500;
+}
+
+.vc-banner-dismiss {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 16px;
+  line-height: 1;
+  padding: 4px;
+}

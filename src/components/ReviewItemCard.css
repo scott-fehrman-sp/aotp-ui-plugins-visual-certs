@@ -1,0 +1,134 @@
+.vc-item {
+  list-style: none;
+  background: var(--vc-surface);
+  border: 1px solid var(--vc-border);
+  border-left: 4px solid var(--vc-pri-none);
+  border-radius: var(--vc-radius);
+  box-shadow: var(--vc-shadow);
+  overflow: hidden;
+}
+
+.vc-item[data-priority='high'] {
+  border-left-color: var(--vc-pri-high);
+}
+.vc-item[data-priority='medium'] {
+  border-left-color: var(--vc-pri-medium);
+}
+.vc-item[data-priority='low'] {
+  border-left-color: var(--vc-pri-low);
+}
+
+.vc-item[data-decided] {
+  opacity: 0.85;
+}
+
+.vc-item-first {
+  background: var(--vc-accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 16px;
+  letter-spacing: 0.3px;
+}
+
+.vc-item-body {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  flex-wrap: wrap;
+}
+
+.vc-item-text {
+  min-width: 0;
+  flex: 1 1 320px;
+}
+
+.vc-item-person {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--vc-text);
+}
+
+.vc-item-access {
+  margin: 2px 0 0;
+  color: var(--vc-text);
+}
+
+.vc-item-source {
+  color: var(--vc-text-muted);
+}
+
+.vc-item-kind-help {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--vc-text-muted);
+}
+
+.vc-item-desc {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: var(--vc-text-muted);
+}
+
+.vc-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.vc-chip {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--vc-warn-bg);
+  color: var(--vc-warn);
+  cursor: help;
+}
+
+.vc-item-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.vc-item-decided {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.vc-decided-badge {
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 999px;
+}
+
+.vc-decided-allow {
+  background: var(--vc-allow-bg);
+  color: var(--vc-allow);
+}
+
+.vc-decided-deny {
+  background: var(--vc-deny-bg);
+  color: var(--vc-deny);
+}
+
+.vc-decided-reassign {
+  background: var(--vc-accent-bg);
+  color: var(--vc-accent);
+}
+
+.vc-item-comment {
+  font-size: 14px;
+  color: var(--vc-text-muted);
+  font-style: italic;
+}
