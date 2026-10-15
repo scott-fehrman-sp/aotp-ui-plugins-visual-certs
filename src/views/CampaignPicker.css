@@ -48,14 +48,44 @@
   text-align: left;
   background: var(--vc-surface);
   border: 1px solid var(--vc-border);
+  /* The accent "highlight board" edge; its color is set per progress tier
+   * below. Default falls back to the neutral tone. */
+  border-left: 5px solid var(--vc-pri-none);
   border-radius: var(--vc-radius);
   box-shadow: var(--vc-shadow);
   padding: 18px;
   transition: border-color 0.15s, transform 0.05s, box-shadow 0.15s;
 }
 
+/*
+ * Progress-based accent color on the left edge:
+ *   none      (0%)      neutral gray  — not started
+ *   started   (1–49%)   amber         — just getting going
+ *   underway  (50–99%)  accent blue   — well along
+ *   complete  (100%)    green         — all decisions made
+ * Only the left border color changes, so hover (which recolors the other three
+ * sides) leaves the progress edge intact.
+ */
+.vc-picker-card[data-progress='none'] {
+  border-left-color: var(--vc-pri-none);
+}
+
+.vc-picker-card[data-progress='started'] {
+  border-left-color: var(--vc-warn);
+}
+
+.vc-picker-card[data-progress='underway'] {
+  border-left-color: var(--vc-accent);
+}
+
+.vc-picker-card[data-progress='complete'] {
+  border-left-color: var(--vc-allow);
+}
+
 .vc-picker-card:hover {
-  border-color: var(--vc-accent);
+  border-top-color: var(--vc-accent);
+  border-right-color: var(--vc-accent);
+  border-bottom-color: var(--vc-accent);
   box-shadow: 0 4px 12px rgba(16, 24, 40, 0.1), 0 2px 4px rgba(16, 24, 40, 0.06);
 }
 

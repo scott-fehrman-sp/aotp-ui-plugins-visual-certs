@@ -32,7 +32,9 @@
 
 .vc-metrics-row {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  /* Five metric cards (Still to review, Reviewed, Kept, Removed, Reassigned)
+   * in a single row. */
+  grid-template-columns: repeat(5, 1fr);
   gap: 12px;
   margin-bottom: 20px;
 }

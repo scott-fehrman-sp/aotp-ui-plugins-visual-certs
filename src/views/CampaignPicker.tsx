@@ -28,11 +28,22 @@ export function CampaignPicker({ campaigns, onSelect, now }: CampaignPickerProps
           const percent = total > 0 ? Math.round((done / total) * 100) : 0
           const days = daysUntil(c.due, now)
           const overdue = days !== null && days < 0
+          // Progress tier drives the card's accent color (see CSS). Tiers:
+          // none (0%), started (1–49%), underway (50–99%), complete (100%).
+          const progressTier =
+            percent >= 100
+              ? 'complete'
+              : percent >= 50
+                ? 'underway'
+                : percent > 0
+                  ? 'started'
+                  : 'none'
           return (
             <li key={c.id}>
               <button
                 type="button"
                 className="vc-picker-card"
+                data-progress={progressTier}
                 onClick={() => onSelect(c.id)}
               >
                 <div className="vc-picker-card-main">

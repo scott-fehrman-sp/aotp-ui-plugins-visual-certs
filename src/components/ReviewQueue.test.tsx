@@ -40,13 +40,7 @@ describe('ReviewQueue', () => {
         isPrivileged: true,
       }),
     ]
-    render(
-      <ReviewQueue
-        ordered={prioritize(items)}
-        noRiskSignals={false}
-        onDecide={vi.fn()}
-      />,
-    )
+    render(<ReviewQueue ordered={prioritize(items)} onDecide={vi.fn()} />)
 
     const cards = screen.getAllByRole('listitem')
     // First card is the risky one and carries the badge.
@@ -60,34 +54,15 @@ describe('ReviewQueue', () => {
   it('calls onDecide with the item id and choice', async () => {
     const onDecide = vi.fn()
     const items = [reviewItem({ id: 'r1', personName: 'Sam' })]
-    render(
-      <ReviewQueue
-        ordered={prioritize(items)}
-        noRiskSignals={false}
-        onDecide={onDecide}
-      />,
-    )
+    render(<ReviewQueue ordered={prioritize(items)} onDecide={onDecide} />)
 
-    await userEvent.click(screen.getByRole('button', { name: /keep access/i }))
+    await userEvent.click(screen.getByRole('button', { name: /^keep$/i }))
     expect(onDecide).toHaveBeenCalledWith('r1', 'allow')
 
-    await userEvent.click(screen.getByRole('button', { name: /remove access/i }))
+    await userEvent.click(screen.getByRole('button', { name: /^remove$/i }))
     expect(onDecide).toHaveBeenCalledWith('r1', 'remove')
 
     await userEvent.click(screen.getByRole('button', { name: /^reassign$/i }))
     expect(onDecide).toHaveBeenCalledWith('r1', 'reassign')
-  })
-
-  it('explains an alphabetical fallback when there are no risk signals', async () => {
-    const items = [reviewItem({ id: 'r1', personName: 'Sam' })]
-    render(
-      <ReviewQueue
-        ordered={prioritize(items)}
-        noRiskSignals={true}
-        onDecide={vi.fn()}
-      />,
-    )
-    await userEvent.click(screen.getByRole('button', { name: /why this order/i }))
-    expect(screen.getByText(/alphabetical order/i)).toBeInTheDocument()
   })
 })

@@ -185,8 +185,8 @@ describe('CertApp routing', () => {
     // Lands on the dashboard (single campaign) and offers to start reviewing.
     await user.click(await screen.findByRole('button', { name: /start reviewing/i }))
 
-    // Review queue shows the item; decide to remove it.
-    await user.click(await screen.findByRole('button', { name: /remove access/i }))
+    // Review queue shows the item; decide to remove it (card button is "Remove").
+    await user.click(await screen.findByRole('button', { name: /^remove$/i }))
 
     // Confirmation dialog appears; comment not required (NO_DECISIONS).
     const dialog = await screen.findByRole('dialog')

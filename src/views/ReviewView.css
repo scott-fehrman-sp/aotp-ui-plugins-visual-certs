@@ -24,6 +24,21 @@
   font-weight: 600;
 }
 
+/*
+ * Scroll only the items. The header above (back link, title, count, table
+ * toggle) and the sign-off footer below stay in normal flow and remain
+ * visible; this panel caps its height to the viewport and scrolls its own
+ * contents when there are more items than fit. A little side/bottom padding
+ * keeps card shadows and focus rings from being clipped at the scroll edge.
+ */
+.vc-review-scroll {
+  max-height: calc(100vh - 220px);
+  overflow-y: auto;
+  padding: 2px 4px 4px;
+  /* Reserve space for the scrollbar so content doesn't shift when it appears. */
+  scrollbar-gutter: stable;
+}
+
 .vc-review-footer {
   margin-top: 20px;
   padding: 18px;

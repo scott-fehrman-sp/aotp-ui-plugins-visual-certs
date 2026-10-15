@@ -113,7 +113,7 @@ export function ReviewItemCard({
                 className="vc-btn vc-btn-allow"
                 onClick={() => onDecide('allow')}
               >
-                Keep access
+                Keep
               </button>
               <button
                 type="button"
@@ -126,7 +126,7 @@ export function ReviewItemCard({
                     : "This access can't be removed from here."
                 }
               >
-                Remove access
+                Remove
               </button>
               <button
                 type="button"

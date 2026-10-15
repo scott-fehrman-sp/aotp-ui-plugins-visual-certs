@@ -4,6 +4,7 @@ import { EmptyState } from '../components/EmptyState'
 import { ErrorState } from '../components/ErrorState'
 import { LoadingState } from '../components/LoadingState'
 import { ReviewQueue } from '../components/ReviewQueue'
+import { WhyThisOrder } from '../components/WhyThisOrder'
 import type { ReviewItemsState } from '../state/useReviewItems'
 import type { DecisionChoice } from '../sailpoint/types'
 import './ReviewView.css'
@@ -85,15 +86,17 @@ export function ReviewView({
 
       {!loading && !error && total > 0 && (
         <>
-          {showTable ? (
-            <DrillDownTable ordered={ordered} />
-          ) : (
-            <ReviewQueue
-              ordered={ordered}
-              noRiskSignals={noRiskSignals}
-              onDecide={onDecide}
-            />
-          )}
+          {/* The ordering explainer sits ABOVE the scroll panel so it stays
+           * visible while the items scroll. Shown for the card view (the table
+           * view presents the order explicitly in its columns). */}
+          {!showTable && <WhyThisOrder noRiskSignals={noRiskSignals} />}
+          <div className="vc-review-scroll">
+            {showTable ? (
+              <DrillDownTable ordered={ordered} />
+            ) : (
+              <ReviewQueue ordered={ordered} onDecide={onDecide} />
+            )}
+          </div>
           {allDecided && onSignOff && (
             <div className="vc-review-footer">
               <p>You've decided on everything. Ready to finish?</p>
