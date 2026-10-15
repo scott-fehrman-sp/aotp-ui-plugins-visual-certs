@@ -70,13 +70,22 @@ export function CertApp({ runtime }: CertAppProps) {
     (campaignId: string) => setSelectedId(campaignId),
     [],
   )
-  const goToPicker = useCallback(() => setSelectedId(null), [])
+  const goToPicker = useCallback(() => {
+    // Re-fetch the campaign list so the picker cards reflect progress made on
+    // the dashboard/review views, instead of the counts captured at first load.
+    setSelectedId(null)
+    reload()
+  }, [reload])
 
-  if (loading) {
+  // Only show the full-screen loader on the FIRST load (no campaigns yet). A
+  // background reload (e.g. returning to the picker) keeps the existing cards
+  // on screen and updates them in place when the fetch resolves, so navigating
+  // back doesn't blank the UI.
+  if (loading && !campaigns) {
     return <LoadingState message="Loading your reviews…" />
   }
 
-  if (error) {
+  if (error && !campaigns) {
     return (
       <ErrorState
         title="We couldn't load your reviews"
