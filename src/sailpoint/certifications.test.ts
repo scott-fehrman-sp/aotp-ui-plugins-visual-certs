@@ -60,7 +60,7 @@ describe('toReviewItemVM', () => {
       id: 'r1',
       completed: false,
       newAccess: true,
-      identitySummary: { id: 's1', name: 'Alex Kim' },
+      identitySummary: { id: 's1', identityId: 'identity-1', name: 'Alex Kim' },
       accessSummary: {
         access: { type: 'ENTITLEMENT', id: 'e1', name: 'Admin Console' },
         entitlement: {
@@ -79,6 +79,7 @@ describe('toReviewItemVM', () => {
 
     expect(vm).toMatchObject({
       id: 'r1',
+      identityId: 'identity-1',
       personName: 'Alex Kim',
       accessName: 'Admin Console',
       accessKind: 'entitlement',
@@ -98,6 +99,8 @@ describe('toReviewItemVM', () => {
     expect(vm.accessName).toBe('this access')
     expect(vm.accessKind).toBe('access')
     expect(vm.dataImpact).toBeNull()
+    // No identitySummary.identityId on the DTO -> empty join key.
+    expect(vm.identityId).toBe('')
   })
 })
 

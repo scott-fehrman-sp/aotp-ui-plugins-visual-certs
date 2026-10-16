@@ -54,6 +54,12 @@ function buildRuntime({ campaigns, subPath = '' }: BuildOptions): {
     summariesApi: {},
     // The reassign flow's identity picker needs a SearchApi on the runtime.
     searchApi: { searchPostV1: vi.fn().mockResolvedValue({ data: [] }) },
+    accessRequestsApi: {
+      listAccessRequestStatusV1: vi.fn().mockResolvedValue({ data: [] }),
+    },
+    identityHistoryApi: {
+      getHistoricalIdentityEventsV1: vi.fn().mockResolvedValue({ data: [] }),
+    },
     user: { id: 'u1', displayName: 'Dana', email: '', isCertAdmin: false },
     context: { page: { subPath, route: '' } },
   } as unknown as PluginRuntime
@@ -176,6 +182,12 @@ describe('CertApp routing', () => {
       certificationsApi: api,
       summariesApi: {},
       searchApi: { searchPostV1: vi.fn().mockResolvedValue({ data: [] }) },
+      accessRequestsApi: {
+        listAccessRequestStatusV1: vi.fn().mockResolvedValue({ data: [] }),
+      },
+      identityHistoryApi: {
+        getHistoricalIdentityEventsV1: vi.fn().mockResolvedValue({ data: [] }),
+      },
       user: { id: 'u1', displayName: 'Dana', email: '', isCertAdmin: false },
       context: { page: { subPath: '', route: '' } },
     } as unknown as PluginRuntime
@@ -236,6 +248,12 @@ describe('CertApp routing', () => {
       certificationsApi: api,
       summariesApi: {},
       searchApi: { searchPostV1 },
+      accessRequestsApi: {
+        listAccessRequestStatusV1: vi.fn().mockResolvedValue({ data: [] }),
+      },
+      identityHistoryApi: {
+        getHistoricalIdentityEventsV1: vi.fn().mockResolvedValue({ data: [] }),
+      },
       user: { id: 'u1', displayName: 'Dana', email: '', isCertAdmin: false },
       context: { page: { subPath: '', route: '' } },
     } as unknown as PluginRuntime
@@ -250,5 +268,65 @@ describe('CertApp routing', () => {
     await user.type(picker, 'pat')
     await waitFor(() => expect(searchPostV1).toHaveBeenCalled())
     expect(await screen.findByText('Pat Ng')).toBeInTheDocument()
+  })
+
+  it('renders the queue immediately and resolves provenance without gating the list', async () => {
+    const user = userEvent.setup()
+    const cert = certDto('c1', 'Finance review', '2026-02-01T00:00:00Z')
+    const reviewItemDto = {
+      id: 'item-1',
+      completed: false,
+      identitySummary: { id: 's1', identityId: 'identity-1', name: 'Alex Kim' },
+      accessSummary: {
+        access: { type: 'ENTITLEMENT', id: 'e1', name: 'Payroll Admin' },
+        entitlement: { id: 'e1', name: 'Payroll Admin', revocable: true },
+      },
+    }
+
+    const api = {
+      listIdentityCertificationsV1: vi.fn().mockResolvedValue({ data: [cert] }),
+      getIdentityCertificationV1: vi.fn().mockResolvedValue({ data: cert }),
+      listIdentityAccessReviewItemsV1: vi
+        .fn()
+        .mockResolvedValue({ data: [reviewItemDto] }),
+    } as unknown as CertificationsApi
+
+    // The access-request fetch matches the item by name + type -> "request".
+    const listAccessRequestStatusV1 = vi.fn().mockResolvedValue({
+      data: [
+        {
+          name: 'Payroll Admin',
+          type: 'ENTITLEMENT',
+          created: '2024-01-01T00:00:00Z',
+          requester: { name: 'Dana Requester' },
+        },
+      ],
+    })
+
+    const runtime = {
+      sdk: { navigation: { setRoute: vi.fn().mockResolvedValue(undefined) } },
+      certificationsApi: api,
+      summariesApi: {},
+      searchApi: { searchPostV1: vi.fn().mockResolvedValue({ data: [] }) },
+      accessRequestsApi: { listAccessRequestStatusV1 },
+      identityHistoryApi: {
+        getHistoricalIdentityEventsV1: vi.fn().mockResolvedValue({ data: [] }),
+      },
+      user: { id: 'u1', displayName: 'Dana', email: '', isCertAdmin: false },
+      context: { page: { subPath: '', route: '' } },
+    } as unknown as PluginRuntime
+
+    render(<CertApp runtime={runtime} />)
+
+    await user.click(await screen.findByRole('button', { name: /start reviewing/i }))
+
+    // The queue (and its keep/remove actions) is interactive right away.
+    expect(await screen.findByRole('button', { name: /^keep$/i })).toBeInTheDocument()
+
+    // Provenance resolves afterward into a headline badge, without blocking.
+    expect(await screen.findByText('Via access request')).toBeInTheDocument()
+    expect(listAccessRequestStatusV1).toHaveBeenCalledWith(
+      expect.objectContaining({ requestedFor: 'identity-1' }),
+    )
   })
 })

@@ -1,6 +1,11 @@
 import { ACCESS_KIND_HELP, ACCESS_KIND_LABEL } from '../domain/language'
 import type { ItemPriority } from '../domain/priority'
-import type { DecisionChoice, ReviewItemVM } from '../sailpoint/types'
+import type {
+  DecisionChoice,
+  ProvenanceEntry,
+  ReviewItemVM,
+} from '../sailpoint/types'
+import { AccessProvenance } from './AccessProvenance'
 import './ReviewItemCard.css'
 
 interface ReviewItemCardProps {
@@ -10,6 +15,8 @@ interface ReviewItemCardProps {
   isFirst: boolean
   /** Open the decision dialog for a choice (allow/remove). */
   onDecide: (choice: DecisionChoice) => void
+  /** This item's provenance; defaults to an idle entry when not yet resolved. */
+  provenance?: ProvenanceEntry
 }
 
 /**
@@ -22,6 +29,7 @@ export function ReviewItemCard({
   priority,
   isFirst,
   onDecide,
+  provenance,
 }: ReviewItemCardProps) {
   const kindLabel = ACCESS_KIND_LABEL[item.accessKind]
   const kindHelp = ACCESS_KIND_HELP[item.accessKind]
@@ -67,6 +75,10 @@ export function ReviewItemCard({
               ))}
             </ul>
           )}
+
+          <AccessProvenance
+            entry={provenance ?? { status: 'idle', data: null }}
+          />
         </div>
 
         <div className="vc-item-actions">

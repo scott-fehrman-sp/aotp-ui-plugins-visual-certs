@@ -6,13 +6,15 @@ import { LoadingState } from '../components/LoadingState'
 import { ReviewQueue } from '../components/ReviewQueue'
 import { WhyThisOrder } from '../components/WhyThisOrder'
 import type { ReviewItemsState } from '../state/useReviewItems'
-import type { DecisionChoice } from '../sailpoint/types'
+import type { DecisionChoice, ProvenanceEntry } from '../sailpoint/types'
 import './ReviewView.css'
 
 interface ReviewViewProps {
   campaignName: string
   /** The loaded, prioritized items + status (from useReviewItems). */
   review: ReviewItemsState
+  /** Per-item provenance (from useProvenance), keyed by review item id. */
+  provenanceByItemId: Record<string, ProvenanceEntry>
   /** Back to the campaign dashboard. */
   onBack: () => void
   /** Open a decision for an item (the dialog is wired in Task 8). */
@@ -29,6 +31,7 @@ interface ReviewViewProps {
 export function ReviewView({
   campaignName,
   review,
+  provenanceByItemId,
   onBack,
   onDecide,
   onSignOff,
@@ -94,7 +97,11 @@ export function ReviewView({
             {showTable ? (
               <DrillDownTable ordered={ordered} />
             ) : (
-              <ReviewQueue ordered={ordered} onDecide={onDecide} />
+              <ReviewQueue
+                ordered={ordered}
+                onDecide={onDecide}
+                provenanceByItemId={provenanceByItemId}
+              />
             )}
           </div>
           {allDecided && onSignOff && (

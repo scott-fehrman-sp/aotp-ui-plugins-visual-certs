@@ -19,9 +19,11 @@
 import { createSDK } from '@sailpoint/ui-plugin-sdk'
 import type { PluginContext, SailPointPluginSDK } from '@sailpoint/ui-plugin-sdk'
 import {
+  AccessRequestsApi,
   CertificationsApi,
   CertificationSummariesApi,
   Configuration,
+  IdentityHistoryApi,
   SearchApi,
 } from 'sailpoint-api-client'
 import type { CurrentUser } from './types'
@@ -35,6 +37,10 @@ export interface PluginRuntime {
   summariesApi: CertificationSummariesApi
   /** Used by the reassign flow to search identities by name/email. */
   searchApi: SearchApi
+  /** Access-request status + approval chain (Q5, and the primary Q4 signal). */
+  accessRequestsApi: AccessRequestsApi
+  /** Experimental identity-history events, to sharpen grant mechanism (Q4). */
+  identityHistoryApi: IdentityHistoryApi
 }
 
 /** Options for {@link initPlugin}, mainly to support testing. */
@@ -127,6 +133,12 @@ export async function initPlugin(
   const certificationsApi = new CertificationsApi(configuration)
   const summariesApi = new CertificationSummariesApi(configuration)
   const searchApi = new SearchApi(configuration)
+  const accessRequestsApi = new AccessRequestsApi(configuration)
+  // Reuses the same autoconfigured Configuration as the clients above. Its
+  // events endpoint maps to the `idn:identity-history:read` scope for tenants
+  // that later tighten away from `sp:scopes:all` (covered today by that broad
+  // scope, so no manifest change is needed now).
+  const identityHistoryApi = new IdentityHistoryApi(configuration)
 
   return {
     sdk,
@@ -135,5 +147,7 @@ export async function initPlugin(
     certificationsApi,
     summariesApi,
     searchApi,
+    accessRequestsApi,
+    identityHistoryApi,
   }
 }

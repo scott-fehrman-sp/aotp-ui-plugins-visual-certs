@@ -251,6 +251,8 @@ export function toReviewItemVM(item: AccessReviewItem): ReviewItemVM {
   const access = describeAccess(item)
   return {
     id: item.id ?? '',
+    // Join key for provenance lookups; empty when the API omitted it.
+    identityId: item.identitySummary?.identityId ?? '',
     completed: item.completed === true,
     decision: item.decision ?? null,
     // `reassigned` is not part of the generated AccessReviewItem type, so read

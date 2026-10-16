@@ -9,6 +9,7 @@ import type { DecisionChoice } from './sailpoint/types'
 import { useCampaign } from './state/useCampaign'
 import { useCampaigns } from './state/useCampaigns'
 import { useDecisions } from './state/useDecisions'
+import { useProvenance } from './state/useProvenance'
 import { useReviewItems } from './state/useReviewItems'
 import { CampaignDashboard } from './views/CampaignDashboard'
 import { CampaignPicker } from './views/CampaignPicker'
@@ -143,9 +144,18 @@ function CampaignRoute({
   showBack,
   onBack,
 }: CampaignRouteProps) {
-  const { certificationsApi, searchApi } = runtime
+  const { certificationsApi, searchApi, accessRequestsApi, identityHistoryApi } =
+    runtime
   const campaignState = useCampaign(certificationsApi, campaignId)
   const review = useReviewItems(certificationsApi, campaignId)
+  // Provenance resolves lazily, after the item list is in hand, and never gates
+  // the queue or re-fetches on keep/remove/reassign (see useProvenance).
+  const provenance = useProvenance(
+    accessRequestsApi,
+    identityHistoryApi,
+    campaignId,
+    review.items,
+  )
   const [step, setStep] = useState<CampaignStep>('dashboard')
 
   const decisions = useDecisions({
@@ -228,6 +238,7 @@ function CampaignRoute({
         <ReviewView
           campaignName={campaign.name}
           review={review}
+          provenanceByItemId={provenance.byItemId}
           onBack={() => setStep('dashboard')}
           onDecide={handleDecide}
           onSignOff={() => setStep('signoff')}

@@ -54,6 +54,12 @@ export type PriorityLevel = 'high' | 'medium' | 'low' | 'none'
 export interface ReviewItemVM {
   /** Review item id (the id passed back in a ReviewDecision). */
   id: string
+  /**
+   * The identity whose access is under review. Used as the join key for
+   * provenance lookups (one fetch per identity). Empty string when the API
+   * never set it.
+   */
+  identityId: string
   /** Whether a decision has already been made on this item. */
   completed: boolean
   /** The decision already recorded, if any. */
@@ -91,6 +97,66 @@ export interface ReviewItemVM {
   aiRecommendation: string | null
   /** Whether the access can actually be revoked (some cannot). */
   revocable: boolean
+}
+
+/** How a reviewer-facing access was most likely granted. */
+export type GrantMechanism = 'role' | 'request' | 'direct' | 'unknown'
+
+/** A single approval step in the request's approval chain. */
+export interface ApprovalStepVM {
+  /** Who reviewed this step (display name), or null if unknown. */
+  approver: string | null
+  /** Plain-language outcome of this step. */
+  decision: 'approved' | 'rejected' | 'pending' | 'unknown'
+  /** When the decision was made (ISO string), or null. */
+  decidedOn: string | null
+  /** Approver's comment, if any. */
+  comment: string | null
+}
+
+/** The original access request that produced this access, if one exists. */
+export interface AccessRequestSummaryVM {
+  /** Who requested it (display name), or null. */
+  requestedBy: string | null
+  /** When it was requested (ISO string), or null. */
+  requestedOn: string | null
+  /** The requester's stated justification, if any. */
+  justification: string | null
+}
+
+/** Provenance for one review item. Always present once resolved; fields degrade. */
+export interface AccessProvenanceVM {
+  /** The review item id this provenance belongs to (join key for the UI). */
+  itemId: string
+  /** Headline mechanism (the user's priority). */
+  grantMechanism: GrantMechanism
+  /** Plain-language headline label, e.g. "Via access request". */
+  mechanismLabel: string
+  /** The source request, or null when no request is on record. */
+  request: AccessRequestSummaryVM | null
+  /** The approval chain, oldest step first; empty when none on record. */
+  approvals: ApprovalStepVM[]
+  /** When the access was granted (ISO), from history when available, else null. */
+  grantedOn: string | null
+  /**
+   * True when the experimental history endpoint could not be reached (400/403)
+   * or returned nothing — used to word the degraded state honestly.
+   */
+  historyUnavailable: boolean
+}
+
+/**
+ * Resolution status of one item's provenance (async, non-blocking). Declared
+ * here (not in the hook) so the components import it from `../sailpoint/types`
+ * alongside the other view models — the repo never imports a type from a
+ * `state/` hook into a component.
+ */
+export type ProvenanceStatus = 'idle' | 'loading' | 'ready' | 'unavailable'
+
+/** Per-item provenance entry the UI consumes, keyed by review item id. */
+export interface ProvenanceEntry {
+  status: ProvenanceStatus
+  data: AccessProvenanceVM | null
 }
 
 /**

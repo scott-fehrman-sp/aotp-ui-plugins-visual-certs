@@ -19,6 +19,7 @@ const campaign: CampaignVM = {
 function reviewItem(overrides: Partial<ReviewItemVM>): ReviewItemVM {
   return {
     id: 'r',
+    identityId: 'id-r',
     completed: false,
     decision: null,
     reassigned: false,

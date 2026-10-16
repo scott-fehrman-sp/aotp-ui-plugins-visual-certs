@@ -1,5 +1,5 @@
 import type { PrioritizedItem } from '../domain/priority'
-import type { DecisionChoice } from '../sailpoint/types'
+import type { DecisionChoice, ProvenanceEntry } from '../sailpoint/types'
 import { ReviewItemCard } from './ReviewItemCard'
 import './ReviewQueue.css'
 
@@ -7,6 +7,8 @@ interface ReviewQueueProps {
   ordered: PrioritizedItem[]
   /** Open a decision for a specific item. */
   onDecide: (itemId: string, choice: DecisionChoice) => void
+  /** Per-item provenance (from useProvenance), keyed by review item id. */
+  provenanceByItemId: Record<string, ProvenanceEntry>
 }
 
 /**
@@ -15,7 +17,11 @@ interface ReviewQueueProps {
  * point. The "Why this order?" explainer is rendered by ReviewView, above the
  * scroll panel, so it stays visible while this list scrolls.
  */
-export function ReviewQueue({ ordered, onDecide }: ReviewQueueProps) {
+export function ReviewQueue({
+  ordered,
+  onDecide,
+  provenanceByItemId,
+}: ReviewQueueProps) {
   // The first outstanding (not yet decided) item gets the "first" badge.
   const firstOutstandingId = ordered.find((o) => !o.item.completed)?.item.id
 
@@ -29,6 +35,7 @@ export function ReviewQueue({ ordered, onDecide }: ReviewQueueProps) {
             priority={priority}
             isFirst={item.id === firstOutstandingId}
             onDecide={(choice) => onDecide(item.id, choice)}
+            provenance={provenanceByItemId[item.id]}
           />
         ))}
       </ul>

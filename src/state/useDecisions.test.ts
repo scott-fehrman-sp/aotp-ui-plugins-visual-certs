@@ -7,6 +7,7 @@ import type { ReviewItemsState } from './useReviewItems'
 
 const item: ReviewItemVM = {
   id: 'r1',
+  identityId: 'id-r1',
   completed: false,
   decision: null,
   reassigned: false,
