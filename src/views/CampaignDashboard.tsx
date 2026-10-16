@@ -15,6 +15,12 @@ interface CampaignDashboardProps {
   items: ReviewItemVM[] | null
   /** Called when the user chooses to start/continue reviewing. */
   onStartReviewing: () => void
+  /**
+   * Called when the user opens the access expansion matrix. When omitted the
+   * "View access map" button is not rendered (keeps existing layout/tests
+   * intact).
+   */
+  onViewMatrix?: () => void
   /** Current time, injectable for tests. */
   now?: Date
 }
@@ -29,6 +35,7 @@ export function CampaignDashboard({
   campaign,
   items,
   onStartReviewing,
+  onViewMatrix,
   now,
 }: CampaignDashboardProps) {
   const metrics = useMemo(
@@ -54,15 +61,28 @@ export function CampaignDashboard({
             <p className="vc-dashboard-desc">{campaign.description}</p>
           )}
         </div>
-        {!allDone && (
-          <button
-            type="button"
-            className="vc-btn vc-btn-primary vc-cta"
-            onClick={onStartReviewing}
-          >
-            {ctaLabel}
-          </button>
-        )}
+        {/* Actions row is always present so the access map stays reachable even
+            on a completed campaign (where the primary CTA is hidden). */}
+        <div className="vc-dashboard-actions">
+          {!allDone && (
+            <button
+              type="button"
+              className="vc-btn vc-btn-primary vc-cta"
+              onClick={onStartReviewing}
+            >
+              {ctaLabel}
+            </button>
+          )}
+          {onViewMatrix && (
+            <button
+              type="button"
+              className="vc-btn vc-btn-secondary"
+              onClick={onViewMatrix}
+            >
+              View access map
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Guided "start here" guidance in plain language. */}

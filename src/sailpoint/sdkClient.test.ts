@@ -79,6 +79,9 @@ describe('initPlugin', () => {
     expect(runtime.searchApi).toBeDefined()
     expect(runtime.accessRequestsApi).toBeDefined()
     expect(runtime.identityHistoryApi).toBeDefined()
+    expect(runtime.rolesApi).toBeDefined()
+    expect(runtime.accessProfilesApi).toBeDefined()
+    expect(runtime.entitlementsApi).toBeDefined()
   })
 
   it('rejects when the handshake origin cannot be trusted', async () => {

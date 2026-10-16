@@ -83,6 +83,16 @@ export interface ReviewItemVM {
   accessDescription: string | null
   /** Name of the system/source the access lives on, if known. */
   sourceName: string | null
+  /**
+   * Id of the role / access profile / entitlement under review, read from
+   * `item.accessSummary.{role|accessProfile|entitlement}.id`. Null when not
+   * applicable (the generic `access` fallback kind, which carries no composition
+   * id in the role/AP/entitlement id space). The access matrix uses this id to
+   * resolve the access's composition; existing consumers ignore it. Optional so
+   * existing `ReviewItemVM` fixtures/consumers compile unchanged (backward
+   * compatible); `toReviewItemVM` always populates it.
+   */
+  accessId?: string | null
   /** True when this access was granted since the last review. */
   isNewAccess: boolean
   /** True when this is elevated/admin ("privileged") access. */
@@ -184,4 +194,102 @@ export interface CurrentUser {
   displayName: string
   email: string
   isCertAdmin: boolean
+}
+
+// --- access expansion matrix -------------------------------------------------
+
+/**
+ * One fully-expanded row of the access matrix: a single path from a user to a
+ * leaf entitlement on a source. Blank (empty-string) role/accessProfile cells
+ * mean that level is NOT on this path (see the expansion rules). `entitlement`
+ * and `source` are populated on a real leaf row; they are blank only on an
+ * `unresolved` row — and specifically always blank together on the degenerate
+ * `access`-kind row (which has no leaf at all; see the mapper's `access`
+ * fallback). A fetch-failure `unresolved` row still carries whatever ids/names
+ * were known from the parent ref before the deep fetch failed.
+ */
+export interface AccessMatrixRowVM {
+  /** Stable, deterministic row id = join of the five tuple fields + ids. */
+  id: string
+  /** Identity id of the user (join key; same source as ReviewItemVM.identityId). */
+  userId: string
+  /** Display name of the user. */
+  user: string
+  /** Role display name, or '' when a role is not on this path. */
+  role: string
+  /** Role id when a role is on the path, else null (used for graph node ids). */
+  roleId: string | null
+  /** Access-profile display name, or '' when an AP is not on this path. */
+  accessProfile: string
+  /** Access-profile id when an AP is on the path, else null. */
+  accessProfileId: string | null
+  /**
+   * Leaf entitlement display name. Populated on a real leaf row; '' only on an
+   * `unresolved` row — and blank specifically on the degenerate `access`-kind
+   * row (which has no leaf at all; see the mapper's `access` fallback).
+   */
+  entitlement: string
+  /** Entitlement id, or null when unresolved. */
+  entitlementId: string | null
+  /**
+   * Source display name the entitlement lives on. Populated on a real leaf row;
+   * '' when unresolved/unknown (always '' on the degenerate `access`-kind row).
+   */
+  source: string
+  /** Source id when known, else null. */
+  sourceId: string | null
+  /**
+   * True when some level on this path could not be resolved (missing permission
+   * or fetch failure). The row still renders with an 'Unresolved' marker in the
+   * blank cells rather than being dropped — mirrors provenance soft-degrade.
+   */
+  unresolved: boolean
+}
+
+/** The kind of a graph node — the five node layers of the matrix. */
+export type AccessGraphNodeKind =
+  | 'user'
+  | 'role'
+  | 'accessProfile'
+  | 'entitlement'
+  | 'source'
+
+/**
+ * A node in the access graph derived from the matrix. `id` is namespaced by
+ * kind (e.g. `user:<identityId>`) so the same display name never collides
+ * across layers or with another layer's id space.
+ */
+export interface AccessGraphNode {
+  /** Namespaced, unique node id, e.g. 'role:<roleId>' or 'source:name:<name>'. */
+  id: string
+  /** Which layer this node belongs to. */
+  kind: AccessGraphNodeKind
+  /** Human-readable label (the display name). */
+  label: string
+}
+
+/**
+ * A directed edge along a path, parent → child, with blank levels skipped
+ * (e.g. a direct entitlement yields user→entitlement→source, no role/AP hop).
+ * Edges are deduped; `pathCount` records how many matrix rows traverse this
+ * same edge, so a future renderer can weight it.
+ */
+export interface AccessGraphEdge {
+  /** Source (parent) node id. */
+  from: string
+  /** Target (child) node id. */
+  to: string
+  /** Number of matrix rows that traverse this exact edge (>= 1). */
+  pathCount: number
+}
+
+/**
+ * The derived graph: deduped nodes + deduped directed edges. Direction is
+ * user → … → source. A renderer can walk it from users (follow `from→to`) or
+ * from sources (follow `to→from`); it is bidirectional-traversal-ready without
+ * storing reverse edges (see `deriveAccessGraph` docs).
+ */
+export interface AccessGraphData {
+  nodes: AccessGraphNode[]
+  edges: AccessGraphEdge[]
 }

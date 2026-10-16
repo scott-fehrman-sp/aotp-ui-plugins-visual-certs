@@ -9,8 +9,10 @@ import type { DecisionChoice } from './sailpoint/types'
 import { useCampaign } from './state/useCampaign'
 import { useCampaigns } from './state/useCampaigns'
 import { useDecisions } from './state/useDecisions'
+import { useAccessMatrix } from './state/useAccessMatrix'
 import { useProvenance } from './state/useProvenance'
 import { useReviewItems } from './state/useReviewItems'
+import { AccessMatrixView } from './views/AccessMatrixView'
 import { CampaignDashboard } from './views/CampaignDashboard'
 import { CampaignPicker } from './views/CampaignPicker'
 import { ReviewView } from './views/ReviewView'
@@ -127,7 +129,7 @@ interface CampaignRouteProps {
 }
 
 /** Steps within a single campaign. */
-type CampaignStep = 'dashboard' | 'review' | 'signoff'
+type CampaignStep = 'dashboard' | 'review' | 'signoff' | 'matrix'
 
 /**
  * Loads one campaign's live state plus its review items, and switches between
@@ -144,8 +146,15 @@ function CampaignRoute({
   showBack,
   onBack,
 }: CampaignRouteProps) {
-  const { certificationsApi, searchApi, accessRequestsApi, identityHistoryApi } =
-    runtime
+  const {
+    certificationsApi,
+    searchApi,
+    accessRequestsApi,
+    identityHistoryApi,
+    rolesApi,
+    accessProfilesApi,
+    entitlementsApi,
+  } = runtime
   const campaignState = useCampaign(certificationsApi, campaignId)
   const review = useReviewItems(certificationsApi, campaignId)
   // Provenance resolves lazily, after the item list is in hand, and never gates
@@ -153,6 +162,16 @@ function CampaignRoute({
   const provenance = useProvenance(
     accessRequestsApi,
     identityHistoryApi,
+    campaignId,
+    review.items,
+  )
+  // The access matrix piggybacks on the already-loaded review items, so it
+  // never triggers a second item fetch. It resolves composition lazily and
+  // gates its own screen on `status === 'ready'`.
+  const matrix = useAccessMatrix(
+    rolesApi,
+    accessProfilesApi,
+    entitlementsApi,
     campaignId,
     review.items,
   )
@@ -219,7 +238,13 @@ function CampaignRoute({
         </div>
       )}
 
-      {step === 'signoff' ? (
+      {step === 'matrix' ? (
+        <AccessMatrixView
+          campaignName={campaign.name}
+          matrix={matrix}
+          onBack={() => setStep('dashboard')}
+        />
+      ) : step === 'signoff' ? (
         <SignOffView
           api={certificationsApi}
           campaign={campaign}
@@ -254,6 +279,7 @@ function CampaignRoute({
             campaign={campaign}
             items={review.items}
             onStartReviewing={() => setStep('review')}
+            onViewMatrix={() => setStep('matrix')}
           />
         </div>
       )}

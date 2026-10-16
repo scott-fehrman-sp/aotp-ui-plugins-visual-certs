@@ -179,6 +179,7 @@ function toDataImpact(value: string | undefined): PriorityLevel | null {
  */
 function describeAccess(item: AccessReviewItem): {
   accessKind: AccessKind
+  accessId: string | null
   accessName: string
   accessDescription: string | null
   sourceName: string | null
@@ -197,6 +198,7 @@ function describeAccess(item: AccessReviewItem): {
   if (entitlement) {
     return {
       accessKind: 'entitlement',
+      accessId: entitlement.id ?? null,
       accessName: entitlement.name ?? fallbackName,
       accessDescription: entitlement.description ?? null,
       sourceName: entitlement.sourceName ?? null,
@@ -210,6 +212,7 @@ function describeAccess(item: AccessReviewItem): {
   if (accessProfile) {
     return {
       accessKind: 'accessProfile',
+      accessId: accessProfile.id ?? null,
       accessName: accessProfile.name ?? fallbackName,
       accessDescription: accessProfile.description ?? null,
       sourceName: null,
@@ -223,6 +226,7 @@ function describeAccess(item: AccessReviewItem): {
   if (role) {
     return {
       accessKind: 'role',
+      accessId: role.id ?? null,
       accessName: role.name ?? fallbackName,
       accessDescription: role.description ?? null,
       sourceName: null,
@@ -235,6 +239,11 @@ function describeAccess(item: AccessReviewItem): {
   }
   return {
     accessKind: 'access',
+    // The design is explicit: do NOT read `summary.access.id` into `accessId`.
+    // An `access`-kind item's id is not in the role/AP/entitlement id space, no
+    // resolver call would consume it, and reading it would only invite a
+    // mis-fetch — so it stays null and the matrix degrades the row honestly.
+    accessId: null,
     accessName: fallbackName,
     accessDescription: null,
     sourceName: null,

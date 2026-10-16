@@ -19,11 +19,14 @@
 import { createSDK } from '@sailpoint/ui-plugin-sdk'
 import type { PluginContext, SailPointPluginSDK } from '@sailpoint/ui-plugin-sdk'
 import {
+  AccessProfilesApi,
   AccessRequestsApi,
   CertificationsApi,
   CertificationSummariesApi,
   Configuration,
+  EntitlementsApi,
   IdentityHistoryApi,
+  RolesApi,
   SearchApi,
 } from 'sailpoint-api-client'
 import type { CurrentUser } from './types'
@@ -41,6 +44,12 @@ export interface PluginRuntime {
   accessRequestsApi: AccessRequestsApi
   /** Experimental identity-history events, to sharpen grant mechanism (Q4). */
   identityHistoryApi: IdentityHistoryApi
+  /** Resolves a role's composition (access profiles + direct entitlements). */
+  rolesApi: RolesApi
+  /** Resolves an access profile's entitlements + its source. */
+  accessProfilesApi: AccessProfilesApi
+  /** Resolves a leaf entitlement's SOURCE (the matrix 'source' column). */
+  entitlementsApi: EntitlementsApi
 }
 
 /** Options for {@link initPlugin}, mainly to support testing. */
@@ -139,6 +148,12 @@ export async function initPlugin(
   // that later tighten away from `sp:scopes:all` (covered today by that broad
   // scope, so no manifest change is needed now).
   const identityHistoryApi = new IdentityHistoryApi(configuration)
+  // Composition clients for the access expansion matrix. All reuse the same
+  // autoconfigured Configuration; roles/access-profiles/entitlements read is
+  // covered by the manifest's existing `sp:scopes:all`, so no manifest change.
+  const rolesApi = new RolesApi(configuration)
+  const accessProfilesApi = new AccessProfilesApi(configuration)
+  const entitlementsApi = new EntitlementsApi(configuration)
 
   return {
     sdk,
@@ -149,5 +164,8 @@ export async function initPlugin(
     searchApi,
     accessRequestsApi,
     identityHistoryApi,
+    rolesApi,
+    accessProfilesApi,
+    entitlementsApi,
   }
 }

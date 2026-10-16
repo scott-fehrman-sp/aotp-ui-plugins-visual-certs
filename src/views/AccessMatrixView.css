@@ -1,0 +1,60 @@
+.vc-matrix-head {
+  margin: 12px 0 16px;
+}
+
+.vc-matrix-title {
+  margin: 0;
+  font-size: 20px;
+}
+
+/* The matrix reuses the shared .vc-table / .vc-table-wrap conventions; these
+   classes layer the sortable-header affordances on top without coupling to
+   DrillDownTable. */
+.vc-matrix-table th[scope='row'] {
+  background: var(--vc-surface-alt);
+  color: var(--vc-text);
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: 15px;
+}
+
+/* The header sort button fills the header cell and inherits its typography so
+   it reads as a column header, not a form control. */
+.vc-matrix-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  text-align: left;
+}
+
+.vc-matrix-sort:hover {
+  color: var(--vc-text);
+}
+
+.vc-matrix-sort:focus-visible {
+  outline: 2px solid var(--vc-accent);
+  outline-offset: 2px;
+}
+
+.vc-matrix-sort-ind {
+  font-size: 11px;
+}
+
+.vc-matrix-unresolved {
+  color: var(--vc-text-muted);
+  font-style: italic;
+}
+
+.vc-matrix-table tr[data-unresolved] {
+  background: var(--vc-surface-alt);
+}

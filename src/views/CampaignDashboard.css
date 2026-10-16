@@ -16,6 +16,13 @@
   color: var(--vc-text-muted);
 }
 
+.vc-dashboard-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .vc-cta {
   font-size: 16px;
   padding: 11px 22px;
