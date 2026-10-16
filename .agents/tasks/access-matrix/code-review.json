@@ -1,0 +1,18 @@
+{
+  "verdict": "APPROVED",
+  "findings": [
+    {
+      "severity": "nit",
+      "blocking": false,
+      "title": "Unresolved-cell marker breadth",
+      "detail": "On a fetch-failure unresolved row with a known role, each blank AP/entitlement/source cell renders its own 'Unresolved' marker rather than a single marker. This is within the design's documented 'visible Unresolved marker in the affected cells' wording; no change required."
+    },
+    {
+      "severity": "info",
+      "blocking": false,
+      "title": "Role-direct-entitlement semantics is an inference",
+      "detail": "Treating Role.entitlements as role-direct and disjoint from AP-reachable leaves is a design-acknowledged ISC inference, not an SDK-documented fact. Tests run against stubbed composition, so correctness is unaffected; flagged for awareness only."
+    }
+  ],
+  "reviewDoc": "/Users/scott.fehrman/Documents/Projects/SailPoint/ui-plugins-apps/visual-certs/.worktrees/access-matrix/.agents/tasks/access-matrix/code-review.md"
+}

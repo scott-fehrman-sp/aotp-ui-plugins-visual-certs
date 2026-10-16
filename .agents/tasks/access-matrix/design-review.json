@@ -1,0 +1,38 @@
+{
+  "verdict": "APPROVED",
+  "findings": [
+    {
+      "id": 1,
+      "severity": "NIT",
+      "title": "Resolver's model-type import paths are not stated",
+      "location": "Technology stack (import convention) and §2 accessMatrix.ts resolver",
+      "problem": "The design names the DTOs it uses (Role, AccessProfileRef, EntitlementRef, EntitlementV2, EntitlementV2Source, AccessSummaryAccess) and states the general convention (classes from package root, models from subpaths) but never writes the concrete type-only import paths for the resolver. A coder must rediscover that Role/AccessProfileRef/EntitlementRef live in sailpoint-api-client/roles/api and EntitlementV2 in sailpoint-api-client/entitlements/api.",
+      "fix": "Add explicit type-only imports to §2a/§2b: `import type { Role, AccessProfileRef, EntitlementRef } from 'sailpoint-api-client/roles/api'` and `import type { EntitlementV2 } from 'sailpoint-api-client/entitlements/api'`; classes RolesApi/AccessProfilesApi/EntitlementsApi from the package root."
+    },
+    {
+      "id": 2,
+      "severity": "NIT",
+      "title": "Role.entitlements = 'directly attached' is an inference presented as a confirmed .d.ts fact",
+      "location": "§2a Which role API to use",
+      "problem": "The role AP-vs-direct split (and the delete blank-AP golden row) depends on Role.entitlements meaning role-direct entitlements disjoint from those reachable via Role.accessProfiles. The generated .d.ts carries no doc comment confirming this; the fields' existence and shallowness are confirmed, the semantics are inferred. The design labels the whole thing 'Confirmed by reading the generated .d.ts'.",
+      "fix": "Soften to: the .d.ts confirms both fields exist as shallow refs; we interpret Role.entitlements as the role's directly-attached entitlements (disjoint from AP-reachable) per the ISC role model. Note the five-id dedup keeps a leaf reached both ways as separate rows (intended 'all paths')."
+    },
+    {
+      "id": 3,
+      "severity": "NIT",
+      "title": "View-matrix button placement unspecified when the campaign is complete",
+      "location": "§7 CertApp integration — 'secondary button beside the primary CTA'",
+      "problem": "CampaignDashboard hides its primary CTA entirely when allDone ({!allDone && <button/>}, verified in source). 'Beside the primary CTA' is undefined for a completed campaign, where the matrix is arguably most useful, so the button could silently disappear.",
+      "fix": "State that onViewMatrix renders its own button unconditionally (independent of the allDone CTA guard), e.g. in an always-present dashboard actions row, so the matrix stays reachable on completed campaigns."
+    },
+    {
+      "id": 4,
+      "severity": "NIT",
+      "title": "Dedup prose for 'leaf in a role both directly and via an AP' is loosely worded",
+      "location": "§Dedup/normalization, second bullet",
+      "problem": "Under the stated five-id key, the same leaf reached role-direct (accessProfileId=null) vs via an AP (accessProfileId=<id>) has different keys and yields two rows (correct 'all paths' behavior), but the parenthetical reads as if such a case collapses to one, contradicting the key definition. Only an identical five-id tuple collapses.",
+      "fix": "Reword to: collapses only when the full five-id tuple is identical (same path produced twice); a leaf reached both role-direct and via an AP has different accessProfileId and correctly stays two rows."
+    }
+  ],
+  "reviewDoc": "/Users/scott.fehrman/Documents/Projects/SailPoint/ui-plugins-apps/visual-certs/.worktrees/access-matrix/.agents/tasks/access-matrix/design-review.md"
+}
