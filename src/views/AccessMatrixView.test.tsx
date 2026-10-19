@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { deriveAccessGraph } from '../domain/accessGraph'
@@ -82,7 +82,7 @@ describe('AccessMatrixView', () => {
     expect(labels).toContain('read')
   })
 
-  it('renders node labels from the graph (nodes measure in jsdom)', () => {
+  it('defaults to the user grid and reveals a user’s node labels on drill-down', () => {
     render(
       <AccessMatrixView
         campaignName="Q3 review"
@@ -90,14 +90,18 @@ describe('AccessMatrixView', () => {
         onBack={vi.fn()}
       />,
     )
-    // When React Flow can mount the custom nodes, their labels are in the DOM.
-    // Query by the node's accessible name (aria-label = "<Kind>: <label>").
+    // Default (grid) mode: only the user card shows; role/source nodes do not.
     expect(
-      screen.getByLabelText('Role: Role A'),
+      screen.getByRole('button', { name: 'Show access for User One' }),
     ).toBeInTheDocument()
-    expect(
-      screen.getByLabelText('Source: engr db'),
-    ).toBeInTheDocument()
+    expect(screen.queryByLabelText('Role: Role A')).not.toBeInTheDocument()
+
+    // Drilling into the user reveals that user's role/source node labels.
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Show access for User One' }),
+    )
+    expect(screen.getByLabelText('Role: Role A')).toBeInTheDocument()
+    expect(screen.getByLabelText('Source: engr db')).toBeInTheDocument()
   })
 
   it('calls onBack when the back button is clicked', async () => {

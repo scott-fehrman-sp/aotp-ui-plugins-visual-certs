@@ -305,6 +305,15 @@ export interface AccessGraphData {
 export type RankDir = 'LR' | 'TB'
 
 /**
+ * Which of the access graph's two display modes the canvas is in. `'grid'` is
+ * the default overview: only `user`-kind cards laid out in a centered grid, no
+ * edges, each card a selectable control. `'drilldown'` is entered by activating
+ * a user card and shows ONLY that user's forward-reachable subgraph (user →
+ * role / access profile / entitlement / source) laid out with the dagre pass.
+ */
+export type AccessGraphViewMode = 'grid' | 'drilldown'
+
+/**
  * The `data` payload carried on each React Flow node in the access scene. Kept
  * intentionally small — the custom node renders only a label plus a per-kind
  * accent — so the pure scene builder stays trivially serializable and testable.
@@ -315,5 +324,17 @@ export interface AccessSceneNodeData extends Record<string, unknown> {
   kind: AccessGraphNodeKind
   /** Human-readable label shown on the card (the node's display name). */
   label: string
+  /**
+   * True ONLY on grid-mode user cards, where the node renders as an activatable
+   * control (button role, keyboard-focusable, Enter/Space → `onSelect`). Left
+   * `undefined` on drill-down scene nodes, which keep the read-only card markup.
+   */
+  interactive?: boolean
+  /**
+   * Activation handler for a grid-mode user card: invoked on click or
+   * Enter/Space to drill into that user's access subgraph. Present only on grid
+   * cards (paired with `interactive`); `undefined` on drill-down scene nodes.
+   */
+  onSelect?: () => void
 }
 

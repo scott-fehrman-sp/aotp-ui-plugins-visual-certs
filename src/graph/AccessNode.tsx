@@ -20,6 +20,33 @@ const KIND_LABEL: Record<AccessGraphNodeKind, string> = {
  */
 export function AccessNode({ data }: NodeProps<AccessSceneNode>) {
   const kindLabel = KIND_LABEL[data.kind]
+
+  // Grid mode: the card is an activatable control that drills into the user.
+  if (data.interactive) {
+    const activate = () => data.onSelect?.()
+    return (
+      <article
+        className={`vc-graph-card vc-graph-card-interactive kind-${data.kind}`}
+        role="button"
+        tabIndex={0}
+        aria-label={`Show access for ${data.label}`}
+        onClick={activate}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            // Space would otherwise scroll the pane; Enter has no default here.
+            event.preventDefault()
+            activate()
+          }
+        }}
+      >
+        <Handles />
+        <strong className="vc-graph-card-label">{data.label}</strong>
+        <span className="vc-graph-card-kind">{kindLabel}</span>
+      </article>
+    )
+  }
+
+  // Drill-down mode: the original read-only card markup and a11y.
   return (
     <article
       className={`vc-graph-card kind-${data.kind}`}

@@ -50,13 +50,46 @@
   color: var(--muted);
 }
 
-/* The LR/TB toggle lives in a top-left panel. */
+/* Visually hidden, still announced to screen readers (user count, mode). */
+.vc-graph-wrap .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Inner nav + LR/TB toggle live in a top-left panel, stacked. */
+.vc-graph-wrap .react-flow__panel.top-left {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+}
+
 .vc-graph-toggle {
   padding: 6px 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--control);
   color: var(--ink);
+  font-family: var(--sans);
+  font-size: 13px;
+  box-shadow: var(--shadow);
+}
+
+/* Small note shown when a drilled-in user has no expanded access. */
+.vc-graph-note {
+  margin: 0;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--control);
+  color: var(--muted);
   font-family: var(--sans);
   font-size: 13px;
   box-shadow: var(--shadow);
@@ -98,6 +131,11 @@
 .vc-graph-card:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+/* Grid-mode user card: a clickable affordance that drills into the user. */
+.vc-graph-card-interactive {
+  cursor: pointer;
 }
 
 .vc-graph-card-label {

@@ -29,3 +29,15 @@ if (!window.matchMedia) {
     dispatchEvent: () => false,
   })) as unknown as typeof window.matchMedia
 }
+
+// jsdom does not implement DOMMatrixReadOnly, which React Flow's node-internals
+// update touches when it mounts a node. A minimal identity-matrix stub lets the
+// access graph canvas mount in tests (geometry is still asserted via the pure
+// builders, never read back off the DOM).
+if (!('DOMMatrixReadOnly' in globalThis)) {
+  class DOMMatrixReadOnlyStub {
+    m22 = 1
+  }
+  ;(globalThis as unknown as { DOMMatrixReadOnly: unknown }).DOMMatrixReadOnly =
+    DOMMatrixReadOnlyStub
+}

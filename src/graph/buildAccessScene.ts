@@ -30,8 +30,8 @@ export interface AccessScene {
  * dimensions and the node reads back the top-left corner, so the drawn card
  * matches the computed rank/row spacing.
  */
-const NODE_WIDTH = 200
-const NODE_HEIGHT = 64
+export const NODE_WIDTH = 200
+export const NODE_HEIGHT = 64
 
 /** Dagre spacing — roomy enough that the 200px cards never crowd a rank. */
 const NODE_SEP = 48
