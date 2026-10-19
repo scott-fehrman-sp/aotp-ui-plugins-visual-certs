@@ -133,6 +133,25 @@
   word-break: break-word;
 }
 
+/* Placeholder shown when a description is absent: a yellow/amber "warning"
+   badge so a missing value reads as a flagged, at-a-glance state. Shape and
+   typography follow org-graph's `.state-badge` (pill, inline-block, 12px/700,
+   line-height 16px); the color uses the app's existing warning token
+   (--vc-warn / --vc-warn-bg), which is already light/dark aware. */
+.vc-node-tooltip-unset {
+  display: inline-block;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  font-style: normal;
+  line-height: 16px;
+  white-space: nowrap;
+  vertical-align: middle;
+  background: var(--vc-warn-bg);
+  color: var(--vc-warn);
+}
+
 /*
  * A description can be long. Wrap it and clamp to a few lines so the tooltip
  * never grows into a giant panel. -webkit-line-clamp handles the ellipsis in

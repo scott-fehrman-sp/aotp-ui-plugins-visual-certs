@@ -93,7 +93,11 @@ export function NodeTooltip({
   const location = detail?.location ?? ''
   const description = detail?.description ?? ''
   const showUserDetail = kind === 'user' && (department || location)
-  const showDescription = kind !== 'user' && description !== ''
+  // Role / access profile / entitlement / source always show a Description
+  // line; when the node has no description we display "not set" rather than
+  // hiding the line, so a reviewer can tell the field is intentionally empty.
+  const showDescription = kind !== 'user'
+  const hasDescription = description !== ''
 
   return (
     <div
@@ -139,9 +143,15 @@ export function NodeTooltip({
                 <div className="vc-node-tooltip-detail">
                   <p className="vc-node-tooltip-line">
                     <span className="vc-node-tooltip-field">Description:</span>{' '}
-                    <span className="vc-node-tooltip-value vc-node-tooltip-description">
-                      {description}
-                    </span>
+                    {hasDescription ? (
+                      <span className="vc-node-tooltip-value vc-node-tooltip-description">
+                        {description}
+                      </span>
+                    ) : (
+                      <span className="vc-node-tooltip-value vc-node-tooltip-unset">
+                        not set
+                      </span>
+                    )}
                   </p>
                 </div>
               ) : null}

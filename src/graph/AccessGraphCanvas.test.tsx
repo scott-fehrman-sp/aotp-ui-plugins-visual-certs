@@ -191,13 +191,14 @@ describe('AccessGraphCanvas', () => {
     expect(roleTip).toHaveTextContent('Grants engineering platform access')
   })
 
-  it('a node with no extra detail shows only kind + label (no stray Description label)', () => {
+  it('shows "not set" for a non-user node missing a description; user tooltip never shows Description', () => {
     // No department/location/description anywhere.
     const graph = deriveAccessGraph([
       row({ id: '1', userId: 'u1', user: 'User One', entitlement: 'read', entitlementId: 'e1', source: 'engr db', sourceId: 's1' }),
     ])
     render(<AccessGraphCanvas graph={graph} />)
 
+    // A user node never shows a Description line (users have dept/location only).
     const userCard = screen.getByRole('button', { name: 'Show access for User One' })
     const userAnchor = userCard.closest<HTMLElement>('.vc-node-tooltip-anchor')!
     stubRect(userAnchor)
@@ -209,7 +210,8 @@ describe('AccessGraphCanvas', () => {
     expect(userTip).not.toHaveTextContent('Description:')
     fireEvent.mouseLeave(userAnchor)
 
-    // Drill in; a bare source node shows only kind + label, no Description.
+    // Drill in; a source node with no description still shows the Description
+    // line, with the value "not set".
     fireEvent.click(userCard)
     const sourceAnchor = screen.getByText('engr db').closest<HTMLElement>('.vc-node-tooltip-anchor')!
     stubRect(sourceAnchor)
@@ -217,7 +219,17 @@ describe('AccessGraphCanvas', () => {
     const sourceTip = screen.getByRole('tooltip')
     expect(sourceTip).toHaveTextContent('Source')
     expect(sourceTip).toHaveTextContent('engr db')
-    expect(sourceTip).not.toHaveTextContent('Description:')
+    expect(sourceTip).toHaveTextContent('Description:')
+    expect(sourceTip).toHaveTextContent('not set')
+    fireEvent.mouseLeave(sourceAnchor)
+
+    // The entitlement node (also no description) shows "not set" too.
+    const entAnchor = screen.getByText('read').closest<HTMLElement>('.vc-node-tooltip-anchor')!
+    stubRect(entAnchor)
+    fireEvent.mouseEnter(entAnchor)
+    const entTip = screen.getByRole('tooltip')
+    expect(entTip).toHaveTextContent('Description:')
+    expect(entTip).toHaveTextContent('not set')
   })
 })
 
