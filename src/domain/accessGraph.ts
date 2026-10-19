@@ -18,6 +18,35 @@ interface Level {
   id: string
   kind: AccessGraphNodeKind
   label: string
+  /** Extra tooltip detail for this node (department/location or description). */
+  detail?: { description?: string; department?: string; location?: string }
+}
+
+/**
+ * Builds a node's tooltip `detail` from the row, keeping only non-empty keys.
+ * Returns `undefined` when there is nothing to show so a bare node stays
+ * `{ id, kind, label }` (and the tooltip renders only kind + label).
+ */
+function detailFor(
+  kind: AccessGraphNodeKind,
+  row: AccessMatrixRowVM,
+): Level['detail'] {
+  const detail: { description?: string; department?: string; location?: string } = {}
+  if (kind === 'user') {
+    if (row.userDepartment) detail.department = row.userDepartment
+    if (row.userLocation) detail.location = row.userLocation
+  } else {
+    const description =
+      kind === 'role'
+        ? row.roleDescription
+        : kind === 'accessProfile'
+          ? row.accessProfileDescription
+          : kind === 'entitlement'
+            ? row.entitlementDescription
+            : row.sourceDescription
+    if (description) detail.description = description
+  }
+  return Object.keys(detail).length > 0 ? detail : undefined
 }
 
 /**
@@ -77,7 +106,15 @@ export function deriveAccessGraph(
 
   const addNode = (level: Level): void => {
     if (!nodes.has(level.id)) {
-      nodes.set(level.id, { id: level.id, kind: level.kind, label: level.label })
+      // First-wins: the first row to introduce a node id sets its label AND
+      // detail; later rows for the same node do not overwrite.
+      const node: AccessGraphNode = {
+        id: level.id,
+        kind: level.kind,
+        label: level.label,
+      }
+      if (level.detail) node.detail = level.detail
+      nodes.set(level.id, node)
     }
   }
 
@@ -85,7 +122,12 @@ export function deriveAccessGraph(
     const levels: Level[] = []
 
     // User is always present.
-    levels.push({ id: `user:${row.userId}`, kind: 'user', label: row.user })
+    levels.push({
+      id: `user:${row.userId}`,
+      kind: 'user',
+      label: row.user,
+      detail: detailFor('user', row),
+    })
 
     // Role / access profile only when on this path (blank = skipped).
     if (row.role !== '') {
@@ -93,6 +135,7 @@ export function deriveAccessGraph(
         id: row.roleId ? `role:${row.roleId}` : `role:name:${row.role}`,
         kind: 'role',
         label: row.role,
+        detail: detailFor('role', row),
       })
     }
     if (row.accessProfile !== '') {
@@ -102,6 +145,7 @@ export function deriveAccessGraph(
           : `accessProfile:name:${row.accessProfile}`,
         kind: 'accessProfile',
         label: row.accessProfile,
+        detail: detailFor('accessProfile', row),
       })
     }
 
@@ -115,6 +159,7 @@ export function deriveAccessGraph(
           : entitlementFallbackId(row),
         kind: 'entitlement',
         label: row.entitlement,
+        detail: detailFor('entitlement', row),
       })
     }
     if (row.source !== '') {
@@ -122,6 +167,7 @@ export function deriveAccessGraph(
         id: row.sourceId ? `source:${row.sourceId}` : `source:name:${row.source}`,
         kind: 'source',
         label: row.source,
+        detail: detailFor('source', row),
       })
     }
 

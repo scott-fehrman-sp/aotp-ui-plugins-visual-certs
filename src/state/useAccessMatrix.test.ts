@@ -2,6 +2,8 @@ import { renderHook, waitFor } from '@testing-library/react'
 import type { AccessProfilesApi } from 'sailpoint-api-client/access_profiles/api'
 import type { EntitlementsApi } from 'sailpoint-api-client/entitlements/api'
 import type { RolesApi } from 'sailpoint-api-client/roles/api'
+import type { SearchApi } from 'sailpoint-api-client/search/api'
+import type { SourcesApi } from 'sailpoint-api-client/sources/api'
 import { describe, expect, it, vi } from 'vitest'
 import type { ReviewItemVM } from '../sailpoint/types'
 import { useAccessMatrix } from './useAccessMatrix'
@@ -85,12 +87,31 @@ function fakeApis() {
       data: { id, name: names[id], source: sources[id] },
     })
   })
+  // Source descriptions for the graph tooltip; one body per source id.
+  const getSourceV1 = vi.fn().mockImplementation(({ id }) => {
+    const descriptions: Record<string, string> = {
+      'src-engr': 'Engineering database',
+      'src-acct': 'Accounting database',
+      'src-phone': 'Phone application',
+    }
+    return Promise.resolve({
+      data: { id, name: id, description: descriptions[id] ?? '' },
+    })
+  })
+  // Identity department/location lookup via the search index.
+  const searchPostV1 = vi.fn().mockResolvedValue({
+    data: [{ id: 'u1', attributes: { department: 'Engineering', location: 'Austin' } }],
+  })
   return {
     rolesApi: { getRoleV1 } as unknown as RolesApi,
     accessProfilesApi: { getAccessProfileV1 } as unknown as AccessProfilesApi,
     entitlementsApi: { getEntitlementV1 } as unknown as EntitlementsApi,
+    sourcesApi: { getSourceV1 } as unknown as SourcesApi,
+    searchApi: { searchPostV1 } as unknown as SearchApi,
     getRoleV1,
     getEntitlementV1,
+    getSourceV1,
+    searchPostV1,
   }
 }
 
@@ -110,6 +131,8 @@ describe('useAccessMatrix', () => {
         apis.rolesApi,
         apis.accessProfilesApi,
         apis.entitlementsApi,
+        apis.sourcesApi,
+        apis.searchApi,
         'c1',
         workedExampleItems(),
       ),
@@ -130,6 +153,8 @@ describe('useAccessMatrix', () => {
           apis.rolesApi,
           apis.accessProfilesApi,
           apis.entitlementsApi,
+          apis.sourcesApi,
+          apis.searchApi,
           'c1',
           list,
         ),

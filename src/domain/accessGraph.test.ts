@@ -220,6 +220,51 @@ describe('deriveAccessGraph', () => {
     ])
   })
 
+  it('puts department/location on the user node and description on each other kind, without changing node count', () => {
+    // Enrich the worked example with user attributes + per-kind descriptions.
+    const enriched = workedExample().map((r, i) => ({
+      ...r,
+      userDepartment: 'Engineering',
+      userLocation: 'Austin',
+      roleDescription: r.role ? 'Role A description' : undefined,
+      accessProfileDescription: r.accessProfile
+        ? `AP ${r.accessProfile} description`
+        : undefined,
+      entitlementDescription: `entitlement ${i} description`,
+      sourceDescription: `source for ${r.source}`,
+    }))
+    const plain = deriveAccessGraph(workedExample())
+    const { nodes } = deriveAccessGraph(enriched)
+
+    // Dedup unaffected: same node count as the un-enriched graph.
+    expect(nodes).toHaveLength(plain.nodes.length)
+
+    const byId = new Map(nodes.map((n) => [n.id, n]))
+    // User node carries department + location, no description.
+    expect(byId.get('user:u1')?.detail).toEqual({
+      department: 'Engineering',
+      location: 'Austin',
+    })
+    // Role / AP / entitlement / source nodes carry a description only.
+    expect(byId.get('role:role-a')?.detail).toEqual({
+      description: 'Role A description',
+    })
+    expect(byId.get('accessProfile:ap-foo')?.detail).toEqual({
+      description: 'AP foo description',
+    })
+    expect(byId.get('entitlement:ent-read-engr')?.detail?.description).toBeTruthy()
+    expect(byId.get('source:src-engr')?.detail?.description).toBeTruthy()
+  })
+
+  it('omits detail entirely for a node with no extra data', () => {
+    const { nodes } = deriveAccessGraph([
+      row({ id: '1', entitlement: 'read', entitlementId: 'e1', source: 'app', sourceId: 's0' }),
+    ])
+    for (const node of nodes) {
+      expect(node.detail).toBeUndefined()
+    }
+  })
+
   it('contributes only the user node and zero edges for an all-blank-leaf access row', () => {
     const rows = [
       row({

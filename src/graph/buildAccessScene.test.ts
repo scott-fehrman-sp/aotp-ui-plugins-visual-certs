@@ -114,6 +114,38 @@ describe('buildAccessScene', () => {
     expect(scene.edges).toEqual([])
   })
 
+  it('threads node detail (description / department / location) onto scene node data', () => {
+    const graph = deriveAccessGraph([
+      row({
+        id: '1',
+        userId: 'u1',
+        user: 'User One',
+        userDepartment: 'Engineering',
+        userLocation: 'Austin',
+        role: 'Role A',
+        roleId: 'role-a',
+        roleDescription: 'Role A description',
+        entitlement: 'read',
+        entitlementId: 'e1',
+        source: 'engr db',
+        sourceId: 's1',
+        sourceDescription: 'Engineering database',
+      }),
+    ])
+    const scene = buildAccessScene(graph, 'LR')
+    const byId = new Map(scene.nodes.map((n) => [n.id, n]))
+    expect(byId.get('user:u1')?.data.detail).toEqual({
+      department: 'Engineering',
+      location: 'Austin',
+    })
+    expect(byId.get('role:role-a')?.data.detail).toEqual({
+      description: 'Role A description',
+    })
+    expect(byId.get('source:s1')?.data.detail).toEqual({
+      description: 'Engineering database',
+    })
+  })
+
   it('carries pathCount on each edge via the custom count-badge edge type', () => {
     // The worked example reuses the user→Role A and Role A→foo hops across
     // multiple rows, so those edges have pathCount > 1 — the data that drives

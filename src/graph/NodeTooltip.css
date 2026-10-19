@@ -1,0 +1,148 @@
+/*
+ * Styled hover/focus tooltip for access-graph nodes. Reads the graph tokens
+ * (tokens.css) so it matches the canvas/card look in both light and dark.
+ */
+
+/*
+ * Wrapper fills the React Flow node box so it has a real layout box: this is
+ * required for it to receive mouse-enter/leave events AND for
+ * getBoundingClientRect to return the card's actual position. (A
+ * `display: contents` wrapper generates no box, so it reports a zero rect and
+ * may be skipped in hit-testing — which hid the tooltip entirely.) The inner
+ * .vc-graph-card already sizes to 100% of this box, so filling the node here
+ * does not change the card's appearance.
+ */
+.vc-node-tooltip-anchor {
+  width: 100%;
+  height: 100%;
+}
+
+/* The portaled popover, positioned above and centered on the node. */
+.vc-node-tooltip {
+  position: fixed;
+  z-index: 1000;
+  transform: translate(-50%, -100%);
+  max-width: 320px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel, var(--control));
+  color: var(--ink);
+  box-shadow: var(--shadow-focus, var(--shadow));
+  font-family: var(--sans);
+  pointer-events: none;
+  /* Subtle entrance so it doesn't pop harshly. */
+  animation: vc-node-tooltip-in 120ms ease-out;
+}
+
+@keyframes vc-node-tooltip-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -100%) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vc-node-tooltip {
+    animation: none;
+  }
+}
+
+/* Little arrow pointing down at the node. */
+.vc-node-tooltip::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+  width: 9px;
+  height: 9px;
+  transform: translateX(-50%) rotate(45deg);
+  background: var(--panel, var(--control));
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+/* Kind caption: uppercase, tinted with the kind accent. */
+.vc-node-tooltip-kind {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.vc-node-tooltip-kind.kind-user {
+  color: var(--vc-graph-user);
+}
+.vc-node-tooltip-kind.kind-role {
+  color: var(--vc-graph-role);
+}
+.vc-node-tooltip-kind.kind-accessProfile {
+  color: var(--vc-graph-accessProfile);
+}
+.vc-node-tooltip-kind.kind-entitlement {
+  color: var(--vc-graph-entitlement);
+}
+.vc-node-tooltip-kind.kind-source {
+  color: var(--vc-graph-source);
+}
+
+/* Full label: wraps so long names are fully readable. */
+.vc-node-tooltip-label {
+  font-size: 14px;
+  line-height: 1.35;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+/*
+ * Extra detail block (department/location or description). Separated from the
+ * label by a hairline so the secondary info reads as a distinct group.
+ */
+.vc-node-tooltip-detail {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.vc-node-tooltip-line {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+/* "Department:" / "Location:" / "Description:" labels: muted, secondary. */
+.vc-node-tooltip-field {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* The values themselves read in the primary ink color. */
+.vc-node-tooltip-value {
+  color: var(--ink);
+  word-break: break-word;
+}
+
+/*
+ * A description can be long. Wrap it and clamp to a few lines so the tooltip
+ * never grows into a giant panel. -webkit-line-clamp handles the ellipsis in
+ * WebKit/Blink; max-height is the non-webkit fallback that caps the height.
+ */
+.vc-node-tooltip-description {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-height: 5.4em;
+}

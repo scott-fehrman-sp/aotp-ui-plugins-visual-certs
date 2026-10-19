@@ -88,6 +88,57 @@ function toIdentityOption(row: unknown): IdentityOption | null {
 }
 
 /**
+ * Identity attribute keys probed for the graph tooltip's department / location
+ * lines. Tenants map these attributes under different names, so each is read
+ * defensively with {@link firstString} (first non-empty wins, default ''):
+ *   - department: 'department', 'departmentName', 'dept'
+ *   - location:   'location', 'city', 'region', 'locality', 'workLocation'
+ */
+const DEPARTMENT_KEYS = ['department', 'departmentName', 'dept']
+const LOCATION_KEYS = ['location', 'city', 'region', 'locality', 'workLocation']
+
+/**
+ * Looks up ONE identity's department + location for the access-graph node
+ * tooltip. Enrichment only: unlike {@link searchIdentities} (which throws for
+ * the picker), this soft-degrades — an empty id or ANY error yields
+ * `{ department: '', location: '' }` and never throws, so a failed lookup can
+ * never blank a matrix row.
+ *
+ * Reads the identities search index by id and probes the row's `attributes`
+ * (which may also carry the values at the top level) across the D3 key lists
+ * above, mirroring {@link toIdentityOption}'s defensive untyped access.
+ */
+export async function fetchIdentityAttributes(
+  api: SearchApi,
+  identityId: string,
+): Promise<{ department: string; location: string }> {
+  if (!identityId) return { department: '', location: '' }
+  try {
+    const res = await api.searchPostV1({
+      search: {
+        indices: [Index.Identities],
+        query: { query: `id:${escapeSearchTerm(identityId)}` },
+      },
+      limit: 1,
+      count: false,
+    })
+    const row = (res.data ?? [])[0]
+    if (!isRecord(row)) return { department: '', location: '' }
+    const attributes = isRecord(row.attributes) ? row.attributes : {}
+    // Department/location can live at the top level or under attributes,
+    // depending on how the identity was indexed, so check both defensively.
+    const department =
+      firstString(row, DEPARTMENT_KEYS) || firstString(attributes, DEPARTMENT_KEYS)
+    const location =
+      firstString(row, LOCATION_KEYS) || firstString(attributes, LOCATION_KEYS)
+    return { department, location }
+  } catch {
+    // Soft-degrade: a failed attribute lookup must never blank a matrix row.
+    return { department: '', location: '' }
+  }
+}
+
+/**
  * Searches identities by name or email. Returns an empty list for input shorter
  * than two non-space characters so a single keystroke never fires a query.
  */

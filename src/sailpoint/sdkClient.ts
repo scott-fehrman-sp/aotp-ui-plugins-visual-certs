@@ -28,6 +28,7 @@ import {
   IdentityHistoryApi,
   RolesApi,
   SearchApi,
+  SourcesApi,
 } from 'sailpoint-api-client'
 import type { CurrentUser } from './types'
 
@@ -50,6 +51,8 @@ export interface PluginRuntime {
   accessProfilesApi: AccessProfilesApi
   /** Resolves a leaf entitlement's SOURCE (the matrix 'source' column). */
   entitlementsApi: EntitlementsApi
+  /** Resolves a source's human-readable description for the graph tooltip. */
+  sourcesApi: SourcesApi
 }
 
 /** Options for {@link initPlugin}, mainly to support testing. */
@@ -154,6 +157,10 @@ export async function initPlugin(
   const rolesApi = new RolesApi(configuration)
   const accessProfilesApi = new AccessProfilesApi(configuration)
   const entitlementsApi = new EntitlementsApi(configuration)
+  // Resolves a source's description for the access-graph node tooltip. Reuses
+  // the same autoconfigured Configuration; source read is covered by the
+  // manifest's existing `sp:scopes:all`, so no manifest change.
+  const sourcesApi = new SourcesApi(configuration)
 
   return {
     sdk,
@@ -167,5 +174,6 @@ export async function initPlugin(
     rolesApi,
     accessProfilesApi,
     entitlementsApi,
+    sourcesApi,
   }
 }

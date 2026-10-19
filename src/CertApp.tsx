@@ -154,6 +154,7 @@ function CampaignRoute({
     rolesApi,
     accessProfilesApi,
     entitlementsApi,
+    sourcesApi,
   } = runtime
   const campaignState = useCampaign(certificationsApi, campaignId)
   const review = useReviewItems(certificationsApi, campaignId)
@@ -172,6 +173,8 @@ function CampaignRoute({
     rolesApi,
     accessProfilesApi,
     entitlementsApi,
+    sourcesApi,
+    searchApi,
     campaignId,
     review.items,
   )

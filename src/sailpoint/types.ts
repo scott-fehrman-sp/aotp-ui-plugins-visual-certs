@@ -244,6 +244,29 @@ export interface AccessMatrixRowVM {
    * blank cells rather than being dropped — mirrors provenance soft-degrade.
    */
   unresolved: boolean
+  /**
+   * The user's department, for the graph's user-node tooltip. Enrichment only:
+   * attaches to `userId` (independent of the access path), so it is present on
+   * EVERY row for that user — including the degenerate `access`-kind all-blank
+   * row and unresolved rows. '' / absent when the identity lookup soft-degraded
+   * or the attribute was unmapped. Optional so existing fixtures compile
+   * unchanged; never part of the five-id dedup key.
+   */
+  userDepartment?: string
+  /** The user's location, same semantics as {@link userDepartment}. */
+  userLocation?: string
+  /**
+   * The role's human-readable description, for the role-node tooltip. Present
+   * only on a resolved role row; '' / absent when unavailable. Enrichment only;
+   * never part of the dedup key.
+   */
+  roleDescription?: string
+  /** The access profile's description, same semantics as {@link roleDescription}. */
+  accessProfileDescription?: string
+  /** The entitlement's description, same semantics as {@link roleDescription}. */
+  entitlementDescription?: string
+  /** The source's description, same semantics as {@link roleDescription}. */
+  sourceDescription?: string
 }
 
 /** The kind of a graph node — the five node layers of the matrix. */
@@ -266,6 +289,14 @@ export interface AccessGraphNode {
   kind: AccessGraphNodeKind
   /** Human-readable label (the display name). */
   label: string
+  /**
+   * Extra detail surfaced in the node's hover/focus tooltip. For a `user` node,
+   * `department`/`location`; for every other kind, `description`. Each key is
+   * set only when non-empty, and `detail` is omitted entirely when a node has
+   * no extra data — so a bare node stays `{ id, kind, label }`. Enrichment only;
+   * first-wins on dedupe (the first row to introduce a node id sets its detail).
+   */
+  detail?: { description?: string; department?: string; location?: string }
 }
 
 /**
@@ -336,5 +367,12 @@ export interface AccessSceneNodeData extends Record<string, unknown> {
    * cards (paired with `interactive`); `undefined` on drill-down scene nodes.
    */
   onSelect?: () => void
+  /**
+   * Extra detail threaded from {@link AccessGraphNode.detail} for the node's
+   * tooltip: `department`/`location` on a user card, `description` on every
+   * other kind. Omitted when the node has no extra data (tooltip then shows
+   * only kind + label). Enrichment only.
+   */
+  detail?: { description?: string; department?: string; location?: string }
 }
 

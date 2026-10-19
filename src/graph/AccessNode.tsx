@@ -1,6 +1,7 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import type { AccessGraphNodeKind } from '../sailpoint/types'
 import type { AccessSceneNode } from './buildAccessScene'
+import { NodeTooltip } from './NodeTooltip'
 
 /** Human-readable caption for each layer, shown under the label. */
 const KIND_LABEL: Record<AccessGraphNodeKind, string> = {
@@ -25,38 +26,52 @@ export function AccessNode({ data }: NodeProps<AccessSceneNode>) {
   if (data.interactive) {
     const activate = () => data.onSelect?.()
     return (
-      <article
-        className={`vc-graph-card vc-graph-card-interactive kind-${data.kind}`}
-        role="button"
-        tabIndex={0}
-        aria-label={`Show access for ${data.label}`}
-        onClick={activate}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter' || event.key === ' ') {
-            // Space would otherwise scroll the pane; Enter has no default here.
-            event.preventDefault()
-            activate()
-          }
-        }}
+      <NodeTooltip
+        kindLabel={kindLabel}
+        kind={data.kind}
+        label={data.label}
+        detail={data.detail}
       >
-        <Handles />
-        <strong className="vc-graph-card-label">{data.label}</strong>
-        <span className="vc-graph-card-kind">{kindLabel}</span>
-      </article>
+        <article
+          className={`vc-graph-card vc-graph-card-interactive kind-${data.kind}`}
+          role="button"
+          tabIndex={0}
+          aria-label={`Show access for ${data.label}`}
+          onClick={activate}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              // Space would otherwise scroll the pane; Enter has no default here.
+              event.preventDefault()
+              activate()
+            }
+          }}
+        >
+          <Handles />
+          <strong className="vc-graph-card-label">{data.label}</strong>
+          <span className="vc-graph-card-kind">{kindLabel}</span>
+        </article>
+      </NodeTooltip>
     )
   }
 
   // Drill-down mode: the original read-only card markup and a11y.
   return (
-    <article
-      className={`vc-graph-card kind-${data.kind}`}
-      tabIndex={0}
-      aria-label={`${kindLabel}: ${data.label}`}
+    <NodeTooltip
+      kindLabel={kindLabel}
+      kind={data.kind}
+      label={data.label}
+      detail={data.detail}
     >
-      <Handles />
-      <strong className="vc-graph-card-label">{data.label}</strong>
-      <span className="vc-graph-card-kind">{kindLabel}</span>
-    </article>
+      <article
+        className={`vc-graph-card kind-${data.kind}`}
+        tabIndex={0}
+        aria-label={`${kindLabel}: ${data.label}`}
+      >
+        <Handles />
+        <strong className="vc-graph-card-label">{data.label}</strong>
+        <span className="vc-graph-card-kind">{kindLabel}</span>
+      </article>
+    </NodeTooltip>
   )
 }
 

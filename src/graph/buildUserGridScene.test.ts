@@ -95,4 +95,23 @@ describe('buildUserGridScene', () => {
     expect(scene.nodes).toEqual([])
     expect(scene.edges).toEqual([])
   })
+
+  it('threads the user node detail (department/location) onto the card data', () => {
+    const graph = deriveAccessGraph([
+      row({
+        id: '1',
+        userDepartment: 'Engineering',
+        userLocation: 'Austin',
+        entitlement: 'read',
+        entitlementId: 'e1',
+        source: 'app',
+        sourceId: 's0',
+      }),
+    ])
+    const scene = buildUserGridScene(graph, 1200)
+    expect(scene.nodes[0]?.data.detail).toEqual({
+      department: 'Engineering',
+      location: 'Austin',
+    })
+  })
 })

@@ -48,6 +48,7 @@ function stubResolver(): AccessCompositionResolver {
     'role-a': {
       id: 'role-a',
       name: 'Role A',
+      description: 'Role A description',
       accessProfileRefs: [{ id: 'ap-foo', name: 'foo' }],
       entitlementRefs: [{ id: 'ent-delete-engr', name: 'delete' }],
     },
@@ -56,6 +57,7 @@ function stubResolver(): AccessCompositionResolver {
     'ap-foo': {
       id: 'ap-foo',
       name: 'foo',
+      description: 'AP foo description',
       entitlementRefs: [
         { id: 'ent-read-engr', name: 'read' },
         { id: 'ent-write-engr', name: 'write' },
@@ -64,6 +66,7 @@ function stubResolver(): AccessCompositionResolver {
     'ap-bar': {
       id: 'ap-bar',
       name: 'bar',
+      description: 'AP bar description',
       entitlementRefs: [
         { id: 'ent-read-acct', name: 'read' },
         { id: 'ent-search-acct', name: 'search' },
@@ -71,17 +74,24 @@ function stubResolver(): AccessCompositionResolver {
     },
   }
   const ents: Record<string, ResolvedEntitlement> = {
-    'ent-read-engr': { id: 'ent-read-engr', name: 'read', sourceId: 'src-engr', sourceName: 'engr db' },
-    'ent-write-engr': { id: 'ent-write-engr', name: 'write', sourceId: 'src-engr', sourceName: 'engr db' },
-    'ent-delete-engr': { id: 'ent-delete-engr', name: 'delete', sourceId: 'src-engr', sourceName: 'engr db' },
-    'ent-read-acct': { id: 'ent-read-acct', name: 'read', sourceId: 'src-acct', sourceName: 'accounting db' },
-    'ent-search-acct': { id: 'ent-search-acct', name: 'search', sourceId: 'src-acct', sourceName: 'accounting db' },
-    'ent-read-phone': { id: 'ent-read-phone', name: 'read', sourceId: 'src-phone', sourceName: 'phone app' },
+    'ent-read-engr': { id: 'ent-read-engr', name: 'read', description: 'read engr', sourceId: 'src-engr', sourceName: 'engr db', sourceDescription: 'Engineering database' },
+    'ent-write-engr': { id: 'ent-write-engr', name: 'write', description: 'write engr', sourceId: 'src-engr', sourceName: 'engr db', sourceDescription: 'Engineering database' },
+    'ent-delete-engr': { id: 'ent-delete-engr', name: 'delete', description: 'delete engr', sourceId: 'src-engr', sourceName: 'engr db', sourceDescription: 'Engineering database' },
+    'ent-read-acct': { id: 'ent-read-acct', name: 'read', description: 'read acct', sourceId: 'src-acct', sourceName: 'accounting db', sourceDescription: 'Accounting database' },
+    'ent-search-acct': { id: 'ent-search-acct', name: 'search', description: 'search acct', sourceId: 'src-acct', sourceName: 'accounting db', sourceDescription: 'Accounting database' },
+    'ent-read-phone': { id: 'ent-read-phone', name: 'read', description: 'read phone', sourceId: 'src-phone', sourceName: 'phone app', sourceDescription: 'Phone application' },
+  }
+  const sources: Record<string, { id: string; name: string; description: string }> = {
+    'src-engr': { id: 'src-engr', name: 'engr db', description: 'Engineering database' },
+    'src-acct': { id: 'src-acct', name: 'accounting db', description: 'Accounting database' },
+    'src-phone': { id: 'src-phone', name: 'phone app', description: 'Phone application' },
   }
   return {
     role: (id) => Promise.resolve(roles[id] ?? null),
     accessProfile: (id) => Promise.resolve(aps[id] ?? null),
     entitlement: (id) => Promise.resolve(ents[id] ?? null),
+    source: (id) => Promise.resolve(sources[id] ?? null),
+    identity: () => Promise.resolve({ department: 'Engineering', location: 'Austin' }),
   }
 }
 
@@ -149,6 +159,7 @@ describe('resolveMatrix', () => {
           ? Promise.resolve({
               id: 'ap-bar2',
               name: 'bar2',
+              description: 'AP bar2 description',
               entitlementRefs: [{ id: 'ent-read-phone', name: 'read' }],
             })
           : stubResolver().accessProfile(id),
@@ -166,6 +177,8 @@ describe('resolveMatrix', () => {
       role: () => Promise.resolve(null),
       accessProfile: () => Promise.resolve(null),
       entitlement: () => Promise.resolve(null),
+      source: () => Promise.resolve(null),
+      identity: () => Promise.resolve({ department: '', location: '' }),
     }
     const items = [
       item({ id: 'e', accessKind: 'entitlement', accessId: 'ent-x', accessName: 'read' }),
@@ -184,6 +197,7 @@ describe('resolveMatrix', () => {
     const roleFn = vi.fn().mockResolvedValue({
       id: 'role-a',
       name: 'Role A',
+      description: 'Role A description',
       accessProfileRefs: [],
       entitlementRefs: [{ id: 'ent-delete-engr', name: 'delete' }],
     } satisfies ResolvedRole)
@@ -241,5 +255,116 @@ describe('resolveMatrix', () => {
       stubResolver(),
     )
     expect(rows).toHaveLength(1)
+  })
+
+  it('carries descriptive enrichment on the resolved worked-example rows', async () => {
+    const rows = await resolveMatrix(workedExampleItems(), stubResolver())
+    // Every row for the user carries its department/location.
+    expect(rows.every((r) => r.userDepartment === 'Engineering')).toBe(true)
+    expect(rows.every((r) => r.userLocation === 'Austin')).toBe(true)
+
+    // Role rows carry the role + AP + entitlement + source descriptions.
+    const fooRead = rows.find(
+      (r) => r.accessProfile === 'foo' && r.entitlement === 'read',
+    )
+    expect(fooRead?.roleDescription).toBe('Role A description')
+    expect(fooRead?.accessProfileDescription).toBe('AP foo description')
+    expect(fooRead?.entitlementDescription).toBe('read engr')
+    expect(fooRead?.sourceDescription).toBe('Engineering database')
+
+    // The role-direct `delete` row has a role description but no AP description.
+    const del = rows.find((r) => r.entitlement === 'delete')
+    expect(del?.roleDescription).toBe('Role A description')
+    expect(del?.accessProfileDescription).toBeUndefined()
+
+    // The direct phone entitlement row carries its own source description.
+    const phone = rows.find((r) => r.source === 'phone app')
+    expect(phone?.sourceDescription).toBe('Phone application')
+  })
+
+  it('soft-degrades a failed SOURCE fetch to empty description without changing row identity', async () => {
+    // A resolver whose source() always fails (null) but entitlement still
+    // resolves and keeps the sourceName; sourceDescription degrades to ''.
+    const resolver: AccessCompositionResolver = {
+      ...stubResolver(),
+      entitlement: (id) =>
+        Promise.resolve(
+          id === 'ent-read-phone'
+            ? {
+                id: 'ent-read-phone',
+                name: 'read',
+                description: 'read phone',
+                sourceId: 'src-phone',
+                sourceName: 'phone app',
+                // Mirrors what fetchEntitlement produces when source() → null.
+                sourceDescription: '',
+              }
+            : null,
+        ),
+      source: () => Promise.resolve(null),
+    }
+    const withSource = await resolveMatrix(
+      [item({ id: 'rev-ent', accessKind: 'entitlement', accessId: 'ent-read-phone', accessName: 'read' })],
+      stubResolver(),
+    )
+    const degraded = await resolveMatrix(
+      [item({ id: 'rev-ent', accessKind: 'entitlement', accessId: 'ent-read-phone', accessName: 'read' })],
+      resolver,
+    )
+    // Same row count and same five-id identity; only the description differs.
+    expect(degraded).toHaveLength(1)
+    expect(degraded[0].id).toBe(withSource[0].id)
+    expect(degraded[0].source).toBe('phone app')
+    expect(degraded[0].sourceDescription).toBe('')
+    expect(degraded[0].unresolved).toBe(false)
+  })
+
+  it('soft-degrades a failed IDENTITY fetch to empty department/location without dropping rows', async () => {
+    const resolver: AccessCompositionResolver = {
+      ...stubResolver(),
+      identity: () => Promise.resolve({ department: '', location: '' }),
+    }
+    const rows = await resolveMatrix(workedExampleItems(), resolver)
+    expect(rows).toHaveLength(6)
+    expect(rows.every((r) => r.userDepartment === '')).toBe(true)
+    expect(rows.every((r) => r.userLocation === '')).toBe(true)
+  })
+
+  it('fetches a source at most once per source id across many entitlements', async () => {
+    // src-engr is shared by read/write/delete. A per-source-id cache in front of
+    // a source spy must call it once for src-engr though three entitlements use it.
+    const base = stubResolver()
+    const sourceFn = vi.fn((id: string) =>
+      Promise.resolve({ id, name: 'engr db', description: 'Engineering database' }),
+    )
+    const cache = new Map<
+      string,
+      Promise<{ id: string; name: string; description: string } | null>
+    >()
+    const resolver: AccessCompositionResolver = {
+      ...base,
+      source: (id) => {
+        const hit = cache.get(id)
+        if (hit) return hit
+        const p = sourceFn(id)
+        cache.set(id, p)
+        return p
+      },
+      // Entitlement resolution routes through the cached source(), mirroring
+      // fetchEntitlement, so the spy sees one call per distinct source id.
+      entitlement: async (id) => {
+        const ent = await base.entitlement(id)
+        if (!ent) return null
+        const src = ent.sourceId ? await resolver.source(ent.sourceId) : null
+        return { ...ent, sourceDescription: src?.description ?? '' }
+      },
+    }
+    // Role A expands into read + write (via foo) + delete, all on src-engr.
+    await resolveMatrix(
+      [item({ id: 'rev-role', accessKind: 'role', accessId: 'role-a', accessName: 'Role A' })],
+      resolver,
+    )
+    expect(sourceFn).toHaveBeenCalledTimes(1)
+    expect(sourceFn).toHaveBeenCalledWith('src-engr')
   })
 })

@@ -71,6 +71,7 @@ export function buildUserGridScene(
       data: {
         kind: node.kind,
         label: node.label,
+        detail: node.detail,
         interactive: true,
         onSelect: onSelect ? () => onSelect(node.id) : undefined,
       },

@@ -183,7 +183,7 @@ export function buildAccessScene(
       id: node.id,
       type: 'access',
       position: { x, y },
-      data: { kind: node.kind, label: node.label },
+      data: { kind: node.kind, label: node.label, detail: node.detail },
       width: NODE_WIDTH,
       height: NODE_HEIGHT,
       sourcePosition: handle.sourcePosition,

@@ -17,6 +17,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { AccessProfilesApi } from 'sailpoint-api-client/access_profiles/api'
 import type { EntitlementsApi } from 'sailpoint-api-client/entitlements/api'
 import type { RolesApi } from 'sailpoint-api-client/roles/api'
+import type { SearchApi } from 'sailpoint-api-client/search/api'
+import type { SourcesApi } from 'sailpoint-api-client/sources/api'
 import { deriveAccessGraph } from '../domain/accessGraph'
 import {
   createAccessCompositionResolver,
@@ -46,6 +48,8 @@ export function useAccessMatrix(
   rolesApi: RolesApi,
   accessProfilesApi: AccessProfilesApi,
   entitlementsApi: EntitlementsApi,
+  sourcesApi: SourcesApi,
+  searchApi: SearchApi,
   campaignId: string,
   items: ReviewItemVM[] | null,
 ): AccessMatrixState {
@@ -77,6 +81,8 @@ export function useAccessMatrix(
         rolesApi,
         accessProfilesApi,
         entitlementsApi,
+        sourcesApi,
+        searchApi,
       )
       resolverCampaignRef.current = campaignId
     }

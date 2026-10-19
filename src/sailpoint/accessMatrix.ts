@@ -12,6 +12,9 @@
 import type { AccessProfilesApi } from 'sailpoint-api-client/access_profiles/api'
 import type { EntitlementsApi } from 'sailpoint-api-client/entitlements/api'
 import type { RolesApi } from 'sailpoint-api-client/roles/api'
+import type { SearchApi } from 'sailpoint-api-client/search/api'
+import type { SourcesApi } from 'sailpoint-api-client/sources/api'
+import { fetchIdentityAttributes } from './identities'
 import type { AccessMatrixRowVM, ReviewItemVM } from './types'
 
 // --- internal, DTO-free resolved shapes (never exposed to components) --------
@@ -20,6 +23,8 @@ import type { AccessMatrixRowVM, ReviewItemVM } from './types'
 export interface ResolvedRole {
   id: string
   name: string
+  /** Human-readable description for the graph tooltip ('' when absent/null). */
+  description: string
   /** Access-profile refs on the role (shallow: id + name only). */
   accessProfileRefs: Array<{ id: string | null; name: string }>
   /** Entitlement refs attached directly to the role (shallow: id + name only). */
@@ -30,6 +35,8 @@ export interface ResolvedRole {
 export interface ResolvedAccessProfile {
   id: string
   name: string
+  /** Human-readable description for the graph tooltip ('' when absent/null). */
+  description: string
   entitlementRefs: Array<{ id: string | null; name: string }>
 }
 
@@ -37,8 +44,16 @@ export interface ResolvedAccessProfile {
 export interface ResolvedEntitlement {
   id: string
   name: string
+  /** Human-readable description for the graph tooltip ('' when absent/null). */
+  description: string
   sourceId: string | null
   sourceName: string
+  /**
+   * The SOURCE's description (not the entitlement's), resolved via the per-id
+   * source cache. '' when the source could not be fetched; `sourceName` is kept
+   * regardless (soft-degrade).
+   */
+  sourceDescription: string
 }
 
 /**
@@ -53,6 +68,18 @@ export interface AccessCompositionResolver {
   accessProfile(id: string): Promise<ResolvedAccessProfile | null>
   /** Entitlement body (name + source). null = soft-degraded. */
   entitlement(id: string): Promise<ResolvedEntitlement | null>
+  /**
+   * A source's name + description, for the source-node tooltip. Backed by a
+   * per-source-id cache so a source shared by many entitlements is fetched at
+   * most once. null = soft-degraded.
+   */
+  source(id: string): Promise<{ id: string; name: string; description: string } | null>
+  /**
+   * A user's department + location, for the user-node tooltip. Backed by a
+   * per-identity cache (fetch-once, concurrent-dedupe). Soft-degrades to empty
+   * strings; returns null only when there is nothing to fetch (empty id).
+   */
+  identity(id: string): Promise<{ department: string; location: string } | null>
 }
 
 /**
@@ -71,10 +98,56 @@ export function createAccessCompositionResolver(
   rolesApi: RolesApi,
   accessProfilesApi: AccessProfilesApi,
   entitlementsApi: EntitlementsApi,
+  sourcesApi: SourcesApi,
+  searchApi: SearchApi,
 ): AccessCompositionResolver {
   const roleCache = new Map<string, Promise<ResolvedRole | null>>()
   const apCache = new Map<string, Promise<ResolvedAccessProfile | null>>()
   const entCache = new Map<string, Promise<ResolvedEntitlement | null>>()
+  // Per-source-id cache: a source shared by many entitlements is fetched once.
+  const sourceCache = new Map<
+    string,
+    Promise<{ id: string; name: string; description: string } | null>
+  >()
+  // Per-identity cache for the user department/location lookup.
+  const identityCache = new Map<
+    string,
+    Promise<{ department: string; location: string } | null>
+  >()
+
+  const cached = <T>(
+    cache: Map<string, Promise<T | null>>,
+    id: string,
+    load: (id: string) => Promise<T | null>,
+  ): Promise<T | null> => {
+    // An empty/missing id can never resolve — treat as soft-degraded without a
+    // network call.
+    if (!id) return Promise.resolve(null)
+    const hit = cache.get(id)
+    if (hit) return hit
+    const promise = load(id)
+    cache.set(id, promise)
+    return promise
+  }
+
+  const fetchSource = async (
+    id: string,
+  ): Promise<{ id: string; name: string; description: string } | null> => {
+    try {
+      const res = await sourcesApi.getSourceV1({ id })
+      const src = res.data
+      return {
+        id: src.id ?? id,
+        name: src.name ?? '',
+        description: src.description ?? '',
+      }
+    } catch {
+      // Soft-degrade: a failed source fetch yields no description, never throws.
+      return null
+    }
+  }
+
+  const source = (id: string) => cached(sourceCache, id, fetchSource)
 
   const fetchRole = async (id: string): Promise<ResolvedRole | null> => {
     try {
@@ -83,6 +156,7 @@ export function createAccessCompositionResolver(
       return {
         id: role.id ?? id,
         name: role.name ?? '',
+        description: role.description ?? '',
         accessProfileRefs: (role.accessProfiles ?? []).map((ref) => ({
           id: ref.id ?? null,
           name: ref.name ?? '',
@@ -107,6 +181,7 @@ export function createAccessCompositionResolver(
       return {
         id: ap.id ?? id,
         name: ap.name ?? '',
+        description: ap.description ?? '',
         entitlementRefs: (ap.entitlements ?? []).map((ref) => ({
           id: ref.id ?? null,
           name: ref.name ?? '',
@@ -123,36 +198,38 @@ export function createAccessCompositionResolver(
     try {
       const res = await entitlementsApi.getEntitlementV1({ id })
       const ent = res.data
+      const sourceId = ent.source?.id ?? null
+      // Route the source description through the per-source-id cache so a source
+      // shared by many entitlements is fetched at most once. Keep `sourceName`
+      // from the entitlement body regardless of whether the source fetch works.
+      const resolvedSource = sourceId ? await source(sourceId) : null
       return {
         id: ent.id ?? id,
         name: ent.name ?? '',
-        sourceId: ent.source?.id ?? null,
+        description: ent.description ?? '',
+        sourceId,
         sourceName: ent.source?.name ?? '',
+        sourceDescription: resolvedSource?.description ?? '',
       }
     } catch {
       return null
     }
   }
 
-  const cached = <T>(
-    cache: Map<string, Promise<T | null>>,
+  const fetchIdentity = async (
     id: string,
-    load: (id: string) => Promise<T | null>,
-  ): Promise<T | null> => {
-    // An empty/missing id can never resolve — treat as soft-degraded without a
-    // network call.
-    if (!id) return Promise.resolve(null)
-    const hit = cache.get(id)
-    if (hit) return hit
-    const promise = load(id)
-    cache.set(id, promise)
-    return promise
+  ): Promise<{ department: string; location: string } | null> => {
+    // fetchIdentityAttributes itself soft-degrades to empty strings (never
+    // throws), so this always resolves to a usable object.
+    return fetchIdentityAttributes(searchApi, id)
   }
 
   return {
     role: (id) => cached(roleCache, id, fetchRole),
     accessProfile: (id) => cached(apCache, id, fetchAccessProfile),
     entitlement: (id) => cached(entCache, id, fetchEntitlement),
+    source,
+    identity: (id) => cached(identityCache, id, fetchIdentity),
   }
 }
 
@@ -171,6 +248,19 @@ interface RowTuple {
   source: string
   sourceId: string | null
   unresolved: boolean
+  // --- descriptive enrichment (NEVER part of rowKey / dedup identity) --------
+  /** User department (per-identity; on every row for the user). */
+  userDepartment?: string
+  /** User location (per-identity; on every row for the user). */
+  userLocation?: string
+  /** Resolved role description, when a role is on this path and resolved. */
+  roleDescription?: string
+  /** Resolved access-profile description, when an AP is on this path. */
+  accessProfileDescription?: string
+  /** Resolved entitlement description, on a resolved leaf row. */
+  entitlementDescription?: string
+  /** Resolved SOURCE description, on a resolved leaf row. */
+  sourceDescription?: string
 }
 
 /**
@@ -199,6 +289,8 @@ async function resolveLeaf(
   source: string
   sourceId: string | null
   unresolved: boolean
+  entitlementDescription?: string
+  sourceDescription?: string
 }> {
   const resolved = ref.id ? await resolver.entitlement(ref.id) : null
   if (!resolved) {
@@ -218,6 +310,8 @@ async function resolveLeaf(
     source: resolved.sourceName,
     sourceId: resolved.sourceId,
     unresolved: false,
+    entitlementDescription: resolved.description,
+    sourceDescription: resolved.sourceDescription,
   }
 }
 
@@ -231,9 +325,16 @@ async function expandItem(
   item: ReviewItemVM,
   resolver: AccessCompositionResolver,
 ): Promise<RowTuple[]> {
+  // Department/location attach to the IDENTITY, independent of the access path,
+  // so resolve once per item and fold into `base` — it then lands on EVERY row
+  // for this user, including the degenerate all-blank `access` row and any
+  // unresolved row. Soft-degrades to '' (never throws, never blanks the matrix).
+  const attrs = await resolver.identity(item.identityId)
   const base = {
     userId: item.identityId,
     user: item.personName,
+    userDepartment: attrs?.department ?? '',
+    userLocation: attrs?.location ?? '',
   }
   // `accessId` is optional on ReviewItemVM; normalize undefined to null.
   const accessId = item.accessId ?? null
@@ -304,6 +405,7 @@ async function expandItem(
           roleId: null,
           accessProfile: ap.name,
           accessProfileId: ap.id,
+          accessProfileDescription: ap.description,
           ...leaf,
         }
       }),
@@ -339,6 +441,7 @@ async function expandItem(
         ...base,
         role: role.name,
         roleId: role.id,
+        roleDescription: role.description,
         accessProfile: apRef.name,
         accessProfileId: apRef.id,
         entitlement: '',
@@ -355,8 +458,10 @@ async function expandItem(
         ...base,
         role: role.name,
         roleId: role.id,
+        roleDescription: role.description,
         accessProfile: ap.name,
         accessProfileId: ap.id,
+        accessProfileDescription: ap.description,
         ...leaf,
       })
     }
@@ -369,6 +474,7 @@ async function expandItem(
       ...base,
       role: role.name,
       roleId: role.id,
+      roleDescription: role.description,
       accessProfile: '',
       accessProfileId: null,
       ...leaf,
