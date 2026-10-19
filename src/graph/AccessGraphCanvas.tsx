@@ -13,12 +13,16 @@ import { buildAccessScene, type AccessSceneNode } from './buildAccessScene'
 import { buildUserGridScene } from './buildUserGridScene'
 import { userSubgraph } from './userSubgraph'
 import { AccessNode } from './AccessNode'
+import { AccessCountEdge } from './AccessCountEdge'
 import { useColorMode } from './useColorMode'
 import { EmptyState } from '../components/EmptyState'
 import './AccessGraph.css'
 
 /** React Flow node-type registry for the access graph. */
 const nodeTypes = { access: AccessNode }
+
+/** Edge-type registry: the count-badge edge with an explanatory tooltip. */
+const edgeTypes = { accessCount: AccessCountEdge }
 
 interface AccessGraphCanvasProps {
   /** The derived graph (nodes + edges) from the access matrix. */
@@ -146,6 +150,7 @@ function CanvasSurface({ graph }: AccessGraphCanvasProps) {
         nodes={scene.nodes}
         edges={scene.edges}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         colorMode={colorMode}
         nodesDraggable={false}
         nodesConnectable={false}

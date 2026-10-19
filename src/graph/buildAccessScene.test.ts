@@ -113,4 +113,104 @@ describe('buildAccessScene', () => {
     expect(scene.nodes).toEqual([])
     expect(scene.edges).toEqual([])
   })
+
+  it('carries pathCount on each edge via the custom count-badge edge type', () => {
+    // The worked example reuses the user→Role A and Role A→foo hops across
+    // multiple rows, so those edges have pathCount > 1 — the data that drives
+    // the badge + its hover tooltip.
+    const graph = deriveAccessGraph(workedExample())
+    const scene = buildAccessScene(graph, 'LR')
+
+    for (const edge of scene.edges) {
+      expect(edge.type).toBe('accessCount')
+      const pathCount = (edge.data as { pathCount: number }).pathCount
+      expect(Number.isInteger(pathCount)).toBe(true)
+      expect(pathCount).toBeGreaterThanOrEqual(1)
+    }
+    // At least one shared edge exists in the worked example (user→Role A is
+    // traversed by the three Role A rows).
+    expect(
+      scene.edges.some((e) => (e.data as { pathCount: number }).pathCount > 1),
+    ).toBe(true)
+  })
+
+  it('pins each kind to its own column in LR (same x per kind, ordered user→source)', () => {
+    const graph = deriveAccessGraph(workedExample())
+    const scene = buildAccessScene(graph, 'LR')
+
+    // Every node of a given kind shares one x (its column), regardless of how
+    // many hops its path took (direct `read`/e6 and role-path `read`/e1 are
+    // both entitlements and must share the entitlement column).
+    const xByKind = new Map<string, Set<number>>()
+    for (const node of scene.nodes) {
+      const set = xByKind.get(node.data.kind) ?? new Set<number>()
+      set.add(node.position.x)
+      xByKind.set(node.data.kind, set)
+    }
+    for (const [, xs] of xByKind) expect(xs.size).toBe(1)
+
+    // Columns are strictly increasing in layer order.
+    const colX = (kind: string) => [...(xByKind.get(kind) ?? [])][0]
+    expect(colX('user')).toBeLessThan(colX('role'))
+    expect(colX('role')).toBeLessThan(colX('accessProfile'))
+    expect(colX('accessProfile')).toBeLessThan(colX('entitlement'))
+    expect(colX('entitlement')).toBeLessThan(colX('source'))
+  })
+
+  it('pins each kind to its own row in TB (same y per kind, ordered user→source)', () => {
+    const graph = deriveAccessGraph(workedExample())
+    const scene = buildAccessScene(graph, 'TB')
+
+    const yByKind = new Map<string, Set<number>>()
+    for (const node of scene.nodes) {
+      const set = yByKind.get(node.data.kind) ?? new Set<number>()
+      set.add(node.position.y)
+      yByKind.set(node.data.kind, set)
+    }
+    for (const [, ys] of yByKind) expect(ys.size).toBe(1)
+
+    const rowY = (kind: string) => [...(yByKind.get(kind) ?? [])][0]
+    expect(rowY('user')).toBeLessThan(rowY('role'))
+    expect(rowY('role')).toBeLessThan(rowY('accessProfile'))
+    expect(rowY('accessProfile')).toBeLessThan(rowY('entitlement'))
+    expect(rowY('entitlement')).toBeLessThan(rowY('source'))
+  })
+
+  it('does not overlap nodes within a kind lane, even when reached by different path lengths', () => {
+    // Mixes entitlements reached directly (user→ent, short) with entitlements
+    // reached via role→AP (long). Before de-overlapping, dagre gave these the
+    // same cross-axis coord because they lived on different ranks, so the cards
+    // stacked on top of each other. Assert every same-lane pair is separated by
+    // at least the card's cross-axis extent in BOTH rankdirs.
+    const rows: AccessMatrixRowVM[] = [
+      row({ id: 'a', role: 'R', roleId: 'r', accessProfile: 'AP', accessProfileId: 'ap', entitlement: 'e-long-1', entitlementId: 'l1', source: 'src', sourceId: 's' }),
+      row({ id: 'b', role: 'R', roleId: 'r', accessProfile: 'AP', accessProfileId: 'ap', entitlement: 'e-long-2', entitlementId: 'l2', source: 'src', sourceId: 's' }),
+      row({ id: 'c', entitlement: 'e-direct-1', entitlementId: 'd1', source: 'src', sourceId: 's' }),
+      row({ id: 'd', entitlement: 'e-direct-2', entitlementId: 'd2', source: 'src', sourceId: 's' }),
+      row({ id: 'e', entitlement: 'e-direct-3', entitlementId: 'd3', source: 'src', sourceId: 's' }),
+    ]
+    const graph = deriveAccessGraph(rows)
+
+    for (const rankdir of ['LR', 'TB'] as const) {
+      const scene = buildAccessScene(graph, rankdir)
+      // Group placed nodes by kind and check pairwise cross-axis separation.
+      const vertical = rankdir === 'TB'
+      // cross-axis extent: height stacks in LR columns, width in TB rows.
+      const extent = vertical ? 200 : 64 // NODE_WIDTH : NODE_HEIGHT
+      const laneCoord = (n: (typeof scene.nodes)[number]) =>
+        vertical ? n.position.x : n.position.y
+      const lanes = new Map<string, number[]>()
+      for (const n of scene.nodes) {
+        const list = lanes.get(n.data.kind) ?? []
+        list.push(laneCoord(n))
+        lanes.set(n.data.kind, list)
+      }
+      for (const coords of lanes.values()) {
+        const sorted = [...coords].sort((x, y) => x - y)
+        for (let i = 1; i < sorted.length; i++) {
+          expect(sorted[i] - sorted[i - 1]).toBeGreaterThanOrEqual(extent)
+        }
+      }
+    }
+  })
 })

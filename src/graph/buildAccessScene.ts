@@ -14,7 +14,33 @@
  */
 import { Graph, layout } from '@dagrejs/dagre'
 import { Position, type Edge, type Node } from '@xyflow/react'
-import type { AccessGraphData, AccessSceneNodeData, RankDir } from '../sailpoint/types'
+import type {
+  AccessGraphData,
+  AccessGraphNodeKind,
+  AccessSceneNodeData,
+  RankDir,
+} from '../sailpoint/types'
+
+/**
+ * The fixed layer order, user → source. Every node of a given kind is pinned to
+ * the rank for its index here, so a kind always forms its own column (LR) or
+ * row (TB) regardless of how many hops its path took to reach it (a direct
+ * entitlement and a role→AP→entitlement both land in the entitlement rank).
+ */
+const KIND_ORDER: readonly AccessGraphNodeKind[] = [
+  'user',
+  'role',
+  'accessProfile',
+  'entitlement',
+  'source',
+]
+
+/** Index of a kind in {@link KIND_ORDER} (its fixed rank). */
+function kindRank(kind: AccessGraphNodeKind): number {
+  const index = KIND_ORDER.indexOf(kind)
+  // Unknown kinds (shouldn't happen) sort after the known layers.
+  return index === -1 ? KIND_ORDER.length : index
+}
 
 /** A positioned React Flow node whose `data` is our small scene payload. */
 export type AccessSceneNode = Node<AccessSceneNodeData, 'access'>
@@ -100,15 +126,63 @@ export function buildAccessScene(
 
   layout(dagreGraph)
 
+  // Pin the rank axis to the kind's fixed band so every kind forms its own
+  // column (LR) or row (TB). For LR the rank axis is x (so cards stack along y
+  // within a column); for TB it is y (so cards sit side by side along x within
+  // a row).
+  const vertical = rankdir === 'TB'
+  const bandStep = (vertical ? NODE_HEIGHT : NODE_WIDTH) + RANK_SEP
+  const rankCoordFor = (kind: AccessGraphNodeKind): number =>
+    MARGIN + kindRank(kind) * bandStep
+
+  // Collapsing every rank-distance of one kind into a single lane means dagre's
+  // cross-axis coordinates — assigned when those nodes sat on DIFFERENT dagre
+  // ranks — can coincide, so two cards in the same lane would overlap (the bug
+  // from pinning alone). De-overlap each lane: keep dagre's cross-axis ORDER
+  // (preserves a sensible top-to-bottom / left-to-right arrangement and keeps
+  // edges from tangling) but re-space the cards at a fixed stride so no two in a
+  // lane can touch. The cross-axis extent is the card height (LR) or width (TB).
+  const crossExtent = vertical ? NODE_WIDTH : NODE_HEIGHT
+  const crossStride = crossExtent + NODE_SEP
+  // dagre's centered cross-axis coordinate per node (x for LR, y for TB).
+  const dagreCross = (id: string): number => {
+    const placed = dagreGraph.node(id)
+    return vertical ? placed.x : placed.y
+  }
+
+  // Assign a de-overlapped cross-axis TOP-LEFT coordinate per node, lane by lane.
+  const crossCoord = new Map<string, number>()
+  const byKind = new Map<AccessGraphNodeKind, AccessGraphData['nodes']>()
+  for (const node of graph.nodes) {
+    const lane = byKind.get(node.kind) ?? []
+    lane.push(node)
+    byKind.set(node.kind, lane)
+  }
+  for (const lane of byKind.values()) {
+    // Order within the lane by dagre's cross-axis position, tie-broken by id so
+    // the layout stays deterministic.
+    const ordered = [...lane].sort((a, b) => {
+      const delta = dagreCross(a.id) - dagreCross(b.id)
+      return delta !== 0 ? delta : a.id.localeCompare(b.id)
+    })
+    // Center the lane on the midpoint of dagre's own spread so lanes of
+    // different sizes stay roughly aligned around a common axis.
+    const spanStart = -((ordered.length - 1) * crossStride) / 2
+    ordered.forEach((node, index) => {
+      crossCoord.set(node.id, spanStart + index * crossStride)
+    })
+  }
+
   const nodes: AccessSceneNode[] = graph.nodes.map((node) => {
-    const placed = dagreGraph.node(node.id)
+    const rankCoord = rankCoordFor(node.kind)
+    const cross = crossCoord.get(node.id) ?? 0
+    // Rank-axis from the kind band; cross-axis from the de-overlapped lane.
+    const x = vertical ? cross : rankCoord
+    const y = vertical ? rankCoord : cross
     return {
       id: node.id,
       type: 'access',
-      position: {
-        x: placed.x - NODE_WIDTH / 2,
-        y: placed.y - NODE_HEIGHT / 2,
-      },
+      position: { x, y },
       data: { kind: node.kind, label: node.label },
       width: NODE_WIDTH,
       height: NODE_HEIGHT,
@@ -125,9 +199,11 @@ export function buildAccessScene(
     target: edge.to,
     sourceHandle: handle.sourceHandle,
     targetHandle: handle.targetHandle,
-    // Weight an edge by how many matrix rows traverse it; label the busy ones.
+    // Weight an edge by how many matrix rows traverse it; the custom edge draws
+    // a count badge (with an explanatory hover tooltip) when pathCount > 1.
+    type: 'accessCount',
     style: { strokeWidth: edge.pathCount > 1 ? 2.5 : 1.5 },
-    label: edge.pathCount > 1 ? String(edge.pathCount) : undefined,
+    data: { pathCount: edge.pathCount },
   }))
 
   return { nodes, edges }

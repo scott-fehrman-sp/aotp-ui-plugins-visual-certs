@@ -187,3 +187,30 @@
   background: transparent;
   pointer-events: none;
 }
+
+/*
+ * Edge count badge: shown on a link shared by more than one access path. Carries
+ * a hover/focus tooltip (native `title` + aria-label) explaining the number.
+ */
+.vc-graph-edge-badge {
+  position: absolute;
+  pointer-events: all;
+  cursor: help;
+  min-width: 18px;
+  padding: 1px 5px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--control);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 16px;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+
+.vc-graph-edge-badge:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
