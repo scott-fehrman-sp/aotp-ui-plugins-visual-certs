@@ -1,0 +1,75 @@
+/*
+ * Design tokens for the access-matrix React Flow graph.
+ *
+ * Mirrors the token vocabulary and values of the sibling `org-graph` plugin's
+ * `theme/tokens.css` so the graph canvas, cards, edges, minimap and controls
+ * read the same way here. These are a SEPARATE namespace from the existing
+ * `--vc-*` app tokens in `index.css` (which are left untouched) so the graph
+ * styling never collides with the rest of the plugin.
+ *
+ * visual-certs has no theme switch, so light is the default and the dark
+ * overrides live under `:root[data-theme='dark']` (shipped to match org-graph's
+ * dark look). The React Flow `colorMode` is derived from `prefers-color-scheme`
+ * at runtime; dark values are also surfaced for consumers that set the
+ * attribute.
+ */
+:root {
+  --motion-ms: 450ms;
+  --canvas: #eef2f6;
+  --ink: #17202a;
+  --muted: #5c6d7e;
+  --meta: #3a4d5e;
+  --card: #ffffff;
+  --card-focus: #f7fbff;
+  --line: #d5e0ea;
+  --accent: #0b4f8a;
+  --accent-ink: #ffffff;
+  --accent-soft: rgba(11, 79, 138, 0.12);
+  --shadow: 0 10px 24px rgba(23, 32, 42, 0.08);
+  --shadow-focus: 0 16px 36px rgba(11, 79, 138, 0.18);
+  --minimap-mask: rgba(238, 242, 246, 0.72);
+  --minimap-node: #9aafc2;
+  --minimap-focus: #0b4f8a;
+  --edge: #7d93a8;
+  --control: #ffffff;
+  --sans: "Segoe UI", system-ui, sans-serif;
+
+  /* Per-kind left-border accents for the five node layers. */
+  --vc-graph-user: #0b4f8a;
+  --vc-graph-role: #6b3fa0;
+  --vc-graph-accessProfile: #0e7a43;
+  --vc-graph-entitlement: #9c5836;
+  --vc-graph-source: #3a4d5e;
+}
+
+:root[data-theme='dark'] {
+  --canvas: #10161d;
+  --ink: #e7eef6;
+  --muted: #b7c9d8;
+  --meta: #d7e4f0;
+  --card: #2c4256;
+  --card-focus: #35506a;
+  --line: #6e8ba3;
+  --accent: #8eb6ff;
+  --accent-ink: #0d1722;
+  --accent-soft: rgba(142, 182, 255, 0.16);
+  --shadow: 0 14px 32px rgba(0, 0, 0, 0.55);
+  --shadow-focus: 0 0 0 1px rgba(142, 182, 255, 0.72), 0 20px 44px rgba(0, 0, 0, 0.7), 0 0 36px rgba(142, 182, 255, 0.32);
+  --minimap-mask: rgba(16, 22, 29, 0.72);
+  --minimap-node: #5c7388;
+  --minimap-focus: #8eb6ff;
+  --edge: #6d8499;
+  --control: #1a242f;
+
+  --vc-graph-user: #8eb6ff;
+  --vc-graph-role: #c4a6e8;
+  --vc-graph-accessProfile: #7dcea0;
+  --vc-graph-entitlement: #c4a06a;
+  --vc-graph-source: #a8b6c8;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-ms: 0ms;
+  }
+}

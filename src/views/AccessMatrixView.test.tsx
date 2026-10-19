@@ -1,7 +1,8 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { deriveAccessGraph } from '../domain/accessGraph'
+import { buildAccessScene } from '../graph/buildAccessScene'
 import type { AccessMatrixState } from '../state/useAccessMatrix'
 import type { AccessMatrixRowVM } from '../sailpoint/types'
 import { AccessMatrixView } from './AccessMatrixView'
@@ -50,83 +51,68 @@ function readyState(
   }
 }
 
-/** Reads the Role column (2nd cell) of each body row, in DOM order. */
-function roleColumn(): string[] {
-  const rows = screen.getAllByRole('row').slice(1) // drop the header row
-  return rows.map((r) => within(r).getAllByRole('cell')[0].textContent ?? '')
-}
-
 describe('AccessMatrixView', () => {
-  it('renders the 6 worked-example rows', () => {
-    render(
+  it('renders the graph surface with the preserved chrome for the worked example', () => {
+    const matrix = readyState(workedExample())
+    const { container } = render(
       <AccessMatrixView
         campaignName="Q3 review"
-        matrix={readyState(workedExample())}
-        onBack={vi.fn()}
-      />,
-    )
-    // 1 header row + 6 body rows.
-    expect(screen.getAllByRole('row')).toHaveLength(7)
-    expect(screen.getByText('delete')).toBeInTheDocument()
-    expect(screen.getByText('search')).toBeInTheDocument()
-  })
-
-  it('toggles aria-sort and reorders rows when a column header is clicked', async () => {
-    render(
-      <AccessMatrixView
-        campaignName="Q3 review"
-        matrix={readyState(workedExample())}
+        matrix={matrix}
         onBack={vi.fn()}
       />,
     )
 
-    const roleHeader = screen.getByRole('columnheader', { name: /role/i })
-    const sourceHeader = screen.getByRole('columnheader', { name: /source/i })
-
-    // Default sort is user/ascending, so no column is actively sorted beyond the
-    // default; the Role header starts unsorted.
-    expect(roleHeader).toHaveAttribute('aria-sort', 'none')
-
-    // Click Role -> ascending; blanks sort FIRST.
-    await userEvent.click(within(roleHeader).getByRole('button'))
-    expect(roleHeader).toHaveAttribute('aria-sort', 'ascending')
-    // Other columns stay 'none'.
-    expect(sourceHeader).toHaveAttribute('aria-sort', 'none')
-    // Blank role cells render a visually-hidden "(not applicable)" marker, so
-    // their textContent is that marker rather than an empty string.
-    const BLANK = '(not applicable)'
-    const asc = roleColumn()
-    // Three blank-role rows come first (ascending).
-    expect(asc.slice(0, 3)).toEqual([BLANK, BLANK, BLANK])
-    expect(asc.slice(3)).toEqual(['Role A', 'Role A', 'Role A'])
-
-    // Click Role again -> descending; blanks sort LAST.
-    await userEvent.click(within(roleHeader).getByRole('button'))
-    expect(roleHeader).toHaveAttribute('aria-sort', 'descending')
-    const desc = roleColumn()
-    expect(desc.slice(0, 3)).toEqual(['Role A', 'Role A', 'Role A'])
-    expect(desc.slice(3)).toEqual([BLANK, BLANK, BLANK])
-  })
-
-  it('exposes column and row header scopes and a visually-hidden caption', () => {
-    render(
-      <AccessMatrixView
-        campaignName="Q3 review"
-        matrix={readyState(workedExample())}
-        onBack={vi.fn()}
-      />,
-    )
-    // Five column headers.
-    expect(screen.getAllByRole('columnheader')).toHaveLength(5)
-    // The User cell of each row is a row header (scope="row") -> 6 of them.
-    const rowHeaders = screen
-      .getAllByRole('rowheader')
-      .filter((el) => el.textContent === 'User One')
-    expect(rowHeaders).toHaveLength(6)
-    // Caption states the blank-sorts-first convention.
+    // Preserved chrome: the back button and the title.
     expect(
-      screen.getByText(/blank cells sort first when sorting ascending/i),
+      screen.getByRole('button', { name: /back to overview/i }),
     ).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'All access paths' }),
+    ).toBeInTheDocument()
+
+    // The React Flow surface mounts (DOM only — test.css is false so no layout).
+    expect(container.querySelector('.react-flow')).not.toBeNull()
+
+    // The scene the canvas builds carries every graph node as a labeled node.
+    const scene = buildAccessScene(matrix.graph, 'LR')
+    const labels = scene.nodes.map((node) => node.data.label)
+    expect(labels).toContain('User One')
+    expect(labels).toContain('Role A')
+    expect(labels).toContain('engr db')
+    expect(labels).toContain('read')
+  })
+
+  it('renders node labels from the graph (nodes measure in jsdom)', () => {
+    render(
+      <AccessMatrixView
+        campaignName="Q3 review"
+        matrix={readyState(workedExample())}
+        onBack={vi.fn()}
+      />,
+    )
+    // When React Flow can mount the custom nodes, their labels are in the DOM.
+    // Query by the node's accessible name (aria-label = "<Kind>: <label>").
+    expect(
+      screen.getByLabelText('Role: Role A'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByLabelText('Source: engr db'),
+    ).toBeInTheDocument()
+  })
+
+  it('calls onBack when the back button is clicked', async () => {
+    const onBack = vi.fn()
+    render(
+      <AccessMatrixView
+        campaignName="Q3 review"
+        matrix={readyState(workedExample())}
+        onBack={onBack}
+      />,
+    )
+    await userEvent.click(
+      screen.getByRole('button', { name: /back to overview/i }),
+    )
+    expect(onBack).toHaveBeenCalledOnce()
   })
 
   it('shows the loading state', () => {

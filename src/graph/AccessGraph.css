@@ -1,0 +1,151 @@
+/*
+ * Styling for the access-matrix React Flow graph. Adapted from org-graph's
+ * App.css graph block (canvas, card, handle, edge, controls, minimap) onto the
+ * access node's five-kind accent scheme. Reads the graph tokens from
+ * `tokens.css`; does not touch the app's `--vc-*` tokens.
+ */
+
+/* A definite height so React Flow has a sized container to measure. */
+.vc-graph-wrap {
+  width: 100%;
+  height: min(70vh, 640px);
+  margin-top: 8px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--canvas);
+}
+
+.vc-graph-wrap .react-flow {
+  width: 100%;
+  height: 100%;
+  background: var(--canvas);
+  font-family: var(--sans);
+}
+
+.vc-graph-wrap .react-flow__edge-path {
+  stroke: var(--edge);
+}
+
+.vc-graph-wrap .react-flow__controls,
+.vc-graph-wrap .react-flow__minimap {
+  background: var(--control);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.vc-graph-wrap .react-flow__controls-button {
+  background: var(--control);
+  border-bottom-color: var(--line);
+  fill: var(--ink);
+}
+
+.vc-graph-wrap .react-flow__controls-button:hover {
+  background: var(--accent-soft);
+}
+
+.vc-graph-wrap .react-flow__attribution {
+  background: transparent;
+  color: var(--muted);
+}
+
+/* The LR/TB toggle lives in a top-left panel. */
+.vc-graph-toggle {
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--control);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 13px;
+  box-shadow: var(--shadow);
+}
+
+.vc-graph-toggle:hover {
+  background: var(--accent-soft);
+}
+
+.vc-graph-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* The node card. */
+.vc-graph-card {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+}
+
+.vc-graph-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent), var(--shadow);
+}
+
+.vc-graph-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.vc-graph-card-label {
+  display: block;
+  overflow: hidden;
+  font-size: 15px;
+  line-height: 19px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vc-graph-card-kind {
+  font-size: 12px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Per-kind left-border accent. */
+.vc-graph-card.kind-user {
+  border-left-color: var(--vc-graph-user);
+}
+
+.vc-graph-card.kind-role {
+  border-left-color: var(--vc-graph-role);
+}
+
+.vc-graph-card.kind-accessProfile {
+  border-left-color: var(--vc-graph-accessProfile);
+}
+
+.vc-graph-card.kind-entitlement {
+  border-left-color: var(--vc-graph-entitlement);
+}
+
+.vc-graph-card.kind-source {
+  border-left-color: var(--vc-graph-source);
+}
+
+/* Handles exist only to anchor edges; keep them out of sight and inert. */
+.vc-graph-handle {
+  width: 1px;
+  height: 1px;
+  min-width: 0;
+  min-height: 0;
+  opacity: 0;
+  border: 0;
+  background: transparent;
+  pointer-events: none;
+}

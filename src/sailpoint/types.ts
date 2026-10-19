@@ -293,3 +293,27 @@ export interface AccessGraphData {
   nodes: AccessGraphNode[]
   edges: AccessGraphEdge[]
 }
+
+// --- access graph scene (React Flow view-model) ------------------------------
+
+/**
+ * Layout direction for the access graph's dagre pass. `'LR'` reads the
+ * user → source pipeline left-to-right (the default); `'TB'` stacks the five
+ * ranks top-to-bottom. These are the only two directions the view toggles
+ * between — they map 1:1 onto dagre's `rankdir`.
+ */
+export type RankDir = 'LR' | 'TB'
+
+/**
+ * The `data` payload carried on each React Flow node in the access scene. Kept
+ * intentionally small — the custom node renders only a label plus a per-kind
+ * accent — so the pure scene builder stays trivially serializable and testable.
+ * Extends `Record<string, unknown>` to satisfy React Flow's node-data bound.
+ */
+export interface AccessSceneNodeData extends Record<string, unknown> {
+  /** Which of the five layers this node belongs to (drives the accent color). */
+  kind: AccessGraphNodeKind
+  /** Human-readable label shown on the card (the node's display name). */
+  label: string
+}
+

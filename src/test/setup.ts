@@ -13,3 +13,19 @@ class ResizeObserverStub {
 if (!('ResizeObserver' in globalThis)) {
   globalThis.ResizeObserver = ResizeObserverStub as unknown as typeof ResizeObserver
 }
+
+// jsdom does not implement matchMedia, which the graph's colorMode hook calls
+// (and React Flow touches internally). Return a non-matching, no-op query so
+// the default 'light' color mode is deterministic in tests.
+if (!window.matchMedia) {
+  window.matchMedia = ((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    addListener: () => {},
+    removeListener: () => {},
+    dispatchEvent: () => false,
+  })) as unknown as typeof window.matchMedia
+}
