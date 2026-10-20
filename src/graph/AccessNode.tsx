@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import type { AccessGraphNodeKind, AccessReviewStatus } from '../sailpoint/types'
 import type { AccessSceneNode } from './buildAccessScene'
@@ -12,29 +13,82 @@ const KIND_LABEL: Record<AccessGraphNodeKind, string> = {
   source: 'Source',
 }
 
-/** Chip text per review status, shown on the user's directly-held access item. */
-const STATUS_CHIP_LABEL: Record<AccessReviewStatus, string> = {
+/** Accessible name per review status, used for the corner status icon. */
+const STATUS_ICON_LABEL: Record<AccessReviewStatus, string> = {
   needsReview: 'Needs review',
-  complete: 'Reviewed',
-  delegated: 'Reassigned',
+  complete: 'Completed',
+  delegated: 'Delegated',
+}
+
+/** Distinct SVG shape per status so status never relies on color alone. */
+const STATUS_ICON_SHAPE: Record<AccessReviewStatus, ReactNode> = {
+  // Hollow circle with an exclamation mark.
+  needsReview: (
+    <>
+      <circle cx="9" cy="9" r="7" fill="none" stroke="currentColor" strokeWidth="1.6" />
+      <line x1="9" y1="5" x2="9" y2="10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <circle cx="9" cy="12.6" r="1" fill="currentColor" />
+    </>
+  ),
+  // Check mark.
+  complete: (
+    <path
+      d="M4 9.5 L7.5 13 L14 5.5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  ),
+  // Forward / hand-off arrow.
+  delegated: (
+    <path
+      d="M3 9 H12 M9 5.5 L13 9 L9 12.5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  ),
 }
 
 /**
- * The review-status chip rendered inside an access-item card. Not color-only:
- * it carries its own text ("Needs review" / "Reviewed" / "Reassigned") plus an
- * `aria-label` and a stable `data-review-status` hook, so status reads without
- * relying on color.
+ * The review-status icon rendered in the lower-right corner of an access-item
+ * card. Not color-only: each status maps to a distinct SVG SHAPE (hollow
+ * exclamation circle / check mark / hand-off arrow) and carries an accessible
+ * name via `role="img"` + `aria-label` + a `<title>`, plus a stable
+ * `data-review-status` hook. Absolutely positioned via CSS.
  */
-function StatusChip({ status }: { status: AccessReviewStatus }) {
-  const text = STATUS_CHIP_LABEL[status]
+export function StatusIcon({
+  status,
+  decorative = false,
+}: {
+  status: AccessReviewStatus
+  /**
+   * When true the icon is purely decorative (hidden from the a11y tree) — used
+   * in the legend where an adjacent text label already names the status. On a
+   * node card it defaults to false so the icon carries the accessible name.
+   */
+  decorative?: boolean
+}) {
+  const label = STATUS_ICON_LABEL[status]
+  const a11y = decorative
+    ? { 'aria-hidden': true as const }
+    : { role: 'img', 'aria-label': label }
   return (
-    <span
-      className={`vc-graph-status-chip vc-graph-status-chip-${status}`}
+    <svg
+      className={`vc-graph-status-icon vc-graph-status-icon-${status}`}
       data-review-status={status}
-      aria-label={`Review status: ${text}`}
+      viewBox="0 0 18 18"
+      width="18"
+      height="18"
+      {...a11y}
     >
-      {text}
-    </span>
+      {decorative ? null : <title>{label}</title>}
+      {STATUS_ICON_SHAPE[status]}
+    </svg>
   )
 }
 
@@ -78,7 +132,7 @@ export function AccessNode({ data }: NodeProps<AccessSceneNode>) {
           <Handles />
           <strong className="vc-graph-card-label">{data.label}</strong>
           <span className="vc-graph-card-kind">{kindLabel}</span>
-          {status ? <StatusChip status={status} /> : null}
+          {status ? <StatusIcon status={status} /> : null}
         </article>
       </NodeTooltip>
     )
@@ -100,7 +154,7 @@ export function AccessNode({ data }: NodeProps<AccessSceneNode>) {
         <Handles />
         <strong className="vc-graph-card-label">{data.label}</strong>
         <span className="vc-graph-card-kind">{kindLabel}</span>
-        {status ? <StatusChip status={status} /> : null}
+        {status ? <StatusIcon status={status} /> : null}
       </article>
     </NodeTooltip>
   )

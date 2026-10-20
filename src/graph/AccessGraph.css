@@ -190,10 +190,12 @@
 
 /*
  * Review-status accents for the user's DIRECTLY-held access item (drill-down
- * only). Two signals per state so status never relies on color alone: a colored
- * ring/left-border on the card AND a text chip inside it ("Needs review" /
- * "Reviewed"). Tokens are the app's `--vc-warn` (amber) and `--vc-allow`
- * (green), reused from `src/index.css`, matching the decided-card vocabulary.
+ * only). Two signals per state so status never relies on color alone: a corner
+ * status ICON (distinct shape per state — the primary signal) AND a subtle
+ * colored ring/left-border on the card (the secondary signal). Tokens are the
+ * app's `--vc-warn` (amber), `--vc-allow` (green), and `--vc-accent` (blue),
+ * reused from `src/index.css`. `--vc-accent` matches the reassign precedent set
+ * by MetricCard data-tone='reassign' and the DecisionBar reassign bar.
  */
 .vc-graph-card-status-needsReview {
   border-left-color: var(--vc-warn);
@@ -205,33 +207,47 @@
   box-shadow: 0 0 0 2px var(--vc-allow), var(--shadow);
 }
 
-/* The status chip, styled like the app's `.vc-chip` / `.vc-decided-badge`. */
-.vc-graph-status-chip {
-  align-self: flex-start;
-  margin-top: 2px;
-  padding: 2px 9px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 15px;
-  letter-spacing: 0.01em;
+.vc-graph-card-status-delegated {
+  border-left-color: var(--vc-accent);
+  box-shadow: 0 0 0 2px var(--vc-accent), var(--shadow);
 }
 
-.vc-graph-status-chip-needsReview {
-  background: var(--vc-warn-bg);
+/*
+ * The corner status icon: lower-right of the card, a small SVG whose shape
+ * differs per status (the primary status signal). `currentColor` drives the
+ * stroke/fill, set per-status below. It is decorative-positioned but carries an
+ * accessible name via role=img/aria-label/<title> in markup, so pointer-events
+ * stay off.
+ */
+.vc-graph-status-icon {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  line-height: 0;
+  pointer-events: none;
+}
+
+.vc-graph-status-icon-needsReview {
   color: var(--vc-warn);
 }
 
-.vc-graph-status-chip-complete {
-  background: var(--vc-allow-bg);
+.vc-graph-status-icon-complete {
   color: var(--vc-allow);
+}
+
+.vc-graph-status-icon-delegated {
+  color: var(--vc-accent);
 }
 
 /*
  * Review-status edge strokes for the user→access-item hop. needsReview is a
- * dashed amber line; complete is a solid green line. The inline `style` from
- * `buildAccessScene` sets the exact stroke/dash; these class rules back it up so
- * the status reads even if inline styles are overridden, and raise edge weight.
+ * dashed amber line; complete is a solid green line; delegated is a dotted blue
+ * line. The inline `style` from `buildAccessScene` sets the exact stroke/dash;
+ * these class rules back it up so the status reads even if inline styles are
+ * overridden, and raise edge weight.
  */
 .vc-graph-wrap .react-flow__edge.vc-graph-edge-needsReview .react-flow__edge-path {
   stroke: var(--vc-warn);
@@ -244,9 +260,17 @@
   stroke-width: 2;
 }
 
+.vc-graph-wrap .react-flow__edge.vc-graph-edge-delegated .react-flow__edge-path {
+  stroke: var(--vc-accent);
+  stroke-width: 2;
+  stroke-dasharray: 2 3;
+}
+
 /*
- * Drill-down legend: two rows (dashed amber / solid green swatch + text) in a
- * corner panel, styled like the layout toggle / back button.
+ * Drill-down legend: three rows (needs review / completed / delegated), each a
+ * status icon + text, in a corner panel styled like the layout toggle / back
+ * button. The icon reuses the node's `.vc-graph-status-icon*` classes so the
+ * legend visually matches the node corner icons.
  */
 .vc-graph-legend {
   display: flex;
@@ -292,4 +316,18 @@
 
 .vc-graph-legend-swatch-complete {
   border-top-color: var(--vc-allow);
+}
+
+.vc-graph-legend-swatch-delegated {
+  border-top-style: dotted;
+  border-top-color: var(--vc-accent);
+}
+
+/*
+ * The legend reuses the node's corner status icon. Inside a legend row it must
+ * sit inline rather than absolutely in the card corner, so reset positioning.
+ */
+.vc-graph-legend-row .vc-graph-status-icon {
+  position: static;
+  flex: 0 0 auto;
 }

@@ -99,9 +99,10 @@ describe('AccessGraphCanvas', () => {
     expect(screen.getByText('No users to map')).toBeInTheDocument()
   })
 
-  it('marks review status in drill-down: legend, chips, and no count badge', () => {
-    // One user with two directly-held items: an undecided role (needs review)
-    // and a completed, directly-held entitlement (reviewed).
+  it('marks review status in drill-down: name, three-state corner icon, legend, no chip', () => {
+    // One user with three directly-held items: an undecided role (needs
+    // review), a completed, directly-held entitlement (completed), and a
+    // reassigned access profile (delegated).
     const graph = deriveAccessGraph([
       row({
         id: '1',
@@ -129,26 +130,53 @@ describe('AccessGraphCanvas', () => {
         accessItemKind: 'entitlement',
         accessItemId: 'e2',
       }),
+      row({
+        id: '3',
+        userId: 'u1',
+        user: 'User One',
+        accessProfile: 'Billing AP',
+        accessProfileId: 'ap-1',
+        entitlement: 'pay',
+        entitlementId: 'e3',
+        source: 'billing db',
+        sourceId: 's3',
+        reviewStatus: 'delegated',
+        accessItemKind: 'accessProfile',
+        accessItemId: 'ap-1',
+      }),
     ])
     render(<AccessGraphCanvas graph={graph} />)
 
-    // Grid shows no legend and no status chips.
+    // Grid shows no legend and no status icons.
     expect(screen.queryByRole('group', { name: /review status legend/i })).not.toBeInTheDocument()
 
     // Drill into the user.
     fireEvent.click(screen.getByRole('button', { name: 'Show access for User One' }))
 
-    // The legend panel renders with both states.
+    // Every access-item node renders its NAME (label).
+    expect(screen.getByText('Role A')).toBeInTheDocument()
+    expect(screen.getByText('login')).toBeInTheDocument()
+    expect(screen.getByText('Billing AP')).toBeInTheDocument()
+
+    // The old text status chip is gone entirely.
+    expect(screen.queryByLabelText('Review status: Needs review')).toBeNull()
+    expect(document.querySelector('.vc-graph-status-chip')).toBeNull()
+
+    // Each directly-held item shows its corner status ICON with a distinct,
+    // accessible name. The legend's icons are decorative (aria-hidden), so the
+    // only accessibly-named icon per status is the node's.
+    const needsReviewIcon = screen.getByLabelText('Needs review')
+    expect(needsReviewIcon).toHaveAttribute('data-review-status', 'needsReview')
+    const completedIcon = screen.getByLabelText('Completed')
+    expect(completedIcon).toHaveAttribute('data-review-status', 'complete')
+    const delegatedIcon = screen.getByLabelText('Delegated')
+    expect(delegatedIcon).toHaveAttribute('data-review-status', 'delegated')
+
+    // The legend lists all three states.
     const legend = screen.getByRole('group', { name: /review status legend/i })
     expect(legend).toHaveTextContent('Needs review')
-    expect(legend).toHaveTextContent('Review complete')
-
-    // The needs-review role node shows a "Needs review" chip; the completed
-    // entitlement shows a "Reviewed" chip.
-    const needsReviewChip = screen.getByLabelText('Review status: Needs review')
-    expect(needsReviewChip).toHaveAttribute('data-review-status', 'needsReview')
-    const reviewedChip = screen.getByLabelText('Review status: Reviewed')
-    expect(reviewedChip).toHaveAttribute('data-review-status', 'complete')
+    expect(legend).toHaveTextContent('Completed')
+    expect(legend).toHaveTextContent('Delegated')
 
     // No numeric count badge anywhere (the old accessCount edge is gone).
     expect(document.querySelector('.vc-graph-edge-badge')).toBeNull()

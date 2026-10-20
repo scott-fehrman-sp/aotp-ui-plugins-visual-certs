@@ -12,7 +12,7 @@ import type { AccessGraphData, AccessSceneNodeData, RankDir } from '../sailpoint
 import { buildAccessScene, type AccessSceneNode } from './buildAccessScene'
 import { buildUserGridScene } from './buildUserGridScene'
 import { userSubgraph } from './userSubgraph'
-import { AccessNode } from './AccessNode'
+import { AccessNode, StatusIcon } from './AccessNode'
 import { useColorMode } from './useColorMode'
 import { EmptyState } from '../components/EmptyState'
 import './AccessGraph.css'
@@ -190,18 +190,16 @@ function CanvasSurface({ graph }: AccessGraphCanvasProps) {
             <div className="vc-graph-legend" role="group" aria-label="Review status legend">
               <p className="vc-graph-legend-title">Review status</p>
               <span className="vc-graph-legend-row">
-                <span
-                  aria-hidden="true"
-                  className="vc-graph-legend-swatch vc-graph-legend-swatch-needsReview"
-                />
+                <StatusIcon status="needsReview" decorative />
                 Needs review
               </span>
               <span className="vc-graph-legend-row">
-                <span
-                  aria-hidden="true"
-                  className="vc-graph-legend-swatch vc-graph-legend-swatch-complete"
-                />
-                Review complete
+                <StatusIcon status="complete" decorative />
+                Completed
+              </span>
+              <span className="vc-graph-legend-row">
+                <StatusIcon status="delegated" decorative />
+                Delegated
               </span>
             </div>
           </Panel>
