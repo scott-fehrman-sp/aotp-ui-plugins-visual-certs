@@ -199,37 +199,50 @@
  * precedent set by MetricCard data-tone='reassign' and the DecisionBar reassign
  * bar.
  */
-.vc-graph-card-status-needsReview {
-  box-shadow: 0 0 0 2px var(--vc-warn), var(--shadow);
+/*
+ * ONE status color per state, shared by everything on the card that expresses
+ * status: the thick left stripe, the outline ring, and the hover ring. The
+ * user→item edge, the corner icon and the legend swatch use these same four
+ * `--vc-*` tokens (see buildAccessScene.ts and the rules below), so a reviewable
+ * item's edge, outline and stripe are always the same color.
+ */
+.vc-graph-card.vc-graph-card-status-needsReview {
+  --vc-graph-status: var(--vc-warn);
 }
 
-.vc-graph-card-status-approved {
-  box-shadow: 0 0 0 2px var(--vc-allow), var(--shadow);
+.vc-graph-card.vc-graph-card-status-approved {
+  --vc-graph-status: var(--vc-allow);
 }
 
-.vc-graph-card-status-revoked {
-  box-shadow: 0 0 0 2px var(--vc-deny), var(--shadow);
+.vc-graph-card.vc-graph-card-status-revoked {
+  --vc-graph-status: var(--vc-deny);
 }
 
-.vc-graph-card-status-reassigned {
-  box-shadow: 0 0 0 2px var(--vc-accent), var(--shadow);
+.vc-graph-card.vc-graph-card-status-reassigned {
+  --vc-graph-status: var(--vc-accent);
 }
 
-/* Keep the status ring on hover (the generic hover rule would replace it). */
-.vc-graph-card.vc-graph-card-status-needsReview:hover {
-  box-shadow: 0 0 0 2px var(--vc-warn), var(--shadow);
-}
-
-.vc-graph-card.vc-graph-card-status-approved:hover {
-  box-shadow: 0 0 0 2px var(--vc-allow), var(--shadow);
-}
-
-.vc-graph-card.vc-graph-card-status-revoked:hover {
-  box-shadow: 0 0 0 2px var(--vc-deny), var(--shadow);
-}
-
+/*
+ * The thick stripe and the ring both take the status color. These selectors
+ * are deliberately as specific as the per-kind stripe rules above
+ * (`.vc-graph-card.kind-*`) and come AFTER them, so on a reviewable item the
+ * status color wins over the node-kind color (the kind is still named in the
+ * card's caption). The :hover variants keep the status ring, which the generic
+ * `.vc-graph-card:hover` rule would otherwise replace with the accent color.
+ */
+.vc-graph-card.vc-graph-card-status-needsReview,
+.vc-graph-card.vc-graph-card-status-approved,
+.vc-graph-card.vc-graph-card-status-revoked,
+.vc-graph-card.vc-graph-card-status-reassigned,
+.vc-graph-card.vc-graph-card-status-needsReview:hover,
+.vc-graph-card.vc-graph-card-status-approved:hover,
+.vc-graph-card.vc-graph-card-status-revoked:hover,
 .vc-graph-card.vc-graph-card-status-reassigned:hover {
-  box-shadow: 0 0 0 2px var(--vc-accent), var(--shadow);
+  /* Neutral thin inner border (the generic :hover rule would turn it the
+     default accent blue); the stripe and ring carry the status color. */
+  border-color: var(--line);
+  border-left-color: var(--vc-graph-status);
+  box-shadow: 0 0 0 2px var(--vc-graph-status), var(--shadow);
 }
 
 /*

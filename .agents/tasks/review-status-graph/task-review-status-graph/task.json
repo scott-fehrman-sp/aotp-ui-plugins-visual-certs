@@ -1,0 +1,11 @@
+{
+  "task_id": "task-review-status-graph",
+  "task_description": "Fix per-user drill-down access-graph review status (live per-user overlay, one status value for edge/ring/icon, no cross-user leak) and render nested non-first-level links as muted reference-only; verify in a real browser.",
+  "status": "pending",
+  "feature_order": [
+    "FEAT-001",
+    "FEAT-002",
+    "FEAT-003"
+  ],
+  "blocked_reason": null
+}

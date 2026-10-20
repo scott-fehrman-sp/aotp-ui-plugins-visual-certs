@@ -1,38 +1,51 @@
 /**
- * Headline cardinalities for the campaign overview, derived from the SAME
- * fully-expanded access graph that powers the access map. Counting the graph's
- * already-deduped, kind-namespaced nodes guarantees the overview numbers match
- * the map exactly: distinct users, distinct leaf entitlements ("access items"),
- * and distinct sources after every role/access-profile has been expanded down
- * to its entitlements and each entitlement resolved to its source.
+ * Headline cardinalities for the campaign overview.
  *
- * Pure: no I/O, no mutation. An empty graph yields all-zero counts.
+ * Two different sources, on purpose:
+ *
+ *  - ACCESS ITEMS is the number of items the reviewer can actually act on: the
+ *    roles, access profiles and directly-held entitlements assigned to users
+ *    (the FIRST level only). That is exactly the set of review items, so it is
+ *    counted from them directly. Anything nested beneath a role or access
+ *    profile is lineage shown for reference on the access map; it is not
+ *    reviewable and is never counted here.
+ *  - USERS and SOURCES come from the expanded access graph (the same one the
+ *    access map draws): distinct users, and distinct sources the assigned
+ *    access ultimately reaches. Sources are reference lineage, but "how many
+ *    systems does this review touch" is still useful context.
+ *
+ * Pure: no I/O, no mutation. Empty inputs yield zero counts.
  */
-import type { AccessGraphData } from '../sailpoint/types'
+import type { AccessGraphData, ReviewItemVM } from '../sailpoint/types'
 
-/** The three expanded counts shown on the overview. */
+/** The three counts shown on the overview. */
 export interface AccessCounts {
   /** Distinct identities in the certification. */
   users: number
-  /** Distinct leaf entitlements across every expanded path. */
+  /**
+   * First-level access items under review: the roles, access profiles and
+   * direct entitlements assigned to users. One per review item.
+   */
   accessItems: number
-  /** Distinct sources the expanded access lands on. */
+  /** Distinct sources the assigned access reaches (via the expanded lineage). */
   sources: number
 }
 
 /**
- * Counts distinct users / entitlements / sources in the derived access graph.
- * Graph nodes are already deduped by a kind-namespaced id, so a simple tally by
- * `kind` is the distinct count — no further de-duplication needed.
+ * Counts users and sources from the derived access graph (nodes are already
+ * deduped by a kind-namespaced id, so a tally by `kind` is the distinct count)
+ * and access items from the review items. `items` is `null` while the review
+ * items are still loading, in which case access items is 0.
  */
-export function computeAccessCounts(graph: AccessGraphData): AccessCounts {
+export function computeAccessCounts(
+  graph: AccessGraphData,
+  items: ReviewItemVM[] | null,
+): AccessCounts {
   let users = 0
-  let accessItems = 0
   let sources = 0
   for (const node of graph.nodes) {
     if (node.kind === 'user') users++
-    else if (node.kind === 'entitlement') accessItems++
     else if (node.kind === 'source') sources++
   }
-  return { users, accessItems, sources }
+  return { users, accessItems: items ? items.length : 0, sources }
 }

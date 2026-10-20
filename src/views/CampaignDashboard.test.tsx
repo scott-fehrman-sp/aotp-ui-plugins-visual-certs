@@ -164,7 +164,7 @@ describe('CampaignDashboard', () => {
     expect(screen.queryByText('Sources')).not.toBeInTheDocument()
   })
 
-  it('shows a placeholder on the access-count cards while the matrix resolves', () => {
+  it('shows a placeholder on the graph-derived cards while the matrix resolves, but Access items is known from the review items', () => {
     render(
       <CampaignDashboard
         campaign={campaign}
@@ -174,30 +174,50 @@ describe('CampaignDashboard', () => {
         now={now}
       />,
     )
-    const usersCard = screen.getByText('Users').closest('.vc-metric')
-    expect(usersCard).toHaveTextContent('—')
-    expect(screen.getByText('Access items').closest('.vc-metric')).toHaveTextContent('—')
+    // Users and Sources come from the expanded graph, which isn't ready yet.
+    expect(screen.getByText('Users').closest('.vc-metric')).toHaveTextContent('—')
     expect(screen.getByText('Sources').closest('.vc-metric')).toHaveTextContent('—')
+    // Access items is the number of first-level review items (3 in `items`), so
+    // it shows immediately and does not wait on the matrix.
+    const accessItemsCard = screen.getByText('Access items').closest('.vc-metric')
+    expect(accessItemsCard).toHaveTextContent('3')
+    expect(accessItemsCard).not.toHaveTextContent('—')
   })
 
-  it('shows distinct user / access-item / source counts from the expanded matrix', () => {
-    // Two users; 3 distinct leaf entitlements; 2 distinct sources.
-    const graph = deriveAccessGraph([
-      matrixRow({ id: '1', userId: 'u1', user: 'User One', role: 'Role A', roleId: 'ra', accessProfile: 'foo', accessProfileId: 'af', entitlement: 'read', entitlementId: 'e1', source: 'engr db', sourceId: 's1' }),
-      matrixRow({ id: '2', userId: 'u1', user: 'User One', entitlement: 'call', entitlementId: 'e2', source: 'phone app', sourceId: 's2' }),
-      matrixRow({ id: '3', userId: 'u2', user: 'User Two', accessProfile: 'bar', accessProfileId: 'ab', entitlement: 'write', entitlementId: 'e3', source: 'engr db', sourceId: 's1' }),
-    ])
+  it('shows a placeholder on Access items until the review items load', () => {
     render(
       <CampaignDashboard
         campaign={campaign}
-        items={items}
+        items={null}
+        matrix={matrixState({ status: 'loading' })}
+        onStartReviewing={vi.fn()}
+        now={now}
+      />,
+    )
+    expect(screen.getByText('Access items').closest('.vc-metric')).toHaveTextContent('—')
+  })
+
+  it('counts Access items as first-level review items, not the expanded leaf entitlements', () => {
+    // The expanded graph holds 3 leaf entitlements (e1, e2, e3) across 2 users
+    // and 2 sources, but only 2 review items exist: those are the first-level
+    // items the reviewer can act on. Access items must read 2, not 3.
+    const graph = deriveAccessGraph([
+      matrixRow({ id: '1', userId: 'u1', user: 'User One', role: 'Role A', roleId: 'ra', accessProfile: 'foo', accessProfileId: 'af', entitlement: 'read', entitlementId: 'e1', source: 'engr db', sourceId: 's1' }),
+      matrixRow({ id: '2', userId: 'u1', user: 'User One', entitlement: 'call', entitlementId: 'e2', source: 'phone app', sourceId: 's2' }),
+      matrixRow({ id: '3', userId: 'u2', user: 'User Two', role: 'Role A', roleId: 'ra', accessProfile: 'foo', accessProfileId: 'af', entitlement: 'write', entitlementId: 'e3', source: 'engr db', sourceId: 's1' }),
+    ])
+    const twoItems = items.slice(0, 2)
+    render(
+      <CampaignDashboard
+        campaign={campaign}
+        items={twoItems}
         matrix={matrixState({ status: 'ready', graph })}
         onStartReviewing={vi.fn()}
         now={now}
       />,
     )
     expect(screen.getByText('Users').closest('.vc-metric')).toHaveTextContent('2')
-    expect(screen.getByText('Access items').closest('.vc-metric')).toHaveTextContent('3')
+    expect(screen.getByText('Access items').closest('.vc-metric')).toHaveTextContent('2')
     expect(screen.getByText('Sources').closest('.vc-metric')).toHaveTextContent('2')
   })
 

@@ -1,0 +1,9 @@
+{
+  "verdict": "APPROVED",
+  "findings": [
+    "Reference card hover (confirmed, non-blocking): hovering a reference card gets no accent ring because the reference rule has equal specificity and comes later; optionally add a :hover rule.",
+    "Edges pass behind reference cards (possible, non-blocking): a user edge can look like it originates from a semi-transparent reference card it passes behind (e.g. red edge behind 'Sales Nested AP'); optional polish.",
+    "reviewKey first-wins (confirmed, informational): two different review accessIds resolving to one node keep the first edge's key; documented as not expected in practice, no action unless observed."
+  ],
+  "reviewDoc": "/Users/scott.fehrman/Documents/Projects/SailPoint/ui-plugins-apps/visual-certs/.agents/tasks/review-status-graph/code-review.md"
+}

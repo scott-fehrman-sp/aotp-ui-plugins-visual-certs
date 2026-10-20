@@ -60,21 +60,25 @@ export function CampaignDashboard({
     [items],
   )
 
-  // Distinct user / access-item / source counts from the expanded access graph
-  // (the same one the map renders). Computed only once the matrix is ready; a
-  // placeholder shows while it resolves.
+  // "What's in this review" counts. USERS and SOURCES come from the expanded
+  // access graph (the one the map renders), so they appear once the matrix is
+  // ready; a placeholder shows while it resolves. ACCESS ITEMS is the number of
+  // first-level items the reviewer can act on (roles, access profiles and
+  // directly-held entitlements), so it comes straight from the review items
+  // and shows as soon as they load, without waiting for the matrix.
   const accessCounts = useMemo(
     () =>
       matrix && matrix.status === 'ready'
-        ? computeAccessCounts(matrix.graph)
+        ? computeAccessCounts(matrix.graph, items)
         : null,
-    [matrix],
+    [matrix, items],
   )
-  // The composition cards resolve independently of the decision metrics, so
+  // The graph-derived cards resolve independently of the decision metrics, so
   // show a dash while loading and keep the layout stable.
   const countsLoading = matrix != null && matrix.status !== 'ready'
   const countOrDash = (value: number | undefined): string | number =>
     accessCounts && value !== undefined ? value : countsLoading ? '—' : 0
+  const accessItemCount: string | number = items ? items.length : '—'
 
   const highCount = priorityCounts?.high ?? 0
   const ctaLabel = metrics.reviewed > 0 ? 'Continue reviewing' : 'Start reviewing'
@@ -142,9 +146,14 @@ export function CampaignDashboard({
           <MetricCard label="Users" value={countOrDash(accessCounts?.users)} />
           <MetricCard
             label="Access items"
-            value={countOrDash(accessCounts?.accessItems)}
+            value={accessItemCount}
+            hint="Directly assigned to users"
           />
-          <MetricCard label="Sources" value={countOrDash(accessCounts?.sources)} />
+          <MetricCard
+            label="Sources"
+            value={countOrDash(accessCounts?.sources)}
+            hint="Reached by that access"
+          />
         </div>
       )}
 
