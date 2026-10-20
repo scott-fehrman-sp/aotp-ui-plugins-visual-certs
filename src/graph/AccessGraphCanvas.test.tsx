@@ -201,6 +201,97 @@ describe('AccessGraphCanvas', () => {
     expect(document.querySelector('.vc-graph-edge-badge')).toBeNull()
   })
 
+  /** role-a{ap-foo{e1}} needsReview; e2 held directly (approved). */
+  function referenceGraph() {
+    return statusGraph([
+      row({
+        id: '1',
+        role: 'Role A',
+        roleId: 'role-a',
+        accessProfile: 'foo',
+        accessProfileId: 'ap-foo',
+        entitlement: 'read',
+        entitlementId: 'e1',
+        source: 'engr db',
+        sourceId: 's1',
+        reviewStatus: 'needsReview',
+        accessItemKind: 'role',
+        accessItemId: 'role-a',
+      }),
+      row({
+        id: '2',
+        entitlement: 'login',
+        entitlementId: 'e2',
+        source: 'phone app',
+        sourceId: 's2',
+        reviewStatus: 'approved',
+        accessItemKind: 'entitlement',
+        accessItemId: 'e2',
+      }),
+    ])
+  }
+
+  const cardFor = (text: string) => screen.getByText(text).closest<HTMLElement>('.vc-graph-card')!
+
+  it('legend lists a Reference only entry distinct from the four statuses', () => {
+    render(<AccessGraphCanvas graph={referenceGraph()} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Show access for User One' }))
+    const legend = screen.getByRole('group', { name: /review status legend/i })
+    expect(legend).toHaveTextContent('Reference only (not reviewed)')
+    // The reference entry is a hairline swatch, not a status icon.
+    expect(legend.querySelectorAll('.vc-graph-status-icon')).toHaveLength(4)
+    expect(legend.querySelector('.vc-graph-legend-swatch-reference')).not.toBeNull()
+  })
+
+  it('every first-level card has exactly one icon equal to its card status and its incoming edge status', () => {
+    render(<AccessGraphCanvas graph={referenceGraph()} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Show access for User One' }))
+    const expected: Record<string, string> = { 'Role A': 'needsReview', login: 'approved' }
+    for (const [text, status] of Object.entries(expected)) {
+      const card = cardFor(text)
+      expect(card).toHaveAttribute('data-review-status', status)
+      const icons = card.querySelectorAll('.vc-graph-status-icon')
+      expect(icons).toHaveLength(1)
+      expect(icons[0]).toHaveAttribute('data-review-status', status)
+      expect(card.className).not.toContain('vc-graph-card-reference')
+    }
+  })
+
+  it('nested-only cards have no status icon and carry the reference class', () => {
+    render(<AccessGraphCanvas graph={referenceGraph()} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Show access for User One' }))
+    for (const text of ['foo', 'read', 'engr db', 'phone app']) {
+      const card = cardFor(text)
+      expect(card.className).toContain('vc-graph-card-reference')
+      expect(card.querySelector('.vc-graph-status-icon')).toBeNull()
+      expect(card).not.toHaveAttribute('data-review-status')
+    }
+    // The user card is never reference.
+    expect(cardFor('User One').className).not.toContain('vc-graph-card-reference')
+  })
+
+  it('stays in the drill-down when review statuses change but nodes are the same', () => {
+    const graph = referenceGraph()
+    const { rerender } = render(<AccessGraphCanvas graph={graph} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Show access for User One' }))
+    expect(screen.getByText('Role A')).toBeInTheDocument()
+
+    // Same nodes array, new edges (what a decision-only overlay rebuild yields).
+    const next = {
+      nodes: graph.nodes,
+      edges: graph.edges.map((e) =>
+        e.reviewStatus === 'needsReview' ? { ...e, reviewStatus: 'approved' as const } : e,
+      ),
+    }
+    rerender(<AccessGraphCanvas graph={next} />)
+    expect(screen.getByText('Role A')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Show access for User One' })).toBeNull()
+
+    // A genuinely new node set returns to the grid.
+    rerender(<AccessGraphCanvas graph={{ nodes: [...graph.nodes], edges: next.edges }} />)
+    expect(screen.getByRole('button', { name: 'Show access for User One' })).toBeInTheDocument()
+  })
+
   it('shows a styled tooltip with the kind and full (untruncated) label on hover', () => {
     // A role name long enough that the card would ellipsis-clip it; the tooltip
     // must still reveal the complete name so a reviewer can read it on hover.

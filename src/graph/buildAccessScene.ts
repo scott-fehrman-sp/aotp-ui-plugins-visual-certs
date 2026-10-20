@@ -188,6 +188,10 @@ export function buildAccessScene(
         label: node.label,
         detail: node.detail,
         reviewStatus: node.reviewStatus,
+        reviewMixed: node.reviewMixed,
+        // A non-user node without a status is reference-only: it is shown to
+        // explain how access derives, but is not itself reviewed.
+        reference: node.kind !== 'user' && !node.reviewStatus,
       },
       width: NODE_WIDTH,
       height: NODE_HEIGHT,
@@ -207,7 +211,7 @@ export function buildAccessScene(
   // approved vs revoked differ by COLOR only on this thin edge; the node's
   // corner icon carries the non-color SHAPE distinction (check vs X). The node
   // also carries the shape/text signal for every state. Deeper hops are
-  // neutral. The count badge was removed with the drill-down rework, so
+  // reference-only hairlines (muted, solid, below the status edges). The count badge was removed with the drill-down rework, so
   // `pathCount` no longer drives any rendering here. The switch is exhaustive
   // over the four-state union (a missing case is a type error).
   const edgeStyle = (
@@ -231,16 +235,25 @@ export function buildAccessScene(
       target: edge.to,
       sourceHandle: handle.sourceHandle,
       targetHandle: handle.targetHandle,
-      style: { strokeWidth: 1.5 },
     }
-    if (!edge.reviewStatus) return base
+    // Status edge: the user's first-level hop, drawn above reference edges.
+    if (edge.reviewStatus) {
+      return {
+        ...base,
+        className: `vc-graph-edge-status vc-graph-edge-${edge.reviewStatus}`,
+        data: { reviewStatus: edge.reviewStatus, reviewMixed: edge.reviewMixed },
+        style: edgeStyle(edge.reviewStatus),
+        zIndex: 1,
+      }
+    }
+    // Reference edge: every other hop, a thin muted neutral hairline.
     return {
       ...base,
-      className: `vc-graph-edge-status vc-graph-edge-${edge.reviewStatus}`,
-      data: { reviewStatus: edge.reviewStatus },
-      style: edgeStyle(edge.reviewStatus),
+      className: 'vc-graph-edge-reference',
+      data: { reference: true },
+      style: { stroke: 'var(--edge)', strokeWidth: 1, opacity: 0.45 },
+      zIndex: 0,
     }
   })
-
   return { nodes, edges }
 }

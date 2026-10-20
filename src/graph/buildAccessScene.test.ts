@@ -194,7 +194,8 @@ describe('buildAccessScene', () => {
     expect(userToRole?.style?.stroke).toBe('var(--vc-warn)')
     expect(userToRole?.style?.strokeDasharray).toBe('6 4')
 
-    // Deeper hops carry no review status and no status class.
+    // Deeper hops carry no review status and no status class: they are
+    // reference-only hairlines.
     for (const [from, to] of [
       ['role:role-a', 'accessProfile:ap-foo'],
       ['accessProfile:ap-foo', 'entitlement:e1'],
@@ -202,8 +203,84 @@ describe('buildAccessScene', () => {
     ] as const) {
       const edge = edgeBetween(from, to)
       expect((edge?.data as { reviewStatus?: string } | undefined)?.reviewStatus).toBeUndefined()
-      expect(edge?.className).toBeUndefined()
+      expect(edge?.className).toBe('vc-graph-edge-reference')
     }
+  })
+
+  /** Role-a{ap-foo{e1}} needsReview, e1 held directly (approved), plus a source. */
+  function referenceRows(): StatusRow[] {
+    return [
+      row({
+        id: '1',
+        role: 'Role A',
+        roleId: 'role-a',
+        accessProfile: 'foo',
+        accessProfileId: 'ap-foo',
+        entitlement: 'read',
+        entitlementId: 'e1',
+        source: 'engr db',
+        sourceId: 's1',
+        reviewStatus: 'needsReview',
+        accessItemKind: 'role',
+        accessItemId: 'role-a',
+      }),
+      row({
+        id: '2',
+        entitlement: 'read',
+        entitlementId: 'e1',
+        source: 'engr db',
+        sourceId: 's1',
+        reviewStatus: 'approved',
+        accessItemKind: 'entitlement',
+        accessItemId: 'e1',
+      }),
+    ]
+  }
+
+  it('renders status edges above reference edges (zIndex)', () => {
+    const scene = buildAccessScene(statusSubgraph(referenceRows()), 'LR')
+    const status = scene.edges.filter((e) => e.className?.includes('vc-graph-edge-status'))
+    const reference = scene.edges.filter((e) => e.className === 'vc-graph-edge-reference')
+    expect(status).toHaveLength(2)
+    expect(reference.length).toBeGreaterThan(0)
+    expect(status.length + reference.length).toBe(scene.edges.length)
+    for (const edge of status) expect(edge.zIndex).toBe(1)
+    for (const edge of reference) expect(edge.zIndex).toBe(0)
+  })
+
+  it('renders deeper edges as muted neutral reference hairlines', () => {
+    const scene = buildAccessScene(statusSubgraph(referenceRows()), 'LR')
+    const nested = scene.edges.find(
+      (e) => e.source === 'accessProfile:ap-foo' && e.target === 'entitlement:e1',
+    )
+    expect(nested?.className).toBe('vc-graph-edge-reference')
+    expect(nested?.style?.stroke).toBe('var(--edge)')
+    expect(nested?.style?.strokeWidth).toBe(1)
+    expect(nested?.style?.strokeDasharray).toBeUndefined()
+    expect(Number(nested?.style?.opacity)).toBeLessThan(1)
+    expect(nested?.data).toEqual({ reference: true })
+  })
+
+  it('marks nested-only nodes reference and first-level nodes not', () => {
+    const scene = buildAccessScene(statusSubgraph(referenceRows()), 'LR')
+    const byId = new Map(scene.nodes.map((n) => [n.id, n]))
+    expect(byId.get('user:u1')?.data.reference).toBe(false)
+    expect(byId.get('role:role-a')?.data.reference).toBe(false)
+    expect(byId.get('accessProfile:ap-foo')?.data.reference).toBe(true)
+    expect(byId.get('source:s1')?.data.reference).toBe(true)
+  })
+
+  it('a node both first-level and nested keeps its status and its nested incoming edge is reference', () => {
+    const scene = buildAccessScene(statusSubgraph(referenceRows()), 'LR')
+    const e1 = scene.nodes.find((n) => n.id === 'entitlement:e1')
+    expect(e1?.data.reviewStatus).toBe('approved')
+    expect(e1?.data.reference).toBe(false)
+    const direct = scene.edges.find((e) => e.source === 'user:u1' && e.target === 'entitlement:e1')
+    expect(direct?.className).toContain('vc-graph-edge-approved')
+    const nested = scene.edges.find(
+      (e) => e.source === 'accessProfile:ap-foo' && e.target === 'entitlement:e1',
+    )
+    expect(nested?.className).toBe('vc-graph-edge-reference')
   })
 
   it('draws an approved user→access-item edge as a solid green stroke with the status marker', () => {

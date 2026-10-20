@@ -78,13 +78,15 @@ function CanvasSurface({ graph }: AccessGraphCanvasProps) {
   const colorMode = useColorMode()
   const width = useStore((state) => state.width)
 
-  // Reset to the grid whenever the campaign/graph changes. Tracking the prior
-  // graph in state and adjusting during render is React's recommended pattern
-  // for deriving state from props (avoids the extra commit + effect round-trip
-  // of resetting in a useEffect, which the lint config also disallows).
-  const [prevGraph, setPrevGraph] = useState(graph)
-  if (prevGraph !== graph) {
-    setPrevGraph(graph)
+  // Reset to the grid whenever the campaign/node set changes. Keyed on
+  // `graph.nodes` (not `graph`) so a status-only refresh, which rebuilds edges
+  // but reuses the nodes array, does not kick the reviewer out of the
+  // drill-down. Tracking the prior value in state and adjusting during render is
+  // React's recommended pattern for deriving state from props (the lint config
+  // disallows resetting in a useEffect).
+  const [prevNodes, setPrevNodes] = useState(graph.nodes)
+  if (prevNodes !== graph.nodes) {
+    setPrevNodes(graph.nodes)
     setSelectedUserId(null)
   }
 
@@ -204,6 +206,13 @@ function CanvasSurface({ graph }: AccessGraphCanvasProps) {
               <span className="vc-graph-legend-row">
                 <StatusIcon status="reassigned" decorative />
                 Reassigned
+              </span>
+              <span className="vc-graph-legend-row">
+                <span
+                  className="vc-graph-legend-swatch vc-graph-legend-swatch-reference"
+                  aria-hidden="true"
+                />
+                Reference only (not reviewed)
               </span>
             </div>
           </Panel>

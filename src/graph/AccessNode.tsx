@@ -113,7 +113,16 @@ export function AccessNode({ data }: NodeProps<AccessSceneNode>) {
   const kindLabel = KIND_LABEL[data.kind]
   const status = data.reviewStatus
   // Review status marks only the user's directly-held access item (drill-down).
-  const statusClass = status ? ` vc-graph-card-status-${status}` : ''
+  const statusClass =
+    (status ? ` vc-graph-card-status-${status}` : '') +
+    (data.reference ? ' vc-graph-card-reference' : '')
+  // Optional tooltip extras: the status label for reviewed nodes, a note for
+  // reference-only ones.
+  const tipProps = {
+    reviewStatusLabel: status ? STATUS_ICON_LABEL[status] : undefined,
+    mixed: data.reviewMixed,
+    reference: data.reference,
+  }
 
   // Grid mode: the card is an activatable control that drills into the user.
   if (data.interactive) {
@@ -124,12 +133,14 @@ export function AccessNode({ data }: NodeProps<AccessSceneNode>) {
         kind={data.kind}
         label={data.label}
         detail={data.detail}
+        {...tipProps}
       >
         <article
           className={`vc-graph-card vc-graph-card-interactive kind-${data.kind}${statusClass}`}
           role="button"
           tabIndex={0}
           aria-label={`Show access for ${data.label}`}
+          data-review-status={status}
           onClick={activate}
           onKeyDown={(event) => {
             if (event.key === 'Enter' || event.key === ' ') {
@@ -155,11 +166,13 @@ export function AccessNode({ data }: NodeProps<AccessSceneNode>) {
       kind={data.kind}
       label={data.label}
       detail={data.detail}
+      {...tipProps}
     >
       <article
         className={`vc-graph-card kind-${data.kind}${statusClass}`}
         tabIndex={0}
         aria-label={`${kindLabel}: ${data.label}`}
+        data-review-status={status}
       >
         <Handles />
         <strong className="vc-graph-card-label">{data.label}</strong>

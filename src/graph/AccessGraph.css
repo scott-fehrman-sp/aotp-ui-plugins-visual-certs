@@ -200,23 +200,47 @@
  * bar.
  */
 .vc-graph-card-status-needsReview {
-  border-left-color: var(--vc-warn);
   box-shadow: 0 0 0 2px var(--vc-warn), var(--shadow);
 }
 
 .vc-graph-card-status-approved {
-  border-left-color: var(--vc-allow);
   box-shadow: 0 0 0 2px var(--vc-allow), var(--shadow);
 }
 
 .vc-graph-card-status-revoked {
-  border-left-color: var(--vc-deny);
   box-shadow: 0 0 0 2px var(--vc-deny), var(--shadow);
 }
 
 .vc-graph-card-status-reassigned {
-  border-left-color: var(--vc-accent);
   box-shadow: 0 0 0 2px var(--vc-accent), var(--shadow);
+}
+
+/* Keep the status ring on hover (the generic hover rule would replace it). */
+.vc-graph-card.vc-graph-card-status-needsReview:hover {
+  box-shadow: 0 0 0 2px var(--vc-warn), var(--shadow);
+}
+
+.vc-graph-card.vc-graph-card-status-approved:hover {
+  box-shadow: 0 0 0 2px var(--vc-allow), var(--shadow);
+}
+
+.vc-graph-card.vc-graph-card-status-revoked:hover {
+  box-shadow: 0 0 0 2px var(--vc-deny), var(--shadow);
+}
+
+.vc-graph-card.vc-graph-card-status-reassigned:hover {
+  box-shadow: 0 0 0 2px var(--vc-accent), var(--shadow);
+}
+
+/*
+ * Reference-only card: shown to explain how an access item derives access, but
+ * not itself reviewed. Muted, no ring, lighter border; name and caption stay
+ * readable via the existing ink/muted tokens.
+ */
+.vc-graph-card.vc-graph-card-reference {
+  opacity: 0.78;
+  border-color: var(--line);
+  box-shadow: none;
 }
 
 /*
@@ -284,6 +308,14 @@
   stroke-dasharray: 2 3;
 }
 
+/* Reference edges: thin muted hairlines under the status edges. */
+.vc-graph-wrap .react-flow__edge.vc-graph-edge-reference .react-flow__edge-path {
+  stroke: var(--edge);
+  stroke-width: 1;
+  stroke-dasharray: none;
+  opacity: 0.45;
+}
+
 /*
  * Drill-down legend: four rows (needs review / approved / revoked / reassigned),
  * each a status icon + text, in a corner panel styled like the layout toggle /
@@ -343,6 +375,11 @@
 .vc-graph-legend-swatch-reassigned {
   border-top-style: dotted;
   border-top-color: var(--vc-accent);
+}
+
+.vc-graph-legend-swatch-reference {
+  border-top-color: var(--edge);
+  border-top-width: 1px;
 }
 
 /*

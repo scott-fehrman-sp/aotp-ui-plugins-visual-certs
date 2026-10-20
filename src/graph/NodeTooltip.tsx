@@ -42,6 +42,12 @@ interface NodeTooltipProps {
    * empty/absent the tooltip shows just the kind caption + label.
    */
   detail?: { description?: string; department?: string; location?: string }
+  /** Review status label (e.g. "Needs review") for a reviewed first-level node. */
+  reviewStatusLabel?: string
+  /** True when the node's first-level items disagree on status. */
+  mixed?: boolean
+  /** True for a reference-only node (shown for context, not reviewed). */
+  reference?: boolean
   /** The node card the tooltip describes and anchors to. */
   children: ReactNode
 }
@@ -61,6 +67,9 @@ export function NodeTooltip({
   kind,
   label,
   detail,
+  reviewStatusLabel,
+  mixed,
+  reference,
   children,
 }: NodeTooltipProps) {
   const [open, setOpen] = useState(false)
@@ -137,6 +146,26 @@ export function NodeTooltip({
                       <span className="vc-node-tooltip-value">{location}</span>
                     </p>
                   ) : null}
+                </div>
+              ) : null}
+              {reviewStatusLabel ? (
+                <div className="vc-node-tooltip-detail">
+                  <p className="vc-node-tooltip-line">
+                    <span className="vc-node-tooltip-field">Review status:</span>{' '}
+                    <span className="vc-node-tooltip-value">
+                      {reviewStatusLabel}
+                      {mixed ? ' (mixed: some items still need review)' : ''}
+                    </span>
+                  </p>
+                </div>
+              ) : null}
+              {reference ? (
+                <div className="vc-node-tooltip-detail">
+                  <p className="vc-node-tooltip-line">
+                    <span className="vc-node-tooltip-value">
+                      Reference only (not reviewed)
+                    </span>
+                  </p>
                 </div>
               ) : null}
               {showDescription ? (
