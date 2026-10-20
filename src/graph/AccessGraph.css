@@ -192,22 +192,29 @@
  * Review-status accents for the user's DIRECTLY-held access item (drill-down
  * only). Two signals per state so status never relies on color alone: a corner
  * status ICON (distinct shape per state — the primary signal) AND a subtle
- * colored ring/left-border on the card (the secondary signal). Tokens are the
- * app's `--vc-warn` (amber), `--vc-allow` (green), and `--vc-accent` (blue),
- * reused from `src/index.css`. `--vc-accent` matches the reassign precedent set
- * by MetricCard data-tone='reassign' and the DecisionBar reassign bar.
+ * colored ring/left-border on the card (the secondary signal). Four states,
+ * each with an app token reused from `src/index.css`: needsReview → `--vc-warn`
+ * (amber), approved → `--vc-allow` (green), revoked → `--vc-deny` (red),
+ * reassigned → `--vc-accent` (blue). `--vc-accent` matches the reassign
+ * precedent set by MetricCard data-tone='reassign' and the DecisionBar reassign
+ * bar.
  */
 .vc-graph-card-status-needsReview {
   border-left-color: var(--vc-warn);
   box-shadow: 0 0 0 2px var(--vc-warn), var(--shadow);
 }
 
-.vc-graph-card-status-complete {
+.vc-graph-card-status-approved {
   border-left-color: var(--vc-allow);
   box-shadow: 0 0 0 2px var(--vc-allow), var(--shadow);
 }
 
-.vc-graph-card-status-delegated {
+.vc-graph-card-status-revoked {
+  border-left-color: var(--vc-deny);
+  box-shadow: 0 0 0 2px var(--vc-deny), var(--shadow);
+}
+
+.vc-graph-card-status-reassigned {
   border-left-color: var(--vc-accent);
   box-shadow: 0 0 0 2px var(--vc-accent), var(--shadow);
 }
@@ -234,20 +241,26 @@
   color: var(--vc-warn);
 }
 
-.vc-graph-status-icon-complete {
+.vc-graph-status-icon-approved {
   color: var(--vc-allow);
 }
 
-.vc-graph-status-icon-delegated {
+.vc-graph-status-icon-revoked {
+  color: var(--vc-deny);
+}
+
+.vc-graph-status-icon-reassigned {
   color: var(--vc-accent);
 }
 
 /*
- * Review-status edge strokes for the user→access-item hop. needsReview is a
- * dashed amber line; complete is a solid green line; delegated is a dotted blue
- * line. The inline `style` from `buildAccessScene` sets the exact stroke/dash;
- * these class rules back it up so the status reads even if inline styles are
- * overridden, and raise edge weight.
+ * Review-status edge strokes for the user→access-item hop, four states:
+ * needsReview is a dashed amber line; approved is a solid green line; revoked is
+ * a solid red line; reassigned is a dotted blue line. approved vs revoked differ
+ * by COLOR only on the thin edge — the node's corner icon (check vs X) carries
+ * the shape distinction. The inline `style` from `buildAccessScene` sets the
+ * exact stroke/dash; these class rules back it up so the status reads even if
+ * inline styles are overridden, and raise edge weight.
  */
 .vc-graph-wrap .react-flow__edge.vc-graph-edge-needsReview .react-flow__edge-path {
   stroke: var(--vc-warn);
@@ -255,22 +268,27 @@
   stroke-dasharray: 6 4;
 }
 
-.vc-graph-wrap .react-flow__edge.vc-graph-edge-complete .react-flow__edge-path {
+.vc-graph-wrap .react-flow__edge.vc-graph-edge-approved .react-flow__edge-path {
   stroke: var(--vc-allow);
   stroke-width: 2;
 }
 
-.vc-graph-wrap .react-flow__edge.vc-graph-edge-delegated .react-flow__edge-path {
+.vc-graph-wrap .react-flow__edge.vc-graph-edge-revoked .react-flow__edge-path {
+  stroke: var(--vc-deny);
+  stroke-width: 2;
+}
+
+.vc-graph-wrap .react-flow__edge.vc-graph-edge-reassigned .react-flow__edge-path {
   stroke: var(--vc-accent);
   stroke-width: 2;
   stroke-dasharray: 2 3;
 }
 
 /*
- * Drill-down legend: three rows (needs review / completed / delegated), each a
- * status icon + text, in a corner panel styled like the layout toggle / back
- * button. The icon reuses the node's `.vc-graph-status-icon*` classes so the
- * legend visually matches the node corner icons.
+ * Drill-down legend: four rows (needs review / approved / revoked / reassigned),
+ * each a status icon + text, in a corner panel styled like the layout toggle /
+ * back button. The icon reuses the node's `.vc-graph-status-icon*` classes so
+ * the legend visually matches the node corner icons.
  */
 .vc-graph-legend {
   display: flex;
@@ -314,11 +332,15 @@
   border-top-color: var(--vc-warn);
 }
 
-.vc-graph-legend-swatch-complete {
+.vc-graph-legend-swatch-approved {
   border-top-color: var(--vc-allow);
 }
 
-.vc-graph-legend-swatch-delegated {
+.vc-graph-legend-swatch-revoked {
+  border-top-color: var(--vc-deny);
+}
+
+.vc-graph-legend-swatch-reassigned {
   border-top-style: dotted;
   border-top-color: var(--vc-accent);
 }

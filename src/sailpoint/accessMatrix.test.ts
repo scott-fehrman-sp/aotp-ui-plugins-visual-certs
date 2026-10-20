@@ -331,9 +331,10 @@ describe('resolveMatrix', () => {
   })
 
   it('stamps reviewStatus + access-item identity from the review item onto every row', async () => {
-    // A decided role item → complete; an undecided AP item → needsReview; a
-    // reassigned entitlement item → delegated (reassignment is terminal). Each
-    // item's access-item identity (kind + id) lands on every row it produced.
+    // A kept role item → approved; a removed role item → revoked; an undecided
+    // AP item → needsReview; a reassigned entitlement item → reassigned
+    // (reassignment is terminal). Each item's access-item identity (kind + id)
+    // lands on every row it produced.
     const items = [
       item({ id: 'rev-role', accessKind: 'role', accessId: 'role-a', accessName: 'Role A', completed: true, decision: 'APPROVE' }),
       item({ id: 'rev-ap', accessKind: 'accessProfile', accessId: 'ap-bar', accessName: 'bar' }),
@@ -343,7 +344,7 @@ describe('resolveMatrix', () => {
 
     const roleRows = rows.filter((r) => r.role === 'Role A')
     expect(roleRows.length).toBeGreaterThan(0)
-    expect(roleRows.every((r) => r.reviewStatus === 'complete')).toBe(true)
+    expect(roleRows.every((r) => r.reviewStatus === 'approved')).toBe(true)
     expect(roleRows.every((r) => r.accessItemKind === 'role')).toBe(true)
     expect(roleRows.every((r) => r.accessItemId === 'role-a')).toBe(true)
 
@@ -354,32 +355,54 @@ describe('resolveMatrix', () => {
     expect(apRows.every((r) => r.accessItemId === 'ap-bar')).toBe(true)
 
     const phoneRow = rows.find((r) => r.source === 'phone app')
-    expect(phoneRow?.reviewStatus).toBe('delegated')
+    expect(phoneRow?.reviewStatus).toBe('reassigned')
     expect(phoneRow?.accessItemKind).toBe('entitlement')
     expect(phoneRow?.accessItemId).toBe('ent-read-phone')
   })
 
-  it('resolves a complete-vs-delegated five-id collision to delegated', async () => {
-    // The same leaf path produced by one decided (complete) and one reassigned
-    // (delegated) item collapses to a single row; reassignment is terminal, so
-    // the survivor must report 'delegated' (needsReview would still outrank it).
+  it('stamps revoked for a removed (REVOKE) role item', async () => {
     const items = [
-      item({ id: 'done', accessKind: 'entitlement', accessId: 'ent-read-phone', accessName: 'read', completed: true, decision: 'APPROVE' }),
-      item({ id: 'moved', accessKind: 'entitlement', accessId: 'ent-read-phone', accessName: 'read', reassigned: true }),
+      item({ id: 'rev-role', accessKind: 'role', accessId: 'role-a', accessName: 'Role A', completed: true, decision: 'REVOKE' }),
     ]
     const rows = await resolveMatrix(items, stubResolver())
-    expect(rows).toHaveLength(1)
-    expect(rows[0].reviewStatus).toBe('delegated')
+    const roleRows = rows.filter((r) => r.role === 'Role A')
+    expect(roleRows.length).toBeGreaterThan(0)
+    expect(roleRows.every((r) => r.reviewStatus === 'revoked')).toBe(true)
   })
 
-  it('resolves the collision to delegated regardless of order', async () => {
+  it('resolves an approved-vs-reassigned five-id collision to reassigned', async () => {
+    // The same leaf path produced by one kept (approved) and one reassigned
+    // item collapses to a single row; reassignment is terminal, so the survivor
+    // must report 'reassigned' (needsReview would still outrank it).
     const items = [
+      item({ id: 'kept', accessKind: 'entitlement', accessId: 'ent-read-phone', accessName: 'read', completed: true, decision: 'APPROVE' }),
       item({ id: 'moved', accessKind: 'entitlement', accessId: 'ent-read-phone', accessName: 'read', reassigned: true }),
-      item({ id: 'done', accessKind: 'entitlement', accessId: 'ent-read-phone', accessName: 'read', completed: true, decision: 'APPROVE' }),
     ]
     const rows = await resolveMatrix(items, stubResolver())
     expect(rows).toHaveLength(1)
-    expect(rows[0].reviewStatus).toBe('delegated')
+    expect(rows[0].reviewStatus).toBe('reassigned')
+  })
+
+  it('resolves the approved-vs-reassigned collision to reassigned regardless of order', async () => {
+    const items = [
+      item({ id: 'moved', accessKind: 'entitlement', accessId: 'ent-read-phone', accessName: 'read', reassigned: true }),
+      item({ id: 'kept', accessKind: 'entitlement', accessId: 'ent-read-phone', accessName: 'read', completed: true, decision: 'APPROVE' }),
+    ]
+    const rows = await resolveMatrix(items, stubResolver())
+    expect(rows).toHaveLength(1)
+    expect(rows[0].reviewStatus).toBe('reassigned')
+  })
+
+  it('resolves a defensive revoked-vs-approved collision to revoked', async () => {
+    // Should not occur in practice (one access item from one review item), but
+    // the merge must be deterministic: revoked outranks approved.
+    const items = [
+      item({ id: 'kept', accessKind: 'entitlement', accessId: 'ent-read-phone', accessName: 'read', completed: true, decision: 'APPROVE' }),
+      item({ id: 'removed', accessKind: 'entitlement', accessId: 'ent-read-phone', accessName: 'read', completed: true, decision: 'REVOKE' }),
+    ]
+    const rows = await resolveMatrix(items, stubResolver())
+    expect(rows).toHaveLength(1)
+    expect(rows[0].reviewStatus).toBe('revoked')
   })
 
   it('keeps row count and ids invariant when status/access-item fields are added', async () => {

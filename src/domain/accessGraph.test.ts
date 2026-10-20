@@ -300,7 +300,7 @@ describe('deriveAccessGraph', () => {
     expect(edgeStatus('entitlement:ent-read-engr', 'source:src-engr')).toBeUndefined()
   })
 
-  it('marks a directly-held entitlement item on the user→entitlement node + edge', () => {
+  it('marks an approved directly-held entitlement item on the user→entitlement node + edge', () => {
     const { nodes, edges } = deriveAccessGraph([
       row({
         id: '1',
@@ -308,25 +308,51 @@ describe('deriveAccessGraph', () => {
         entitlementId: 'ent-read-phone',
         source: 'phone app',
         sourceId: 'src-phone',
-        reviewStatus: 'complete',
+        reviewStatus: 'approved',
         accessItemKind: 'entitlement',
         accessItemId: 'ent-read-phone',
       }),
     ])
     const nodeById = new Map(nodes.map((n) => [n.id, n]))
-    expect(nodeById.get('entitlement:ent-read-phone')?.reviewStatus).toBe('complete')
+    expect(nodeById.get('entitlement:ent-read-phone')?.reviewStatus).toBe('approved')
     expect(nodeById.get('source:src-phone')?.reviewStatus).toBeUndefined()
     const userToEnt = edges.find(
       (e) => e.from === 'user:u1' && e.to === 'entitlement:ent-read-phone',
     )
-    expect(userToEnt?.reviewStatus).toBe('complete')
+    expect(userToEnt?.reviewStatus).toBe('approved')
     const entToSource = edges.find(
       (e) => e.from === 'entitlement:ent-read-phone' && e.to === 'source:src-phone',
     )
     expect(entToSource?.reviewStatus).toBeUndefined()
   })
 
-  it('stamps a delegated status on the user access-item node + user→item edge only', () => {
+  it('marks a revoked directly-held entitlement item on the user→entitlement node + edge', () => {
+    const { nodes, edges } = deriveAccessGraph([
+      row({
+        id: '1',
+        entitlement: 'read',
+        entitlementId: 'ent-read-phone',
+        source: 'phone app',
+        sourceId: 'src-phone',
+        reviewStatus: 'revoked',
+        accessItemKind: 'entitlement',
+        accessItemId: 'ent-read-phone',
+      }),
+    ])
+    const nodeById = new Map(nodes.map((n) => [n.id, n]))
+    expect(nodeById.get('entitlement:ent-read-phone')?.reviewStatus).toBe('revoked')
+    expect(nodeById.get('source:src-phone')?.reviewStatus).toBeUndefined()
+    const userToEnt = edges.find(
+      (e) => e.from === 'user:u1' && e.to === 'entitlement:ent-read-phone',
+    )
+    expect(userToEnt?.reviewStatus).toBe('revoked')
+    const entToSource = edges.find(
+      (e) => e.from === 'entitlement:ent-read-phone' && e.to === 'source:src-phone',
+    )
+    expect(entToSource?.reviewStatus).toBeUndefined()
+  })
+
+  it('stamps a reassigned status on the user access-item node + user→item edge only', () => {
     const { nodes, edges } = deriveAccessGraph([
       row({
         id: '1',
@@ -338,13 +364,13 @@ describe('deriveAccessGraph', () => {
         entitlementId: 'ent-read-engr',
         source: 'engr db',
         sourceId: 'src-engr',
-        reviewStatus: 'delegated',
+        reviewStatus: 'reassigned',
         accessItemKind: 'role',
         accessItemId: 'role-a',
       }),
     ])
     const nodeById = new Map(nodes.map((n) => [n.id, n]))
-    expect(nodeById.get('role:role-a')?.reviewStatus).toBe('delegated')
+    expect(nodeById.get('role:role-a')?.reviewStatus).toBe('reassigned')
     expect(nodeById.get('user:u1')?.reviewStatus).toBeUndefined()
     expect(nodeById.get('accessProfile:ap-foo')?.reviewStatus).toBeUndefined()
     expect(nodeById.get('entitlement:ent-read-engr')?.reviewStatus).toBeUndefined()
@@ -352,13 +378,13 @@ describe('deriveAccessGraph', () => {
 
     const edgeStatus = (from: string, to: string) =>
       edges.find((e) => e.from === from && e.to === to)?.reviewStatus
-    expect(edgeStatus('user:u1', 'role:role-a')).toBe('delegated')
+    expect(edgeStatus('user:u1', 'role:role-a')).toBe('reassigned')
     expect(edgeStatus('role:role-a', 'accessProfile:ap-foo')).toBeUndefined()
   })
 
-  it('needsReview-wins over a delegated access-item row', () => {
-    // One delegated row and one needs-review row for the same role: needsReview
-    // outranks delegated.
+  it('needsReview-wins over a reassigned access-item row', () => {
+    // One reassigned row and one needs-review row for the same role: needsReview
+    // outranks reassigned.
     const { nodes, edges } = deriveAccessGraph([
       row({
         id: '1',
@@ -368,7 +394,7 @@ describe('deriveAccessGraph', () => {
         entitlementId: 'e1',
         source: 'engr db',
         sourceId: 's1',
-        reviewStatus: 'delegated',
+        reviewStatus: 'reassigned',
         accessItemKind: 'role',
         accessItemId: 'role-a',
       }),
@@ -394,8 +420,8 @@ describe('deriveAccessGraph', () => {
     ).toBe('needsReview')
   })
 
-  it('applies needsReview-wins when an access-item node is reached from complete and incomplete rows', () => {
-    // Two rows for the SAME role-a node: one complete, one needing review. The
+  it('applies needsReview-wins when an access-item node is reached from approved and incomplete rows', () => {
+    // Two rows for the SAME role-a node: one approved, one needing review. The
     // node + user→role edge must end up needsReview.
     const { nodes, edges } = deriveAccessGraph([
       row({
@@ -406,7 +432,7 @@ describe('deriveAccessGraph', () => {
         entitlementId: 'e1',
         source: 'engr db',
         sourceId: 's1',
-        reviewStatus: 'complete',
+        reviewStatus: 'approved',
         accessItemKind: 'role',
         accessItemId: 'role-a',
       }),

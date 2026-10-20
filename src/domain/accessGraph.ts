@@ -51,6 +51,19 @@ function detailFor(
 }
 
 /**
+ * Collision precedence for `reviewStatus` (highest wins):
+ * `needsReview > reassigned > revoked > approved`. Mirrors
+ * `REVIEW_STATUS_RANK` in `sailpoint/accessMatrix.ts` so the matrix row, the
+ * node, and the edge always agree on which status survives a collision.
+ */
+const REVIEW_STATUS_RANK: Record<AccessReviewStatus, number> = {
+  needsReview: 3,
+  reassigned: 2,
+  revoked: 1,
+  approved: 0,
+}
+
+/**
  * Builds the namespaced id for a level. When the real id is known we use
  * `<kind>:<id>`; when it is null (an unresolved leaf or a role/AP that could
  * not be deep-fetched) we fall back to a name-based synthetic id so the row
@@ -120,11 +133,14 @@ export function deriveAccessGraph(
   }
 
   /**
-   * Stamps review status onto a node/edge with needsReview-wins across all three
-   * states: once a node or edge is marked `needsReview` it stays that way;
-   * `'complete'` and `'delegated'` both apply only when nothing has set it to
-   * `needsReview` (by plain assignment, last-write-wins between the two — the
-   * matrix already resolves the complete-vs-delegated precedence upstream).
+   * Stamps review status onto a node/edge with the four-state precedence
+   * `needsReview > reassigned > revoked > approved` (highest wins): once a node
+   * or edge is marked `needsReview` it stays that way (outstanding work is never
+   * hidden); `reassigned` stays terminal over a plain keep/remove decision; the
+   * revoked-over-approved order is an arbitrary-but-fixed tiebreak for the
+   * defensive decided-vs-decided case. The incoming `status` overwrites the
+   * current one only when it STRICTLY outranks it, so the result is independent
+   * of row order — matching the matrix merge in `sailpoint/accessMatrix.ts`.
    * Leaves the field untouched when `status` is undefined.
    */
   const markStatus = (
@@ -132,8 +148,12 @@ export function deriveAccessGraph(
     status: AccessReviewStatus | undefined,
   ): void => {
     if (!target || !status) return
-    if (target.reviewStatus === 'needsReview') return
-    target.reviewStatus = status
+    if (
+      target.reviewStatus === undefined ||
+      REVIEW_STATUS_RANK[status] > REVIEW_STATUS_RANK[target.reviewStatus]
+    ) {
+      target.reviewStatus = status
+    }
   }
 
   for (const row of rows) {

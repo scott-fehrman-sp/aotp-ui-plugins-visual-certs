@@ -194,12 +194,16 @@ function CanvasSurface({ graph }: AccessGraphCanvasProps) {
                 Needs review
               </span>
               <span className="vc-graph-legend-row">
-                <StatusIcon status="complete" decorative />
-                Completed
+                <StatusIcon status="approved" decorative />
+                Approved
               </span>
               <span className="vc-graph-legend-row">
-                <StatusIcon status="delegated" decorative />
-                Delegated
+                <StatusIcon status="revoked" decorative />
+                Revoked
+              </span>
+              <span className="vc-graph-legend-row">
+                <StatusIcon status="reassigned" decorative />
+                Reassigned
               </span>
             </div>
           </Panel>

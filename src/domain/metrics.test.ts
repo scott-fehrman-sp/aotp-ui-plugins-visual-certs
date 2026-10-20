@@ -42,26 +42,42 @@ function reviewItem(overrides: Partial<ReviewItemVM> = {}): ReviewItemVM {
 }
 
 describe('reviewStatusOf', () => {
-  it('returns delegated for a reassigned item, even when also decided', () => {
-    expect(reviewStatusOf(reviewItem({ reassigned: true }))).toBe('delegated')
+  it('returns reassigned for a reassigned item, even when also decided', () => {
+    expect(reviewStatusOf(reviewItem({ reassigned: true }))).toBe('reassigned')
     expect(
       reviewStatusOf(
         reviewItem({ reassigned: true, completed: true, decision: 'APPROVE' }),
       ),
-    ).toBe('delegated')
+    ).toBe('reassigned')
   })
 
-  it('returns complete for a decided (not reassigned) item', () => {
-    expect(reviewStatusOf(reviewItem({ completed: true }))).toBe('complete')
-    expect(reviewStatusOf(reviewItem({ decision: 'REVOKE' }))).toBe('complete')
+  it('returns approved for a kept (APPROVE) item', () => {
+    expect(reviewStatusOf(reviewItem({ completed: true, decision: 'APPROVE' }))).toBe(
+      'approved',
+    )
+  })
+
+  it('returns revoked for a removed (REVOKE) item', () => {
+    expect(reviewStatusOf(reviewItem({ completed: true, decision: 'REVOKE' }))).toBe(
+      'revoked',
+    )
+  })
+
+  it('maps a bare completed-without-decision item to approved (defensive fallback)', () => {
+    expect(reviewStatusOf(reviewItem({ completed: true }))).toBe('approved')
   })
 
   it('returns needsReview for an undecided, non-reassigned item', () => {
     expect(reviewStatusOf(reviewItem())).toBe('needsReview')
   })
 
-  it('isItemReviewed is true for complete and delegated, false for needsReview', () => {
-    expect(isItemReviewed(reviewItem({ completed: true }))).toBe(true)
+  it('isItemReviewed is true for approved, revoked and reassigned, false for needsReview', () => {
+    expect(isItemReviewed(reviewItem({ completed: true, decision: 'APPROVE' }))).toBe(
+      true,
+    )
+    expect(isItemReviewed(reviewItem({ completed: true, decision: 'REVOKE' }))).toBe(
+      true,
+    )
     expect(isItemReviewed(reviewItem({ reassigned: true }))).toBe(true)
     expect(isItemReviewed(reviewItem())).toBe(false)
   })

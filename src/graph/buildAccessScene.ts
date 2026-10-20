@@ -199,20 +199,28 @@ export function buildAccessScene(
   })
 
   // Plain built-in React Flow edges (no custom edge type). The user→access-item
-  // edge conveys review status via stroke color + dash across THREE states:
-  // needsReview → dashed amber, complete → solid green, delegated → dotted blue
-  // (reassigned, terminal). The node carries the non-color shape/text signal.
-  // Deeper hops are neutral. The count badge was removed with the drill-down
-  // rework, so `pathCount` no longer drives any rendering here.
+  // edge conveys review status via stroke color + dash across FOUR states:
+  //   needsReview → dashed amber (--vc-warn),
+  //   approved    → solid green (--vc-allow),
+  //   revoked     → solid red (--vc-deny),
+  //   reassigned  → dotted blue (--vc-accent, terminal).
+  // approved vs revoked differ by COLOR only on this thin edge; the node's
+  // corner icon carries the non-color SHAPE distinction (check vs X). The node
+  // also carries the shape/text signal for every state. Deeper hops are
+  // neutral. The count badge was removed with the drill-down rework, so
+  // `pathCount` no longer drives any rendering here. The switch is exhaustive
+  // over the four-state union (a missing case is a type error).
   const edgeStyle = (
     status: NonNullable<(typeof graph.edges)[number]['reviewStatus']>,
   ): Edge['style'] => {
     switch (status) {
       case 'needsReview':
         return { stroke: 'var(--vc-warn)', strokeWidth: 2, strokeDasharray: '6 4' }
-      case 'complete':
+      case 'approved':
         return { stroke: 'var(--vc-allow)', strokeWidth: 2 }
-      case 'delegated':
+      case 'revoked':
+        return { stroke: 'var(--vc-deny)', strokeWidth: 2 }
+      case 'reassigned':
         return { stroke: 'var(--vc-accent)', strokeWidth: 2, strokeDasharray: '2 3' }
     }
   }

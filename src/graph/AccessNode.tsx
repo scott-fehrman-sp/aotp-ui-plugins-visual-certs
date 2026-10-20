@@ -16,8 +16,9 @@ const KIND_LABEL: Record<AccessGraphNodeKind, string> = {
 /** Accessible name per review status, used for the corner status icon. */
 const STATUS_ICON_LABEL: Record<AccessReviewStatus, string> = {
   needsReview: 'Needs review',
-  complete: 'Completed',
-  delegated: 'Delegated',
+  approved: 'Approved',
+  revoked: 'Revoked',
+  reassigned: 'Reassigned',
 }
 
 /** Distinct SVG shape per status so status never relies on color alone. */
@@ -30,8 +31,8 @@ const STATUS_ICON_SHAPE: Record<AccessReviewStatus, ReactNode> = {
       <circle cx="9" cy="12.6" r="1" fill="currentColor" />
     </>
   ),
-  // Check mark.
-  complete: (
+  // Check mark (reviewer KEPT the access).
+  approved: (
     <path
       d="M4 9.5 L7.5 13 L14 5.5"
       fill="none"
@@ -41,8 +42,16 @@ const STATUS_ICON_SHAPE: Record<AccessReviewStatus, ReactNode> = {
       strokeLinejoin="round"
     />
   ),
-  // Forward / hand-off arrow.
-  delegated: (
+  // X / crossed strokes (reviewer REMOVED the access) — clearly distinct from
+  // the check mark.
+  revoked: (
+    <>
+      <line x1="5" y1="5" x2="13" y2="13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <line x1="13" y1="5" x2="5" y2="13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </>
+  ),
+  // Forward / hand-off arrow (handed to someone else to review).
+  reassigned: (
     <path
       d="M3 9 H12 M9 5.5 L13 9 L9 12.5"
       fill="none"
@@ -56,10 +65,11 @@ const STATUS_ICON_SHAPE: Record<AccessReviewStatus, ReactNode> = {
 
 /**
  * The review-status icon rendered in the lower-right corner of an access-item
- * card. Not color-only: each status maps to a distinct SVG SHAPE (hollow
- * exclamation circle / check mark / hand-off arrow) and carries an accessible
- * name via `role="img"` + `aria-label` + a `<title>`, plus a stable
- * `data-review-status` hook. Absolutely positioned via CSS.
+ * card. Not color-only: each of the four statuses maps to a distinct SVG SHAPE
+ * (needsReview → hollow exclamation circle; approved → check mark; revoked → X;
+ * reassigned → hand-off arrow) and carries an accessible name via `role="img"` +
+ * `aria-label` + a `<title>`, plus a stable `data-review-status` hook.
+ * Absolutely positioned via CSS.
  */
 export function StatusIcon({
   status,

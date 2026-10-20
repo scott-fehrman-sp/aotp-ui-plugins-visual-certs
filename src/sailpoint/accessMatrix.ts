@@ -270,8 +270,9 @@ interface RowTuple {
   /**
    * Review status of the source review item (via `reviewStatusOf`), on every
    * row the item produces. NEVER part of `rowKey` — same enrichment pattern as
-   * `userDepartment`. On a dedup collision, needsReview-wins and a
-   * complete-vs-delegated tie resolves to 'delegated' (reassignment terminal).
+   * `userDepartment`. On a dedup collision the deterministic precedence
+   * `needsReview > reassigned > revoked > approved` applies (needsReview never
+   * hidden; reassignment terminal over a plain keep/remove decision).
    */
   reviewStatus?: AccessReviewStatus
   /** Kind of the user's directly-held access item (first hop off the user). */
@@ -518,6 +519,22 @@ async function expandItem(
 }
 
 /**
+ * Collision precedence for `reviewStatus` when two rows dedup to the same
+ * five-id tuple but carry different statuses (highest wins):
+ * `needsReview > reassigned > revoked > approved`. needsReview is never hidden;
+ * reassignment is terminal over a plain keep/remove decision; the
+ * revoked-over-approved order is an arbitrary-but-fixed tiebreak for the
+ * defensive decided-vs-decided case. Mirrors `markStatus` in
+ * `domain/accessGraph.ts` so the node/edge and the matrix row always agree.
+ */
+const REVIEW_STATUS_RANK: Record<AccessReviewStatus, number> = {
+  needsReview: 3,
+  reassigned: 2,
+  revoked: 1,
+  approved: 0,
+}
+
+/**
  * Expands review items into canonical, deduped matrix rows. Async: fetches
  * composition via the resolver (cached, concurrent-deduped). Degrades
  * unresolved leaves to an `unresolved` row rather than throwing.
@@ -544,19 +561,21 @@ export async function resolveMatrix(
         continue
       }
       // First-wins on every enrichment field EXCEPT reviewStatus, which follows
-      // a three-way precedence on collision:
-      //   - needsReview-wins: if any contributing row still needs review, the
-      //     merged row must say so rather than hide outstanding work.
-      //   - otherwise a complete-vs-delegated tie resolves to 'delegated':
-      //     reassignment is terminal for this reviewer, so it outranks a plain
-      //     keep/remove decision when two resolved rows collide.
-      if (tuple.reviewStatus === 'needsReview') {
-        existing.reviewStatus = 'needsReview'
-      } else if (
-        existing.reviewStatus !== 'needsReview' &&
-        tuple.reviewStatus === 'delegated'
+      // the four-state precedence on collision via REVIEW_STATUS_RANK:
+      //   needsReview > reassigned > revoked > approved
+      //   - needsReview always wins so outstanding work is never hidden.
+      //   - reassignment stays terminal over a plain keep/remove decision.
+      //   - revoked > approved is an arbitrary-but-fixed order for the defensive
+      //     decided-vs-decided collision (one access item comes from one review
+      //     item, so this should not occur in practice).
+      // Keep the incoming status only when it strictly outranks the existing one.
+      if (
+        tuple.reviewStatus &&
+        (existing.reviewStatus === undefined ||
+          REVIEW_STATUS_RANK[tuple.reviewStatus] >
+            REVIEW_STATUS_RANK[existing.reviewStatus])
       ) {
-        existing.reviewStatus = 'delegated'
+        existing.reviewStatus = tuple.reviewStatus
       }
     }
   }

@@ -99,10 +99,11 @@ describe('AccessGraphCanvas', () => {
     expect(screen.getByText('No users to map')).toBeInTheDocument()
   })
 
-  it('marks review status in drill-down: name, three-state corner icon, legend, no chip', () => {
-    // One user with three directly-held items: an undecided role (needs
-    // review), a completed, directly-held entitlement (completed), and a
-    // reassigned access profile (delegated).
+  it('marks review status in drill-down: name, four-state corner icon, legend, no chip', () => {
+    // One user with four directly-held items covering every state: an undecided
+    // role (needsReview), a kept directly-held entitlement (approved), a removed
+    // directly-held entitlement (revoked), and a reassigned access profile
+    // (reassigned).
     const graph = deriveAccessGraph([
       row({
         id: '1',
@@ -126,12 +127,24 @@ describe('AccessGraphCanvas', () => {
         entitlementId: 'e2',
         source: 'phone app',
         sourceId: 's2',
-        reviewStatus: 'complete',
+        reviewStatus: 'approved',
         accessItemKind: 'entitlement',
         accessItemId: 'e2',
       }),
       row({
         id: '3',
+        userId: 'u1',
+        user: 'User One',
+        entitlement: 'admin',
+        entitlementId: 'e4',
+        source: 'ops db',
+        sourceId: 's4',
+        reviewStatus: 'revoked',
+        accessItemKind: 'entitlement',
+        accessItemId: 'e4',
+      }),
+      row({
+        id: '4',
         userId: 'u1',
         user: 'User One',
         accessProfile: 'Billing AP',
@@ -140,7 +153,7 @@ describe('AccessGraphCanvas', () => {
         entitlementId: 'e3',
         source: 'billing db',
         sourceId: 's3',
-        reviewStatus: 'delegated',
+        reviewStatus: 'reassigned',
         accessItemKind: 'accessProfile',
         accessItemId: 'ap-1',
       }),
@@ -156,6 +169,7 @@ describe('AccessGraphCanvas', () => {
     // Every access-item node renders its NAME (label).
     expect(screen.getByText('Role A')).toBeInTheDocument()
     expect(screen.getByText('login')).toBeInTheDocument()
+    expect(screen.getByText('admin')).toBeInTheDocument()
     expect(screen.getByText('Billing AP')).toBeInTheDocument()
 
     // The old text status chip is gone entirely.
@@ -167,16 +181,19 @@ describe('AccessGraphCanvas', () => {
     // only accessibly-named icon per status is the node's.
     const needsReviewIcon = screen.getByLabelText('Needs review')
     expect(needsReviewIcon).toHaveAttribute('data-review-status', 'needsReview')
-    const completedIcon = screen.getByLabelText('Completed')
-    expect(completedIcon).toHaveAttribute('data-review-status', 'complete')
-    const delegatedIcon = screen.getByLabelText('Delegated')
-    expect(delegatedIcon).toHaveAttribute('data-review-status', 'delegated')
+    const approvedIcon = screen.getByLabelText('Approved')
+    expect(approvedIcon).toHaveAttribute('data-review-status', 'approved')
+    const revokedIcon = screen.getByLabelText('Revoked')
+    expect(revokedIcon).toHaveAttribute('data-review-status', 'revoked')
+    const reassignedIcon = screen.getByLabelText('Reassigned')
+    expect(reassignedIcon).toHaveAttribute('data-review-status', 'reassigned')
 
-    // The legend lists all three states.
+    // The legend lists all four states.
     const legend = screen.getByRole('group', { name: /review status legend/i })
     expect(legend).toHaveTextContent('Needs review')
-    expect(legend).toHaveTextContent('Completed')
-    expect(legend).toHaveTextContent('Delegated')
+    expect(legend).toHaveTextContent('Approved')
+    expect(legend).toHaveTextContent('Revoked')
+    expect(legend).toHaveTextContent('Reassigned')
 
     // No numeric count badge anywhere (the old accessCount edge is gone).
     expect(document.querySelector('.vc-graph-edge-badge')).toBeNull()

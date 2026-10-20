@@ -34,29 +34,39 @@ export interface CampaignMetrics {
 }
 
 /**
- * Classifies a review item into the three-state review status, the SINGLE
- * source of truth for the "needs review vs complete vs delegated" rule. The
- * precedence is:
- *   - reassigned → `'delegated'` (TERMINAL for this reviewer, even if a
- *     decision was also recorded),
- *   - else a recorded keep/remove decision (`completed` or `decision != null`)
- *     → `'complete'`,
+ * Classifies a review item into the four-state review status, the SINGLE
+ * source of truth for the "needs review vs approved vs revoked vs reassigned"
+ * rule. The precedence is:
+ *   - reassigned → `'reassigned'` (TERMINAL for this reviewer, even if a
+ *     keep/remove decision was also recorded),
+ *   - else `decision === 'REVOKE'` → `'revoked'` (reviewer removed access),
+ *   - else `decision === 'APPROVE'` → `'approved'` (reviewer kept access),
+ *   - else the defensive `completed && decision == null && !reassigned` corner
+ *     → `'approved'` (see the unreachable-fallback note below),
  *   - else → `'needsReview'`.
  * `computeMetrics` (via `isItemReviewed`) and the access-matrix review-status
  * stamp both derive from this so the dashboard and the graph can never disagree.
  */
 export function reviewStatusOf(item: ReviewItemVM): AccessReviewStatus {
-  if (item.reassigned === true) return 'delegated'
-  if (item.completed || item.decision != null) return 'complete'
+  if (item.reassigned === true) return 'reassigned'
+  if (item.decision === 'REVOKE') return 'revoked'
+  if (item.decision === 'APPROVE') return 'approved'
+  // Defensive, UNREACHABLE with current data: the data layer always populates
+  // `decision` whenever `completed` is true, so a bare completed-without-
+  // decision item should never occur. `reviewStatusOf` must stay total, so map
+  // this corner deterministically to `'approved'` — the non-destructive reading
+  // of a resolved, non-reassigned item (mirrors the old 'complete' mapping) and
+  // keeps `isItemReviewed` true for it.
+  if (item.completed) return 'approved'
   return 'needsReview'
 }
 
 /**
  * Whether a review item counts as REVIEWED (resolved) rather than still needing
  * a decision. An item is reviewed when its {@link reviewStatusOf} is anything
- * other than `'needsReview'` — i.e. `'complete'` (a recorded keep/remove
- * decision) OR `'delegated'` (reassigned to someone else, which resolves the
- * item from this reviewer's perspective). Expressed in terms of
+ * other than `'needsReview'` — i.e. `'approved'` or `'revoked'` (a recorded
+ * keep/remove decision) OR `'reassigned'` (handed to someone else, which
+ * resolves the item from this reviewer's perspective). Expressed in terms of
  * `reviewStatusOf` so the two helpers can never diverge.
  */
 export function isItemReviewed(item: ReviewItemVM): boolean {

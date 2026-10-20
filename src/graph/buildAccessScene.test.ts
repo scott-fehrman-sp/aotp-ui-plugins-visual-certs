@@ -204,7 +204,7 @@ describe('buildAccessScene', () => {
     }
   })
 
-  it('draws a complete user→access-item edge as a solid green stroke with the status marker', () => {
+  it('draws an approved user→access-item edge as a solid green stroke with the status marker', () => {
     const graph = deriveAccessGraph([
       row({
         id: '1',
@@ -212,7 +212,7 @@ describe('buildAccessScene', () => {
         entitlementId: 'e6',
         source: 'phone app',
         sourceId: 's3',
-        reviewStatus: 'complete',
+        reviewStatus: 'approved',
         accessItemKind: 'entitlement',
         accessItemId: 'e6',
       }),
@@ -222,14 +222,39 @@ describe('buildAccessScene', () => {
       (e) => e.source === 'user:u1' && e.target === 'entitlement:e6',
     )
     expect((userToEnt?.data as { reviewStatus?: string } | undefined)?.reviewStatus).toBe(
-      'complete',
+      'approved',
     )
-    expect(userToEnt?.className).toContain('vc-graph-edge-complete')
+    expect(userToEnt?.className).toContain('vc-graph-edge-approved')
     expect(userToEnt?.style?.stroke).toBe('var(--vc-allow)')
     expect(userToEnt?.style?.strokeDasharray).toBeUndefined()
   })
 
-  it('draws a delegated user→access-item edge as a dotted blue stroke with the status marker', () => {
+  it('draws a revoked user→access-item edge as a solid red stroke with the status marker', () => {
+    const graph = deriveAccessGraph([
+      row({
+        id: '1',
+        entitlement: 'read',
+        entitlementId: 'e6',
+        source: 'phone app',
+        sourceId: 's3',
+        reviewStatus: 'revoked',
+        accessItemKind: 'entitlement',
+        accessItemId: 'e6',
+      }),
+    ])
+    const scene = buildAccessScene(graph, 'LR')
+    const userToEnt = scene.edges.find(
+      (e) => e.source === 'user:u1' && e.target === 'entitlement:e6',
+    )
+    expect((userToEnt?.data as { reviewStatus?: string } | undefined)?.reviewStatus).toBe(
+      'revoked',
+    )
+    expect(userToEnt?.className).toContain('vc-graph-edge-revoked')
+    expect(userToEnt?.style?.stroke).toBe('var(--vc-deny)')
+    expect(userToEnt?.style?.strokeDasharray).toBeUndefined()
+  })
+
+  it('draws a reassigned user→access-item edge as a dotted blue stroke with the status marker', () => {
     const graph = deriveAccessGraph([
       row({
         id: '1',
@@ -239,7 +264,7 @@ describe('buildAccessScene', () => {
         entitlementId: 'e1',
         source: 'engr db',
         sourceId: 's1',
-        reviewStatus: 'delegated',
+        reviewStatus: 'reassigned',
         accessItemKind: 'role',
         accessItemId: 'role-a',
       }),
@@ -249,9 +274,9 @@ describe('buildAccessScene', () => {
       (e) => e.source === 'user:u1' && e.target === 'role:role-a',
     )
     expect((userToRole?.data as { reviewStatus?: string } | undefined)?.reviewStatus).toBe(
-      'delegated',
+      'reassigned',
     )
-    expect(userToRole?.className).toContain('vc-graph-edge-delegated')
+    expect(userToRole?.className).toContain('vc-graph-edge-reassigned')
     expect(userToRole?.style?.stroke).toBe('var(--vc-accent)')
     expect(userToRole?.style?.strokeDasharray).toBe('2 3')
   })

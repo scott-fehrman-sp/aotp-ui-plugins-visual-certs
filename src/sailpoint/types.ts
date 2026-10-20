@@ -200,16 +200,21 @@ export interface CurrentUser {
 
 /**
  * Review status of the user's directly-held access item, for the drill-down
- * graph. `'needsReview'` = no decision recorded yet; `'complete'` = a
- * keep/remove decision is recorded (not reassigned); `'delegated'` = the item
- * was reassigned to someone else, which is TERMINAL for this reviewer and takes
- * precedence over a recorded decision. See `reviewStatusOf` in
+ * graph. Four states: `'needsReview'` = no decision recorded yet; `'approved'`
+ * = reviewer KEPT the access (`decision === 'APPROVE'`); `'revoked'` = reviewer
+ * REMOVED the access (`decision === 'REVOKE'`); `'reassigned'` = the item was
+ * handed to someone else to review, which is TERMINAL for this reviewer and
+ * takes precedence over a recorded decision. See `reviewStatusOf` in
  * `domain/metrics.ts`, the single source of truth; `isItemReviewed` is true for
- * both `'complete'` and `'delegated'`. Only the FIRST hop off the user (the role
- * / access profile / directly-held entitlement under review) carries this;
- * deeper explanatory hops stay neutral.
+ * `'approved'`, `'revoked'`, and `'reassigned'`. Only the FIRST hop off the user
+ * (the role / access profile / directly-held entitlement under review) carries
+ * this; deeper explanatory hops stay neutral.
  */
-export type AccessReviewStatus = 'needsReview' | 'complete' | 'delegated'
+export type AccessReviewStatus =
+  | 'needsReview'
+  | 'approved'
+  | 'revoked'
+  | 'reassigned'
 
 /**
  * One fully-expanded row of the access matrix: a single path from a user to a
@@ -283,11 +288,12 @@ export interface AccessMatrixRowVM {
   /**
    * Review status of the review item this row came from, for the drill-down
    * graph's user→access-item edge/node marking. Stamped on EVERY row the item
-   * produces (via `reviewStatusOf`, reassigned→'delegated' precedence).
+   * produces (via `reviewStatusOf`, reassigned→'reassigned' precedence).
    * Enrichment only — NEVER part of the five-id dedup key (`rowKey`); when two
-   * rows collide on the dedup identity but disagree on status, `'needsReview'`
-   * wins so outstanding work is never hidden, and a `'complete'`-vs-`'delegated'`
-   * collision resolves to `'delegated'` (reassignment is terminal).
+   * rows collide on the dedup identity but disagree on status, the deterministic
+   * precedence `needsReview > reassigned > revoked > approved` applies so
+   * outstanding work is never hidden and reassignment stays terminal over any
+   * plain keep/remove decision.
    */
   reviewStatus?: AccessReviewStatus
   /**
@@ -338,9 +344,9 @@ export interface AccessGraphNode {
    * Review status of this node, set ONLY on the user's directly-held access
    * item (the first hop off the user) in the drill-down graph. Deeper nodes and
    * the user node itself leave it `undefined`. One of `'needsReview'` /
-   * `'complete'` / `'delegated'`; `'needsReview'` wins when the same access-item
-   * node is reached from rows with differing status (reassigned→`'delegated'`
-   * is terminal otherwise).
+   * `'approved'` / `'revoked'` / `'reassigned'`; precedence on collision is
+   * `needsReview > reassigned > revoked > approved` (needsReview never hidden,
+   * reassignment terminal over a plain keep/remove decision).
    */
   reviewStatus?: AccessReviewStatus
 }
@@ -361,11 +367,11 @@ export interface AccessGraphEdge {
   /**
    * Review status of this edge, set ONLY on the user→access-item edge (the
    * first hop off the user) in the drill-down graph. Deeper edges leave it
-   * `undefined`. One of `'needsReview'` / `'complete'` / `'delegated'`;
-   * `'needsReview'` wins when the same edge is reached from rows with differing
-   * status (reassigned→`'delegated'` is terminal otherwise). `pathCount` is
-   * retained for any data-layer consumer, but the drill-down renderer no longer
-   * draws a count badge.
+   * `undefined`. One of `'needsReview'` / `'approved'` / `'revoked'` /
+   * `'reassigned'`; precedence on collision is
+   * `needsReview > reassigned > revoked > approved` (needsReview never hidden,
+   * reassignment terminal). `pathCount` is retained for any data-layer consumer,
+   * but the drill-down renderer no longer draws a count badge.
    */
   reviewStatus?: AccessReviewStatus
 }
@@ -433,9 +439,9 @@ export interface AccessSceneNodeData extends Record<string, unknown> {
   /**
    * Review status threaded from {@link AccessGraphNode.reviewStatus}: set only
    * on the user's directly-held access-item card in drill-down so the node can
-   * render a status signal + accent. One of `'needsReview'` / `'complete'` /
-   * `'delegated'`. Omitted on every other node (grid user cards, user node,
-   * deeper hops).
+   * render a status signal + accent. One of `'needsReview'` / `'approved'` /
+   * `'revoked'` / `'reassigned'`. Omitted on every other node (grid user cards,
+   * user node, deeper hops).
    */
   reviewStatus?: AccessReviewStatus
 }
