@@ -281,6 +281,7 @@ function CampaignRoute({
           <CampaignDashboard
             campaign={campaign}
             items={review.items}
+            matrix={matrix}
             onStartReviewing={() => setStep('review')}
             onViewMatrix={() => setStep('matrix')}
           />

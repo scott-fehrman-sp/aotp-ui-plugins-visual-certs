@@ -46,6 +46,12 @@
   margin-bottom: 20px;
 }
 
+/* The "what's in this review" composition row has three cards (Users, Access
+ * items, Sources), so it gets its own three-column track. */
+.vc-metrics-row-access {
+  grid-template-columns: repeat(3, 1fr);
+}
+
 .vc-charts-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

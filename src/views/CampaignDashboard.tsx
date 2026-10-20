@@ -4,8 +4,10 @@ import { DecisionBar } from '../components/charts/DecisionBar'
 import { PriorityBreakdown } from '../components/charts/PriorityBreakdown'
 import { ProgressDonut } from '../components/charts/ProgressDonut'
 import { MetricCard } from '../components/MetricCard'
+import { computeAccessCounts } from '../domain/accessCounts'
 import { computeMetrics } from '../domain/metrics'
 import { countByPriority, prioritize } from '../domain/priority'
+import type { AccessMatrixState } from '../state/useAccessMatrix'
 import type { CampaignVM, ReviewItemVM } from '../sailpoint/types'
 import './CampaignDashboard.css'
 
@@ -21,6 +23,15 @@ interface CampaignDashboardProps {
    * intact).
    */
   onViewMatrix?: () => void
+  /**
+   * The expanded access matrix state. When provided, the overview shows
+   * distinct user / access-item / source counts derived from the SAME
+   * fully-expanded graph that powers the access map, so the numbers match it
+   * exactly. The cards show a placeholder until the matrix resolves. When
+   * omitted the composition cards are not rendered (keeps existing tests
+   * intact).
+   */
+  matrix?: AccessMatrixState
   /** Current time, injectable for tests. */
   now?: Date
 }
@@ -36,6 +47,7 @@ export function CampaignDashboard({
   items,
   onStartReviewing,
   onViewMatrix,
+  matrix,
   now,
 }: CampaignDashboardProps) {
   const metrics = useMemo(
@@ -47,6 +59,22 @@ export function CampaignDashboard({
     () => (items ? countByPriority(prioritize(items)) : null),
     [items],
   )
+
+  // Distinct user / access-item / source counts from the expanded access graph
+  // (the same one the map renders). Computed only once the matrix is ready; a
+  // placeholder shows while it resolves.
+  const accessCounts = useMemo(
+    () =>
+      matrix && matrix.status === 'ready'
+        ? computeAccessCounts(matrix.graph)
+        : null,
+    [matrix],
+  )
+  // The composition cards resolve independently of the decision metrics, so
+  // show a dash while loading and keep the layout stable.
+  const countsLoading = matrix != null && matrix.status !== 'ready'
+  const countOrDash = (value: number | undefined): string | number =>
+    accessCounts && value !== undefined ? value : countsLoading ? '—' : 0
 
   const highCount = priorityCounts?.high ?? 0
   const ctaLabel = metrics.reviewed > 0 ? 'Continue reviewing' : 'Start reviewing'
@@ -103,6 +131,22 @@ export function CampaignDashboard({
         <MetricCard label="Removed" value={metrics.revoked} tone="deny" />
         <MetricCard label="Reassigned" value={metrics.reassigned} tone="reassign" />
       </div>
+
+      {/* "What's in this review" — distinct counts from the expanded access map.
+          Rendered only when the matrix state is wired in. */}
+      {matrix && (
+        <div
+          className="vc-metrics-row vc-metrics-row-access"
+          aria-busy={countsLoading}
+        >
+          <MetricCard label="Users" value={countOrDash(accessCounts?.users)} />
+          <MetricCard
+            label="Access items"
+            value={countOrDash(accessCounts?.accessItems)}
+          />
+          <MetricCard label="Sources" value={countOrDash(accessCounts?.sources)} />
+        </div>
+      )}
 
       <div className="vc-charts-grid">
         <ProgressDonut

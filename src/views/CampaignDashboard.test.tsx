@@ -1,8 +1,47 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
-import type { CampaignVM, ReviewItemVM } from '../sailpoint/types'
+import { deriveAccessGraph } from '../domain/accessGraph'
+import type {
+  AccessMatrixRowVM,
+  CampaignVM,
+  ReviewItemVM,
+} from '../sailpoint/types'
+import type { AccessMatrixState } from '../state/useAccessMatrix'
 import { CampaignDashboard } from './CampaignDashboard'
+
+/** A minimal AccessMatrixState for the composition-count cards. */
+function matrixState(
+  overrides: Partial<AccessMatrixState> = {},
+): AccessMatrixState {
+  return {
+    status: 'ready',
+    rows: [],
+    graph: { nodes: [], edges: [] },
+    unresolvedCount: 0,
+    error: null,
+    reload: vi.fn(),
+    ...overrides,
+  }
+}
+
+function matrixRow(overrides: Partial<AccessMatrixRowVM>): AccessMatrixRowVM {
+  return {
+    id: 'r',
+    userId: 'u1',
+    user: 'User One',
+    role: '',
+    roleId: null,
+    accessProfile: '',
+    accessProfileId: null,
+    entitlement: '',
+    entitlementId: null,
+    source: '',
+    sourceId: null,
+    unresolved: false,
+    ...overrides,
+  }
+}
 
 const campaign: CampaignVM = {
   id: 'c1',
@@ -109,6 +148,57 @@ describe('CampaignDashboard', () => {
       screen.getByRole('button', { name: /continue reviewing/i }),
     )
     expect(onStart).toHaveBeenCalledOnce()
+  })
+
+  it('does not render the access-count cards without a matrix prop', () => {
+    render(
+      <CampaignDashboard
+        campaign={campaign}
+        items={items}
+        onStartReviewing={vi.fn()}
+        now={now}
+      />,
+    )
+    expect(screen.queryByText('Users')).not.toBeInTheDocument()
+    expect(screen.queryByText('Access items')).not.toBeInTheDocument()
+    expect(screen.queryByText('Sources')).not.toBeInTheDocument()
+  })
+
+  it('shows a placeholder on the access-count cards while the matrix resolves', () => {
+    render(
+      <CampaignDashboard
+        campaign={campaign}
+        items={items}
+        matrix={matrixState({ status: 'loading' })}
+        onStartReviewing={vi.fn()}
+        now={now}
+      />,
+    )
+    const usersCard = screen.getByText('Users').closest('.vc-metric')
+    expect(usersCard).toHaveTextContent('—')
+    expect(screen.getByText('Access items').closest('.vc-metric')).toHaveTextContent('—')
+    expect(screen.getByText('Sources').closest('.vc-metric')).toHaveTextContent('—')
+  })
+
+  it('shows distinct user / access-item / source counts from the expanded matrix', () => {
+    // Two users; 3 distinct leaf entitlements; 2 distinct sources.
+    const graph = deriveAccessGraph([
+      matrixRow({ id: '1', userId: 'u1', user: 'User One', role: 'Role A', roleId: 'ra', accessProfile: 'foo', accessProfileId: 'af', entitlement: 'read', entitlementId: 'e1', source: 'engr db', sourceId: 's1' }),
+      matrixRow({ id: '2', userId: 'u1', user: 'User One', entitlement: 'call', entitlementId: 'e2', source: 'phone app', sourceId: 's2' }),
+      matrixRow({ id: '3', userId: 'u2', user: 'User Two', accessProfile: 'bar', accessProfileId: 'ab', entitlement: 'write', entitlementId: 'e3', source: 'engr db', sourceId: 's1' }),
+    ])
+    render(
+      <CampaignDashboard
+        campaign={campaign}
+        items={items}
+        matrix={matrixState({ status: 'ready', graph })}
+        onStartReviewing={vi.fn()}
+        now={now}
+      />,
+    )
+    expect(screen.getByText('Users').closest('.vc-metric')).toHaveTextContent('2')
+    expect(screen.getByText('Access items').closest('.vc-metric')).toHaveTextContent('3')
+    expect(screen.getByText('Sources').closest('.vc-metric')).toHaveTextContent('2')
   })
 
   it('shows a done message and hides the CTA when everything is decided', () => {
