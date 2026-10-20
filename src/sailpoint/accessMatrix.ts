@@ -14,7 +14,7 @@ import type { EntitlementsApi } from 'sailpoint-api-client/entitlements/api'
 import type { RolesApi } from 'sailpoint-api-client/roles/api'
 import type { SearchApi } from 'sailpoint-api-client/search/api'
 import type { SourcesApi } from 'sailpoint-api-client/sources/api'
-import { isItemReviewed } from '../domain/metrics'
+import { reviewStatusOf } from '../domain/metrics'
 import { fetchIdentityAttributes } from './identities'
 import type {
   AccessGraphNodeKind,
@@ -268,9 +268,10 @@ interface RowTuple {
   /** Resolved SOURCE description, on a resolved leaf row. */
   sourceDescription?: string
   /**
-   * Review status of the source review item (via `isItemReviewed`), on every
+   * Review status of the source review item (via `reviewStatusOf`), on every
    * row the item produces. NEVER part of `rowKey` — same enrichment pattern as
-   * `userDepartment`. On a dedup collision, needsReview-wins.
+   * `userDepartment`. On a dedup collision, needsReview-wins and a
+   * complete-vs-delegated tie resolves to 'delegated' (reassignment terminal).
    */
   reviewStatus?: AccessReviewStatus
   /** Kind of the user's directly-held access item (first hop off the user). */
@@ -352,9 +353,7 @@ async function expandItem(
   // The generic `access` fallback has no composition node, so it carries no
   // access-item kind (its degenerate row still carries status on the user side,
   // but with no access-item node/edge there is nothing to mark downstream).
-  const reviewStatus: AccessReviewStatus = isItemReviewed(item)
-    ? 'complete'
-    : 'needsReview'
+  const reviewStatus: AccessReviewStatus = reviewStatusOf(item)
   const accessItemKind: AccessGraphNodeKind | undefined =
     item.accessKind === 'role' ||
     item.accessKind === 'accessProfile' ||
@@ -544,14 +543,20 @@ export async function resolveMatrix(
         byKey.set(id, { id, ...tuple })
         continue
       }
-      // First-wins on every enrichment field EXCEPT reviewStatus, where
-      // needsReview-wins: if any contributing row still needs review, the merged
-      // row must say so rather than hide outstanding work behind 'complete'.
-      if (
-        existing.reviewStatus === 'complete' &&
-        tuple.reviewStatus === 'needsReview'
-      ) {
+      // First-wins on every enrichment field EXCEPT reviewStatus, which follows
+      // a three-way precedence on collision:
+      //   - needsReview-wins: if any contributing row still needs review, the
+      //     merged row must say so rather than hide outstanding work.
+      //   - otherwise a complete-vs-delegated tie resolves to 'delegated':
+      //     reassignment is terminal for this reviewer, so it outranks a plain
+      //     keep/remove decision when two resolved rows collide.
+      if (tuple.reviewStatus === 'needsReview') {
         existing.reviewStatus = 'needsReview'
+      } else if (
+        existing.reviewStatus !== 'needsReview' &&
+        tuple.reviewStatus === 'delegated'
+      ) {
+        existing.reviewStatus = 'delegated'
       }
     }
   }

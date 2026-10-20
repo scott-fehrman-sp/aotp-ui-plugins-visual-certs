@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { CampaignVM, ReviewItemVM } from '../sailpoint/types'
-import { computeMetrics, daysUntil } from './metrics'
+import { computeMetrics, daysUntil, isItemReviewed, reviewStatusOf } from './metrics'
 
 function campaign(overrides: Partial<CampaignVM> = {}): CampaignVM {
   return {
@@ -40,6 +40,32 @@ function reviewItem(overrides: Partial<ReviewItemVM> = {}): ReviewItemVM {
     ...overrides,
   }
 }
+
+describe('reviewStatusOf', () => {
+  it('returns delegated for a reassigned item, even when also decided', () => {
+    expect(reviewStatusOf(reviewItem({ reassigned: true }))).toBe('delegated')
+    expect(
+      reviewStatusOf(
+        reviewItem({ reassigned: true, completed: true, decision: 'APPROVE' }),
+      ),
+    ).toBe('delegated')
+  })
+
+  it('returns complete for a decided (not reassigned) item', () => {
+    expect(reviewStatusOf(reviewItem({ completed: true }))).toBe('complete')
+    expect(reviewStatusOf(reviewItem({ decision: 'REVOKE' }))).toBe('complete')
+  })
+
+  it('returns needsReview for an undecided, non-reassigned item', () => {
+    expect(reviewStatusOf(reviewItem())).toBe('needsReview')
+  })
+
+  it('isItemReviewed is true for complete and delegated, false for needsReview', () => {
+    expect(isItemReviewed(reviewItem({ completed: true }))).toBe(true)
+    expect(isItemReviewed(reviewItem({ reassigned: true }))).toBe(true)
+    expect(isItemReviewed(reviewItem())).toBe(false)
+  })
+})
 
 describe('daysUntil', () => {
   const now = new Date('2026-01-10T00:00:00Z')

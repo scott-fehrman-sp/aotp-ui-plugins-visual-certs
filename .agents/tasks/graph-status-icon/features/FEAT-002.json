@@ -1,0 +1,27 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Rework the access-item node presentation in the per-user drill-down graph: fix the missing NAME by removing the stacked text status chip, replace the chip with a three-state status ICON in the lower-right corner (needs review / completed / delegated), each a distinct SVG shape with an accessible label/title, keep a subtle card accent as a secondary signal, and update the drill-down legend from two entries to three. Depends on FEAT-001 (consumes the widened AccessReviewStatus union and the three-state node/edge data). Grid-mode (all-users overview) behavior and tests stay unchanged.",
+  "status": "pending",
+  "steps": [
+    "src/graph/AccessNode.tsx: remove the StatusChip component and STATUS_CHIP_LABEL and both usages (interactive card branch and read-only card branch). Add a local inline-SVG StatusIcon component mapping the three statuses to distinct SHAPES (needsReview = hollow circle with exclamation; complete = check mark; delegated = forward/hand-off arrow), each wrapped so it has an accessible name: role='img' with aria-label and a <title>, text 'Needs review' / 'Completed' / 'Delegated', plus a stable data-review-status={status} hook and className `vc-graph-status-icon vc-graph-status-icon-${status}`. Render the icon as the LAST child of the <article> card (absolutely positioned bottom-right via CSS). Ensure the card still renders the label (`.vc-graph-card-label` with data.label) AND the kind caption (`.vc-graph-card-kind`); with only two stacked text rows the name is no longer crowded. Keep the existing statusClass accent application. Use a Record keyed by the three-member union so tsc enforces exhaustiveness.",
+    "src/graph/AccessGraph.css: delete the `.vc-graph-status-chip`, `.vc-graph-status-chip-needsReview`, `.vc-graph-status-chip-complete` rules. Add `.vc-graph-status-icon` (position:absolute; bottom:6px; right:6px; width/height ~18px; display inline-flex; pointer-events:none; line-height:0) and per-status color rules (`.vc-graph-status-icon-needsReview { color: var(--vc-warn) }`, `-complete { color: var(--vc-allow) }`, `-delegated { color: var(--vc-accent) }`) with the SVG using `fill`/`stroke: currentColor`. Add `.vc-graph-card-status-delegated` mirroring the complete/needsReview accent rules but with `var(--vc-accent)` (left-border + ring). Add the delegated edge rule `.vc-graph-wrap .react-flow__edge.vc-graph-edge-delegated .react-flow__edge-path { stroke: var(--vc-accent); stroke-width: 2; stroke-dasharray: 2 3; }`. Add legend swatch `.vc-graph-legend-swatch-delegated`. Confirm `.vc-graph-card` stays position:relative.",
+    "src/graph/AccessGraphCanvas.tsx: change the drill-down legend (role='group' aria-label 'Review status legend') from two rows to three: Needs review, Completed, Delegated. Each row should render the same StatusIcon used on the node (or a matching swatch) plus the text label so the legend visually matches the node icons. Keep the legend rendered only in drill-down (inDrilldown), not in grid mode.",
+    "src/graph/AccessGraphCanvas.test.tsx: update the 'marks review status in drill-down' test to the three-state model. Build a drill-down graph with a needsReview item, a complete item, and a delegated item (reassigned). Assert: each access-item node renders its NAME (getByText on the label); the old chip is GONE (queryByLabelText('Review status: Needs review') is null AND document.querySelector('.vc-graph-status-chip') is null); the status ICON is present with the correct accessible name via getByLabelText('Needs review'), getByLabelText('Completed'), getByLabelText('Delegated'); the legend (getByRole('group', { name: /review status legend/i })) has text content 'Needs review', 'Completed', and 'Delegated'. Keep using the scoped stubRect helper; do NOT add a global getBoundingClientRect stub. Leave the grid-mode tests and the tooltip tests unchanged (except the 'Review complete' legend text becomes 'Completed' and a third 'Delegated' row is asserted)."
+  ],
+  "acceptance_criteria": [
+    "Every access-item node in drill-down renders its full NAME (label) and kind caption; no text status chip is present anywhere (.vc-graph-status-chip has zero matches).",
+    "Each of the user's directly-held access-item nodes shows exactly one corner status icon in the lower-right with a distinct shape per state and an accessible name of 'Needs review', 'Completed', or 'Delegated'; the user node, deeper explanatory nodes, and the source node show NO status icon.",
+    "The drill-down legend lists three entries (Needs review / Completed / Delegated), each with its icon + label, and appears only in drill-down (absent in grid mode).",
+    "A subtle card accent (left-border/ring) remains as the secondary signal for all three states (needsReview amber, complete green, delegated blue); the corner icon is the primary signal.",
+    "npm run build passes with zero type errors (the status->icon map is exhaustive over the three-member union)."
+  ],
+  "verification": [
+    "npx vitest run src/graph/AccessGraphCanvas.test.tsx  (all green: name present, chip gone, three icons with correct accessible names, legend lists three)",
+    "npm run build  (tsc -b && vite build, zero type errors)",
+    "npm run lint  (clean)",
+    "npm test  (full suite green; if src/state/useProvenance.test.ts fails only under full-suite load, re-run it isolated: npx vitest run src/state/useProvenance.test.ts)"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

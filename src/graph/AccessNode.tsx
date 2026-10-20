@@ -1,5 +1,5 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
-import type { AccessGraphNodeKind } from '../sailpoint/types'
+import type { AccessGraphNodeKind, AccessReviewStatus } from '../sailpoint/types'
 import type { AccessSceneNode } from './buildAccessScene'
 import { NodeTooltip } from './NodeTooltip'
 
@@ -13,18 +13,19 @@ const KIND_LABEL: Record<AccessGraphNodeKind, string> = {
 }
 
 /** Chip text per review status, shown on the user's directly-held access item. */
-const STATUS_CHIP_LABEL = {
+const STATUS_CHIP_LABEL: Record<AccessReviewStatus, string> = {
   needsReview: 'Needs review',
   complete: 'Reviewed',
-} as const
+  delegated: 'Reassigned',
+}
 
 /**
  * The review-status chip rendered inside an access-item card. Not color-only:
- * it carries its own text ("Needs review" / "Reviewed") plus an `aria-label`
- * and a stable `data-review-status` hook, so status reads without relying on
- * color.
+ * it carries its own text ("Needs review" / "Reviewed" / "Reassigned") plus an
+ * `aria-label` and a stable `data-review-status` hook, so status reads without
+ * relying on color.
  */
-function StatusChip({ status }: { status: 'needsReview' | 'complete' }) {
+function StatusChip({ status }: { status: AccessReviewStatus }) {
   const text = STATUS_CHIP_LABEL[status]
   return (
     <span

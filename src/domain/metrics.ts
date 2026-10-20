@@ -3,7 +3,11 @@
  * decision counts, the live review items, and the deadline. All pure functions
  * so the dashboard and charts can recompute instantly as decisions are made.
  */
-import type { CampaignVM, ReviewItemVM } from '../sailpoint/types'
+import type {
+  AccessReviewStatus,
+  CampaignVM,
+  ReviewItemVM,
+} from '../sailpoint/types'
 
 /** Everything the dashboard needs to render progress + headline numbers. */
 export interface CampaignMetrics {
@@ -30,16 +34,33 @@ export interface CampaignMetrics {
 }
 
 /**
+ * Classifies a review item into the three-state review status, the SINGLE
+ * source of truth for the "needs review vs complete vs delegated" rule. The
+ * precedence is:
+ *   - reassigned → `'delegated'` (TERMINAL for this reviewer, even if a
+ *     decision was also recorded),
+ *   - else a recorded keep/remove decision (`completed` or `decision != null`)
+ *     → `'complete'`,
+ *   - else → `'needsReview'`.
+ * `computeMetrics` (via `isItemReviewed`) and the access-matrix review-status
+ * stamp both derive from this so the dashboard and the graph can never disagree.
+ */
+export function reviewStatusOf(item: ReviewItemVM): AccessReviewStatus {
+  if (item.reassigned === true) return 'delegated'
+  if (item.completed || item.decision != null) return 'complete'
+  return 'needsReview'
+}
+
+/**
  * Whether a review item counts as REVIEWED (resolved) rather than still needing
- * a decision. An item is reviewed when a decision has been recorded
- * (`completed`), a decision value is present, OR it was reassigned to someone
- * else — reassignment resolves the item from this reviewer's perspective. This
- * is the SINGLE source of truth for the "complete vs needs review" rule:
- * `computeMetrics` and the access-matrix review-status stamp both call it so the
- * dashboard and the graph can never disagree.
+ * a decision. An item is reviewed when its {@link reviewStatusOf} is anything
+ * other than `'needsReview'` — i.e. `'complete'` (a recorded keep/remove
+ * decision) OR `'delegated'` (reassigned to someone else, which resolves the
+ * item from this reviewer's perspective). Expressed in terms of
+ * `reviewStatusOf` so the two helpers can never diverge.
  */
 export function isItemReviewed(item: ReviewItemVM): boolean {
-  return item.completed || item.decision != null || item.reassigned === true
+  return reviewStatusOf(item) !== 'needsReview'
 }
 
 /** Milliseconds in a day. */

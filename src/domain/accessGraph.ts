@@ -120,10 +120,12 @@ export function deriveAccessGraph(
   }
 
   /**
-   * Stamps review status onto a node/edge with needsReview-wins: once a node or
-   * edge is marked `needsReview` it stays that way; `complete` only applies when
-   * nothing has set it to `needsReview`. Leaves the field untouched when
-   * `status` is undefined.
+   * Stamps review status onto a node/edge with needsReview-wins across all three
+   * states: once a node or edge is marked `needsReview` it stays that way;
+   * `'complete'` and `'delegated'` both apply only when nothing has set it to
+   * `needsReview` (by plain assignment, last-write-wins between the two — the
+   * matrix already resolves the complete-vs-delegated precedence upstream).
+   * Leaves the field untouched when `status` is undefined.
    */
   const markStatus = (
     target: { reviewStatus?: AccessReviewStatus } | undefined,

@@ -326,6 +326,74 @@ describe('deriveAccessGraph', () => {
     expect(entToSource?.reviewStatus).toBeUndefined()
   })
 
+  it('stamps a delegated status on the user access-item node + user→item edge only', () => {
+    const { nodes, edges } = deriveAccessGraph([
+      row({
+        id: '1',
+        role: 'Role A',
+        roleId: 'role-a',
+        accessProfile: 'foo',
+        accessProfileId: 'ap-foo',
+        entitlement: 'read',
+        entitlementId: 'ent-read-engr',
+        source: 'engr db',
+        sourceId: 'src-engr',
+        reviewStatus: 'delegated',
+        accessItemKind: 'role',
+        accessItemId: 'role-a',
+      }),
+    ])
+    const nodeById = new Map(nodes.map((n) => [n.id, n]))
+    expect(nodeById.get('role:role-a')?.reviewStatus).toBe('delegated')
+    expect(nodeById.get('user:u1')?.reviewStatus).toBeUndefined()
+    expect(nodeById.get('accessProfile:ap-foo')?.reviewStatus).toBeUndefined()
+    expect(nodeById.get('entitlement:ent-read-engr')?.reviewStatus).toBeUndefined()
+    expect(nodeById.get('source:src-engr')?.reviewStatus).toBeUndefined()
+
+    const edgeStatus = (from: string, to: string) =>
+      edges.find((e) => e.from === from && e.to === to)?.reviewStatus
+    expect(edgeStatus('user:u1', 'role:role-a')).toBe('delegated')
+    expect(edgeStatus('role:role-a', 'accessProfile:ap-foo')).toBeUndefined()
+  })
+
+  it('needsReview-wins over a delegated access-item row', () => {
+    // One delegated row and one needs-review row for the same role: needsReview
+    // outranks delegated.
+    const { nodes, edges } = deriveAccessGraph([
+      row({
+        id: '1',
+        role: 'Role A',
+        roleId: 'role-a',
+        entitlement: 'read',
+        entitlementId: 'e1',
+        source: 'engr db',
+        sourceId: 's1',
+        reviewStatus: 'delegated',
+        accessItemKind: 'role',
+        accessItemId: 'role-a',
+      }),
+      row({
+        id: '2',
+        role: 'Role A',
+        roleId: 'role-a',
+        entitlement: 'write',
+        entitlementId: 'e2',
+        source: 'engr db',
+        sourceId: 's1',
+        reviewStatus: 'needsReview',
+        accessItemKind: 'role',
+        accessItemId: 'role-a',
+      }),
+    ])
+    expect(nodes.find((n) => n.id === 'role:role-a')?.reviewStatus).toBe(
+      'needsReview',
+    )
+    expect(
+      edges.find((e) => e.from === 'user:u1' && e.to === 'role:role-a')
+        ?.reviewStatus,
+    ).toBe('needsReview')
+  })
+
   it('applies needsReview-wins when an access-item node is reached from complete and incomplete rows', () => {
     // Two rows for the SAME role-a node: one complete, one needing review. The
     // node + user→role edge must end up needsReview.

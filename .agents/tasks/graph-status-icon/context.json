@@ -1,0 +1,31 @@
+{
+  "project_type": "SailPoint ISC full-page UI plugin: React 19 + @xyflow/react (React Flow) graph + Recharts dashboard, built with Vite, tested with Vitest + React Testing Library.",
+  "language": "TypeScript (TSX), ES modules.",
+  "build_system": "Vite 8. tsconfig project references (tsconfig.app.json, tsconfig.node.json). TypeScript ~6.0. Build = tsc -b then vite build. No monorepo; single package at the worktree root.",
+  "test_framework": "Vitest 3 + @testing-library/react + @testing-library/jest-dom + jsdom. React Flow runs with css:false in tests; pure scene/graph builders are unit-tested without mounting the canvas.",
+  "build_command": "npm run build  (tsc -b && vite build)",
+  "test_command": "npm test  (vitest run). Single file: npx vitest run <path>. Lint: npm run lint (eslint .).",
+  "verification_instructions": "1) npm run build must produce ZERO type errors — the review-status union is widened from 2 to 3 members, so watch for non-exhaustive switch/object-map errors anywhere the union is matched (buildAccessScene edge styling, AccessNode icon map, any Record<AccessReviewStatus, X>). 2) npm run lint must be clean. 3) npm test must be all green. Do NOT weaken existing tests except the ones that assert the removed status chip text or the two-state assumption (the accessMatrix.test.ts case that currently expects a reassigned item -> 'complete' must become 'delegated'). KNOWN FLAKE: src/state/useProvenance.test.ts can fail only under full-suite load and passes on an isolated re-run (npx vitest run src/state/useProvenance.test.ts).",
+  "snapshot_or_generated_files": null,
+  "environment_constraints": "Tests run in jsdom which never lays out: getBoundingClientRect returns an all-zero rect, so the NodeTooltip refuses to open. The AccessGraphCanvas.test.tsx file already has a SCOPED stubRect(el) helper that stubs the rect for one element only. Do NOT add a global getBoundingClientRect stub — it broke the Recharts dashboard test previously. React Flow's d3-zoom pointer sequence breaks in jsdom, so tests fire plain DOM events on the card's own React handlers instead of driving pointer/zoom.",
+  "contribution_requirements": "README.md documents the plugin. Keep the two token namespaces separate: app tokens --vc-* live in src/index.css; graph-canvas tokens (--canvas, --ink, --line, --accent, etc.) live in src/graph/tokens.css. The access-item status work reuses the app --vc-* decision tokens (--vc-warn amber, --vc-allow green, --vc-accent blue) already pulled into AccessGraph.css. Status signals must never be color-only (icon SHAPE must differ + an accessible label/title). Node cards expose an accessible name; the drill-down legend is a role=group labelled 'Review status legend'.",
+  "key_patterns": "Single source of truth for reviewed-vs-not is isItemReviewed in src/domain/metrics.ts, reused by computeMetrics AND by expandItem in accessMatrix.ts. reviewStatus is ENRICHMENT ONLY and is NEVER part of rowKey/dedup; on a dedup collision needsReview-wins. The three-way mapping precedence is: reassigned -> 'delegated' (terminal), else completed||decision!=null -> 'complete', else 'needsReview'. The status is stamped only on the user's DIRECTLY-held access item (first hop off the user, levels[1] in accessGraph.ts) and the user->item edge; deeper hops, the user node, and the source get NO status. Blue reassign precedent: --vc-accent is used by MetricCard data-tone='reassign' (MetricCard.css) and the DecisionBar reassign bar (DecisionBar.tsx) and .vc-btn-reassign; 'delegated' reuses --vc-accent to stay consistent. The node card .vc-graph-card is position:relative already, so a corner icon positions absolutely with no new stacking context.",
+  "relevant_files": [
+    "src/sailpoint/types.ts  (AccessReviewStatus union + reviewStatus docs on AccessMatrixRowVM/AccessGraphNode/AccessGraphEdge/AccessSceneNodeData)",
+    "src/domain/metrics.ts  (isItemReviewed single source of truth; add reviewStatusOf)",
+    "src/domain/metrics.test.ts",
+    "src/sailpoint/accessMatrix.ts  (expandItem stamps reviewStatus; resolveMatrix merge needsReview-wins; rowKey excludes status)",
+    "src/sailpoint/accessMatrix.test.ts",
+    "src/domain/accessGraph.ts  (markStatus needsReview-wins; stamps levels[1] + user->item edge)",
+    "src/domain/accessGraph.test.ts",
+    "src/graph/buildAccessScene.ts  (node data.reviewStatus passthrough; edge styling switch by status; NODE_HEIGHT=64; no count badge)",
+    "src/graph/buildAccessScene.test.ts",
+    "src/graph/AccessNode.tsx  (StatusChip to remove; add corner StatusIcon; render label+kind caption)",
+    "src/graph/AccessGraph.css  (.vc-graph-card flex box; .vc-graph-status-chip* to remove; .vc-graph-card-status-*; edge status rules; legend swatches)",
+    "src/graph/AccessGraphCanvas.tsx  (drill-down legend, 2 entries -> 3)",
+    "src/graph/AccessGraphCanvas.test.tsx  (scoped stubRect helper; chip/legend/name assertions)",
+    "src/index.css  (--vc-warn, --vc-allow, --vc-accent tokens)",
+    "src/components/MetricCard.css + src/components/charts/DecisionBar.tsx  (reassign=--vc-accent precedent, study only)"
+  ],
+  "directory_structure": "src/sailpoint = API wrappers + view-model types + the access matrix expansion. src/domain = pure derivations (metrics, accessGraph, priority, language). src/graph = the React Flow access graph (pure scene builders buildAccessScene/buildUserGridScene/userSubgraph, the AccessNode custom node, AccessGraphCanvas orchestrator, NodeTooltip, CSS + tokens.css). src/components = reusable UI incl. charts. src/views = top-level screens. src/state = data hooks. Tests are colocated as *.test.ts(x)."
+}

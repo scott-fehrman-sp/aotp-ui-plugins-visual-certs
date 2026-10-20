@@ -199,10 +199,23 @@ export function buildAccessScene(
   })
 
   // Plain built-in React Flow edges (no custom edge type). The user→access-item
-  // edge conveys review status via stroke color + dash (needsReview) / solid
-  // (complete); the node chip carries the non-color text signal. Deeper hops are
-  // neutral. The count badge was removed with the drill-down rework, so
-  // `pathCount` no longer drives any rendering here.
+  // edge conveys review status via stroke color + dash across THREE states:
+  // needsReview → dashed amber, complete → solid green, delegated → dotted blue
+  // (reassigned, terminal). The node carries the non-color shape/text signal.
+  // Deeper hops are neutral. The count badge was removed with the drill-down
+  // rework, so `pathCount` no longer drives any rendering here.
+  const edgeStyle = (
+    status: NonNullable<(typeof graph.edges)[number]['reviewStatus']>,
+  ): Edge['style'] => {
+    switch (status) {
+      case 'needsReview':
+        return { stroke: 'var(--vc-warn)', strokeWidth: 2, strokeDasharray: '6 4' }
+      case 'complete':
+        return { stroke: 'var(--vc-allow)', strokeWidth: 2 }
+      case 'delegated':
+        return { stroke: 'var(--vc-accent)', strokeWidth: 2, strokeDasharray: '2 3' }
+    }
+  }
   const edges: Edge[] = graph.edges.map((edge) => {
     const base: Edge = {
       id: `e:${edge.from}:${edge.to}`,
@@ -217,10 +230,7 @@ export function buildAccessScene(
       ...base,
       className: `vc-graph-edge-status vc-graph-edge-${edge.reviewStatus}`,
       data: { reviewStatus: edge.reviewStatus },
-      style:
-        edge.reviewStatus === 'needsReview'
-          ? { stroke: 'var(--vc-warn)', strokeWidth: 2, strokeDasharray: '6 4' }
-          : { stroke: 'var(--vc-allow)', strokeWidth: 2 },
+      style: edgeStyle(edge.reviewStatus),
     }
   })
 
