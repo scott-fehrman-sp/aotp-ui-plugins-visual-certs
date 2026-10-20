@@ -11,6 +11,7 @@ import type {
   AccessGraphNode,
   AccessGraphNodeKind,
   AccessMatrixRowVM,
+  AccessReviewStatus,
 } from '../sailpoint/types'
 
 /** One present level on a row's path: a graph node to add + edge to continue. */
@@ -118,6 +119,21 @@ export function deriveAccessGraph(
     }
   }
 
+  /**
+   * Stamps review status onto a node/edge with needsReview-wins: once a node or
+   * edge is marked `needsReview` it stays that way; `complete` only applies when
+   * nothing has set it to `needsReview`. Leaves the field untouched when
+   * `status` is undefined.
+   */
+  const markStatus = (
+    target: { reviewStatus?: AccessReviewStatus } | undefined,
+    status: AccessReviewStatus | undefined,
+  ): void => {
+    if (!target || !status) return
+    if (target.reviewStatus === 'needsReview') return
+    target.reviewStatus = status
+  }
+
   for (const row of rows) {
     const levels: Level[] = []
 
@@ -183,6 +199,22 @@ export function deriveAccessGraph(
       } else {
         edges.set(key, { from, to, pathCount: 1 })
       }
+    }
+
+    // Stamp review status onto the user's DIRECT access item: the first hop off
+    // the user (levels[1]) is the role / access profile / entitlement under
+    // review. Confirm it matches the review item's own access-item kind so a
+    // degenerate `access` row (which has no access-item level) never marks a
+    // downstream node. Deeper hops stay neutral; needsReview-wins on collision.
+    const accessItemLevel = levels[1]
+    if (
+      accessItemLevel &&
+      row.accessItemKind !== undefined &&
+      accessItemLevel.kind === row.accessItemKind
+    ) {
+      markStatus(nodes.get(accessItemLevel.id), row.reviewStatus)
+      const edgeKey = `${levels[0].id}|${accessItemLevel.id}`
+      markStatus(edges.get(edgeKey), row.reviewStatus)
     }
   }
 

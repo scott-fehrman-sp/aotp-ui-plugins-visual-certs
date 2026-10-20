@@ -13,16 +13,12 @@ import { buildAccessScene, type AccessSceneNode } from './buildAccessScene'
 import { buildUserGridScene } from './buildUserGridScene'
 import { userSubgraph } from './userSubgraph'
 import { AccessNode } from './AccessNode'
-import { AccessCountEdge } from './AccessCountEdge'
 import { useColorMode } from './useColorMode'
 import { EmptyState } from '../components/EmptyState'
 import './AccessGraph.css'
 
 /** React Flow node-type registry for the access graph. */
 const nodeTypes = { access: AccessNode }
-
-/** Edge-type registry: the count-badge edge with an explanatory tooltip. */
-const edgeTypes = { accessCount: AccessCountEdge }
 
 interface AccessGraphCanvasProps {
   /** The derived graph (nodes + edges) from the access matrix. */
@@ -150,7 +146,6 @@ function CanvasSurface({ graph }: AccessGraphCanvasProps) {
         nodes={scene.nodes}
         edges={scene.edges}
         nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
         colorMode={colorMode}
         nodesDraggable={false}
         nodesConnectable={false}
@@ -188,6 +183,27 @@ function CanvasSurface({ graph }: AccessGraphCanvasProps) {
             >
               {rankdir === 'LR' ? 'Layout: vertical' : 'Layout: horizontal'}
             </button>
+          </Panel>
+        )}
+        {inDrilldown && (
+          <Panel position="bottom-left">
+            <div className="vc-graph-legend" role="group" aria-label="Review status legend">
+              <p className="vc-graph-legend-title">Review status</p>
+              <span className="vc-graph-legend-row">
+                <span
+                  aria-hidden="true"
+                  className="vc-graph-legend-swatch vc-graph-legend-swatch-needsReview"
+                />
+                Needs review
+              </span>
+              <span className="vc-graph-legend-row">
+                <span
+                  aria-hidden="true"
+                  className="vc-graph-legend-swatch vc-graph-legend-swatch-complete"
+                />
+                Review complete
+              </span>
+            </div>
           </Panel>
         )}
         {isDegenerate && (

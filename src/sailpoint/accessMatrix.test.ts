@@ -330,6 +330,72 @@ describe('resolveMatrix', () => {
     expect(rows.every((r) => r.userLocation === '')).toBe(true)
   })
 
+  it('stamps reviewStatus + access-item identity from the review item onto every row', async () => {
+    // A decided role item → complete; an undecided AP item → needsReview; a
+    // reassigned entitlement item → complete. Each item's access-item identity
+    // (kind + id) lands on every row it produced.
+    const items = [
+      item({ id: 'rev-role', accessKind: 'role', accessId: 'role-a', accessName: 'Role A', completed: true, decision: 'APPROVE' }),
+      item({ id: 'rev-ap', accessKind: 'accessProfile', accessId: 'ap-bar', accessName: 'bar' }),
+      item({ id: 'rev-ent', accessKind: 'entitlement', accessId: 'ent-read-phone', accessName: 'read', reassigned: true }),
+    ]
+    const rows = await resolveMatrix(items, stubResolver())
+
+    const roleRows = rows.filter((r) => r.role === 'Role A')
+    expect(roleRows.length).toBeGreaterThan(0)
+    expect(roleRows.every((r) => r.reviewStatus === 'complete')).toBe(true)
+    expect(roleRows.every((r) => r.accessItemKind === 'role')).toBe(true)
+    expect(roleRows.every((r) => r.accessItemId === 'role-a')).toBe(true)
+
+    const apRows = rows.filter((r) => r.accessProfile === 'bar')
+    expect(apRows.length).toBeGreaterThan(0)
+    expect(apRows.every((r) => r.reviewStatus === 'needsReview')).toBe(true)
+    expect(apRows.every((r) => r.accessItemKind === 'accessProfile')).toBe(true)
+    expect(apRows.every((r) => r.accessItemId === 'ap-bar')).toBe(true)
+
+    const phoneRow = rows.find((r) => r.source === 'phone app')
+    expect(phoneRow?.reviewStatus).toBe('complete')
+    expect(phoneRow?.accessItemKind).toBe('entitlement')
+    expect(phoneRow?.accessItemId).toBe('ent-read-phone')
+  })
+
+  it('keeps row count and ids invariant when status/access-item fields are added', async () => {
+    // Same worked example as the 6-golden-row test, but the items now carry
+    // decisions; adding reviewStatus/accessItem* must not change dedup identity.
+    const decided = workedExampleItems().map((it) =>
+      item({ ...it, completed: true, decision: 'APPROVE' }),
+    )
+    const undecided = await resolveMatrix(workedExampleItems(), stubResolver())
+    const withStatus = await resolveMatrix(decided, stubResolver())
+    expect(withStatus).toHaveLength(6)
+    expect(withStatus.map((r) => r.id).sort()).toEqual(
+      undecided.map((r) => r.id).sort(),
+    )
+  })
+
+  it('needsReview-wins when two items share the five-id tuple but differ in status', async () => {
+    // The same leaf path produced by one decided and one undecided item collapses
+    // to a single row; the surviving row must report needsReview.
+    const items = [
+      item({ id: 'done', accessKind: 'entitlement', accessId: 'ent-read-phone', accessName: 'read', completed: true, decision: 'APPROVE' }),
+      item({ id: 'todo', accessKind: 'entitlement', accessId: 'ent-read-phone', accessName: 'read' }),
+    ]
+    const rows = await resolveMatrix(items, stubResolver())
+    expect(rows).toHaveLength(1)
+    expect(rows[0].reviewStatus).toBe('needsReview')
+  })
+
+  it('needsReview-wins regardless of which item is seen first', async () => {
+    // Undecided first, decided second — the merge must still keep needsReview.
+    const items = [
+      item({ id: 'todo', accessKind: 'entitlement', accessId: 'ent-read-phone', accessName: 'read' }),
+      item({ id: 'done', accessKind: 'entitlement', accessId: 'ent-read-phone', accessName: 'read', completed: true, decision: 'APPROVE' }),
+    ]
+    const rows = await resolveMatrix(items, stubResolver())
+    expect(rows).toHaveLength(1)
+    expect(rows[0].reviewStatus).toBe('needsReview')
+  })
+
   it('fetches a source at most once per source id across many entitlements', async () => {
     // src-engr is shared by read/write/delete. A per-source-id cache in front of
     // a source spy must call it once for src-engr though three entitlements use it.

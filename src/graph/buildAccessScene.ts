@@ -183,7 +183,12 @@ export function buildAccessScene(
       id: node.id,
       type: 'access',
       position: { x, y },
-      data: { kind: node.kind, label: node.label, detail: node.detail },
+      data: {
+        kind: node.kind,
+        label: node.label,
+        detail: node.detail,
+        reviewStatus: node.reviewStatus,
+      },
       width: NODE_WIDTH,
       height: NODE_HEIGHT,
       sourcePosition: handle.sourcePosition,
@@ -193,18 +198,31 @@ export function buildAccessScene(
     }
   })
 
-  const edges: Edge[] = graph.edges.map((edge) => ({
-    id: `e:${edge.from}:${edge.to}`,
-    source: edge.from,
-    target: edge.to,
-    sourceHandle: handle.sourceHandle,
-    targetHandle: handle.targetHandle,
-    // Weight an edge by how many matrix rows traverse it; the custom edge draws
-    // a count badge (with an explanatory hover tooltip) when pathCount > 1.
-    type: 'accessCount',
-    style: { strokeWidth: edge.pathCount > 1 ? 2.5 : 1.5 },
-    data: { pathCount: edge.pathCount },
-  }))
+  // Plain built-in React Flow edges (no custom edge type). The user→access-item
+  // edge conveys review status via stroke color + dash (needsReview) / solid
+  // (complete); the node chip carries the non-color text signal. Deeper hops are
+  // neutral. The count badge was removed with the drill-down rework, so
+  // `pathCount` no longer drives any rendering here.
+  const edges: Edge[] = graph.edges.map((edge) => {
+    const base: Edge = {
+      id: `e:${edge.from}:${edge.to}`,
+      source: edge.from,
+      target: edge.to,
+      sourceHandle: handle.sourceHandle,
+      targetHandle: handle.targetHandle,
+      style: { strokeWidth: 1.5 },
+    }
+    if (!edge.reviewStatus) return base
+    return {
+      ...base,
+      className: `vc-graph-edge-status vc-graph-edge-${edge.reviewStatus}`,
+      data: { reviewStatus: edge.reviewStatus },
+      style:
+        edge.reviewStatus === 'needsReview'
+          ? { stroke: 'var(--vc-warn)', strokeWidth: 2, strokeDasharray: '6 4' }
+          : { stroke: 'var(--vc-allow)', strokeWidth: 2 },
+    }
+  })
 
   return { nodes, edges }
 }

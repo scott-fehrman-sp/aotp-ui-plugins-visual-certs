@@ -12,6 +12,31 @@ const KIND_LABEL: Record<AccessGraphNodeKind, string> = {
   source: 'Source',
 }
 
+/** Chip text per review status, shown on the user's directly-held access item. */
+const STATUS_CHIP_LABEL = {
+  needsReview: 'Needs review',
+  complete: 'Reviewed',
+} as const
+
+/**
+ * The review-status chip rendered inside an access-item card. Not color-only:
+ * it carries its own text ("Needs review" / "Reviewed") plus an `aria-label`
+ * and a stable `data-review-status` hook, so status reads without relying on
+ * color.
+ */
+function StatusChip({ status }: { status: 'needsReview' | 'complete' }) {
+  const text = STATUS_CHIP_LABEL[status]
+  return (
+    <span
+      className={`vc-graph-status-chip vc-graph-status-chip-${status}`}
+      data-review-status={status}
+      aria-label={`Review status: ${text}`}
+    >
+      {text}
+    </span>
+  )
+}
+
 /**
  * The custom React Flow node for the access graph: a small accessible card
  * showing the node's label and a per-kind caption, with a left-border accent
@@ -21,6 +46,9 @@ const KIND_LABEL: Record<AccessGraphNodeKind, string> = {
  */
 export function AccessNode({ data }: NodeProps<AccessSceneNode>) {
   const kindLabel = KIND_LABEL[data.kind]
+  const status = data.reviewStatus
+  // Review status marks only the user's directly-held access item (drill-down).
+  const statusClass = status ? ` vc-graph-card-status-${status}` : ''
 
   // Grid mode: the card is an activatable control that drills into the user.
   if (data.interactive) {
@@ -33,7 +61,7 @@ export function AccessNode({ data }: NodeProps<AccessSceneNode>) {
         detail={data.detail}
       >
         <article
-          className={`vc-graph-card vc-graph-card-interactive kind-${data.kind}`}
+          className={`vc-graph-card vc-graph-card-interactive kind-${data.kind}${statusClass}`}
           role="button"
           tabIndex={0}
           aria-label={`Show access for ${data.label}`}
@@ -49,6 +77,7 @@ export function AccessNode({ data }: NodeProps<AccessSceneNode>) {
           <Handles />
           <strong className="vc-graph-card-label">{data.label}</strong>
           <span className="vc-graph-card-kind">{kindLabel}</span>
+          {status ? <StatusChip status={status} /> : null}
         </article>
       </NodeTooltip>
     )
@@ -63,13 +92,14 @@ export function AccessNode({ data }: NodeProps<AccessSceneNode>) {
       detail={data.detail}
     >
       <article
-        className={`vc-graph-card kind-${data.kind}`}
+        className={`vc-graph-card kind-${data.kind}${statusClass}`}
         tabIndex={0}
         aria-label={`${kindLabel}: ${data.label}`}
       >
         <Handles />
         <strong className="vc-graph-card-label">{data.label}</strong>
         <span className="vc-graph-card-kind">{kindLabel}</span>
+        {status ? <StatusChip status={status} /> : null}
       </article>
     </NodeTooltip>
   )

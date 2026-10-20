@@ -29,6 +29,19 @@ export interface CampaignMetrics {
   isComplete: boolean
 }
 
+/**
+ * Whether a review item counts as REVIEWED (resolved) rather than still needing
+ * a decision. An item is reviewed when a decision has been recorded
+ * (`completed`), a decision value is present, OR it was reassigned to someone
+ * else — reassignment resolves the item from this reviewer's perspective. This
+ * is the SINGLE source of truth for the "complete vs needs review" rule:
+ * `computeMetrics` and the access-matrix review-status stamp both call it so the
+ * dashboard and the graph can never disagree.
+ */
+export function isItemReviewed(item: ReviewItemVM): boolean {
+  return item.completed || item.decision != null || item.reassigned === true
+}
+
 /** Milliseconds in a day. */
 const MS_PER_DAY = 24 * 60 * 60 * 1000
 
@@ -73,7 +86,7 @@ export function computeMetrics(
       // handed it to someone else, so it advances progress (reviewed/remaining/
       // percentComplete) but is a THIRD outcome — neither kept nor removed — so
       // it never counts toward approved or revoked.
-      if (item.completed || item.decision || item.reassigned) {
+      if (isItemReviewed(item)) {
         reviewed++
         if (item.decision === 'APPROVE') approved++
         else if (item.decision === 'REVOKE') revoked++

@@ -14,8 +14,14 @@ import type { EntitlementsApi } from 'sailpoint-api-client/entitlements/api'
 import type { RolesApi } from 'sailpoint-api-client/roles/api'
 import type { SearchApi } from 'sailpoint-api-client/search/api'
 import type { SourcesApi } from 'sailpoint-api-client/sources/api'
+import { isItemReviewed } from '../domain/metrics'
 import { fetchIdentityAttributes } from './identities'
-import type { AccessMatrixRowVM, ReviewItemVM } from './types'
+import type {
+  AccessGraphNodeKind,
+  AccessMatrixRowVM,
+  AccessReviewStatus,
+  ReviewItemVM,
+} from './types'
 
 // --- internal, DTO-free resolved shapes (never exposed to components) --------
 
@@ -261,6 +267,16 @@ interface RowTuple {
   entitlementDescription?: string
   /** Resolved SOURCE description, on a resolved leaf row. */
   sourceDescription?: string
+  /**
+   * Review status of the source review item (via `isItemReviewed`), on every
+   * row the item produces. NEVER part of `rowKey` — same enrichment pattern as
+   * `userDepartment`. On a dedup collision, needsReview-wins.
+   */
+  reviewStatus?: AccessReviewStatus
+  /** Kind of the user's directly-held access item (first hop off the user). */
+  accessItemKind?: AccessGraphNodeKind
+  /** Id of the user's directly-held access item; null when the item had none. */
+  accessItemId?: string | null
 }
 
 /**
@@ -330,11 +346,29 @@ async function expandItem(
   // for this user, including the degenerate all-blank `access` row and any
   // unresolved row. Soft-degrades to '' (never throws, never blanks the matrix).
   const attrs = await resolver.identity(item.identityId)
+  // Review status + the directly-held access-item identity attach to the review
+  // item itself (independent of how its composition expands), so fold them into
+  // `base` and let them land on EVERY row — exactly like department/location.
+  // The generic `access` fallback has no composition node, so it carries no
+  // access-item kind (its degenerate row still carries status on the user side,
+  // but with no access-item node/edge there is nothing to mark downstream).
+  const reviewStatus: AccessReviewStatus = isItemReviewed(item)
+    ? 'complete'
+    : 'needsReview'
+  const accessItemKind: AccessGraphNodeKind | undefined =
+    item.accessKind === 'role' ||
+    item.accessKind === 'accessProfile' ||
+    item.accessKind === 'entitlement'
+      ? item.accessKind
+      : undefined
   const base = {
     userId: item.identityId,
     user: item.personName,
     userDepartment: attrs?.department ?? '',
     userLocation: attrs?.location ?? '',
+    reviewStatus,
+    accessItemKind,
+    accessItemId: item.accessId ?? null,
   }
   // `accessId` is optional on ReviewItemVM; normalize undefined to null.
   const accessId = item.accessId ?? null
@@ -505,8 +539,19 @@ export async function resolveMatrix(
   for (const tuples of expanded) {
     for (const tuple of tuples) {
       const id = rowKey(tuple)
-      if (!byKey.has(id)) {
+      const existing = byKey.get(id)
+      if (!existing) {
         byKey.set(id, { id, ...tuple })
+        continue
+      }
+      // First-wins on every enrichment field EXCEPT reviewStatus, where
+      // needsReview-wins: if any contributing row still needs review, the merged
+      // row must say so rather than hide outstanding work behind 'complete'.
+      if (
+        existing.reviewStatus === 'complete' &&
+        tuple.reviewStatus === 'needsReview'
+      ) {
+        existing.reviewStatus = 'needsReview'
       }
     }
   }

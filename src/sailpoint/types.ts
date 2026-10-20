@@ -199,6 +199,16 @@ export interface CurrentUser {
 // --- access expansion matrix -------------------------------------------------
 
 /**
+ * Review status of the user's directly-held access item, for the drill-down
+ * graph. `'needsReview'` = no decision recorded yet; `'complete'` = a decision
+ * is recorded OR the item was reassigned (see `isItemReviewed` in
+ * `domain/metrics.ts`, the single source of truth). Only the FIRST hop off the
+ * user (the role / access profile / directly-held entitlement under review)
+ * carries this; deeper explanatory hops stay neutral.
+ */
+export type AccessReviewStatus = 'needsReview' | 'complete'
+
+/**
  * One fully-expanded row of the access matrix: a single path from a user to a
  * leaf entitlement on a source. Blank (empty-string) role/accessProfile cells
  * mean that level is NOT on this path (see the expansion rules). `entitlement`
@@ -267,6 +277,29 @@ export interface AccessMatrixRowVM {
   entitlementDescription?: string
   /** The source's description, same semantics as {@link roleDescription}. */
   sourceDescription?: string
+  /**
+   * Review status of the review item this row came from, for the drill-down
+   * graph's user→access-item edge/node marking. Stamped on EVERY row the item
+   * produces (via `isItemReviewed`). Enrichment only — NEVER part of the
+   * five-id dedup key (`rowKey`); when two rows collide on the dedup identity
+   * but disagree on status, `'needsReview'` wins so outstanding work is never
+   * hidden behind a "complete" mark.
+   */
+  reviewStatus?: AccessReviewStatus
+  /**
+   * The KIND of the user's directly-held access item (the first hop off the
+   * user node): the role, access profile, or entitlement under review. Lets the
+   * graph find exactly which child node + user→child edge to mark with
+   * `reviewStatus`. `undefined` for the generic `access` fallback (no composition
+   * node). Enrichment only; never part of the dedup key.
+   */
+  accessItemKind?: AccessGraphNodeKind
+  /**
+   * The id of the user's directly-held access item (`ReviewItemVM.accessId`),
+   * paired with {@link accessItemKind}. Null when the review item carried no id.
+   * Enrichment only; never part of the dedup key.
+   */
+  accessItemId?: string | null
 }
 
 /** The kind of a graph node — the five node layers of the matrix. */
@@ -297,6 +330,13 @@ export interface AccessGraphNode {
    * first-wins on dedupe (the first row to introduce a node id sets its detail).
    */
   detail?: { description?: string; department?: string; location?: string }
+  /**
+   * Review status of this node, set ONLY on the user's directly-held access
+   * item (the first hop off the user) in the drill-down graph. Deeper nodes and
+   * the user node itself leave it `undefined`. `'needsReview'` wins when the
+   * same access-item node is reached from rows with differing status.
+   */
+  reviewStatus?: AccessReviewStatus
 }
 
 /**
@@ -312,6 +352,14 @@ export interface AccessGraphEdge {
   to: string
   /** Number of matrix rows that traverse this exact edge (>= 1). */
   pathCount: number
+  /**
+   * Review status of this edge, set ONLY on the user→access-item edge (the
+   * first hop off the user) in the drill-down graph. Deeper edges leave it
+   * `undefined`. `'needsReview'` wins when the same edge is reached from rows
+   * with differing status. `pathCount` is retained for any data-layer consumer,
+   * but the drill-down renderer no longer draws a count badge.
+   */
+  reviewStatus?: AccessReviewStatus
 }
 
 /**
@@ -374,5 +422,12 @@ export interface AccessSceneNodeData extends Record<string, unknown> {
    * only kind + label). Enrichment only.
    */
   detail?: { description?: string; department?: string; location?: string }
+  /**
+   * Review status threaded from {@link AccessGraphNode.reviewStatus}: set only
+   * on the user's directly-held access-item card in drill-down so the node can
+   * render a "Needs review" / "Reviewed" chip + accent. Omitted on every other
+   * node (grid user cards, user node, deeper hops).
+   */
+  reviewStatus?: AccessReviewStatus
 }
 

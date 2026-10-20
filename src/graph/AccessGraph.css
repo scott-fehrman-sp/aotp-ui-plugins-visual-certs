@@ -189,28 +189,107 @@
 }
 
 /*
- * Edge count badge: shown on a link shared by more than one access path. Carries
- * a hover/focus tooltip (native `title` + aria-label) explaining the number.
+ * Review-status accents for the user's DIRECTLY-held access item (drill-down
+ * only). Two signals per state so status never relies on color alone: a colored
+ * ring/left-border on the card AND a text chip inside it ("Needs review" /
+ * "Reviewed"). Tokens are the app's `--vc-warn` (amber) and `--vc-allow`
+ * (green), reused from `src/index.css`, matching the decided-card vocabulary.
  */
-.vc-graph-edge-badge {
-  position: absolute;
-  pointer-events: all;
-  cursor: help;
-  min-width: 18px;
-  padding: 1px 5px;
+.vc-graph-card-status-needsReview {
+  border-left-color: var(--vc-warn);
+  box-shadow: 0 0 0 2px var(--vc-warn), var(--shadow);
+}
+
+.vc-graph-card-status-complete {
+  border-left-color: var(--vc-allow);
+  box-shadow: 0 0 0 2px var(--vc-allow), var(--shadow);
+}
+
+/* The status chip, styled like the app's `.vc-chip` / `.vc-decided-badge`. */
+.vc-graph-status-chip {
+  align-self: flex-start;
+  margin-top: 2px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 15px;
+  letter-spacing: 0.01em;
+}
+
+.vc-graph-status-chip-needsReview {
+  background: var(--vc-warn-bg);
+  color: var(--vc-warn);
+}
+
+.vc-graph-status-chip-complete {
+  background: var(--vc-allow-bg);
+  color: var(--vc-allow);
+}
+
+/*
+ * Review-status edge strokes for the user→access-item hop. needsReview is a
+ * dashed amber line; complete is a solid green line. The inline `style` from
+ * `buildAccessScene` sets the exact stroke/dash; these class rules back it up so
+ * the status reads even if inline styles are overridden, and raise edge weight.
+ */
+.vc-graph-wrap .react-flow__edge.vc-graph-edge-needsReview .react-flow__edge-path {
+  stroke: var(--vc-warn);
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+}
+
+.vc-graph-wrap .react-flow__edge.vc-graph-edge-complete .react-flow__edge-path {
+  stroke: var(--vc-allow);
+  stroke-width: 2;
+}
+
+/*
+ * Drill-down legend: two rows (dashed amber / solid green swatch + text) in a
+ * corner panel, styled like the layout toggle / back button.
+ */
+.vc-graph-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 12px;
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: 8px;
   background: var(--control);
   color: var(--ink);
   font-family: var(--sans);
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 16px;
-  text-align: center;
+  font-size: 13px;
   box-shadow: var(--shadow);
 }
 
-.vc-graph-edge-badge:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
+.vc-graph-legend-title {
+  margin: 0 0 2px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.vc-graph-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vc-graph-legend-swatch {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 0;
+  border-top-width: 3px;
+  border-top-style: solid;
+}
+
+.vc-graph-legend-swatch-needsReview {
+  border-top-style: dashed;
+  border-top-color: var(--vc-warn);
+}
+
+.vc-graph-legend-swatch-complete {
+  border-top-color: var(--vc-allow);
 }

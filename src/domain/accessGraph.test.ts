@@ -265,6 +265,115 @@ describe('deriveAccessGraph', () => {
     }
   })
 
+  it('stamps reviewStatus on the user access-item node + user→item edge only', () => {
+    // A role item that needs review: the role node and the user→role edge carry
+    // needsReview; the AP / entitlement / source nodes and every deeper edge
+    // carry no reviewStatus.
+    const { nodes, edges } = deriveAccessGraph([
+      row({
+        id: '1',
+        role: 'Role A',
+        roleId: 'role-a',
+        accessProfile: 'foo',
+        accessProfileId: 'ap-foo',
+        entitlement: 'read',
+        entitlementId: 'ent-read-engr',
+        source: 'engr db',
+        sourceId: 'src-engr',
+        reviewStatus: 'needsReview',
+        accessItemKind: 'role',
+        accessItemId: 'role-a',
+      }),
+    ])
+    const nodeById = new Map(nodes.map((n) => [n.id, n]))
+    expect(nodeById.get('role:role-a')?.reviewStatus).toBe('needsReview')
+    expect(nodeById.get('user:u1')?.reviewStatus).toBeUndefined()
+    expect(nodeById.get('accessProfile:ap-foo')?.reviewStatus).toBeUndefined()
+    expect(nodeById.get('entitlement:ent-read-engr')?.reviewStatus).toBeUndefined()
+    expect(nodeById.get('source:src-engr')?.reviewStatus).toBeUndefined()
+
+    const edgeStatus = (from: string, to: string) =>
+      edges.find((e) => e.from === from && e.to === to)?.reviewStatus
+    expect(edgeStatus('user:u1', 'role:role-a')).toBe('needsReview')
+    expect(edgeStatus('role:role-a', 'accessProfile:ap-foo')).toBeUndefined()
+    expect(edgeStatus('accessProfile:ap-foo', 'entitlement:ent-read-engr')).toBeUndefined()
+    expect(edgeStatus('entitlement:ent-read-engr', 'source:src-engr')).toBeUndefined()
+  })
+
+  it('marks a directly-held entitlement item on the user→entitlement node + edge', () => {
+    const { nodes, edges } = deriveAccessGraph([
+      row({
+        id: '1',
+        entitlement: 'read',
+        entitlementId: 'ent-read-phone',
+        source: 'phone app',
+        sourceId: 'src-phone',
+        reviewStatus: 'complete',
+        accessItemKind: 'entitlement',
+        accessItemId: 'ent-read-phone',
+      }),
+    ])
+    const nodeById = new Map(nodes.map((n) => [n.id, n]))
+    expect(nodeById.get('entitlement:ent-read-phone')?.reviewStatus).toBe('complete')
+    expect(nodeById.get('source:src-phone')?.reviewStatus).toBeUndefined()
+    const userToEnt = edges.find(
+      (e) => e.from === 'user:u1' && e.to === 'entitlement:ent-read-phone',
+    )
+    expect(userToEnt?.reviewStatus).toBe('complete')
+    const entToSource = edges.find(
+      (e) => e.from === 'entitlement:ent-read-phone' && e.to === 'source:src-phone',
+    )
+    expect(entToSource?.reviewStatus).toBeUndefined()
+  })
+
+  it('applies needsReview-wins when an access-item node is reached from complete and incomplete rows', () => {
+    // Two rows for the SAME role-a node: one complete, one needing review. The
+    // node + user→role edge must end up needsReview.
+    const { nodes, edges } = deriveAccessGraph([
+      row({
+        id: '1',
+        role: 'Role A',
+        roleId: 'role-a',
+        entitlement: 'read',
+        entitlementId: 'e1',
+        source: 'engr db',
+        sourceId: 's1',
+        reviewStatus: 'complete',
+        accessItemKind: 'role',
+        accessItemId: 'role-a',
+      }),
+      row({
+        id: '2',
+        role: 'Role A',
+        roleId: 'role-a',
+        entitlement: 'write',
+        entitlementId: 'e2',
+        source: 'engr db',
+        sourceId: 's1',
+        reviewStatus: 'needsReview',
+        accessItemKind: 'role',
+        accessItemId: 'role-a',
+      }),
+    ])
+    const roleNode = nodes.find((n) => n.id === 'role:role-a')
+    expect(roleNode?.reviewStatus).toBe('needsReview')
+    const userToRole = edges.find((e) => e.from === 'user:u1' && e.to === 'role:role-a')
+    expect(userToRole?.reviewStatus).toBe('needsReview')
+  })
+
+  it('leaves status undefined everywhere for a degenerate access row (no access item)', () => {
+    const { nodes } = deriveAccessGraph([
+      row({
+        id: 'blank',
+        reviewStatus: 'needsReview',
+        accessItemKind: undefined,
+        accessItemId: null,
+        unresolved: true,
+      }),
+    ])
+    expect(nodes.every((n) => n.reviewStatus === undefined)).toBe(true)
+  })
+
   it('contributes only the user node and zero edges for an all-blank-leaf access row', () => {
     const rows = [
       row({

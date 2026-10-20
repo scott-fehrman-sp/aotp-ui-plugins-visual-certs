@@ -146,24 +146,111 @@ describe('buildAccessScene', () => {
     })
   })
 
-  it('carries pathCount on each edge via the custom count-badge edge type', () => {
-    // The worked example reuses the user→Role A and Role A→foo hops across
-    // multiple rows, so those edges have pathCount > 1 — the data that drives
-    // the badge + its hover tooltip.
+  it('renders no count badge: no accessCount edge type, no pathCount data, no count label', () => {
+    // The drill-down rework removed the edge count badge entirely. Edges are now
+    // plain built-in React Flow edges with no custom type, no pathCount payload,
+    // and no numeric label.
     const graph = deriveAccessGraph(workedExample())
     const scene = buildAccessScene(graph, 'LR')
 
     for (const edge of scene.edges) {
-      expect(edge.type).toBe('accessCount')
-      const pathCount = (edge.data as { pathCount: number }).pathCount
-      expect(Number.isInteger(pathCount)).toBe(true)
-      expect(pathCount).toBeGreaterThanOrEqual(1)
+      expect(edge.type).not.toBe('accessCount')
+      expect((edge.data as { pathCount?: number } | undefined)?.pathCount).toBeUndefined()
+      expect(edge.label).toBeUndefined()
     }
-    // At least one shared edge exists in the worked example (user→Role A is
-    // traversed by the three Role A rows).
-    expect(
-      scene.edges.some((e) => (e.data as { pathCount: number }).pathCount > 1),
-    ).toBe(true)
+  })
+
+  it('marks the user→access-item edge by review status and leaves deeper edges neutral', () => {
+    // A role item that still needs review: the user→role edge carries the
+    // needsReview marker (data + class + dashed amber stroke); role→AP,
+    // AP→entitlement, entitlement→source stay neutral.
+    const graph = deriveAccessGraph([
+      row({
+        id: '1',
+        role: 'Role A',
+        roleId: 'role-a',
+        accessProfile: 'foo',
+        accessProfileId: 'ap-foo',
+        entitlement: 'read',
+        entitlementId: 'e1',
+        source: 'engr db',
+        sourceId: 's1',
+        reviewStatus: 'needsReview',
+        accessItemKind: 'role',
+        accessItemId: 'role-a',
+      }),
+    ])
+    const scene = buildAccessScene(graph, 'LR')
+    const edgeBetween = (from: string, to: string) =>
+      scene.edges.find((e) => e.source === from && e.target === to)
+
+    const userToRole = edgeBetween('user:u1', 'role:role-a')
+    expect((userToRole?.data as { reviewStatus?: string } | undefined)?.reviewStatus).toBe(
+      'needsReview',
+    )
+    expect(userToRole?.className).toContain('vc-graph-edge-needsReview')
+    expect(userToRole?.style?.stroke).toBe('var(--vc-warn)')
+    expect(userToRole?.style?.strokeDasharray).toBe('6 4')
+
+    // Deeper hops carry no review status and no status class.
+    for (const [from, to] of [
+      ['role:role-a', 'accessProfile:ap-foo'],
+      ['accessProfile:ap-foo', 'entitlement:e1'],
+      ['entitlement:e1', 'source:s1'],
+    ] as const) {
+      const edge = edgeBetween(from, to)
+      expect((edge?.data as { reviewStatus?: string } | undefined)?.reviewStatus).toBeUndefined()
+      expect(edge?.className).toBeUndefined()
+    }
+  })
+
+  it('draws a complete user→access-item edge as a solid green stroke with the status marker', () => {
+    const graph = deriveAccessGraph([
+      row({
+        id: '1',
+        entitlement: 'read',
+        entitlementId: 'e6',
+        source: 'phone app',
+        sourceId: 's3',
+        reviewStatus: 'complete',
+        accessItemKind: 'entitlement',
+        accessItemId: 'e6',
+      }),
+    ])
+    const scene = buildAccessScene(graph, 'LR')
+    const userToEnt = scene.edges.find(
+      (e) => e.source === 'user:u1' && e.target === 'entitlement:e6',
+    )
+    expect((userToEnt?.data as { reviewStatus?: string } | undefined)?.reviewStatus).toBe(
+      'complete',
+    )
+    expect(userToEnt?.className).toContain('vc-graph-edge-complete')
+    expect(userToEnt?.style?.stroke).toBe('var(--vc-allow)')
+    expect(userToEnt?.style?.strokeDasharray).toBeUndefined()
+  })
+
+  it('threads review status onto the access-item scene node data', () => {
+    const graph = deriveAccessGraph([
+      row({
+        id: '1',
+        role: 'Role A',
+        roleId: 'role-a',
+        entitlement: 'read',
+        entitlementId: 'e1',
+        source: 'engr db',
+        sourceId: 's1',
+        reviewStatus: 'needsReview',
+        accessItemKind: 'role',
+        accessItemId: 'role-a',
+      }),
+    ])
+    const scene = buildAccessScene(graph, 'LR')
+    const byId = new Map(scene.nodes.map((n) => [n.id, n]))
+    expect(byId.get('role:role-a')?.data.reviewStatus).toBe('needsReview')
+    // User, entitlement, source nodes carry no status.
+    expect(byId.get('user:u1')?.data.reviewStatus).toBeUndefined()
+    expect(byId.get('entitlement:e1')?.data.reviewStatus).toBeUndefined()
+    expect(byId.get('source:s1')?.data.reviewStatus).toBeUndefined()
   })
 
   it('pins each kind to its own column in LR (same x per kind, ordered user→source)', () => {

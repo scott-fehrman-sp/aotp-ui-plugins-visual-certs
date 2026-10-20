@@ -99,6 +99,61 @@ describe('AccessGraphCanvas', () => {
     expect(screen.getByText('No users to map')).toBeInTheDocument()
   })
 
+  it('marks review status in drill-down: legend, chips, and no count badge', () => {
+    // One user with two directly-held items: an undecided role (needs review)
+    // and a completed, directly-held entitlement (reviewed).
+    const graph = deriveAccessGraph([
+      row({
+        id: '1',
+        userId: 'u1',
+        user: 'User One',
+        role: 'Role A',
+        roleId: 'role-a',
+        entitlement: 'read',
+        entitlementId: 'e1',
+        source: 'engr db',
+        sourceId: 's1',
+        reviewStatus: 'needsReview',
+        accessItemKind: 'role',
+        accessItemId: 'role-a',
+      }),
+      row({
+        id: '2',
+        userId: 'u1',
+        user: 'User One',
+        entitlement: 'login',
+        entitlementId: 'e2',
+        source: 'phone app',
+        sourceId: 's2',
+        reviewStatus: 'complete',
+        accessItemKind: 'entitlement',
+        accessItemId: 'e2',
+      }),
+    ])
+    render(<AccessGraphCanvas graph={graph} />)
+
+    // Grid shows no legend and no status chips.
+    expect(screen.queryByRole('group', { name: /review status legend/i })).not.toBeInTheDocument()
+
+    // Drill into the user.
+    fireEvent.click(screen.getByRole('button', { name: 'Show access for User One' }))
+
+    // The legend panel renders with both states.
+    const legend = screen.getByRole('group', { name: /review status legend/i })
+    expect(legend).toHaveTextContent('Needs review')
+    expect(legend).toHaveTextContent('Review complete')
+
+    // The needs-review role node shows a "Needs review" chip; the completed
+    // entitlement shows a "Reviewed" chip.
+    const needsReviewChip = screen.getByLabelText('Review status: Needs review')
+    expect(needsReviewChip).toHaveAttribute('data-review-status', 'needsReview')
+    const reviewedChip = screen.getByLabelText('Review status: Reviewed')
+    expect(reviewedChip).toHaveAttribute('data-review-status', 'complete')
+
+    // No numeric count badge anywhere (the old accessCount edge is gone).
+    expect(document.querySelector('.vc-graph-edge-badge')).toBeNull()
+  })
+
   it('shows a styled tooltip with the kind and full (untruncated) label on hover', () => {
     // A role name long enough that the card would ellipsis-clip it; the tooltip
     // must still reveal the complete name so a reviewer can read it on hover.
