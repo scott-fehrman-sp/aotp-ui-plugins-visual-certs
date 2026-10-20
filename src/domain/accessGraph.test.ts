@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
+import { resolveMatrix } from '../sailpoint/accessMatrix'
 import type { AccessMatrixRowVM } from '../sailpoint/types'
+import {
+  fixtureItems,
+  fixtureResolver,
+  reviewItem,
+} from '../test/reviewStatusFixture'
 import { deriveAccessGraph } from './accessGraph'
+import { reviewKey } from './reviewOverlay'
 
 function row(overrides: Partial<AccessMatrixRowVM>): AccessMatrixRowVM {
   return {
@@ -265,10 +272,8 @@ describe('deriveAccessGraph', () => {
     }
   })
 
-  it('stamps reviewStatus on the user access-item node + user→item edge only', () => {
-    // A role item that needs review: the role node and the user→role edge carry
-    // needsReview; the AP / entitlement / source nodes and every deeper edge
-    // carry no reviewStatus.
+  it('marks only the user→access-item edge as first-level, with a review key and no status', () => {
+    // A role item: user→role is the review hop; every deeper edge is reference.
     const { nodes, edges } = deriveAccessGraph([
       row({
         id: '1',
@@ -280,192 +285,112 @@ describe('deriveAccessGraph', () => {
         entitlementId: 'ent-read-engr',
         source: 'engr db',
         sourceId: 'src-engr',
-        reviewStatus: 'needsReview',
         accessItemKind: 'role',
         accessItemId: 'role-a',
+        accessItemName: 'Role A',
       }),
     ])
-    const nodeById = new Map(nodes.map((n) => [n.id, n]))
-    expect(nodeById.get('role:role-a')?.reviewStatus).toBe('needsReview')
-    expect(nodeById.get('user:u1')?.reviewStatus).toBeUndefined()
-    expect(nodeById.get('accessProfile:ap-foo')?.reviewStatus).toBeUndefined()
-    expect(nodeById.get('entitlement:ent-read-engr')?.reviewStatus).toBeUndefined()
-    expect(nodeById.get('source:src-engr')?.reviewStatus).toBeUndefined()
-
-    const edgeStatus = (from: string, to: string) =>
-      edges.find((e) => e.from === from && e.to === to)?.reviewStatus
-    expect(edgeStatus('user:u1', 'role:role-a')).toBe('needsReview')
-    expect(edgeStatus('role:role-a', 'accessProfile:ap-foo')).toBeUndefined()
-    expect(edgeStatus('accessProfile:ap-foo', 'entitlement:ent-read-engr')).toBeUndefined()
-    expect(edgeStatus('entitlement:ent-read-engr', 'source:src-engr')).toBeUndefined()
+    const edgeOf = (from: string, to: string) =>
+      edges.find((e) => e.from === from && e.to === to)
+    expect(edgeOf('user:u1', 'role:role-a')).toEqual({
+      from: 'user:u1',
+      to: 'role:role-a',
+      pathCount: 1,
+      firstLevel: true,
+      reviewKey: reviewKey('u1', 'role', 'role-a', 'Role A'),
+    })
+    for (const [from, to] of [
+      ['role:role-a', 'accessProfile:ap-foo'],
+      ['accessProfile:ap-foo', 'entitlement:ent-read-engr'],
+      ['entitlement:ent-read-engr', 'source:src-engr'],
+    ]) {
+      expect(edgeOf(from, to)).toEqual({ from, to, pathCount: 1 })
+    }
+    // Structural derivation never stamps a status on any node.
+    expect(nodes.every((n) => n.reviewStatus === undefined)).toBe(true)
   })
 
-  it('marks an approved directly-held entitlement item on the user→entitlement node + edge', () => {
-    const { nodes, edges } = deriveAccessGraph([
+  it('marks a directly-held entitlement as the first-level hop (user→entitlement)', () => {
+    const { edges } = deriveAccessGraph([
       row({
         id: '1',
         entitlement: 'read',
         entitlementId: 'ent-read-phone',
         source: 'phone app',
         sourceId: 'src-phone',
-        reviewStatus: 'approved',
         accessItemKind: 'entitlement',
         accessItemId: 'ent-read-phone',
+        accessItemName: 'read',
       }),
     ])
-    const nodeById = new Map(nodes.map((n) => [n.id, n]))
-    expect(nodeById.get('entitlement:ent-read-phone')?.reviewStatus).toBe('approved')
-    expect(nodeById.get('source:src-phone')?.reviewStatus).toBeUndefined()
     const userToEnt = edges.find(
       (e) => e.from === 'user:u1' && e.to === 'entitlement:ent-read-phone',
     )
-    expect(userToEnt?.reviewStatus).toBe('approved')
+    expect(userToEnt?.firstLevel).toBe(true)
+    expect(userToEnt?.reviewKey).toBe(
+      reviewKey('u1', 'entitlement', 'ent-read-phone', 'read'),
+    )
     const entToSource = edges.find(
       (e) => e.from === 'entitlement:ent-read-phone' && e.to === 'source:src-phone',
     )
-    expect(entToSource?.reviewStatus).toBeUndefined()
+    expect(entToSource?.firstLevel).toBeUndefined()
   })
 
-  it('marks a revoked directly-held entitlement item on the user→entitlement node + edge', () => {
+  it('keeps a blank-labelled first-level item as the first hop instead of a deeper node', () => {
+    // The role resolved with a blank name: the user's first hop must still be
+    // the role (label from the review item), not the entitlement below it.
     const { nodes, edges } = deriveAccessGraph([
       row({
         id: '1',
-        entitlement: 'read',
-        entitlementId: 'ent-read-phone',
-        source: 'phone app',
-        sourceId: 'src-phone',
-        reviewStatus: 'revoked',
-        accessItemKind: 'entitlement',
-        accessItemId: 'ent-read-phone',
-      }),
-    ])
-    const nodeById = new Map(nodes.map((n) => [n.id, n]))
-    expect(nodeById.get('entitlement:ent-read-phone')?.reviewStatus).toBe('revoked')
-    expect(nodeById.get('source:src-phone')?.reviewStatus).toBeUndefined()
-    const userToEnt = edges.find(
-      (e) => e.from === 'user:u1' && e.to === 'entitlement:ent-read-phone',
-    )
-    expect(userToEnt?.reviewStatus).toBe('revoked')
-    const entToSource = edges.find(
-      (e) => e.from === 'entitlement:ent-read-phone' && e.to === 'source:src-phone',
-    )
-    expect(entToSource?.reviewStatus).toBeUndefined()
-  })
-
-  it('stamps a reassigned status on the user access-item node + user→item edge only', () => {
-    const { nodes, edges } = deriveAccessGraph([
-      row({
-        id: '1',
-        role: 'Role A',
-        roleId: 'role-a',
-        accessProfile: 'foo',
-        accessProfileId: 'ap-foo',
-        entitlement: 'read',
-        entitlementId: 'ent-read-engr',
-        source: 'engr db',
-        sourceId: 'src-engr',
-        reviewStatus: 'reassigned',
-        accessItemKind: 'role',
-        accessItemId: 'role-a',
-      }),
-    ])
-    const nodeById = new Map(nodes.map((n) => [n.id, n]))
-    expect(nodeById.get('role:role-a')?.reviewStatus).toBe('reassigned')
-    expect(nodeById.get('user:u1')?.reviewStatus).toBeUndefined()
-    expect(nodeById.get('accessProfile:ap-foo')?.reviewStatus).toBeUndefined()
-    expect(nodeById.get('entitlement:ent-read-engr')?.reviewStatus).toBeUndefined()
-    expect(nodeById.get('source:src-engr')?.reviewStatus).toBeUndefined()
-
-    const edgeStatus = (from: string, to: string) =>
-      edges.find((e) => e.from === from && e.to === to)?.reviewStatus
-    expect(edgeStatus('user:u1', 'role:role-a')).toBe('reassigned')
-    expect(edgeStatus('role:role-a', 'accessProfile:ap-foo')).toBeUndefined()
-  })
-
-  it('needsReview-wins over a reassigned access-item row', () => {
-    // One reassigned row and one needs-review row for the same role: needsReview
-    // outranks reassigned.
-    const { nodes, edges } = deriveAccessGraph([
-      row({
-        id: '1',
-        role: 'Role A',
-        roleId: 'role-a',
+        role: '',
+        roleId: 'role-x',
         entitlement: 'read',
         entitlementId: 'e1',
         source: 'engr db',
         sourceId: 's1',
-        reviewStatus: 'reassigned',
         accessItemKind: 'role',
-        accessItemId: 'role-a',
-      }),
-      row({
-        id: '2',
-        role: 'Role A',
-        roleId: 'role-a',
-        entitlement: 'write',
-        entitlementId: 'e2',
-        source: 'engr db',
-        sourceId: 's1',
-        reviewStatus: 'needsReview',
-        accessItemKind: 'role',
-        accessItemId: 'role-a',
+        accessItemId: 'role-x',
+        accessItemName: 'Review Item Role',
       }),
     ])
-    expect(nodes.find((n) => n.id === 'role:role-a')?.reviewStatus).toBe(
-      'needsReview',
-    )
+    expect(nodes.find((n) => n.id === 'role:role-x')?.label).toBe('Review Item Role')
     expect(
-      edges.find((e) => e.from === 'user:u1' && e.to === 'role:role-a')
-        ?.reviewStatus,
-    ).toBe('needsReview')
+      edges.find((e) => e.from === 'user:u1' && e.to === 'role:role-x')?.firstLevel,
+    ).toBe(true)
+    expect(edges.some((e) => e.from === 'user:u1' && e.to === 'entitlement:e1')).toBe(false)
   })
 
-  it('applies needsReview-wins when an access-item node is reached from approved and incomplete rows', () => {
-    // Two rows for the SAME role-a node: one approved, one needing review. The
-    // node + user→role edge must end up needsReview.
-    const { nodes, edges } = deriveAccessGraph([
-      row({
-        id: '1',
-        role: 'Role A',
-        roleId: 'role-a',
-        entitlement: 'read',
-        entitlementId: 'e1',
-        source: 'engr db',
-        sourceId: 's1',
-        reviewStatus: 'approved',
-        accessItemKind: 'role',
-        accessItemId: 'role-a',
-      }),
-      row({
-        id: '2',
-        role: 'Role A',
-        roleId: 'role-a',
-        entitlement: 'write',
-        entitlementId: 'e2',
-        source: 'engr db',
-        sourceId: 's1',
-        reviewStatus: 'needsReview',
-        accessItemKind: 'role',
-        accessItemId: 'role-a',
-      }),
-    ])
-    const roleNode = nodes.find((n) => n.id === 'role:role-a')
-    expect(roleNode?.reviewStatus).toBe('needsReview')
-    const userToRole = edges.find((e) => e.from === 'user:u1' && e.to === 'role:role-a')
-    expect(userToRole?.reviewStatus).toBe('needsReview')
-  })
-
-  it('leaves status undefined everywhere for a degenerate access row (no access item)', () => {
+  it("falls back to 'Unnamed <kind>' when both the label and the item name are blank", () => {
     const { nodes } = deriveAccessGraph([
       row({
+        id: '1',
+        accessProfile: '',
+        accessProfileId: 'ap-x',
+        entitlement: 'read',
+        entitlementId: 'e1',
+        source: 'engr db',
+        sourceId: 's1',
+        accessItemKind: 'accessProfile',
+        accessItemId: 'ap-x',
+        accessItemName: '',
+      }),
+    ])
+    expect(nodes.find((n) => n.id === 'accessProfile:ap-x')?.label).toBe(
+      'Unnamed access profile',
+    )
+  })
+
+  it('leaves no first-level edge for a degenerate access row (no access item)', () => {
+    const { nodes, edges } = deriveAccessGraph([
+      row({
         id: 'blank',
-        reviewStatus: 'needsReview',
         accessItemKind: undefined,
         accessItemId: null,
         unresolved: true,
       }),
     ])
     expect(nodes.every((n) => n.reviewStatus === undefined)).toBe(true)
+    expect(edges.some((e) => e.firstLevel)).toBe(false)
   })
 
   it('contributes only the user node and zero edges for an all-blank-leaf access row', () => {
@@ -482,5 +407,59 @@ describe('deriveAccessGraph', () => {
     const { nodes, edges } = deriveAccessGraph(rows)
     expect(nodes).toEqual([{ id: 'user:u1', kind: 'user', label: 'User One' }])
     expect(edges).toEqual([])
+  })
+})
+
+describe('deriveAccessGraph first-level structure (shared fixture)', () => {
+  it("user->X edges equal exactly the user's review items", async () => {
+    // User A's non-'access' review items, plus a zero-composition AP and a role
+    // whose resolved name is blank: none of them may vanish or be replaced by a
+    // deeper node as the first hop.
+    const items = [
+      ...fixtureItems(),
+      reviewItem({ id: 'a-empty', accessKind: 'accessProfile', accessId: 'ap-empty', accessName: 'Empty AP' }),
+      reviewItem({ id: 'a-blank', accessKind: 'role', accessId: 'role-blank', accessName: 'Blank Role' }),
+      reviewItem({ id: 'a-generic', accessKind: 'access', accessId: null }),
+    ]
+    const rows = await resolveMatrix(items, fixtureResolver())
+    const { edges } = deriveAccessGraph(rows)
+
+    const firstLevelTargets = edges
+      .filter((e) => e.from === 'user:u-a' && e.firstLevel === true)
+      .map((e) => e.to)
+      .sort()
+    expect(firstLevelTargets).toEqual(
+      [
+        'accessProfile:ap-bill',
+        'accessProfile:ap-empty',
+        'role:role-a',
+        'role:role-blank',
+        'entitlement:e-login',
+        'entitlement:e-admin',
+        'entitlement:e-read',
+      ].sort(),
+    )
+    // The user's outgoing edges are exactly those first-level edges.
+    expect(edges.filter((e) => e.from === 'user:u-a')).toHaveLength(
+      firstLevelTargets.length,
+    )
+  })
+
+  it('deeper edges never carry a review status or first-level marker', async () => {
+    const rows = await resolveMatrix(fixtureItems(), fixtureResolver())
+    const { edges } = deriveAccessGraph(rows)
+    const deeper = edges.filter((e) => !e.from.startsWith('user:'))
+    expect(deeper.length).toBeGreaterThan(0)
+    for (const edge of deeper) {
+      expect(edge.reviewStatus).toBeUndefined()
+      expect(edge.firstLevel).toBeUndefined()
+      expect(edge.reviewKey).toBeUndefined()
+    }
+  })
+
+  it('never stamps a review status on a node during derivation', async () => {
+    const rows = await resolveMatrix(fixtureItems(), fixtureResolver())
+    const { nodes } = deriveAccessGraph(rows)
+    expect(nodes.every((n) => n.reviewStatus === undefined)).toBe(true)
   })
 })

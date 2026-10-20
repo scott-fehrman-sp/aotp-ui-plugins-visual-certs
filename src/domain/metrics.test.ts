@@ -1,6 +1,17 @@
 import { describe, expect, it } from 'vitest'
-import type { CampaignVM, ReviewItemVM } from '../sailpoint/types'
-import { computeMetrics, daysUntil, isItemReviewed, reviewStatusOf } from './metrics'
+import type {
+  AccessReviewStatus,
+  CampaignVM,
+  ReviewItemVM,
+} from '../sailpoint/types'
+import {
+  REVIEW_STATUS_RANK,
+  aggregateReviewStatus,
+  computeMetrics,
+  daysUntil,
+  isItemReviewed,
+  reviewStatusOf,
+} from './metrics'
 
 function campaign(overrides: Partial<CampaignVM> = {}): CampaignVM {
   return {
@@ -213,5 +224,33 @@ describe('computeMetrics', () => {
     const m = computeMetrics(campaign({ due: '2026-01-01T00:00:00Z' }), items, now)
     expect(m.isComplete).toBe(true)
     expect(m.isOverdue).toBe(true)
+  })
+})
+
+describe('aggregateReviewStatus', () => {
+  const all: AccessReviewStatus[] = ['needsReview', 'reassigned', 'revoked', 'approved']
+
+  it('returns null for an empty list', () => {
+    expect(aggregateReviewStatus([])).toBeNull()
+  })
+
+  it('ranks needsReview > reassigned > revoked > approved', () => {
+    expect(aggregateReviewStatus(['approved', 'revoked'])?.status).toBe('revoked')
+    expect(aggregateReviewStatus(['revoked', 'reassigned'])?.status).toBe('reassigned')
+    expect(aggregateReviewStatus(['reassigned', 'needsReview'])?.status).toBe('needsReview')
+    expect(Object.keys(REVIEW_STATUS_RANK).sort()).toEqual([...all].sort())
+  })
+
+  it('is independent of input order', () => {
+    const forward = aggregateReviewStatus(all)
+    const backward = aggregateReviewStatus([...all].reverse())
+    expect(forward).toEqual(backward)
+    expect(forward?.status).toBe('needsReview')
+  })
+
+  it('flags mixed only when the statuses disagree', () => {
+    expect(aggregateReviewStatus(['approved'])).toEqual({ status: 'approved', mixed: false })
+    expect(aggregateReviewStatus(['revoked', 'revoked'])).toEqual({ status: 'revoked', mixed: false })
+    expect(aggregateReviewStatus(['approved', 'revoked'])?.mixed).toBe(true)
   })
 })

@@ -109,6 +109,7 @@ function fakeApis() {
     sourcesApi: { getSourceV1 } as unknown as SourcesApi,
     searchApi: { searchPostV1 } as unknown as SearchApi,
     getRoleV1,
+    getAccessProfileV1,
     getEntitlementV1,
     getSourceV1,
     searchPostV1,
@@ -162,11 +163,84 @@ describe('useAccessMatrix', () => {
     )
     await waitFor(() => expect(result.current.status).toBe('ready'))
     const callsAfterLoad = apis.getEntitlementV1.mock.calls.length
+    const roleCallsAfterLoad = apis.getRoleV1.mock.calls.length
+    const apCallsAfterLoad = apis.getAccessProfileV1.mock.calls.length
 
     // Rebuild the array but preserve ids (mirrors a decision update).
     rerender({ list: items.map((i) => ({ ...i, completed: true })) })
 
     expect(result.current.status).toBe('ready')
     expect(apis.getEntitlementV1.mock.calls.length).toBe(callsAfterLoad)
+    expect(apis.getRoleV1.mock.calls.length).toBe(roleCallsAfterLoad)
+    expect(apis.getAccessProfileV1.mock.calls.length).toBe(apCallsAfterLoad)
+  })
+
+  it('keeps graph.nodes reference stable across status-only rebuilds', async () => {
+    const apis = fakeApis()
+    const items = workedExampleItems()
+    const { result, rerender } = renderHook(
+      ({ list }: { list: ReviewItemVM[] }) =>
+        useAccessMatrix(
+          apis.rolesApi,
+          apis.accessProfilesApi,
+          apis.entitlementsApi,
+          apis.sourcesApi,
+          apis.searchApi,
+          'c1',
+          list,
+        ),
+      { initialProps: { list: items } },
+    )
+    await waitFor(() => expect(result.current.status).toBe('ready'))
+    const nodesBefore = result.current.graph.nodes
+    const edgesBefore = result.current.graph.edges
+
+    rerender({ list: items.map((i) => ({ ...i, completed: true, decision: 'REVOKE' as const })) })
+
+    expect(result.current.graph.nodes).toBe(nodesBefore)
+    expect(result.current.graph.edges).not.toBe(edgesBefore)
+    const roleEdge = result.current.graph.edges.find(
+      (e) => e.from === 'user:u1' && e.to === 'role:role-a',
+    )
+    expect(roleEdge?.reviewStatus).toBe('revoked')
+  })
+
+  it('reflects a decision made after resolution in graph edge status without re-resolving', async () => {
+    const apis = fakeApis()
+    const items = workedExampleItems()
+    const { result, rerender } = renderHook(
+      ({ list }: { list: ReviewItemVM[] }) =>
+        useAccessMatrix(
+          apis.rolesApi,
+          apis.accessProfilesApi,
+          apis.entitlementsApi,
+          apis.sourcesApi,
+          apis.searchApi,
+          'c1',
+          list,
+        ),
+      { initialProps: { list: items } },
+    )
+    await waitFor(() => expect(result.current.status).toBe('ready'))
+    const roleEdge = () =>
+      result.current.graph.edges.find(
+        (e) => e.from === 'user:u1' && e.to === 'role:role-a',
+      )
+    expect(roleEdge()?.reviewStatus).toBe('needsReview')
+    const roleCalls = apis.getRoleV1.mock.calls.length
+    const entCalls = apis.getEntitlementV1.mock.calls.length
+
+    // The reviewer keeps the role AFTER resolution (same ids, new decision).
+    rerender({
+      list: items.map((i) =>
+        i.id === 'rev-role'
+          ? { ...i, completed: true, decision: 'APPROVE' as const }
+          : i,
+      ),
+    })
+
+    expect(roleEdge()?.reviewStatus).toBe('approved')
+    expect(apis.getRoleV1.mock.calls.length).toBe(roleCalls)
+    expect(apis.getEntitlementV1.mock.calls.length).toBe(entCalls)
   })
 })

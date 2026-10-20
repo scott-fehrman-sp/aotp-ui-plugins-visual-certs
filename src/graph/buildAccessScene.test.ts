@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { deriveAccessGraph } from '../domain/accessGraph'
 import type { AccessMatrixRowVM } from '../sailpoint/types'
+import { statusSubgraph } from '../test/reviewStatusFixture'
+import type { StatusRow } from '../test/reviewStatusFixture'
 import { buildAccessScene } from './buildAccessScene'
 
-function row(overrides: Partial<AccessMatrixRowVM>): AccessMatrixRowVM {
+function row(overrides: Partial<StatusRow>): StatusRow {
   return {
     id: 'r',
     userId: 'u1',
@@ -164,7 +166,7 @@ describe('buildAccessScene', () => {
     // A role item that still needs review: the user→role edge carries the
     // needsReview marker (data + class + dashed amber stroke); role→AP,
     // AP→entitlement, entitlement→source stay neutral.
-    const graph = deriveAccessGraph([
+    const graph = statusSubgraph([
       row({
         id: '1',
         role: 'Role A',
@@ -205,7 +207,7 @@ describe('buildAccessScene', () => {
   })
 
   it('draws an approved user→access-item edge as a solid green stroke with the status marker', () => {
-    const graph = deriveAccessGraph([
+    const graph = statusSubgraph([
       row({
         id: '1',
         entitlement: 'read',
@@ -230,7 +232,7 @@ describe('buildAccessScene', () => {
   })
 
   it('draws a revoked user→access-item edge as a solid red stroke with the status marker', () => {
-    const graph = deriveAccessGraph([
+    const graph = statusSubgraph([
       row({
         id: '1',
         entitlement: 'read',
@@ -255,7 +257,7 @@ describe('buildAccessScene', () => {
   })
 
   it('draws a reassigned user→access-item edge as a dotted blue stroke with the status marker', () => {
-    const graph = deriveAccessGraph([
+    const graph = statusSubgraph([
       row({
         id: '1',
         role: 'Role A',
@@ -282,7 +284,7 @@ describe('buildAccessScene', () => {
   })
 
   it('threads review status onto the access-item scene node data', () => {
-    const graph = deriveAccessGraph([
+    const graph = statusSubgraph([
       row({
         id: '1',
         role: 'Role A',

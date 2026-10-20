@@ -14,12 +14,10 @@ import type { EntitlementsApi } from 'sailpoint-api-client/entitlements/api'
 import type { RolesApi } from 'sailpoint-api-client/roles/api'
 import type { SearchApi } from 'sailpoint-api-client/search/api'
 import type { SourcesApi } from 'sailpoint-api-client/sources/api'
-import { reviewStatusOf } from '../domain/metrics'
 import { fetchIdentityAttributes } from './identities'
 import type {
   AccessGraphNodeKind,
   AccessMatrixRowVM,
-  AccessReviewStatus,
   ReviewItemVM,
 } from './types'
 
@@ -267,18 +265,12 @@ interface RowTuple {
   entitlementDescription?: string
   /** Resolved SOURCE description, on a resolved leaf row. */
   sourceDescription?: string
-  /**
-   * Review status of the source review item (via `reviewStatusOf`), on every
-   * row the item produces. NEVER part of `rowKey` — same enrichment pattern as
-   * `userDepartment`. On a dedup collision the deterministic precedence
-   * `needsReview > reassigned > revoked > approved` applies (needsReview never
-   * hidden; reassignment terminal over a plain keep/remove decision).
-   */
-  reviewStatus?: AccessReviewStatus
   /** Kind of the user's directly-held access item (first hop off the user). */
   accessItemKind?: AccessGraphNodeKind
   /** Id of the user's directly-held access item; null when the item had none. */
   accessItemId?: string | null
+  /** The review item's own display name (review-key fallback / blank-label fallback). */
+  accessItemName?: string
 }
 
 /**
@@ -348,13 +340,13 @@ async function expandItem(
   // for this user, including the degenerate all-blank `access` row and any
   // unresolved row. Soft-degrades to '' (never throws, never blanks the matrix).
   const attrs = await resolver.identity(item.identityId)
-  // Review status + the directly-held access-item identity attach to the review
-  // item itself (independent of how its composition expands), so fold them into
-  // `base` and let them land on EVERY row — exactly like department/location.
+  // The directly-held access-item identity (kind, id, name) attaches to the
+  // review item itself (independent of how its composition expands), so fold it
+  // into `base` and let it land on EVERY row — exactly like department/location.
+  // Review STATUS is deliberately not stamped here: it is a live overlay applied
+  // after resolution (`domain/reviewOverlay.ts`) so a decision never re-resolves.
   // The generic `access` fallback has no composition node, so it carries no
-  // access-item kind (its degenerate row still carries status on the user side,
-  // but with no access-item node/edge there is nothing to mark downstream).
-  const reviewStatus: AccessReviewStatus = reviewStatusOf(item)
+  // access-item kind and nothing downstream is treated as a review hop.
   const accessItemKind: AccessGraphNodeKind | undefined =
     item.accessKind === 'role' ||
     item.accessKind === 'accessProfile' ||
@@ -366,9 +358,9 @@ async function expandItem(
     user: item.personName,
     userDepartment: attrs?.department ?? '',
     userLocation: attrs?.location ?? '',
-    reviewStatus,
     accessItemKind,
     accessItemId: item.accessId ?? null,
+    accessItemName: item.accessName,
   }
   // `accessId` is optional on ReviewItemVM; normalize undefined to null.
   const accessId = item.accessId ?? null
@@ -430,6 +422,25 @@ async function expandItem(
         },
       ]
     }
+    if (ap.entitlementRefs.length === 0) {
+      // Resolved but empty: the item is still a reviewable first-level hop, so
+      // emit one bare row (name/id of the AP, blank leaf) instead of vanishing.
+      return [
+        {
+          ...base,
+          role: '',
+          roleId: null,
+          accessProfile: ap.name,
+          accessProfileId: ap.id,
+          accessProfileDescription: ap.description,
+          entitlement: '',
+          entitlementId: null,
+          source: '',
+          sourceId: null,
+          unresolved: false,
+        },
+      ]
+    }
     return Promise.all(
       ap.entitlementRefs.map(async (ref) => {
         const leaf = await resolveLeaf(resolver, ref)
@@ -461,6 +472,26 @@ async function expandItem(
         source: '',
         sourceId: null,
         unresolved: true,
+      },
+    ]
+  }
+
+  if (role.accessProfileRefs.length === 0 && role.entitlementRefs.length === 0) {
+    // Resolved but empty role: still a reviewable first-level hop (see the AP
+    // case above), so emit one bare row rather than nothing.
+    return [
+      {
+        ...base,
+        role: role.name,
+        roleId: role.id,
+        roleDescription: role.description,
+        accessProfile: '',
+        accessProfileId: null,
+        entitlement: '',
+        entitlementId: null,
+        source: '',
+        sourceId: null,
+        unresolved: false,
       },
     ]
   }
@@ -519,22 +550,6 @@ async function expandItem(
 }
 
 /**
- * Collision precedence for `reviewStatus` when two rows dedup to the same
- * five-id tuple but carry different statuses (highest wins):
- * `needsReview > reassigned > revoked > approved`. needsReview is never hidden;
- * reassignment is terminal over a plain keep/remove decision; the
- * revoked-over-approved order is an arbitrary-but-fixed tiebreak for the
- * defensive decided-vs-decided case. Mirrors `markStatus` in
- * `domain/accessGraph.ts` so the node/edge and the matrix row always agree.
- */
-const REVIEW_STATUS_RANK: Record<AccessReviewStatus, number> = {
-  needsReview: 3,
-  reassigned: 2,
-  revoked: 1,
-  approved: 0,
-}
-
-/**
  * Expands review items into canonical, deduped matrix rows. Async: fetches
  * composition via the resolver (cached, concurrent-deduped). Degrades
  * unresolved leaves to an `unresolved` row rather than throwing.
@@ -555,28 +570,10 @@ export async function resolveMatrix(
   for (const tuples of expanded) {
     for (const tuple of tuples) {
       const id = rowKey(tuple)
-      const existing = byKey.get(id)
-      if (!existing) {
-        byKey.set(id, { id, ...tuple })
-        continue
-      }
-      // First-wins on every enrichment field EXCEPT reviewStatus, which follows
-      // the four-state precedence on collision via REVIEW_STATUS_RANK:
-      //   needsReview > reassigned > revoked > approved
-      //   - needsReview always wins so outstanding work is never hidden.
-      //   - reassignment stays terminal over a plain keep/remove decision.
-      //   - revoked > approved is an arbitrary-but-fixed order for the defensive
-      //     decided-vs-decided collision (one access item comes from one review
-      //     item, so this should not occur in practice).
-      // Keep the incoming status only when it strictly outranks the existing one.
-      if (
-        tuple.reviewStatus &&
-        (existing.reviewStatus === undefined ||
-          REVIEW_STATUS_RANK[tuple.reviewStatus] >
-            REVIEW_STATUS_RANK[existing.reviewStatus])
-      ) {
-        existing.reviewStatus = tuple.reviewStatus
-      }
+      // First-wins on collision: every enrichment field keeps the first row's
+      // value. Review status is not on the row (live overlay), so there is
+      // nothing to merge.
+      if (!byKey.has(id)) byKey.set(id, { id, ...tuple })
     }
   }
   return [...byKey.values()]

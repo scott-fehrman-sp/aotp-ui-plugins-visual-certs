@@ -8,6 +8,13 @@
  * `buildAccessScene` renders the drill-down view for that one user without ever
  * touching the other users' nodes/edges.
  *
+ * Review status is derived HERE, per user: a node carries `reviewStatus` /
+ * `reviewMixed` only when it is the target of THIS user's own `firstLevel`
+ * edge, and the value is copied from that edge. The shared graph's nodes are
+ * deduped across users, so any status they carried would leak between users;
+ * every other kept node is returned without status (reference-only). Node and
+ * edge status therefore cannot diverge.
+ *
  * It is framework-pure: no React, no DOM, no I/O, no mutation of the input
  * graph, deterministic output. Output order mirrors the input graph's node and
  * edge order among the kept items, so identical input yields identical output.
@@ -22,8 +29,8 @@ import type { AccessGraphData } from '../sailpoint/types'
  * - Otherwise → the user node plus every node reachable by following `from→to`
  *   edges, and exactly the edges traversed along those paths.
  *
- * PURE and deterministic: does not mutate `graph`; kept nodes/edges preserve
- * the input graph's relative order.
+ * PURE and deterministic: does not mutate `graph` (status is stamped on COPIES of
+ * the target nodes); kept nodes/edges preserve the input graph's relative order.
  */
 export function userSubgraph(
   graph: AccessGraphData,
@@ -57,8 +64,32 @@ export function userSubgraph(
     }
   }
 
-  return {
-    nodes: graph.nodes.filter((node) => reachableNodeIds.has(node.id)),
-    edges: graph.edges.filter((edge) => keptEdgeKeys.has(`${edge.from}|${edge.to}`)),
+  const keptEdges = graph.edges.filter((edge) =>
+    keptEdgeKeys.has(`${edge.from}|${edge.to}`),
+  )
+
+  // Status comes ONLY from this user's first-level edges.
+  const edgeByTarget = new Map<string, (typeof graph.edges)[number]>()
+  for (const edge of keptEdges) {
+    if (edge.from === userNodeId && edge.firstLevel && edge.reviewStatus) {
+      edgeByTarget.set(edge.to, edge)
+    }
   }
+
+  const keptNodes = graph.nodes
+    .filter((node) => reachableNodeIds.has(node.id))
+    .map((node) => {
+      // Copy, then strip defensively so nothing but this user's edge can set it.
+      const copy = { ...node }
+      delete copy.reviewStatus
+      delete copy.reviewMixed
+      const edge = edgeByTarget.get(node.id)
+      if (edge?.reviewStatus) {
+        copy.reviewStatus = edge.reviewStatus
+        copy.reviewMixed = edge.reviewMixed
+      }
+      return copy
+    })
+
+  return { nodes: keptNodes, edges: keptEdges }
 }

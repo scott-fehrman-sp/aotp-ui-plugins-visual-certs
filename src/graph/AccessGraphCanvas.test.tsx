@@ -2,9 +2,11 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { deriveAccessGraph } from '../domain/accessGraph'
 import type { AccessMatrixRowVM } from '../sailpoint/types'
+import { statusGraph } from '../test/reviewStatusFixture'
+import type { StatusRow } from '../test/reviewStatusFixture'
 import { AccessGraphCanvas } from './AccessGraphCanvas'
 
-function row(overrides: Partial<AccessMatrixRowVM>): AccessMatrixRowVM {
+function row(overrides: Partial<StatusRow>): StatusRow {
   return {
     id: 'r',
     userId: 'u1',
@@ -104,7 +106,7 @@ describe('AccessGraphCanvas', () => {
     // role (needsReview), a kept directly-held entitlement (approved), a removed
     // directly-held entitlement (revoked), and a reassigned access profile
     // (reassigned).
-    const graph = deriveAccessGraph([
+    const graph = statusGraph([
       row({
         id: '1',
         userId: 'u1',

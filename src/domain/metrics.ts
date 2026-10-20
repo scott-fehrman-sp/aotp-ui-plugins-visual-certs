@@ -44,8 +44,9 @@ export interface CampaignMetrics {
  *   - else the defensive `completed && decision == null && !reassigned` corner
  *     → `'approved'` (see the unreachable-fallback note below),
  *   - else → `'needsReview'`.
- * `computeMetrics` (via `isItemReviewed`) and the access-matrix review-status
- * stamp both derive from this so the dashboard and the graph can never disagree.
+ * `computeMetrics` (via `isItemReviewed`) and the live graph review overlay
+ * (`domain/reviewOverlay.ts`) both derive from this so the dashboard and the
+ * graph can never disagree.
  */
 export function reviewStatusOf(item: ReviewItemVM): AccessReviewStatus {
   if (item.reassigned === true) return 'reassigned'
@@ -59,6 +60,39 @@ export function reviewStatusOf(item: ReviewItemVM): AccessReviewStatus {
   // keeps `isItemReviewed` true for it.
   if (item.completed) return 'approved'
   return 'needsReview'
+}
+
+/**
+ * Aggregation rank for combining several review statuses into one (highest
+ * wins): `needsReview > reassigned > revoked > approved`. needsReview is never
+ * hidden (outstanding work stays visible); reassignment is terminal over a plain
+ * keep/remove decision; revoked-over-approved is an arbitrary-but-fixed tiebreak
+ * for the defensive decided-vs-decided case. The ONE rank table in the app.
+ */
+export const REVIEW_STATUS_RANK: Record<AccessReviewStatus, number> = {
+  needsReview: 3,
+  reassigned: 2,
+  revoked: 1,
+  approved: 0,
+}
+
+/**
+ * Collapses several review statuses (e.g. every review item for one user and one
+ * access item) into one, by {@link REVIEW_STATUS_RANK}. Independent of input
+ * order. `mixed` is true when the statuses are not all identical. Returns `null`
+ * for an empty list.
+ */
+export function aggregateReviewStatus(
+  statuses: AccessReviewStatus[],
+): { status: AccessReviewStatus; mixed: boolean } | null {
+  if (statuses.length === 0) return null
+  let status = statuses[0]
+  let mixed = false
+  for (const next of statuses) {
+    if (next !== status) mixed = true
+    if (REVIEW_STATUS_RANK[next] > REVIEW_STATUS_RANK[status]) status = next
+  }
+  return { status, mixed }
 }
 
 /**

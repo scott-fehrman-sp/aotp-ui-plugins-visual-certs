@@ -11,8 +11,8 @@ import type {
   AccessGraphNode,
   AccessGraphNodeKind,
   AccessMatrixRowVM,
-  AccessReviewStatus,
 } from '../sailpoint/types'
+import { reviewKey } from './reviewOverlay'
 
 /** One present level on a row's path: a graph node to add + edge to continue. */
 interface Level {
@@ -50,17 +50,13 @@ function detailFor(
   return Object.keys(detail).length > 0 ? detail : undefined
 }
 
-/**
- * Collision precedence for `reviewStatus` (highest wins):
- * `needsReview > reassigned > revoked > approved`. Mirrors
- * `REVIEW_STATUS_RANK` in `sailpoint/accessMatrix.ts` so the matrix row, the
- * node, and the edge always agree on which status survives a collision.
- */
-const REVIEW_STATUS_RANK: Record<AccessReviewStatus, number> = {
-  needsReview: 3,
-  reassigned: 2,
-  revoked: 1,
-  approved: 0,
+/** Human-readable kind names for the blank-label fallback of a first-level item. */
+const KIND_LABEL: Record<AccessGraphNodeKind, string> = {
+  user: 'user',
+  role: 'role',
+  accessProfile: 'access profile',
+  entitlement: 'entitlement',
+  source: 'source',
 }
 
 /**
@@ -87,6 +83,16 @@ function entitlementFallbackId(row: AccessMatrixRowVM): string {
  *   - AP grant:                  user → accessProfile → entitlement → source
  *   - role direct entitlement:   user → role → entitlement → source
  *   - role → AP → entitlement:   user → role → accessProfile → entitlement → source
+ *
+ * First level: the user's directly-held access item (the role / access profile /
+ * entitlement under review, `row.accessItemKind`) is ALWAYS the first hop off the
+ * user, even when its resolved label is blank (the label then falls back to the
+ * review item's own name, then `Unnamed <kind>`), so a deeper node can never
+ * replace it. That user→item edge is marked `firstLevel` with a `reviewKey`;
+ * every deeper edge is reference-only and carries neither. Review STATUS is not
+ * derived here: it is a live per-user overlay (`applyReviewStatus`), and node
+ * status is derived from the edge by `userSubgraph`. Nodes here never carry a
+ * status because they are shared across users.
  *
  * Node id scheme (namespaced so ids never collide across layers):
  *   - `user:<userId>`
@@ -132,30 +138,6 @@ export function deriveAccessGraph(
     }
   }
 
-  /**
-   * Stamps review status onto a node/edge with the four-state precedence
-   * `needsReview > reassigned > revoked > approved` (highest wins): once a node
-   * or edge is marked `needsReview` it stays that way (outstanding work is never
-   * hidden); `reassigned` stays terminal over a plain keep/remove decision; the
-   * revoked-over-approved order is an arbitrary-but-fixed tiebreak for the
-   * defensive decided-vs-decided case. The incoming `status` overwrites the
-   * current one only when it STRICTLY outranks it, so the result is independent
-   * of row order — matching the matrix merge in `sailpoint/accessMatrix.ts`.
-   * Leaves the field untouched when `status` is undefined.
-   */
-  const markStatus = (
-    target: { reviewStatus?: AccessReviewStatus } | undefined,
-    status: AccessReviewStatus | undefined,
-  ): void => {
-    if (!target || !status) return
-    if (
-      target.reviewStatus === undefined ||
-      REVIEW_STATUS_RANK[status] > REVIEW_STATUS_RANK[target.reviewStatus]
-    ) {
-      target.reviewStatus = status
-    }
-  }
-
   for (const row of rows) {
     const levels: Level[] = []
 
@@ -167,36 +149,50 @@ export function deriveAccessGraph(
       detail: detailFor('user', row),
     })
 
-    // Role / access profile only when on this path (blank = skipped).
-    if (row.role !== '') {
+    // Role / access profile / entitlement are present when on this path (blank =
+    // skipped) OR when they are the user's directly-held item (`heldKind`), in
+    // which case a blank label falls back so the first hop is never lost.
+    const heldKind = row.accessItemKind
+    const heldLabel = (kind: AccessGraphNodeKind, label: string): string =>
+      label !== '' ? label : row.accessItemName || `Unnamed ${KIND_LABEL[kind]}`
+
+    if (row.role !== '' || heldKind === 'role') {
+      const label = heldLabel('role', row.role)
       levels.push({
-        id: row.roleId ? `role:${row.roleId}` : `role:name:${row.role}`,
+        id: row.roleId
+          ? `role:${row.roleId}`
+          : row.accessItemId && heldKind === 'role' && row.role === ''
+            ? `role:${row.accessItemId}`
+            : `role:name:${label}`,
         kind: 'role',
-        label: row.role,
+        label,
         detail: detailFor('role', row),
       })
     }
-    if (row.accessProfile !== '') {
+    if (row.accessProfile !== '' || heldKind === 'accessProfile') {
+      const label = heldLabel('accessProfile', row.accessProfile)
       levels.push({
         id: row.accessProfileId
           ? `accessProfile:${row.accessProfileId}`
-          : `accessProfile:name:${row.accessProfile}`,
+          : row.accessItemId && heldKind === 'accessProfile' && row.accessProfile === ''
+            ? `accessProfile:${row.accessItemId}`
+            : `accessProfile:name:${label}`,
         kind: 'accessProfile',
-        label: row.accessProfile,
+        label,
         detail: detailFor('accessProfile', row),
       })
     }
 
     // Entitlement + source are present on every real leaf row. They are blank
-    // together only on the degenerate all-blank-leaf `access`-kind row, which
-    // then contributes just the user node.
-    if (row.entitlement !== '') {
+    // together on the degenerate `access`-kind row (just the user node) and on a
+    // bare first-level row for an empty access profile / role (user → item only).
+    if (row.entitlement !== '' || heldKind === 'entitlement') {
       levels.push({
         id: row.entitlementId
           ? `entitlement:${row.entitlementId}`
           : entitlementFallbackId(row),
         kind: 'entitlement',
-        label: row.entitlement,
+        label: heldLabel('entitlement', row.entitlement),
         detail: detailFor('entitlement', row),
       })
     }
@@ -209,34 +205,35 @@ export function deriveAccessGraph(
       })
     }
 
-    // Add nodes, then one edge per consecutive present pair.
+    // Add nodes, then one edge per consecutive present pair. The user→first-hop
+    // edge is the review hop only when the first hop IS the held item's kind
+    // (a degenerate `access` row has no held kind, so it marks nothing).
     for (const level of levels) addNode(level)
+    const firstHop = levels[1]
+    const markFirstLevel =
+      firstHop !== undefined &&
+      heldKind !== undefined &&
+      firstHop.kind === heldKind
     for (let i = 0; i < levels.length - 1; i++) {
       const from = levels[i].id
       const to = levels[i + 1].id
       const key = `${from}|${to}`
-      const existing = edges.get(key)
-      if (existing) {
-        existing.pathCount += 1
+      let edge = edges.get(key)
+      if (edge) {
+        edge.pathCount += 1
       } else {
-        edges.set(key, { from, to, pathCount: 1 })
+        edge = { from, to, pathCount: 1 }
+        edges.set(key, edge)
       }
-    }
-
-    // Stamp review status onto the user's DIRECT access item: the first hop off
-    // the user (levels[1]) is the role / access profile / entitlement under
-    // review. Confirm it matches the review item's own access-item kind so a
-    // degenerate `access` row (which has no access-item level) never marks a
-    // downstream node. Deeper hops stay neutral; needsReview-wins on collision.
-    const accessItemLevel = levels[1]
-    if (
-      accessItemLevel &&
-      row.accessItemKind !== undefined &&
-      accessItemLevel.kind === row.accessItemKind
-    ) {
-      markStatus(nodes.get(accessItemLevel.id), row.reviewStatus)
-      const edgeKey = `${levels[0].id}|${accessItemLevel.id}`
-      markStatus(edges.get(edgeKey), row.reviewStatus)
+      if (i === 0 && markFirstLevel && !edge.firstLevel) {
+        edge.firstLevel = true
+        edge.reviewKey = reviewKey(
+          row.userId,
+          heldKind,
+          row.accessItemId,
+          row.accessItemName ?? '',
+        )
+      }
     }
   }
 

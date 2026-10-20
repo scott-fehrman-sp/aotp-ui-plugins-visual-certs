@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { deriveAccessGraph } from '../domain/accessGraph'
 import type { AccessMatrixRowVM } from '../sailpoint/types'
+import {
+  buildFixtureGraph,
+  fixtureItems,
+  reviewItem,
+} from '../test/reviewStatusFixture'
 import { userSubgraph } from './userSubgraph'
 
 function row(overrides: Partial<AccessMatrixRowVM>): AccessMatrixRowVM {
@@ -103,5 +108,80 @@ describe('userSubgraph', () => {
     userSubgraph(graph, 'user:u1')
     expect(graph.nodes).toHaveLength(nodeCount)
     expect(graph.edges).toHaveLength(edgeCount)
+  })
+})
+
+describe('userSubgraph review status (shared fixture)', () => {
+  const nodeStatus = (sub: ReturnType<typeof userSubgraph>, id: string) =>
+    sub.nodes.find((n) => n.id === id)?.reviewStatus
+  const edgeStatus = (sub: ReturnType<typeof userSubgraph>, to: string, user: string) =>
+    sub.edges.find((e) => e.from === user && e.to === to)?.reviewStatus
+
+  it("stamps node status only from this user's first-level edge (no cross-user leak)", async () => {
+    const graph = await buildFixtureGraph()
+    const a = userSubgraph(graph, 'user:u-a')
+    const b = userSubgraph(graph, 'user:u-b')
+
+    // Both users hold e-login and ap-bill with different statuses.
+    expect(nodeStatus(a, 'entitlement:e-login')).toBe('approved')
+    expect(nodeStatus(b, 'entitlement:e-login')).toBe('needsReview')
+    expect(nodeStatus(a, 'accessProfile:ap-bill')).toBe('needsReview')
+    expect(nodeStatus(b, 'accessProfile:ap-bill')).toBe('reassigned')
+    // And each matches its own user edge.
+    expect(edgeStatus(a, 'entitlement:e-login', 'user:u-a')).toBe('approved')
+    expect(edgeStatus(b, 'accessProfile:ap-bill', 'user:u-b')).toBe('reassigned')
+  })
+
+  it("a nested-only node carries no status in another user's drill-down", async () => {
+    // User C holds e-write DIRECTLY (approved). For user A, e-write is only
+    // reachable nested under role-a -> ap-foo, so it must not carry C's status.
+    const items = [
+      ...fixtureItems(),
+      reviewItem({
+        id: 'c-write',
+        identityId: 'u-c',
+        personName: 'Carol Clark',
+        accessKind: 'entitlement',
+        accessId: 'e-write',
+        accessName: 'Write',
+        completed: true,
+        decision: 'APPROVE',
+      }),
+    ]
+    const graph = await buildFixtureGraph(items)
+    const a = userSubgraph(graph, 'user:u-a')
+    expect(a.nodes.some((n) => n.id === 'entitlement:e-write')).toBe(true)
+    expect(nodeStatus(a, 'entitlement:e-write')).toBeUndefined()
+    // Deeper nodes of user A's items carry no status either.
+    expect(nodeStatus(a, 'entitlement:e-pay')).toBeUndefined()
+    expect(nodeStatus(a, 'accessProfile:ap-foo')).toBeUndefined()
+    expect(nodeStatus(a, 'source:s-erp')).toBeUndefined()
+    // ... while C's own drill-down does carry it.
+    expect(nodeStatus(userSubgraph(graph, 'user:u-c'), 'entitlement:e-write')).toBe(
+      'approved',
+    )
+  })
+
+  it('node status always equals its incoming user edge status across a mixed fixture', async () => {
+    const graph = await buildFixtureGraph()
+    for (const userId of ['user:u-a', 'user:u-b']) {
+      const sub = userSubgraph(graph, userId)
+      for (const node of sub.nodes) {
+        const incoming = sub.edges.find((e) => e.from === userId && e.to === node.id)
+        expect(node.reviewStatus, `${userId} -> ${node.id}`).toBe(
+          incoming?.reviewStatus,
+        )
+      }
+    }
+    // The fixture really does exercise all four statuses for user A.
+    const a = userSubgraph(graph, 'user:u-a')
+    const statuses = new Set(
+      a.edges.filter((e) => e.from === 'user:u-a').map((e) => e.reviewStatus),
+    )
+    expect(statuses).toEqual(
+      new Set(['needsReview', 'approved', 'revoked', 'reassigned']),
+    )
+    // e-read is held directly AND nested: its node status is the direct edge's.
+    expect(nodeStatus(a, 'entitlement:e-read')).toBe('approved')
   })
 })

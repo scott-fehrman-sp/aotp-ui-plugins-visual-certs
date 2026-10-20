@@ -199,8 +199,8 @@ export interface CurrentUser {
 // --- access expansion matrix -------------------------------------------------
 
 /**
- * Review status of the user's directly-held access item, for the drill-down
- * graph. Four states: `'needsReview'` = no decision recorded yet; `'approved'`
+ * Review status of the user's directly-held (first-level) access item, for the
+ * drill-down graph. Four states: `'needsReview'` = no decision recorded yet; `'approved'`
  * = reviewer KEPT the access (`decision === 'APPROVE'`); `'revoked'` = reviewer
  * REMOVED the access (`decision === 'REVOKE'`); `'reassigned'` = the item was
  * handed to someone else to review, which is TERMINAL for this reviewer and
@@ -208,7 +208,8 @@ export interface CurrentUser {
  * `domain/metrics.ts`, the single source of truth; `isItemReviewed` is true for
  * `'approved'`, `'revoked'`, and `'reassigned'`. Only the FIRST hop off the user
  * (the role / access profile / directly-held entitlement under review) carries
- * this; deeper explanatory hops stay neutral.
+ * this; deeper explanatory hops stay neutral. Status is a LIVE per-user overlay
+ * (see `domain/reviewOverlay.ts`), never baked into resolved matrix rows.
  */
 export type AccessReviewStatus =
   | 'needsReview'
@@ -286,22 +287,13 @@ export interface AccessMatrixRowVM {
   /** The source's description, same semantics as {@link roleDescription}. */
   sourceDescription?: string
   /**
-   * Review status of the review item this row came from, for the drill-down
-   * graph's user→access-item edge/node marking. Stamped on EVERY row the item
-   * produces (via `reviewStatusOf`, reassigned→'reassigned' precedence).
-   * Enrichment only — NEVER part of the five-id dedup key (`rowKey`); when two
-   * rows collide on the dedup identity but disagree on status, the deterministic
-   * precedence `needsReview > reassigned > revoked > approved` applies so
-   * outstanding work is never hidden and reassignment stays terminal over any
-   * plain keep/remove decision.
-   */
-  reviewStatus?: AccessReviewStatus
-  /**
    * The KIND of the user's directly-held access item (the first hop off the
    * user node): the role, access profile, or entitlement under review. Lets the
-   * graph find exactly which child node + user→child edge to mark with
-   * `reviewStatus`. `undefined` for the generic `access` fallback (no composition
-   * node). Enrichment only; never part of the dedup key.
+   * graph mark the user→child edge as a first-level review hop (see
+   * {@link AccessGraphEdge.firstLevel}). `undefined` for the generic `access`
+   * fallback (no composition node). Enrichment only; never part of the dedup
+   * key. Review STATUS is deliberately NOT on the row: it is a live overlay
+   * applied after resolution so a decision never needs a re-resolve.
    */
   accessItemKind?: AccessGraphNodeKind
   /**
@@ -310,6 +302,13 @@ export interface AccessMatrixRowVM {
    * Enrichment only; never part of the dedup key.
    */
   accessItemId?: string | null
+  /**
+   * The review item's own display name (`ReviewItemVM.accessName`), paired with
+   * {@link accessItemKind}. Used as the review-key fallback when the item has no
+   * id and as the node label when the resolved label is blank. Enrichment only;
+   * never part of the dedup key.
+   */
+  accessItemName?: string
 }
 
 /** The kind of a graph node — the five node layers of the matrix. */
@@ -341,14 +340,19 @@ export interface AccessGraphNode {
    */
   detail?: { description?: string; department?: string; location?: string }
   /**
-   * Review status of this node, set ONLY on the user's directly-held access
-   * item (the first hop off the user) in the drill-down graph. Deeper nodes and
-   * the user node itself leave it `undefined`. One of `'needsReview'` /
-   * `'approved'` / `'revoked'` / `'reassigned'`; precedence on collision is
-   * `needsReview > reassigned > revoked > approved` (needsReview never hidden,
-   * reassignment terminal over a plain keep/remove decision).
+   * Review status of this node, set ONLY by `userSubgraph`, and only on the
+   * target of the viewed user's own first-level edge (copied from that edge, so
+   * node and edge can never disagree). The shared, user-independent graph never
+   * carries it: nodes are deduped across users, so a status there would leak
+   * between users. Deeper nodes and the user node leave it `undefined`.
    */
   reviewStatus?: AccessReviewStatus
+  /**
+   * True when the first-level edge this status was copied from aggregates
+   * several review items that disagree (see {@link AccessGraphEdge.reviewMixed}).
+   * Set only by `userSubgraph` alongside `reviewStatus`.
+   */
+  reviewMixed?: boolean
 }
 
 /**
@@ -365,15 +369,33 @@ export interface AccessGraphEdge {
   /** Number of matrix rows that traverse this exact edge (>= 1). */
   pathCount: number
   /**
-   * Review status of this edge, set ONLY on the user→access-item edge (the
-   * first hop off the user) in the drill-down graph. Deeper edges leave it
-   * `undefined`. One of `'needsReview'` / `'approved'` / `'revoked'` /
-   * `'reassigned'`; precedence on collision is
-   * `needsReview > reassigned > revoked > approved` (needsReview never hidden,
-   * reassignment terminal). `pathCount` is retained for any data-layer consumer,
-   * but the drill-down renderer no longer draws a count badge.
+   * Review status of this edge: a LIVE per-user overlay set ONLY by
+   * `applyReviewStatus` on `firstLevel` edges whose {@link reviewKey} has a
+   * review item. Structural derivation never sets it, and deeper edges leave it
+   * `undefined`. Aggregation across several review items for one key follows
+   * `needsReview > reassigned > revoked > approved` (`aggregateReviewStatus`).
+   * `pathCount` is retained for any data-layer consumer, but the drill-down
+   * renderer no longer draws a count badge.
    */
   reviewStatus?: AccessReviewStatus
+  /**
+   * True ONLY on the user→access-item edge that is a real review hop (the
+   * user's directly-held role / access profile / entitlement). Every deeper
+   * edge leaves it `undefined` and is explanatory reference only.
+   */
+  firstLevel?: boolean
+  /**
+   * Join key into the review items for a `firstLevel` edge:
+   * `reviewKey(userId, kind, accessId | name)`. Set structurally by
+   * `deriveAccessGraph`; matched by `applyReviewStatus`.
+   */
+  reviewKey?: string
+  /**
+   * True when {@link reviewStatus} aggregates several review items for this
+   * key that do not all share one status (tooltip detail). Set only by
+   * `applyReviewStatus`.
+   */
+  reviewMixed?: boolean
 }
 
 /**
@@ -444,5 +466,15 @@ export interface AccessSceneNodeData extends Record<string, unknown> {
    * user node, deeper hops).
    */
   reviewStatus?: AccessReviewStatus
+  /**
+   * True when the status aggregates several disagreeing review items
+   * (threaded from {@link AccessGraphNode.reviewMixed}).
+   */
+  reviewMixed?: boolean
+  /**
+   * True on a non-user node with no review status: a deeper, reference-only
+   * node shown to explain how access derives to a source (not itself reviewed).
+   */
+  reference?: boolean
 }
 

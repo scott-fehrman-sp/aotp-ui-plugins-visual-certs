@@ -52,6 +52,13 @@ function stubResolver(): AccessCompositionResolver {
       accessProfileRefs: [{ id: 'ap-foo', name: 'foo' }],
       entitlementRefs: [{ id: 'ent-delete-engr', name: 'delete' }],
     },
+    'role-empty': {
+      id: 'role-empty',
+      name: 'Empty Role',
+      description: 'Role with nothing in it',
+      accessProfileRefs: [],
+      entitlementRefs: [],
+    },
   }
   const aps: Record<string, ResolvedAccessProfile> = {
     'ap-foo': {
@@ -71,6 +78,12 @@ function stubResolver(): AccessCompositionResolver {
         { id: 'ent-read-acct', name: 'read' },
         { id: 'ent-search-acct', name: 'search' },
       ],
+    },
+    'ap-empty': {
+      id: 'ap-empty',
+      name: 'empty ap',
+      description: 'AP with no entitlements',
+      entitlementRefs: [],
     },
   }
   const ents: Record<string, ResolvedEntitlement> = {
@@ -330,11 +343,10 @@ describe('resolveMatrix', () => {
     expect(rows.every((r) => r.userLocation === '')).toBe(true)
   })
 
-  it('stamps reviewStatus + access-item identity from the review item onto every row', async () => {
-    // A kept role item → approved; a removed role item → revoked; an undecided
-    // AP item → needsReview; a reassigned entitlement item → reassigned
-    // (reassignment is terminal). Each item's access-item identity (kind + id)
-    // lands on every row it produced.
+  it('stamps access-item identity (kind, id, name) onto every row and no review status', async () => {
+    // Each item's directly-held identity lands on every row it produced. Review
+    // STATUS is a live overlay (domain/reviewOverlay), never on a resolved row,
+    // so decisions made after resolution cannot go stale here.
     const items = [
       item({ id: 'rev-role', accessKind: 'role', accessId: 'role-a', accessName: 'Role A', completed: true, decision: 'APPROVE' }),
       item({ id: 'rev-ap', accessKind: 'accessProfile', accessId: 'ap-bar', accessName: 'bar' }),
@@ -344,70 +356,40 @@ describe('resolveMatrix', () => {
 
     const roleRows = rows.filter((r) => r.role === 'Role A')
     expect(roleRows.length).toBeGreaterThan(0)
-    expect(roleRows.every((r) => r.reviewStatus === 'approved')).toBe(true)
     expect(roleRows.every((r) => r.accessItemKind === 'role')).toBe(true)
     expect(roleRows.every((r) => r.accessItemId === 'role-a')).toBe(true)
+    expect(roleRows.every((r) => r.accessItemName === 'Role A')).toBe(true)
 
     const apRows = rows.filter((r) => r.accessProfile === 'bar')
     expect(apRows.length).toBeGreaterThan(0)
-    expect(apRows.every((r) => r.reviewStatus === 'needsReview')).toBe(true)
     expect(apRows.every((r) => r.accessItemKind === 'accessProfile')).toBe(true)
     expect(apRows.every((r) => r.accessItemId === 'ap-bar')).toBe(true)
+    expect(apRows.every((r) => r.accessItemName === 'bar')).toBe(true)
 
     const phoneRow = rows.find((r) => r.source === 'phone app')
-    expect(phoneRow?.reviewStatus).toBe('reassigned')
     expect(phoneRow?.accessItemKind).toBe('entitlement')
     expect(phoneRow?.accessItemId).toBe('ent-read-phone')
+    expect(phoneRow?.accessItemName).toBe('read')
+
+    expect(rows.every((r) => !('reviewStatus' in r))).toBe(true)
   })
 
-  it('stamps revoked for a removed (REVOKE) role item', async () => {
-    const items = [
-      item({ id: 'rev-role', accessKind: 'role', accessId: 'role-a', accessName: 'Role A', completed: true, decision: 'REVOKE' }),
-    ]
-    const rows = await resolveMatrix(items, stubResolver())
-    const roleRows = rows.filter((r) => r.role === 'Role A')
-    expect(roleRows.length).toBeGreaterThan(0)
-    expect(roleRows.every((r) => r.reviewStatus === 'revoked')).toBe(true)
-  })
-
-  it('resolves an approved-vs-reassigned five-id collision to reassigned', async () => {
-    // The same leaf path produced by one kept (approved) and one reassigned
-    // item collapses to a single row; reassignment is terminal, so the survivor
-    // must report 'reassigned' (needsReview would still outrank it).
+  it('collapses a same-path collision to one first-wins row regardless of status', async () => {
+    // The same leaf path produced by a kept and a reassigned item collapses to a
+    // single row; status is not on the row, so the survivor is simply the first.
     const items = [
       item({ id: 'kept', accessKind: 'entitlement', accessId: 'ent-read-phone', accessName: 'read', completed: true, decision: 'APPROVE' }),
       item({ id: 'moved', accessKind: 'entitlement', accessId: 'ent-read-phone', accessName: 'read', reassigned: true }),
     ]
     const rows = await resolveMatrix(items, stubResolver())
     expect(rows).toHaveLength(1)
-    expect(rows[0].reviewStatus).toBe('reassigned')
+    expect(rows[0].accessItemId).toBe('ent-read-phone')
+    expect('reviewStatus' in rows[0]).toBe(false)
   })
 
-  it('resolves the approved-vs-reassigned collision to reassigned regardless of order', async () => {
-    const items = [
-      item({ id: 'moved', accessKind: 'entitlement', accessId: 'ent-read-phone', accessName: 'read', reassigned: true }),
-      item({ id: 'kept', accessKind: 'entitlement', accessId: 'ent-read-phone', accessName: 'read', completed: true, decision: 'APPROVE' }),
-    ]
-    const rows = await resolveMatrix(items, stubResolver())
-    expect(rows).toHaveLength(1)
-    expect(rows[0].reviewStatus).toBe('reassigned')
-  })
-
-  it('resolves a defensive revoked-vs-approved collision to revoked', async () => {
-    // Should not occur in practice (one access item from one review item), but
-    // the merge must be deterministic: revoked outranks approved.
-    const items = [
-      item({ id: 'kept', accessKind: 'entitlement', accessId: 'ent-read-phone', accessName: 'read', completed: true, decision: 'APPROVE' }),
-      item({ id: 'removed', accessKind: 'entitlement', accessId: 'ent-read-phone', accessName: 'read', completed: true, decision: 'REVOKE' }),
-    ]
-    const rows = await resolveMatrix(items, stubResolver())
-    expect(rows).toHaveLength(1)
-    expect(rows[0].reviewStatus).toBe('revoked')
-  })
-
-  it('keeps row count and ids invariant when status/access-item fields are added', async () => {
+  it('keeps row count and ids invariant when decisions change', async () => {
     // Same worked example as the 6-golden-row test, but the items now carry
-    // decisions; adding reviewStatus/accessItem* must not change dedup identity.
+    // decisions; the dedup identity (rowKey) must not depend on them.
     const decided = workedExampleItems().map((it) =>
       item({ ...it, completed: true, decision: 'APPROVE' }),
     )
@@ -417,29 +399,6 @@ describe('resolveMatrix', () => {
     expect(withStatus.map((r) => r.id).sort()).toEqual(
       undecided.map((r) => r.id).sort(),
     )
-  })
-
-  it('needsReview-wins when two items share the five-id tuple but differ in status', async () => {
-    // The same leaf path produced by one decided and one undecided item collapses
-    // to a single row; the surviving row must report needsReview.
-    const items = [
-      item({ id: 'done', accessKind: 'entitlement', accessId: 'ent-read-phone', accessName: 'read', completed: true, decision: 'APPROVE' }),
-      item({ id: 'todo', accessKind: 'entitlement', accessId: 'ent-read-phone', accessName: 'read' }),
-    ]
-    const rows = await resolveMatrix(items, stubResolver())
-    expect(rows).toHaveLength(1)
-    expect(rows[0].reviewStatus).toBe('needsReview')
-  })
-
-  it('needsReview-wins regardless of which item is seen first', async () => {
-    // Undecided first, decided second — the merge must still keep needsReview.
-    const items = [
-      item({ id: 'todo', accessKind: 'entitlement', accessId: 'ent-read-phone', accessName: 'read' }),
-      item({ id: 'done', accessKind: 'entitlement', accessId: 'ent-read-phone', accessName: 'read', completed: true, decision: 'APPROVE' }),
-    ]
-    const rows = await resolveMatrix(items, stubResolver())
-    expect(rows).toHaveLength(1)
-    expect(rows[0].reviewStatus).toBe('needsReview')
   })
 
   it('fetches a source at most once per source id across many entitlements', async () => {
@@ -478,5 +437,42 @@ describe('resolveMatrix', () => {
     )
     expect(sourceFn).toHaveBeenCalledTimes(1)
     expect(sourceFn).toHaveBeenCalledWith('src-engr')
+  })
+
+  it('emits a first-level row for an access profile with zero entitlements', async () => {
+    const rows = await resolveMatrix(
+      [item({ id: 'rev-empty-ap', accessKind: 'accessProfile', accessId: 'ap-empty', accessName: 'empty ap' })],
+      stubResolver(),
+    )
+    expect(rows).toHaveLength(1)
+    expect(rows[0]).toMatchObject({
+      accessProfile: 'empty ap',
+      accessProfileId: 'ap-empty',
+      entitlement: '',
+      entitlementId: null,
+      source: '',
+      sourceId: null,
+      unresolved: false,
+      accessItemKind: 'accessProfile',
+      accessItemId: 'ap-empty',
+    })
+  })
+
+  it('emits a first-level row for a role with no access profiles or entitlements', async () => {
+    const rows = await resolveMatrix(
+      [item({ id: 'rev-empty-role', accessKind: 'role', accessId: 'role-empty', accessName: 'Empty Role' })],
+      stubResolver(),
+    )
+    expect(rows).toHaveLength(1)
+    expect(rows[0]).toMatchObject({
+      role: 'Empty Role',
+      roleId: 'role-empty',
+      accessProfile: '',
+      entitlement: '',
+      source: '',
+      unresolved: false,
+      accessItemKind: 'role',
+      accessItemId: 'role-empty',
+    })
   })
 })

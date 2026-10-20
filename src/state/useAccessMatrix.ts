@@ -7,6 +7,11 @@
  * decision-driven `items` rebuild does not re-run resolution, and a `cancelled`
  * guard that drops a stale resolution.
  *
+ * Review STATUS is a live overlay: the resolve effect builds only the
+ * structural graph, and `graph` is a `useMemo` that applies the CURRENT items'
+ * statuses to it, so a keep/remove/reassign decision updates the graph without
+ * re-running (or re-fetching) resolution.
+ *
  * Unlike provenance (a non-blocking per-item enhancement), the matrix is the
  * PRIMARY content of its own screen, so the hook exposes a single-shot
  * `status` the view gates on. Soft-degraded leaves never fail the matrix; they
@@ -20,6 +25,7 @@ import type { RolesApi } from 'sailpoint-api-client/roles/api'
 import type { SearchApi } from 'sailpoint-api-client/search/api'
 import type { SourcesApi } from 'sailpoint-api-client/sources/api'
 import { deriveAccessGraph } from '../domain/accessGraph'
+import { applyReviewStatus } from '../domain/reviewOverlay'
 import {
   createAccessCompositionResolver,
   resolveMatrix,
@@ -55,7 +61,8 @@ export function useAccessMatrix(
 ): AccessMatrixState {
   const [status, setStatus] = useState<AccessMatrixState['status']>('idle')
   const [rows, setRows] = useState<AccessMatrixRowVM[]>([])
-  const [graph, setGraph] = useState<AccessGraphData>(EMPTY_GRAPH)
+  // Structural graph only (no review status); the live overlay is applied below.
+  const [structural, setStructural] = useState<AccessGraphData>(EMPTY_GRAPH)
   const [error, setError] = useState<string | null>(null)
 
   // The resolver's per-id caches survive re-renders; `CampaignRoute` is keyless,
@@ -106,7 +113,7 @@ export function useAccessMatrix(
       .then((resolvedRows) => {
         if (cancelled) return
         setRows(resolvedRows)
-        setGraph(deriveAccessGraph(resolvedRows))
+        setStructural(deriveAccessGraph(resolvedRows))
         setStatus('ready')
       })
       .catch((err: unknown) => {
@@ -114,7 +121,7 @@ export function useAccessMatrix(
         // resolveMatrix soft-degrades API failures to unresolved rows, so this
         // path is reserved for a truly fatal/unexpected error.
         setRows([])
-        setGraph(EMPTY_GRAPH)
+        setStructural(EMPTY_GRAPH)
         setError(toFriendlyError(err).message)
         setStatus('error')
       })
@@ -126,6 +133,14 @@ export function useAccessMatrix(
     // `items` array reference (a decision rebuilds the array but preserves ids).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idSig, campaignId, reloadToken])
+
+  // Live per-user review status over the structural first-level edges. Re-runs
+  // on every `items` change (cheap) while `nodes` keeps its reference, so the
+  // canvas can tell a status-only change from a structural one.
+  const graph = useMemo(
+    () => applyReviewStatus(structural, items ?? []),
+    [structural, items],
+  )
 
   const unresolvedCount = useMemo(
     () => rows.filter((r) => r.unresolved).length,
