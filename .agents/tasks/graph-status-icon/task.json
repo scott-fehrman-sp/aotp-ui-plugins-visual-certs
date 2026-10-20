@@ -1,7 +1,7 @@
 {
   "task_id": "task-graph-status-icon",
   "task_description": "Rework the access-item node in the per-user drill-down access graph of the SailPoint ISC UI plugin: widen the review-status model from two states (needsReview|complete) to three (needsReview|complete|delegated), thread the third state through types -> metrics -> accessMatrix -> accessGraph -> buildAccessScene, then replace the text status chip on the access-item node with a three-state corner status icon (needs review / completed / delegated), ensure the node name renders, update the drill-down legend to three entries, and keep dashboard metric counts invariant. Verify with npm run build, npm run lint, npm test.",
-  "status": "pending",
+  "status": "completed",
   "feature_order": ["FEAT-001", "FEAT-002"],
   "blocked_reason": null
 }
