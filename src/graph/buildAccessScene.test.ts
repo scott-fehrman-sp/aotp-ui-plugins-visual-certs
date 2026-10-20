@@ -248,6 +248,13 @@ describe('buildAccessScene', () => {
     for (const edge of reference) expect(edge.zIndex).toBe(0)
   })
 
+  it('stacks every node above the status edge layer so lines never cross a card', () => {
+    const scene = buildAccessScene(statusSubgraph(referenceRows()), 'LR')
+    const maxEdgeZ = Math.max(...scene.edges.map((e) => e.zIndex ?? 0))
+    expect(scene.nodes.length).toBeGreaterThan(0)
+    for (const node of scene.nodes) expect(node.zIndex).toBeGreaterThan(maxEdgeZ)
+  })
+
   it('renders deeper edges as muted neutral reference hairlines', () => {
     const scene = buildAccessScene(statusSubgraph(referenceRows()), 'LR')
     const nested = scene.edges.find(

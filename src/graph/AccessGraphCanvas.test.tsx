@@ -201,6 +201,13 @@ describe('AccessGraphCanvas', () => {
     expect(document.querySelector('.vc-graph-edge-badge')).toBeNull()
   })
 
+  it('places the legend in a panel that clears the zoom controls', () => {
+    render(<AccessGraphCanvas graph={referenceGraph()} />)
+    fireEvent.click(screen.getByRole('button', { name: /show access for/i }))
+    const legend = screen.getByRole('group', { name: /review status legend/i })
+    expect(legend.closest('.react-flow__panel')).toHaveClass('vc-graph-legend-panel')
+  })
+
   /** role-a{ap-foo{e1}} needsReview; e2 held directly (approved). */
   function referenceGraph() {
     return statusGraph([

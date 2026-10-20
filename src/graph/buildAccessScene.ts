@@ -199,6 +199,10 @@ export function buildAccessScene(
       targetPosition: handle.targetPosition,
       draggable: false,
       connectable: false,
+      // Cards sit above every edge layer (status edges use zIndex 1), so a
+      // status line that passes behind another card never strikes through its
+      // name. Edges still stack status-over-reference among themselves.
+      zIndex: 2,
     }
   })
 

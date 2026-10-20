@@ -5,6 +5,7 @@ import {
   Panel,
   ReactFlow,
   ReactFlowProvider,
+  useReactFlow,
   useStore,
   type NodeMouseHandler,
 } from '@xyflow/react'
@@ -70,6 +71,22 @@ export function AccessGraphCanvas({ graph }: AccessGraphCanvasProps) {
       <CanvasSurface graph={graph} />
     </ReactFlowProvider>
   )
+}
+
+/**
+ * Re-fits the viewport when the user drills in or back out. React Flow's
+ * `fitView` prop only fits once on mount, so without this the drill-down keeps
+ * the overview grid's zoom (up to 1.8x) and most of the graph sits off-screen.
+ */
+function FitOnSceneChange({ sceneKey }: { sceneKey: string }) {
+  const { fitView } = useReactFlow()
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      void fitView()
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [sceneKey, fitView])
+  return null
 }
 
 function CanvasSurface({ graph }: AccessGraphCanvasProps) {
@@ -168,6 +185,7 @@ function CanvasSurface({ graph }: AccessGraphCanvasProps) {
           }
         />
         <Controls showInteractive={false} />
+        <FitOnSceneChange sceneKey={selectedUserId ?? 'grid'} />
         {inDrilldown && (
           <Panel position="top-left">
             <button
@@ -188,7 +206,7 @@ function CanvasSurface({ graph }: AccessGraphCanvasProps) {
           </Panel>
         )}
         {inDrilldown && (
-          <Panel position="bottom-left">
+          <Panel position="bottom-left" className="vc-graph-legend-panel">
             <div className="vc-graph-legend" role="group" aria-label="Review status legend">
               <p className="vc-graph-legend-title">Review status</p>
               <span className="vc-graph-legend-row">
