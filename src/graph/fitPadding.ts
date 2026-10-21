@@ -78,7 +78,7 @@ export interface FitPaddingOptions {
    * scroll axis stays free. Absent: behavior is unchanged.
    */
   scrollAxis?: 'x' | 'y'
-  /** Weight applied to scroll-axis sides in the side choice only. Default 3. */
+  /** Weight applied to scroll-axis sides in the side choice only. Default 2 (tuned in a real browser: 3 pushed more overlays into the rank axis at 1000x700). */
   scrollAxisPenalty?: number
 }
 
@@ -96,7 +96,7 @@ export function computeFitPadding(
   overlays: readonly Box[],
   options: FitPaddingOptions = {},
 ): FitPadding {
-  const { base = 24, gap = 12, maxFraction = 0.75, scrollAxis, scrollAxisPenalty = 3 } = options
+  const { base = 24, gap = 12, maxFraction = 0.75, scrollAxis, scrollAxisPenalty = 2 } = options
   const padding: FitPadding = { top: base, right: base, bottom: base, left: base }
 
   for (const box of overlays) {

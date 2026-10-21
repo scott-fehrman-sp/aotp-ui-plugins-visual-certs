@@ -214,14 +214,17 @@ describe('computeFitPadding scrollAxis', () => {
     )
   })
 
-  it('moves overlays off the scroll axis (y): no top/bottom strip beyond the base', () => {
+  it('moves overlays off the scroll axis (y): no bottom strip beyond the base', () => {
     const p = computeFitPadding(CANVAS, [BACK, MINIMAP], { scrollAxis: 'y' })
-    // Without the penalty the minimap takes a 160 px bottom strip and Back a top one.
+    // Without the penalty the minimap takes a 160 px bottom strip.
     expect(computeFitPadding(CANVAS, [BACK, MINIMAP]).bottom).toBeGreaterThan(24)
-    expect(p.top).toBe(24)
     expect(p.bottom).toBe(24)
-    expect(p.left).toBe(157 + 12)
     expect(p.right).toBe(968 - 782 + 12)
+    // The default penalty (2) leaves the thin Back button on top; a heavier one moves it left.
+    expect(p.top).toBe(54 + 12)
+    const heavy = computeFitPadding(CANVAS, [BACK], { scrollAxis: 'y', scrollAxisPenalty: 3 })
+    expect(heavy.top).toBe(24)
+    expect(heavy.left).toBe(157 + 12)
   })
 
   it('moves overlays off the scroll axis (x) for TB', () => {
