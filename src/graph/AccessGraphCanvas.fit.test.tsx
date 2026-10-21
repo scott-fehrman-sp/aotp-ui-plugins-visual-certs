@@ -7,11 +7,16 @@ import { AccessGraphCanvas } from './AccessGraphCanvas'
 // Separate file so mocking useReactFlow's fitView does not touch the other
 // canvas tests. Everything else in @xyflow/react stays real.
 const fitViewSpy = vi.hoisted(() => vi.fn(() => Promise.resolve(true)))
+const setViewportSpy = vi.hoisted(() => vi.fn(() => Promise.resolve(true)))
 vi.mock('@xyflow/react', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@xyflow/react')>()
   return {
     ...actual,
-    useReactFlow: () => ({ ...actual.useReactFlow(), fitView: fitViewSpy }),
+    useReactFlow: () => ({
+      ...actual.useReactFlow(),
+      fitView: fitViewSpy,
+      setViewport: setViewportSpy,
+    }),
   }
 })
 

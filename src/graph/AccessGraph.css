@@ -96,6 +96,26 @@
   box-shadow: var(--shadow);
 }
 
+/* Scroll hint for long drill-down graphs: same look as the note, same top offset
+   and height as the Back button so it sits inside the band Back reserves, and
+   never intercepts wheel or drag. */
+.vc-graph-hint {
+  margin: 0;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--control);
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 16px;
+  box-shadow: var(--shadow);
+}
+
+.vc-graph-wrap .react-flow__panel.vc-graph-hint-panel {
+  pointer-events: none;
+}
+
 .vc-graph-toggle:hover {
   background: var(--accent-soft);
 }

@@ -8,6 +8,7 @@ import {
   useReactFlow,
   useStore,
   useStoreApi,
+  getNodesBounds,
   type NodeMouseHandler,
 } from '@xyflow/react'
 import type { AccessGraphData, AccessSceneNodeData, RankDir } from '../sailpoint/types'
@@ -15,9 +16,10 @@ import { buildAccessScene, type AccessSceneNode } from './buildAccessScene'
 import { buildUserGridScene } from './buildUserGridScene'
 import { userSubgraph } from './userSubgraph'
 import { withoutReference } from './referenceFilter'
-import { computeFitPadding, measureOverlays, toFitViewPadding } from './fitPadding'
+import { computeFitPadding, measureOverlays, planFit, toFitViewPadding } from './fitPadding'
 import { emphasizeEdges } from './emphasizeEdges'
 import { EmphasisContext } from './EmphasisContext'
+import { ScrollHint } from './ScrollHint'
 import { GraphControls } from './GraphControls'
 import { AccessNode, StatusIcon } from './AccessNode'
 import { useColorMode } from './useColorMode'
@@ -31,6 +33,10 @@ interface AccessGraphCanvasProps {
   /** The derived graph (nodes + edges) from the access matrix. */
   graph: AccessGraphData
 }
+
+/** Zoom range of the canvas (also the bounds planFit clamps to). */
+const MIN_ZOOM = 0.15
+const MAX_ZOOM = 1.8
 
 /** Minimap dot color per layer, matched to the card accents. */
 const MINIMAP_COLOR: Record<string, string> = {
@@ -90,6 +96,13 @@ export function AccessGraphCanvas({ graph }: AccessGraphCanvasProps) {
   )
 }
 
+/** What the latest refit decided, keyed by the fit it belongs to. */
+interface FitOutcome {
+  fitKey: string
+  /** True when the graph opened at the readable zoom (a long list). */
+  long: boolean
+}
+
 /**
  * Re-fits the viewport whenever `fitKey` or the canvas size changes. React
  * Flow's `fitView` prop only fits once on mount, so without this the drill-down
@@ -102,9 +115,35 @@ export function AccessGraphCanvas({ graph }: AccessGraphCanvasProps) {
  * is measured one frame after the change (once the panels have laid out) and
  * turned into per-side pixel padding. The graph may end up smaller at small
  * viewports, but never under an overlay.
+ *
+ * REVISED INVARIANT for long graphs. Fitting a 25-item lane into the canvas
+ * pins the zoom at the minimum and leaves illegible cards, so in drill-down
+ * `planFit` decides per refit:
+ * - Mode A (fit-everything zoom >= SCROLL_MODE_FIT_ZOOM): today's `fitView`
+ *   with overlay padding, strict: no node under an overlay, all nodes inside.
+ * - Mode B (below it, a long list): `setViewport` at READABLE_MIN_ZOOM. The
+ *   content START is aligned to the overlay-free region (rank axis), or the
+ *   user is centered when the lane is too long to start-align it (the user
+ *   sits at the lane midpoint), and overlays are assigned away from the scroll
+ *   axis. The user card and nearest items are clear of every overlay; the rest
+ *   is reached by scrolling or dragging, and the scroll hint says so. The
+ *   Controls fit-view button still shows everything.
+ * The overview grid keeps the plain overlay-aware `fitView`. Refit triggers are
+ * unchanged (`fitKey`, canvas size); node data is read inside the frame
+ * callback so scene changes do not add triggers.
  */
-function FitOnSceneChange({ fitKey }: { fitKey: string }) {
-  const { fitView } = useReactFlow()
+function FitOnSceneChange({
+  fitKey,
+  rankdir,
+  inDrilldown,
+  onPlan,
+}: {
+  fitKey: string
+  rankdir: RankDir
+  inDrilldown: boolean
+  onPlan: (outcome: FitOutcome) => void
+}) {
+  const { fitView, setViewport, getNodes } = useReactFlow()
   const store = useStoreApi()
   // Canvas size changes (window resize) must refit too.
   const width = useStore((state) => state.width)
@@ -117,10 +156,35 @@ function FitOnSceneChange({ fitKey }: { fitKey: string }) {
         return
       }
       const { canvas, overlays } = measureOverlays(root)
-      void fitView({ padding: toFitViewPadding(computeFitPadding(canvas, overlays)) })
+      const nodes = inDrilldown ? getNodes() : []
+      const user = nodes.find(
+        (node) => (node.data as AccessSceneNodeData).kind === 'user',
+      )
+      if (!user) {
+        void fitView({ padding: toFitViewPadding(computeFitPadding(canvas, overlays)) })
+        onPlan({ fitKey, long: false })
+        return
+      }
+      const plan = planFit({
+        bounds: getNodesBounds(nodes),
+        focus: getNodesBounds([user]),
+        canvas,
+        overlays,
+        minZoom: MIN_ZOOM,
+        maxZoom: MAX_ZOOM,
+        scrollAxis: rankdir === 'LR' ? 'y' : 'x',
+      })
+      if (plan.mode === 'readable') {
+        void setViewport(plan.viewport, { duration: 0 })
+      } else {
+        void fitView({ padding: toFitViewPadding(plan.padding) })
+      }
+      onPlan({ fitKey, long: plan.mode === 'readable' })
     })
     return () => cancelAnimationFrame(frame)
-  }, [fitKey, width, height, fitView, store])
+    // rankdir and inDrilldown are encoded in fitKey; onPlan, setViewport and
+    // getNodes are stable. So the refit triggers stay exactly fitKey + canvas size.
+  }, [fitKey, width, height, fitView, setViewport, getNodes, rankdir, inDrilldown, onPlan, store])
   return null
 }
 
@@ -222,6 +286,21 @@ function CanvasSurface({ graph }: AccessGraphCanvasProps) {
     [scene.edges, emphasisId, inDrilldown],
   )
 
+  // Outcome of the latest refit, used by the scroll hint. Keyed by fitKey so a
+  // stale outcome from a previous scene never shows.
+  const [fitOutcome, setFitOutcome] = useState<FitOutcome | null>(null)
+  const fitKey = `${
+    inDrilldown
+      ? `${selectedUserId}|${showReference ? 'ref' : 'noref'}|${rankdir}`
+      : 'grid'
+  }|${showMinimap ? 'map' : 'nomap'}`
+  const itemCount = useMemo(
+    () =>
+      scene.nodes.filter((node) => node.data.kind !== 'user' && !node.data.reference)
+        .length,
+    [scene.nodes],
+  )
+
   // A degenerate user (no outgoing edges) yields a single-node subgraph. Judged
   // on the UNFILTERED subgraph so hiding reference never triggers the note.
   const isDegenerate = inDrilldown && (subgraph?.edges.length ?? 0) === 0
@@ -271,8 +350,8 @@ function CanvasSurface({ graph }: AccessGraphCanvasProps) {
         deleteKeyCode={null}
         panOnScroll
         fitView
-        minZoom={0.15}
-        maxZoom={1.8}
+        minZoom={MIN_ZOOM}
+        maxZoom={MAX_ZOOM}
         onNodeClick={onNodeClick}
       >
         {showMinimap && (
@@ -287,12 +366,17 @@ function CanvasSurface({ graph }: AccessGraphCanvasProps) {
         )}
         <Controls showInteractive={false} />
         <FitOnSceneChange
-          fitKey={`${
-            inDrilldown
-              ? `${selectedUserId}|${showReference ? 'ref' : 'noref'}|${rankdir}`
-              : 'grid'
-          }|${showMinimap ? 'map' : 'nomap'}`}
+          fitKey={fitKey}
+          rankdir={rankdir}
+          inDrilldown={inDrilldown}
+          onPlan={setFitOutcome}
         />
+        {inDrilldown && !isDegenerate && (
+          <ScrollHint
+            itemCount={itemCount}
+            active={fitOutcome?.fitKey === fitKey && fitOutcome.long}
+          />
+        )}
         <Panel position="top-right" className="vc-graph-controls-panel">
           <GraphControls
             inDrilldown={inDrilldown}
