@@ -487,3 +487,179 @@
   position: static;
   flex: 0 0 auto;
 }
+
+/*
+ * Motion. Ported from org-graph's App.css (same class names: `motion-on`,
+ * `entering`, `exiting`, `reveal`). `useGraphTransition` swaps the classes; the
+ * rules here do the gliding and the fading. `.motion-on` is added one frame
+ * after mount so the first display does not slide in from the origin. Structural
+ * moves use --motion-ms; hover / selection / dimming use the shorter
+ * --motion-fast-ms. Both are 0ms under prefers-reduced-motion (tokens.css).
+ */
+.vc-graph-wrap .react-flow.motion-on .react-flow__node {
+  transition:
+    transform var(--motion-ms) ease,
+    width var(--motion-ms) ease,
+    height var(--motion-ms) ease,
+    opacity var(--motion-ms) ease;
+}
+
+.vc-graph-wrap .react-flow.motion-on .react-flow__edge {
+  transition: opacity var(--motion-ms) ease;
+}
+
+.vc-graph-wrap .react-flow__node.entering,
+.vc-graph-wrap .react-flow__node.exiting,
+.vc-graph-wrap .react-flow__edge.entering,
+.vc-graph-wrap .react-flow__edge.exiting {
+  opacity: 0;
+}
+
+/* The wrapper's inline pointer-events beat a plain rule, hence !important. */
+.vc-graph-wrap .react-flow__node.exiting,
+.vc-graph-wrap .react-flow__edge.exiting,
+.vc-graph-wrap .react-flow__edge.exiting * {
+  pointer-events: none !important;
+}
+
+/* Cards, edges and status marks restyle quickly (select, hover, dim, complete). */
+.vc-graph-wrap .react-flow.motion-on .vc-graph-card {
+  transition:
+    transform var(--motion-ms) ease,
+    opacity var(--motion-fast-ms) ease,
+    background-color var(--motion-fast-ms) ease,
+    border-color var(--motion-fast-ms) ease,
+    box-shadow var(--motion-fast-ms) ease,
+    color var(--motion-fast-ms) ease;
+}
+
+.vc-graph-wrap .react-flow.motion-on .vc-graph-status-icon {
+  transition: color var(--motion-fast-ms) ease;
+}
+
+/* Not stroke-dasharray: the status edges differ by dash pattern, and a dash
+   transition would flash a solid line while it interpolates. */
+.vc-graph-wrap .react-flow.motion-on .react-flow__edge-path {
+  transition:
+    stroke var(--motion-fast-ms) ease,
+    stroke-width var(--motion-fast-ms) ease,
+    opacity var(--motion-fast-ms) ease;
+}
+
+.vc-graph-wrap .react-flow__node.entering .vc-graph-card,
+.vc-graph-wrap .react-flow__node.exiting .vc-graph-card {
+  transform: scale(0.94);
+}
+
+/*
+ * Leaving cards and edges fade with keyframes as well: a card that was revealing
+ * has an animation holding its opacity, and removing that animation does not
+ * start a transition, so the transition alone would snap it to invisible.
+ */
+@keyframes vc-graph-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes vc-graph-card-out {
+  from { transform: scale(1); }
+  to { transform: scale(0.94); }
+}
+
+.vc-graph-wrap .react-flow__node.exiting,
+.vc-graph-wrap .react-flow__edge.exiting {
+  animation: vc-graph-fade-out var(--motion-ms) ease forwards;
+}
+
+.vc-graph-wrap .react-flow__node.exiting .vc-graph-card {
+  animation: vc-graph-card-out var(--motion-ms) ease forwards;
+}
+
+@keyframes vc-graph-node-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes vc-graph-card-in {
+  from { transform: scale(0.94); }
+  to { transform: scale(1); }
+}
+
+@keyframes vc-graph-edge-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/*
+ * Overview grid: cards new to the screen fade and scale in on their own
+ * --reveal-delay (a cascade). Not gated on `.motion-on`, so a card born staged
+ * never paints fully visible first. The animation owns opacity here, so the
+ * node keeps only its position / size transitions.
+ */
+.vc-graph-wrap .react-flow__node.reveal {
+  opacity: 0;
+  animation: vc-graph-node-in min(280ms, var(--motion-ms)) ease forwards;
+  animation-delay: var(--reveal-delay, 0ms);
+}
+
+.vc-graph-wrap .react-flow.motion-on .react-flow__node.reveal {
+  transition:
+    transform var(--motion-ms) ease,
+    width var(--motion-ms) ease,
+    height var(--motion-ms) ease;
+}
+
+.vc-graph-wrap .react-flow__node.reveal .vc-graph-card {
+  transform: scale(0.94);
+  animation: vc-graph-card-in min(280ms, var(--motion-ms)) ease forwards;
+  animation-delay: var(--reveal-delay, 0ms);
+}
+
+/*
+ * An edge whose card moves is drawn at the final geometry at once while the card
+ * glides there, so it must not show during the glide: it waits for the first
+ * part of the motion (`backwards` keeps it invisible), then fades in as the cards
+ * arrive. A keyframe animation, not the `entering` transition: the edge may be
+ * mounted after the class change (React Flow draws an edge once both cards are
+ * measured), and a class that is added then removed would play its transition
+ * backwards almost instantly. It ends a little before the class is removed at the
+ * end of the motion, so the removal never cuts the fade short.
+ */
+.vc-graph-wrap .react-flow__edge.vc-graph-edge-settling,
+.vc-graph-wrap .react-flow__edge.vc-graph-edge-arriving {
+  animation: vc-graph-edge-in max(0ms, calc(var(--motion-ms) * 0.6 - 60ms)) ease
+    calc(var(--motion-ms) * 0.4) backwards;
+}
+
+/* The keyframes own the fade of an arriving edge. */
+.vc-graph-wrap .react-flow.motion-on .react-flow__edge.vc-graph-edge-arriving {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vc-graph-wrap .react-flow__node,
+  .vc-graph-wrap .react-flow__edge,
+  .vc-graph-wrap .vc-graph-card,
+  .vc-graph-wrap .vc-graph-status-icon,
+  .vc-graph-wrap .react-flow__edge-path {
+    transition: none !important;
+  }
+
+  .vc-graph-wrap .react-flow__node.reveal,
+  .vc-graph-wrap .react-flow__node.reveal .vc-graph-card,
+  .vc-graph-wrap .react-flow__node.exiting,
+  .vc-graph-wrap .react-flow__node.exiting .vc-graph-card,
+  .vc-graph-wrap .react-flow__edge.exiting,
+  .vc-graph-wrap .react-flow__edge.vc-graph-edge-settling,
+  .vc-graph-wrap .react-flow__edge.vc-graph-edge-arriving {
+    animation: none;
+  }
+
+  .vc-graph-wrap .react-flow__node.reveal {
+    opacity: 1;
+  }
+
+  .vc-graph-wrap .react-flow__node.reveal .vc-graph-card {
+    transform: none;
+  }
+}

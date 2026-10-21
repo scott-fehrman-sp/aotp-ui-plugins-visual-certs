@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Controls,
   MiniMap,
@@ -20,7 +20,10 @@ import { withoutCompleted } from './completedFilter'
 import { computeFitPadding, measureOverlays, planFit, toFitViewPadding } from './fitPadding'
 import { EmphasisContext } from './EmphasisContext'
 import { SelectionContext, type SelectionState } from './SelectionContext'
-import { highlightEdges, isSelectableNodeData, lineageNodeIds } from './selectEdges'
+import { isSelectableNodeData, lineageNodeIds } from './selectEdges'
+import { highlightFrameEdges, isFramePlaced } from './graphTransition'
+import { useGraphTransition } from './useGraphTransition'
+import { useMotionMs } from './useMotionMs'
 import { ScrollHint } from './ScrollHint'
 import { GraphControls } from './GraphControls'
 import { AccessNode, StatusIcon } from './AccessNode'
@@ -47,6 +50,13 @@ interface AccessGraphCanvasProps {
    *  - `null`: the host's slot has not mounted yet; render nothing for now.
    */
   backSlot?: HTMLElement | null
+  /**
+   * Test seam: the motion duration in ms. When omitted the duration is read
+   * from the `--motion-ms` CSS token (0 under `prefers-reduced-motion`, and 0
+   * where no stylesheet is loaded, e.g. jsdom, which turns every transition
+   * off). Hosts have no reason to set it.
+   */
+  motionMs?: number
 }
 
 /** Shared empty lineage, so "nothing selected" keeps a stable context value. */
@@ -104,13 +114,24 @@ const MINIMAP_COLOR: Record<string, string> = {
  * first-level items whose status is approved / revoked / reassigned plus any
  * lineage left orphaned (`withoutCompleted`), re-lays out and refits once.
  *
+ * TRANSITIONS. Scene updates (grid <-> drill-down, hide completed / reference,
+ * layout, lane wrapping) animate like org-graph's: the scene builders still
+ * produce the final nodes and edges, and `useGraphTransition` turns each update
+ * into frames: cards that stay glide to their new position, cards that leave
+ * fade and scale out (inert, then removed), cards that arrive fade in from a
+ * related card, and the viewport animates over the same `--motion-ms`. Cards new
+ * to the overview grid cascade in. Only the STRUCTURAL scene is animated; hover
+ * and selection restyle the frame's edges afterwards, so they never start a
+ * transition. Everything that reads the scene (selection, counts, notes, the
+ * scroll hint, announcements) reads the TARGET scene, not the frame.
+ *
  * Structure mirrors org-graph's `OrgCanvas`: a `ReactFlowProvider` wrapping a
  * surface that reads the viewport width from the React Flow store, derives
  * `colorMode` from the OS color scheme, memoizes the pure scene builders, and
  * renders a read-only graph (no dragging, no connecting) with a minimap and
  * controls. When the graph has no users it renders an `EmptyState` instead.
  */
-export function AccessGraphCanvas({ graph, backSlot }: AccessGraphCanvasProps) {
+export function AccessGraphCanvas({ graph, backSlot, motionMs }: AccessGraphCanvasProps) {
   const hasUsers = useMemo(
     () => graph.nodes.some((node) => node.kind === 'user'),
     [graph],
@@ -127,7 +148,7 @@ export function AccessGraphCanvas({ graph, backSlot }: AccessGraphCanvasProps) {
 
   return (
     <ReactFlowProvider>
-      <CanvasSurface graph={graph} backSlot={backSlot} />
+      <CanvasSurface graph={graph} backSlot={backSlot} motionMs={motionMs} />
     </ReactFlowProvider>
   )
 }
@@ -167,37 +188,74 @@ interface FitOutcome {
  * The overview grid keeps the plain overlay-aware `fitView`. Refit triggers are
  * unchanged (`fitKey`, canvas size); node data is read inside the frame
  * callback so scene changes do not add triggers.
+ *
+ * The bounds always come from the TARGET scene's nodes, never from the store:
+ * during a transition the store holds entering cards at their origin and
+ * exiting cards at their old position. The fit waits until `placed` (the store
+ * holds every target card at its final position), so it starts together with
+ * the cards' glide, and it animates over the same `--motion-ms` (the first fit
+ * of the canvas is instant). The final camera is the one the unanimated code
+ * produced.
  */
 function FitOnSceneChange({
   fitKey,
   rankdir,
   inDrilldown,
+  targetNodes,
+  placed,
+  motionMs,
   onPlan,
 }: {
   fitKey: string
   rankdir: RankDir
   inDrilldown: boolean
+  /** The TARGET scene's nodes: the fit is computed from these, never from the store. */
+  targetNodes: AccessSceneNode[]
+  /** True once the store holds every target card at its final position. */
+  placed: boolean
+  /** Duration of the camera move; the first fit of the canvas is always instant. */
+  motionMs: number
   onPlan: (outcome: FitOutcome) => void
 }) {
-  const { fitView, setViewport, getNodes } = useReactFlow()
+  const { fitView, setViewport } = useReactFlow()
   const store = useStoreApi()
   // Canvas size changes (window resize) must refit too.
   const width = useStore((state) => state.width)
   const height = useStore((state) => state.height)
+  // The latest target nodes, read inside the frame callback. Declared before the
+  // fit effect so it is current when that runs; it is not a dependency, so a
+  // scene change adds no refit trigger of its own.
+  const targetRef = useRef(targetNodes)
   useEffect(() => {
+    targetRef.current = targetNodes
+  })
+  const hasFitted = useRef(false)
+  useEffect(() => {
+    // During a transition the store holds entering cards at their origin; wait
+    // until the target positions are in place, then fit once, in step with the
+    // cards' own glide.
+    if (!placed) return
     const frame = requestAnimationFrame(() => {
+      const duration = hasFitted.current ? motionMs : 0
+      hasFitted.current = true
+      const target = targetRef.current
+      const ids = target.map((node) => ({ id: node.id }))
       const root = store.getState().domNode
       if (!root) {
-        void fitView()
+        void fitView({ duration })
         return
       }
       const { canvas, overlays } = measureOverlays(root)
-      const nodes = inDrilldown ? getNodes() : []
+      const nodes = inDrilldown ? target : []
       const user = nodes.find(
         (node) => (node.data as AccessSceneNodeData).kind === 'user',
       )
       if (!user) {
-        void fitView({ padding: toFitViewPadding(computeFitPadding(canvas, overlays)) })
+        void fitView({
+          nodes: ids,
+          padding: toFitViewPadding(computeFitPadding(canvas, overlays)),
+          duration,
+        })
         onPlan({ fitKey, long: false })
         return
       }
@@ -211,20 +269,31 @@ function FitOnSceneChange({
         scrollAxis: rankdir === 'LR' ? 'y' : 'x',
       })
       if (plan.mode === 'readable') {
-        void setViewport(plan.viewport, { duration: 0 })
+        void setViewport(plan.viewport, { duration })
       } else {
-        void fitView({ padding: toFitViewPadding(plan.padding) })
+        void fitView({ nodes: ids, padding: toFitViewPadding(plan.padding), duration })
       }
       onPlan({ fitKey, long: plan.mode === 'readable' })
     })
     return () => cancelAnimationFrame(frame)
-    // rankdir and inDrilldown are encoded in fitKey; onPlan, setViewport and
-    // getNodes are stable. So the refit triggers stay exactly fitKey + canvas size.
-  }, [fitKey, width, height, fitView, setViewport, getNodes, rankdir, inDrilldown, onPlan, store])
+    // rankdir and inDrilldown are encoded in fitKey; onPlan and setViewport are
+    // stable. So the refit triggers stay fitKey + canvas size (+ `placed`, which
+    // only defers the fit until the target positions are in the store).
+  }, [fitKey, width, height, placed, motionMs, fitView, setViewport, rankdir, inDrilldown, onPlan, store])
   return null
 }
 
-function CanvasSurface({ graph, backSlot }: AccessGraphCanvasProps) {
+function CanvasSurface({ graph, backSlot, motionMs: motionMsProp }: AccessGraphCanvasProps) {
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const motionMs = useMotionMs(motionMsProp, wrapRef)
+  // `motion-on` is applied one frame after mount so the first display does not
+  // slide its cards in from the origin (as org-graph's OrgCanvas does).
+  const [motionOn, setMotionOn] = useState(false)
+  useEffect(() => {
+    if (motionMs <= 0) return
+    const id = requestAnimationFrame(() => setMotionOn(true))
+    return () => cancelAnimationFrame(id)
+  }, [motionMs])
   const [rankdir, setRankdir] = useState<RankDir>('LR')
   const [showReference, setShowReference] = useState(true)
   // Completed (approved / revoked / reassigned) items are shown by default.
@@ -318,6 +387,18 @@ function CanvasSurface({ graph, backSlot }: AccessGraphCanvasProps) {
     setHoverId(null)
     setFocusId(null)
   }
+  // What React Flow renders: the structural scene run through the transition.
+  // Hover / selection are NOT inputs (they restyle `frame.edges` below).
+  const frame = useGraphTransition(
+    scene.nodes,
+    scene.edges,
+    sceneKey,
+    motionMs,
+    inDrilldown ? 'instant' : 'stagger',
+  )
+  // True once every target card sits in the frame at its final position (see
+  // `FitOnSceneChange`).
+  const placed = useMemo(() => isFramePlaced(frame.nodes, scene.nodes), [frame.nodes, scene.nodes])
   // Pointer wins; a keyboard-focused card stays emphasized once the pointer
   // leaves another card. Purely an edge restyle: no layout or refit input.
   const emphasisId = hoverId ?? focusId
@@ -337,12 +418,12 @@ function CanvasSurface({ graph, backSlot }: AccessGraphCanvasProps) {
   // nothing selected this is exactly `emphasizeEdges`.
   const displayEdges = useMemo(
     () =>
-      highlightEdges(
-        scene.edges,
+      highlightFrameEdges(
+        frame.edges,
         inDrilldown ? activeItemId : null,
         inDrilldown ? emphasisId : null,
       ),
-    [scene.edges, activeItemId, emphasisId, inDrilldown],
+    [frame.edges, activeItemId, emphasisId, inDrilldown],
   )
   const lineage = useMemo(
     () => (activeItemId === null ? NO_LINEAGE : lineageNodeIds(scene.edges, activeItemId)),
@@ -463,7 +544,7 @@ function CanvasSurface({ graph, backSlot }: AccessGraphCanvasProps) {
   }
 
   return (
-    <div className="vc-graph-wrap">
+    <div className="vc-graph-wrap" ref={wrapRef}>
       <p className="sr-only" aria-live="polite">
         {inDrilldown ? 'Showing access for one user' : `Showing ${userCount} users`}
       </p>
@@ -473,8 +554,9 @@ function CanvasSurface({ graph, backSlot }: AccessGraphCanvasProps) {
       <EmphasisContext.Provider value={emphasis}>
       <SelectionContext.Provider value={selection}>
       <ReactFlow
-        nodes={scene.nodes}
+        nodes={frame.nodes}
         edges={displayEdges}
+        className={motionMs > 0 && motionOn ? 'motion-on' : undefined}
         nodeTypes={nodeTypes}
         colorMode={colorMode}
         nodesDraggable={false}
@@ -503,6 +585,9 @@ function CanvasSurface({ graph, backSlot }: AccessGraphCanvasProps) {
           fitKey={fitKey}
           rankdir={rankdir}
           inDrilldown={inDrilldown}
+          targetNodes={scene.nodes}
+          placed={placed}
+          motionMs={motionMs}
           onPlan={setFitOutcome}
         />
         {inDrilldown && !isDegenerate && (

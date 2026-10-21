@@ -15,6 +15,8 @@
  */
 :root {
   --motion-ms: 450ms;
+  /* Short restyles (hover, selection, emphasis, dimming); structural moves use --motion-ms. */
+  --motion-fast-ms: min(160ms, var(--motion-ms));
   --canvas: #eef2f6;
   --ink: #17202a;
   --muted: #5c6d7e;
