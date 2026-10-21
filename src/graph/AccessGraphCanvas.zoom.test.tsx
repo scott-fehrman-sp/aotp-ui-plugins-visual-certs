@@ -64,20 +64,23 @@ function shortGraph() {
   )
 }
 
-/** 30 directly held entitlements: a ~3,400 px lane, a long list. */
-function longGraph() {
+/**
+ * 100 directly held entitlements: a long list. The lane wraps into ten
+ * sub-columns (LR) / sub-rows (TB), still too wide to fit at a readable zoom.
+ */
+function longGraph(count = 100) {
   return statusGraph(
-    Array.from({ length: 30 }, (_, i) => {
+    Array.from({ length: count }, (_, i) => {
       const n = i + 1
       return row({ id: String(n), entitlement: `Ent ${n}`, entitlementId: `e${n}`, source: 's', sourceId: 's1', reviewStatus: 'needsReview', accessItemKind: 'entitlement', accessItemId: `e${n}`, accessItemName: `Ent ${n}` })
     }),
   )
 }
 
-/** 30 directly held entitlements, the first `completed` of them approved. */
-function longWithCompleted(completed: number) {
+/** `total` directly held entitlements, the first `completed` of them approved. */
+function longWithCompleted(completed: number, total = 100) {
   return statusGraph(
-    Array.from({ length: 30 }, (_, i) => {
+    Array.from({ length: total }, (_, i) => {
       const n = i + 1
       return row({ id: String(n), entitlement: `Ent ${n}`, entitlementId: `e${n}`, source: 's', sourceId: 's1', reviewStatus: n <= completed ? 'approved' : 'needsReview', accessItemKind: 'entitlement', accessItemId: `e${n}`, accessItemName: `Ent ${n}` })
     }),
@@ -127,8 +130,19 @@ describe('AccessGraphCanvas readable zoom for long graphs', () => {
     expect(spies.fitView).not.toHaveBeenCalled()
     expect(lastZoom()).toBe(READABLE_MIN_ZOOM)
     const hint = screen.getByRole('status')
-    expect(hint).toHaveTextContent('30 items — scroll or drag to see all')
+    expect(hint).toHaveTextContent('100 items — scroll or drag to see all')
     expect(hint.closest('.react-flow__panel')).toHaveClass('top', 'center', 'vc-graph-fit-ignore')
+  })
+
+  it('fits 30 entitlements with fitView now that the lane wraps (no hint)', async () => {
+    // Intended effect of lane wrapping: 30 entitlements used to be a ~3,300 px
+    // column (readable zoom + hint); as three 10-card columns they fit.
+    const { container } = render(<AccessGraphCanvas graph={longGraph(30)} />)
+    drillIn()
+    await sizeCanvas(container, 968, 490)
+    expect(spies.fitView).toHaveBeenCalledTimes(1)
+    expect(spies.setViewport).not.toHaveBeenCalled()
+    expect(screen.queryByRole('status')).toBeNull()
   })
 
   it('opens a long graph at the readable zoom in TB too', async () => {
@@ -137,7 +151,7 @@ describe('AccessGraphCanvas readable zoom for long graphs', () => {
     fireEvent.click(btn('Layout: vertical'))
     await sizeCanvas(container, 968, 490)
     expect(lastZoom()).toBe(READABLE_MIN_ZOOM)
-    expect(screen.getByRole('status')).toHaveTextContent('30 items')
+    expect(screen.getByRole('status')).toHaveTextContent('100 items')
   })
 
   it('each refit trigger produces exactly one plan', async () => {
@@ -169,26 +183,26 @@ describe('AccessGraphCanvas readable zoom for long graphs', () => {
       const { container } = render(<AccessGraphCanvas graph={longWithCompleted(10)} />)
       drillIn()
       await sizeCanvas(container, 968, 490)
-      expect(screen.getByRole('status')).toHaveTextContent('30 items — scroll or drag to see all')
+      expect(screen.getByRole('status')).toHaveTextContent('100 items — scroll or drag to see all')
 
       const before = plans()
       fireEvent.click(btn('Hide completed items'))
       await waitFor(() => expect(plans()).toBe(before + 1))
       expect(spies.setViewport).toHaveBeenCalledTimes(2)
       expect(lastZoom()).toBe(READABLE_MIN_ZOOM)
-      expect(screen.getByRole('status')).toHaveTextContent('20 items — scroll or drag to see all')
+      expect(screen.getByRole('status')).toHaveTextContent('90 items — scroll or drag to see all')
 
       const afterHide = plans()
       fireEvent.click(btn(/^Show completed items/))
       await waitFor(() => expect(plans()).toBe(afterHide + 1))
-      expect(screen.getByRole('status')).toHaveTextContent('30 items')
+      expect(screen.getByRole('status')).toHaveTextContent('100 items')
     })
 
     it('drops back to a normal fit with no hint when few items remain', async () => {
-      const { container } = render(<AccessGraphCanvas graph={longWithCompleted(24)} />)
+      const { container } = render(<AccessGraphCanvas graph={longWithCompleted(94)} />)
       drillIn()
       await sizeCanvas(container, 968, 490)
-      expect(screen.getByRole('status')).toHaveTextContent('30 items')
+      expect(screen.getByRole('status')).toHaveTextContent('100 items')
       spies.fitView.mockClear()
       spies.setViewport.mockClear()
 

@@ -15,6 +15,11 @@
  *   hidden: with reference hidden the nested lineage and the sources are simply
  *   absent, and the first-level items keep their role / access profile /
  *   entitlement lanes.
+ *   A lane that holds MORE than `MAX_ITEMS_PER_LANE` (10) role / access profile
+ *   / entitlement cards wraps into `ceil(n / 10)` balanced sub-columns (LR) or
+ *   sub-rows (TB), placed side by side along the rank axis `WRAP_GAP` apart.
+ *   Later lanes shift by the extra width; absent lanes keep their slot. The user
+ *   and source lanes never wrap.
  * - "single lane" (`singleLane: true`): for a graph that holds only the user and
  *   its first-level items (the output of `withoutReference`); every item goes in
  *   ONE lane directly after the user, so no status edge can run behind another
@@ -85,6 +90,53 @@ export const CARD_Z_INDEX = 2
 const NODE_SEP = 48
 const RANK_SEP = 120
 const MARGIN = 24
+
+/**
+ * A role / access profile / entitlement lane holding MORE than this many cards
+ * wraps into several sub-columns (LR) / sub-rows (TB). 10 or fewer is laid out
+ * as a single column / row, exactly as before.
+ */
+export const MAX_ITEMS_PER_LANE = 10
+
+/**
+ * Rank-axis gap between the sub-columns / sub-rows of ONE wrapped lane. Smaller
+ * than `RANK_SEP` so a wrapped type reads as one group, clearly closer than the
+ * next type.
+ */
+export const WRAP_GAP = 40
+
+/**
+ * The lanes that wrap. The user lane is always one card and the source lane is
+ * not an access item type (a long source lane stays one column / row).
+ */
+const WRAPPING_KINDS: ReadonlySet<AccessGraphNodeKind> = new Set([
+  'role',
+  'accessProfile',
+  'entitlement',
+])
+
+/**
+ * Splits an ordered lane into balanced chunks of at most `MAX_ITEMS_PER_LANE`:
+ * `k = ceil(n / 10)` chunks, the first `n % k` of size `floor(n / k) + 1` and
+ * the rest `floor(n / k)` (11 -> 6+5, 25 -> 9+8+8, 31 -> 8+8+8+7). Order is
+ * preserved (chunks read first to last reproduce the input). 10 or fewer items
+ * (including none) come back as a single chunk. Pure; the input is not mutated.
+ */
+export function splitLane<T>(ordered: readonly T[]): T[][] {
+  const n = ordered.length
+  if (n <= MAX_ITEMS_PER_LANE) return [[...ordered]]
+  const k = Math.ceil(n / MAX_ITEMS_PER_LANE)
+  const base = Math.floor(n / k)
+  const larger = n % k
+  const chunks: T[][] = []
+  let start = 0
+  for (let i = 0; i < k; i++) {
+    const size = i < larger ? base + 1 : base
+    chunks.push(ordered.slice(start, start + size))
+    start += size
+  }
+  return chunks
+}
 
 /**
  * The handle ids + source/target positions for a given direction. Matches the
@@ -176,13 +228,19 @@ function singleLanePlacements(
 /**
  * Lanes placement: one dagre pass for the cross-axis ORDER, then every kind is
  * pinned to its fixed band (a column in LR, a row in TB) and each lane is
- * de-overlapped at a fixed stride.
+ * de-overlapped at a fixed stride. A role / access profile / entitlement lane
+ * with more than `MAX_ITEMS_PER_LANE` cards is split (column-major, in its
+ * existing order) into balanced sub-columns / sub-rows `subStep` apart on the
+ * rank axis, each centered on cross 0. Lanes are visited in layer order and
+ * every lane after a wrapped one shifts by the extra width, accumulated; an
+ * absent kind keeps its fixed slot (lanes are not compacted).
  */
 function lanePlacements(
   graph: AccessGraphData,
   rankdir: RankDir,
   bandStep: number,
   crossStride: number,
+  subStep: number,
 ): Map<string, Placement> {
   const dagreGraph = new Graph()
   dagreGraph.setDefaultEdgeLabel(() => ({}))
@@ -230,22 +288,31 @@ function lanePlacements(
     lane.push(node)
     byKind.set(node.kind, lane)
   }
-  for (const [kind, lane] of byKind) {
+  const kinds = [...byKind.keys()].sort((a, b) => kindRank(a) - kindRank(b))
+  // Extra rank-axis width taken by the wrapped lanes visited so far.
+  let shift = 0
+  for (const kind of kinds) {
+    const lane = byKind.get(kind) ?? []
     // Order within the lane by dagre's cross-axis position, tie-broken by id so
     // the layout stays deterministic.
     const ordered = [...lane].sort((a, b) => {
       const delta = dagreCross(a.id) - dagreCross(b.id)
       return delta !== 0 ? delta : a.id.localeCompare(b.id)
     })
-    // Center the lane on the midpoint of dagre's own spread so lanes of
-    // different sizes stay roughly aligned around a common axis.
-    const spanStart = -((ordered.length - 1) * crossStride) / 2
-    ordered.forEach((node, index) => {
-      placements.set(node.id, {
-        rank: rankCoordFor(kind),
-        cross: spanStart + index * crossStride,
+    const chunks = WRAPPING_KINDS.has(kind) ? splitLane(ordered) : [ordered]
+    const baseRank = rankCoordFor(kind) + shift
+    chunks.forEach((chunk, chunkIndex) => {
+      // Center each (sub-)lane on the midpoint of dagre's own spread so lanes of
+      // different sizes stay roughly aligned around a common axis.
+      const spanStart = -((chunk.length - 1) * crossStride) / 2
+      chunk.forEach((node, index) => {
+        placements.set(node.id, {
+          rank: baseRank + chunkIndex * subStep,
+          cross: spanStart + index * crossStride,
+        })
       })
     })
+    shift += (chunks.length - 1) * subStep
   }
   return placements
 }
@@ -273,11 +340,13 @@ export function buildAccessScene(
   const bandStep = (vertical ? NODE_HEIGHT : NODE_WIDTH) + RANK_SEP
   const crossExtent = vertical ? NODE_WIDTH : NODE_HEIGHT
   const crossStride = crossExtent + NODE_SEP
+  // Rank-axis step between the sub-columns / sub-rows of one wrapped lane.
+  const subStep = (vertical ? NODE_HEIGHT : NODE_WIDTH) + WRAP_GAP
 
   // Per-node coordinates from whichever layout was requested.
   const placements = options.singleLane
     ? singleLanePlacements(graph, bandStep, crossStride)
-    : lanePlacements(graph, rankdir, bandStep, crossStride)
+    : lanePlacements(graph, rankdir, bandStep, crossStride, subStep)
 
   const nodes: AccessSceneNode[] = graph.nodes.map((node) => {
     const { rank: rankCoord, cross } = placements.get(node.id) ?? { rank: MARGIN, cross: 0 }
