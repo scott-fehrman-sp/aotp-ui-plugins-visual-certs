@@ -276,13 +276,13 @@ function CanvasSurface({ graph, backSlot }: AccessGraphCanvasProps) {
         setSelectedUserId,
       )
     }
-    // Reference hidden: the graph is only the user + first-level items, so
-    // there is no derivation to show and they share ONE lane after the user
-    // (kind lanes would only add long edges that run behind other cards).
-    return buildAccessScene(visibleGraph ?? { nodes: [], edges: [] }, rankdir, {
-      singleLane: !showReference,
-    })
-  }, [graph, selectedUserId, visibleGraph, rankdir, width, showReference])
+    // Reference shown OR hidden, each access type keeps its own column (LR) /
+    // row (TB), in the fixed order role, access profile, entitlement (then
+    // sources when reference is shown). Hiding reference only removes the
+    // nested lineage and the sources; the reviewable items stay in the same
+    // lanes, so toggling reference never rearranges them by kind.
+    return buildAccessScene(visibleGraph ?? { nodes: [], edges: [] }, rankdir)
+  }, [graph, selectedUserId, visibleGraph, rankdir, width])
 
   const inDrilldown = selectedUserId !== null
 

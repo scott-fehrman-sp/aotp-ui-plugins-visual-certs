@@ -102,23 +102,85 @@ describe('AccessGraphCanvas overlay-aware fit', () => {
     await waitFor(() => expect(parseInt(lastPadding()!.left, 10)).toBeGreaterThanOrEqual(251 + 12))
   })
 
-  it('lays out first-level items in one column (LR) / row (TB) when reference is hidden', () => {
-    const { container } = render(<AccessGraphCanvas graph={graph()} />)
-    drillIn()
-    fireEvent.click(btn('Hide reference nodes and links'))
+  describe('access types keep their own lane, with reference shown or hidden', () => {
+    /** One first-level item of each type, plus a second entitlement, with lineage. */
+    function threeKinds() {
+      return statusGraph([
+        row({ id: '1', role: 'Role A', roleId: 'role-a', accessProfile: 'foo', accessProfileId: 'ap-foo', entitlement: 'read', entitlementId: 'e1', source: 'engr db', sourceId: 's1', reviewStatus: 'needsReview', accessItemKind: 'role', accessItemId: 'role-a', accessItemName: 'Role A' }),
+        row({ id: '2', accessProfile: 'Billing', accessProfileId: 'ap-bill', entitlement: 'invoice', entitlementId: 'e4', source: 'erp', sourceId: 's3', reviewStatus: 'approved', accessItemKind: 'accessProfile', accessItemId: 'ap-bill', accessItemName: 'Billing' }),
+        row({ id: '3', entitlement: 'login', entitlementId: 'e2', source: 'phone app', sourceId: 's2', reviewStatus: 'approved', accessItemKind: 'entitlement', accessItemId: 'e2', accessItemName: 'login' }),
+        row({ id: '4', entitlement: 'admin', entitlementId: 'e3', source: 'phone app', sourceId: 's2', reviewStatus: 'revoked', accessItemKind: 'entitlement', accessItemId: 'e3', accessItemName: 'admin' }),
+      ])
+    }
     const translate = (label: string) => {
       const wrapper = screen.getByText(label).closest<HTMLElement>('.react-flow__node')!
       const m = /translate\((-?[\d.]+)px,\s*(-?[\d.]+)px\)/.exec(wrapper.style.transform)!
       return { x: Number(m[1]), y: Number(m[2]) }
     }
-    expect(container.querySelectorAll('.react-flow__node')).toHaveLength(4)
-    const lr = ['Role A', 'login', 'admin'].map(translate)
-    expect(new Set(lr.map((p) => p.x)).size).toBe(1)
-    expect(new Set(lr.map((p) => p.y)).size).toBe(3)
-    expect(lr[0].x).toBeGreaterThan(translate('User One').x)
-    fireEvent.click(btn('Layout: vertical'))
-    const tb = ['Role A', 'login', 'admin'].map(translate)
-    expect(new Set(tb.map((p) => p.y)).size).toBe(1)
-    expect(new Set(tb.map((p) => p.x)).size).toBe(3)
+    const items = ['Role A', 'Billing', 'login', 'admin']
+
+    it('hidden, horizontal: role, access profile, entitlement each get their own column, in that order', () => {
+      const { container } = render(<AccessGraphCanvas graph={threeKinds()} />)
+      drillIn()
+      fireEvent.click(btn('Hide reference nodes and links'))
+
+      // Only the user and the four first-level items remain.
+      expect(container.querySelectorAll('.react-flow__node')).toHaveLength(5)
+      const [role, ap, login, admin] = items.map(translate)
+      const user = translate('User One')
+
+      // Left to right: user, then role, then access profile, then entitlements.
+      expect(user.x).toBeLessThan(role.x)
+      expect(role.x).toBeLessThan(ap.x)
+      expect(ap.x).toBeLessThan(login.x)
+      // Both entitlements share the entitlement column, stacked apart.
+      expect(login.x).toBe(admin.x)
+      expect(login.y).not.toBe(admin.y)
+    })
+
+    it('hidden, vertical: the same three types get their own rows, top to bottom', () => {
+      render(<AccessGraphCanvas graph={threeKinds()} />)
+      drillIn()
+      fireEvent.click(btn('Hide reference nodes and links'))
+      fireEvent.click(btn('Layout: vertical'))
+
+      const [role, ap, login, admin] = items.map(translate)
+      const user = translate('User One')
+      expect(user.y).toBeLessThan(role.y)
+      expect(role.y).toBeLessThan(ap.y)
+      expect(ap.y).toBeLessThan(login.y)
+      expect(login.y).toBe(admin.y)
+      expect(login.x).not.toBe(admin.x)
+    })
+
+    it('hiding reference does not move an access type to a different lane', () => {
+      render(<AccessGraphCanvas graph={threeKinds()} />)
+      drillIn()
+      const shown = items.map(translate)
+      fireEvent.click(btn('Hide reference nodes and links'))
+      const hidden = items.map(translate)
+      // The lane (rank-axis coordinate, x in the horizontal layout) of every
+      // first-level item is identical shown vs hidden.
+      expect(hidden.map((p) => p.x)).toEqual(shown.map((p) => p.x))
+    })
+
+    it('a type the user does not hold simply has no cards (the others keep their lanes)', () => {
+      // Entitlements only: no role or access profile cards at all.
+      render(
+        <AccessGraphCanvas
+          graph={statusGraph([
+            row({ id: '3', entitlement: 'login', entitlementId: 'e2', source: 'phone app', sourceId: 's2', reviewStatus: 'approved', accessItemKind: 'entitlement', accessItemId: 'e2', accessItemName: 'login' }),
+            row({ id: '4', entitlement: 'admin', entitlementId: 'e3', source: 'phone app', sourceId: 's2', reviewStatus: 'revoked', accessItemKind: 'entitlement', accessItemId: 'e3', accessItemName: 'admin' }),
+          ])}
+        />,
+      )
+      drillIn()
+      fireEvent.click(btn('Hide reference nodes and links'))
+      const user = translate('User One')
+      const login = translate('login')
+      const admin = translate('admin')
+      expect(user.x).toBeLessThan(login.x)
+      expect(login.x).toBe(admin.x)
+    })
   })
 })

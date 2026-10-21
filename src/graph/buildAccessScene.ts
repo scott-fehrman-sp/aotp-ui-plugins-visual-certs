@@ -10,12 +10,17 @@
  * Two layouts share one node/edge mapping:
  *
  * - "lanes" (default): every kind is pinned to its own column (LR) / row (TB)
- *   so the derivation layers user → role → access profile → entitlement →
- *   source read left to right. Used while reference content is SHOWN.
+ *   so the layers user → role → access profile → entitlement → source read left
+ *   to right. The canvas uses this whether reference content is shown or
+ *   hidden: with reference hidden the nested lineage and the sources are simply
+ *   absent, and the first-level items keep their role / access profile /
+ *   entitlement lanes.
  * - "single lane" (`singleLane: true`): for a graph that holds only the user and
- *   its first-level items (the output of `withoutReference`). There is no
- *   derivation to show, so kind lanes would only create long edges that run
- *   behind other cards; every item goes in ONE lane directly after the user.
+ *   its first-level items (the output of `withoutReference`); every item goes in
+ *   ONE lane directly after the user, so no status edge can run behind another
+ *   card. NOT used by the canvas at the moment (the product wants a dedicated
+ *   lane per access type even with reference hidden); kept, pure and tested, as
+ *   an option for a compact view.
  *
  * It is deliberately framework-pure: no React, no DOM, no I/O, no mutation of
  * the input graph, deterministic output. React Flow's `css: false` in the test
