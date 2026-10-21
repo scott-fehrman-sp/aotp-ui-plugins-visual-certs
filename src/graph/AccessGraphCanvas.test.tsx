@@ -523,12 +523,14 @@ describe('AccessGraphCanvas', () => {
       expect(check()).toEqual([
         'Layout (open a user to change)',
         'Reference nodes and links (open a user to change)',
+        'Completed items (open a user to filter)',
         'Hide minimap',
       ])
       drillIn()
       expect(check()).toEqual([
         'Layout: vertical',
         'Hide reference nodes and links',
+        'Hide completed items',
         'Hide minimap',
       ])
     })
@@ -666,6 +668,201 @@ describe('AccessGraphCanvas', () => {
       expect(panel).toHaveClass('top')
       expect(panel).toHaveClass('center')
       expect(panel).not.toHaveClass('right')
+    })
+
+    describe('hide completed items', () => {
+      const R = (o: Partial<StatusRow>) =>
+        row({ userId: 'u1', user: 'User One', ...o })
+
+      /**
+       * User One: Role A (approved) -> foo -> read -> ERP; Role B (needsReview)
+       * -> read and -> shared; Shared held directly (revoked) AND nested under
+       * Role B; Billing AP (reassigned) -> pay -> Payroll; Login (needsReview)
+       * -> Directory; Legacy (approved) -> Directory. Hidden items: Role A,
+       * Shared, Billing AP, Legacy (4).
+       * User Two: every item complete. User Three: no lineage at all.
+       */
+      function completedGraph() {
+        return statusGraph([
+          R({ id: '1', role: 'Role A', roleId: 'role-a', accessProfile: 'foo', accessProfileId: 'ap-foo', entitlement: 'read', entitlementId: 'e-read', source: 'ERP', sourceId: 's-erp', reviewStatus: 'approved', accessItemKind: 'role', accessItemId: 'role-a' }),
+          R({ id: '2', role: 'Role B', roleId: 'role-b', entitlement: 'read', entitlementId: 'e-read', source: 'ERP', sourceId: 's-erp', reviewStatus: 'needsReview', accessItemKind: 'role', accessItemId: 'role-b' }),
+          R({ id: '3', role: 'Role B', roleId: 'role-b', entitlement: 'Shared', entitlementId: 'e-sh', source: 'ERP', sourceId: 's-erp', reviewStatus: 'needsReview', accessItemKind: 'role', accessItemId: 'role-b' }),
+          R({ id: '4', entitlement: 'Shared', entitlementId: 'e-sh', source: 'ERP', sourceId: 's-erp', reviewStatus: 'revoked', accessItemKind: 'entitlement', accessItemId: 'e-sh' }),
+          R({ id: '5', accessProfile: 'Billing AP', accessProfileId: 'ap-bill', entitlement: 'pay', entitlementId: 'e-pay', source: 'Payroll', sourceId: 's-pay', reviewStatus: 'reassigned', accessItemKind: 'accessProfile', accessItemId: 'ap-bill' }),
+          R({ id: '6', entitlement: 'Login', entitlementId: 'e-login', source: 'Directory', sourceId: 's-dir', reviewStatus: 'needsReview', accessItemKind: 'entitlement', accessItemId: 'e-login' }),
+          R({ id: '7', entitlement: 'Legacy', entitlementId: 'e-leg', source: 'Directory', sourceId: 's-dir', reviewStatus: 'approved', accessItemKind: 'entitlement', accessItemId: 'e-leg' }),
+          row({ id: '8', userId: 'u2', user: 'User Two', role: 'Role X', roleId: 'role-x', entitlement: 'xread', entitlementId: 'e-x', source: 'XDB', sourceId: 's-x', reviewStatus: 'approved', accessItemKind: 'role', accessItemId: 'role-x' }),
+          row({ id: '9', userId: 'u2', user: 'User Two', entitlement: 'xadmin', entitlementId: 'e-xa', source: 'XDB', sourceId: 's-x', reviewStatus: 'revoked', accessItemKind: 'entitlement', accessItemId: 'e-xa' }),
+          row({ id: '10', userId: 'u3', user: 'User Three' }),
+        ])
+      }
+      const label = (text: string) => screen.queryByText(text)
+      const cardOf = (text: string) => screen.getByText(text).closest<HTMLElement>('.vc-graph-card')!
+      const nodeLabels = () =>
+        Array.from(document.querySelectorAll('.react-flow__node .vc-graph-card')).map(
+          (c) => c.textContent,
+        )
+      const COMPLETED_ONLY = ['Role A', 'foo', 'Billing AP', 'pay', 'Payroll', 'Legacy']
+      const KEPT = ['Role B', 'read', 'ERP', 'Login', 'Directory', 'Shared']
+
+      it('is enabled and pressed by default in drill-down, disabled in the grid', () => {
+        render(<AccessGraphCanvas graph={completedGraph()} />)
+        expect(btn('Completed items (open a user to filter)')).toBeDisabled()
+        drillIn()
+        const completed = btn('Hide completed items')
+        expect(completed).toBeEnabled()
+        expect(completed).toHaveAttribute('aria-pressed', 'true')
+        expect(completed).toHaveClass('vc-graph-control-active')
+        for (const t of [...COMPLETED_ONLY, ...KEPT]) expect(label(t)).toBeInTheDocument()
+      })
+
+      it('hides completed cards, keeps needs-review ones and announces the count', () => {
+        render(<AccessGraphCanvas graph={completedGraph()} />)
+        drillIn()
+        fireEvent.click(btn('Hide completed items'))
+
+        for (const t of COMPLETED_ONLY) expect(label(t)).toBeNull()
+        for (const t of KEPT) expect(label(t)).toBeInTheDocument()
+        const hidden = btn('Show completed items (4 hidden)')
+        expect(hidden).toHaveAttribute('aria-pressed', 'false')
+        expect(hidden).not.toHaveClass('vc-graph-control-active')
+        expect(hidden.querySelector('svg')).toHaveAttribute('data-icon', 'completedHidden')
+        expect(announcement()).toHaveTextContent('Completed items hidden (4).')
+        // Legend unchanged.
+        const legend = screen.getByRole('group', { name: /review status legend/i })
+        expect(legend.querySelectorAll('.vc-graph-status-icon')).toHaveLength(4)
+        expect(legend).toHaveTextContent('Reference Only')
+      })
+
+      it('keeps a directly-held completed entitlement that is nested under a visible item as muted reference', () => {
+        render(<AccessGraphCanvas graph={completedGraph()} />)
+        drillIn()
+        expect(cardOf('Shared')).toHaveAttribute('data-review-status', 'revoked')
+        fireEvent.click(btn('Hide completed items'))
+        const shared = cardOf('Shared')
+        expect(shared).toHaveClass('vc-graph-card-reference')
+        expect(shared.querySelector('.vc-graph-status-icon')).toBeNull()
+        expect(shared).not.toHaveAttribute('aria-pressed')
+        // The needs-review ones still carry their status.
+        expect(cardOf('Role B')).toHaveAttribute('data-review-status', 'needsReview')
+        expect(cardOf('Login')).toHaveAttribute('data-review-status', 'needsReview')
+      })
+
+      it('shows the completed items again, restoring the original cards', () => {
+        render(<AccessGraphCanvas graph={completedGraph()} />)
+        drillIn()
+        const before = nodeLabels()
+        fireEvent.click(btn('Hide completed items'))
+        expect(nodeLabels()).not.toEqual(before)
+        fireEvent.click(btn('Show completed items (4 hidden)'))
+        expect(nodeLabels()).toEqual(before)
+        expect(btn('Hide completed items')).toHaveAttribute('aria-pressed', 'true')
+        expect(announcement()).toHaveTextContent('Completed items shown.')
+        expect(cardOf('Shared')).toHaveAttribute('data-review-status', 'revoked')
+      })
+
+      it('composes with the reference toggle in either order', () => {
+        render(<AccessGraphCanvas graph={completedGraph()} />)
+        drillIn()
+        fireEvent.click(btn('Hide completed items'))
+        fireEvent.click(btn('Hide reference nodes and links'))
+        const a = nodeLabels().sort()
+        // Only the user and the needs-review first-level items remain.
+        expect(a).toEqual(['Login', 'Role B', 'User One'].map((t) => expect.stringContaining(t)))
+        fireEvent.click(btn('Show reference nodes and links'))
+        fireEvent.click(btn('Show completed items (4 hidden)'))
+        fireEvent.click(btn('Hide reference nodes and links'))
+        fireEvent.click(btn('Hide completed items'))
+        expect(nodeLabels().sort()).toEqual(a)
+        // Showing completed again with reference hidden restores first-level only.
+        fireEvent.click(btn(/^Show completed items/))
+        for (const t of ['Role A', 'Billing AP', 'Legacy', 'Shared']) expect(label(t)).toBeInTheDocument()
+        for (const t of ['foo', 'pay', 'ERP', 'Payroll', 'Directory']) expect(label(t)).toBeNull()
+      })
+
+      it('survives Back-to-all-users and switching users, using each user own count', () => {
+        render(<AccessGraphCanvas graph={completedGraph()} />)
+        drillIn()
+        fireEvent.click(btn('Hide completed items'))
+        fireEvent.click(btn(/back to all users/i))
+        // Grid: unfiltered, disabled, all users present.
+        expect(btn('Completed items (open a user to filter)')).toBeDisabled()
+        expect(screen.getByRole('button', { name: 'Show access for User Two' })).toBeInTheDocument()
+        drillIn('User Two')
+        expect(btn('Show completed items (2 hidden)')).toHaveAttribute('aria-pressed', 'false')
+        expect(label('Role X')).toBeNull()
+        fireEvent.click(btn(/back to all users/i))
+        drillIn('User One')
+        expect(label('Role A')).toBeNull()
+        expect(label('Role B')).toBeInTheDocument()
+        fireEvent.click(btn('Show completed items (4 hidden)'))
+        expect(label('Role A')).toBeInTheDocument()
+      })
+
+      it('shows the all-complete note instead of the empty-user note when everything is hidden', () => {
+        render(<AccessGraphCanvas graph={completedGraph()} />)
+        drillIn('User Two')
+        expect(label('All access items are complete. Show completed items to see them.')).toBeNull()
+        fireEvent.click(btn('Hide completed items'))
+        const note = screen.getByText('All access items are complete. Show completed items to see them.')
+        const panel = note.closest('.react-flow__panel')!
+        expect(panel).toHaveClass('top')
+        expect(panel).toHaveClass('center')
+        expect(label('No expanded access for this user.')).toBeNull()
+        expect(nodeLabels()).toEqual(['User TwoUser'])
+        fireEvent.click(btn('Show completed items (2 hidden)'))
+        expect(label('All access items are complete. Show completed items to see them.')).toBeNull()
+        expect(label('Role X')).toBeInTheDocument()
+      })
+
+      it('keeps the old note for a genuinely empty user, even after toggling', () => {
+        render(<AccessGraphCanvas graph={completedGraph()} />)
+        drillIn('User Three')
+        expect(label('No expanded access for this user.')).toBeInTheDocument()
+        fireEvent.click(btn('Hide completed items'))
+        expect(btn('Show completed items (0 hidden)')).toBeInTheDocument()
+        expect(label('No expanded access for this user.')).toBeInTheDocument()
+        expect(label('All access items are complete. Show completed items to see them.')).toBeNull()
+      })
+
+      it('never hides a status-less first-level item or a mixed-status item', () => {
+        const unstatused = {
+          nodes: [
+            { id: 'user:u1', kind: 'user' as const, label: 'User One' },
+            { id: 'role:r', kind: 'role' as const, label: 'Unreviewed' },
+          ],
+          edges: [{ from: 'user:u1', to: 'role:r', pathCount: 1, firstLevel: true }],
+        }
+        const { unmount } = render(<AccessGraphCanvas graph={unstatused} />)
+        drillIn()
+        fireEvent.click(btn('Hide completed items'))
+        expect(label('Unreviewed')).toBeInTheDocument()
+        expect(btn('Show completed items (0 hidden)')).toBeInTheDocument()
+        unmount()
+
+        // Two review items of one role: one approved, one needs review -> mixed.
+        const mixed = statusGraph([
+          R({ id: 'm1', role: 'Role M', roleId: 'role-m', entitlement: 'a', entitlementId: 'ea', reviewStatus: 'approved', accessItemKind: 'role', accessItemId: 'role-m' }),
+          R({ id: 'm2', role: 'Role M', roleId: 'role-m', entitlement: 'b', entitlementId: 'eb', reviewStatus: 'needsReview', accessItemKind: 'role', accessItemId: 'role-m' }),
+        ])
+        render(<AccessGraphCanvas graph={mixed} />)
+        drillIn()
+        fireEvent.click(btn('Hide completed items'))
+        expect(label('Role M')).toBeInTheDocument()
+        expect(btn('Show completed items (0 hidden)')).toBeInTheDocument()
+      })
+
+      it('shows the hidden count in the hover hint', () => {
+        render(<AccessGraphCanvas graph={completedGraph()} />)
+        drillIn()
+        fireEvent.click(btn('Hide completed items'))
+        const anchor = btn('Show completed items (4 hidden)').closest<HTMLElement>(
+          '.vc-graph-hint-anchor',
+        )!
+        stubAnchorRect(anchor)
+        fireEvent.mouseEnter(anchor)
+        expect(screen.getByRole('tooltip')).toHaveTextContent('Show completed items (4 hidden)')
+      })
     })
 
     it('shows a tooltip on a panel button; Escape closes it first, then leaves the drill-down', () => {

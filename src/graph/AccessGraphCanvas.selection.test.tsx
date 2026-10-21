@@ -75,7 +75,7 @@ function graph(): AccessGraphData {
   ])
 }
 
-const btn = (name: string) => screen.getByRole('button', { name })
+const btn = (name: string | RegExp) => screen.getByRole('button', { name })
 const edges = () => spies.edges as Edge[]
 const nodes = () => spies.nodes as Node[]
 const card = (label: string) => screen.getByText(label).closest<HTMLElement>('.vc-graph-card')!
@@ -500,5 +500,86 @@ describe('AccessGraphCanvas selection: an item both first-level and nested', () 
     expect(selectedEdges()[0].style?.stroke).toBe(STATUS_STROKE.approved)
     const upstream = edges().find((e) => e.id === eid('accessProfile:ap-foo', 'entitlement:e-read'))!
     expect(upstream.style?.opacity).toBe(DIM_REFERENCE_OPACITY)
+  })
+})
+
+/** True when the selection dims any edge (the base reference opacity is not a dim). */
+const anyDimmed = () =>
+  edges().some(
+    (e) => e.style?.opacity === DIM_STATUS_OPACITY || e.style?.opacity === DIM_REFERENCE_OPACITY,
+  )
+
+describe('AccessGraphCanvas selection with the completed filter', () => {
+  it('keeps a visible item selected across hide and show, recomputing the highlight from the filtered edges', () => {
+    render(<AccessGraphCanvas graph={graph()} />)
+    drillIn()
+    fireEvent.click(card('Role A'))
+    const full = snapshot()
+
+    fireEvent.click(btn('Hide completed items'))
+    expect(pressed()).toEqual([card('Role A')])
+    expect(selectedEdges().map((e) => e.id)).toEqual([eid('user:u1', 'role:role-a')])
+    expect(lineageEdges()).toHaveLength(3)
+    // Only the visible lineage is left: nothing is dimmed.
+    expect(edges()).toHaveLength(4)
+    expect(anyDimmed()).toBe(false)
+
+    fireEvent.click(btn(/^Show completed items/))
+    expect(pressed()).toEqual([card('Role A')])
+    expect(edges()).toEqual(full)
+  })
+
+  it('clears the selection of an item that gets hidden, and does not restore it on show', () => {
+    render(<AccessGraphCanvas graph={graph()} />)
+    drillIn()
+    fireEvent.click(card('login'))
+    expect(pressed()).toEqual([card('login')])
+
+    fireEvent.click(btn('Hide completed items'))
+    expect(pressed()).toHaveLength(0)
+    expect(selectedEdges()).toHaveLength(0)
+    expect(lineageEdges()).toHaveLength(0)
+    expect(anyDimmed()).toBe(false)
+    expect(liveText()).toContain('Completed items hidden (2).')
+    expect(liveText()).not.toContain('Highlighting the links')
+
+    fireEvent.click(btn(/^Show completed items/))
+    expect(pressed()).toHaveLength(0)
+    expect(selectedEdges()).toHaveLength(0)
+    expect(anyDimmed()).toBe(false)
+  })
+
+  it('clears the selection of a first-level item that survives only as nested reference (fixture: Read)', async () => {
+    render(<AccessGraphCanvas graph={await buildFixtureGraph()} />)
+    fireEvent.click(btn('Show access for Alice Adams'))
+    fireEvent.click(card('Read'))
+    expect(pressed()).toEqual([card('Read')])
+    fireEvent.click(btn('Hide completed items'))
+    // Role A is completed too, so Read is not even reachable any more.
+    expect(screen.queryByText('Read')).toBeNull()
+    expect(pressed()).toHaveLength(0)
+    fireEvent.click(btn(/^Show completed items/))
+    expect(pressed()).toHaveLength(0)
+    expect(btn('Entitlement: Read')).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  it('clears the selection when a status-only refresh completes the selected item while completed items are hidden', () => {
+    const base = graph()
+    const { rerender } = render(<AccessGraphCanvas graph={base} />)
+    drillIn()
+    fireEvent.click(btn('Hide completed items'))
+    fireEvent.click(card('Role A'))
+    expect(pressed()).toEqual([card('Role A')])
+    const refreshed: AccessGraphData = {
+      nodes: base.nodes,
+      edges: base.edges.map((e) =>
+        e.to === 'role:role-a' ? { ...e, reviewStatus: 'approved' as const } : e,
+      ),
+    }
+    rerender(<AccessGraphCanvas graph={refreshed} />)
+    expect(screen.queryByText('Role A')).toBeNull()
+    expect(pressed()).toHaveLength(0)
+    fireEvent.click(btn(/^Show completed items/))
+    expect(pressed()).toHaveLength(0)
   })
 })

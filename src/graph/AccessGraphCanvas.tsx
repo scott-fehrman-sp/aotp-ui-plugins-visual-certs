@@ -16,6 +16,7 @@ import { buildAccessScene, type AccessSceneNode } from './buildAccessScene'
 import { buildUserGridScene } from './buildUserGridScene'
 import { userSubgraph } from './userSubgraph'
 import { withoutReference } from './referenceFilter'
+import { withoutCompleted } from './completedFilter'
 import { computeFitPadding, measureOverlays, planFit, toFitViewPadding } from './fitPadding'
 import { EmphasisContext } from './EmphasisContext'
 import { SelectionContext, type SelectionState } from './SelectionContext'
@@ -86,7 +87,9 @@ const MINIMAP_COLOR: Record<string, string> = {
  * cleared by clicking the same card, clicking the empty pane, or Escape (the
  * first Escape clears the selection, only a second one returns to the grid),
  * and by drilling into another user, going back, or a new node set. It survives
- * the layout, reference and minimap toggles and a status-only refresh. Selecting
+ * the layout, reference, completed and minimap toggles and a status-only
+ * refresh, except that hiding completed items clears the selection when the
+ * selected item gets hidden. Selecting
  * is a cheap edge restyle: the scene, the node objects and the fit are
  * untouched, exactly like hover.
  *
@@ -95,8 +98,11 @@ const MINIMAP_COLOR: Record<string, string> = {
  * the legend, minimap, controls and panels so no card sits under them.
  *
  * A right-side vertical control panel (`GraphControls`, in both modes) holds the
- * layout direction, reference visibility and minimap toggles. Those preferences
- * live in memory and survive switching users and grid/drill-down.
+ * layout direction, reference visibility, completed-items visibility and
+ * minimap toggles. Those preferences live in memory and survive switching users
+ * and grid/drill-down. The completed toggle (drill-down only) hides the
+ * first-level items whose status is approved / revoked / reassigned plus any
+ * lineage left orphaned (`withoutCompleted`), re-lays out and refits once.
  *
  * Structure mirrors org-graph's `OrgCanvas`: a `ReactFlowProvider` wrapping a
  * surface that reads the viewport width from the React Flow store, derives
@@ -221,6 +227,8 @@ function FitOnSceneChange({
 function CanvasSurface({ graph, backSlot }: AccessGraphCanvasProps) {
   const [rankdir, setRankdir] = useState<RankDir>('LR')
   const [showReference, setShowReference] = useState(true)
+  // Completed (approved / revoked / reassigned) items are shown by default.
+  const [showCompleted, setShowCompleted] = useState(true)
   const [showMinimap, setShowMinimap] = useState(true)
   const [announcement, setAnnouncement] = useState('')
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
@@ -261,12 +269,21 @@ function CanvasSurface({ graph, backSlot }: AccessGraphCanvasProps) {
     [graph, selectedUserId],
   )
 
-  // With reference hidden only the user + first-level items/edges remain. The
-  // layout below is recomputed on the filtered graph, so there are no gaps.
-  const visibleGraph = useMemo(
-    () => (subgraph && !showReference ? withoutReference(subgraph) : subgraph),
-    [subgraph, showReference],
+  // Always computed (even while completed items are shown) so the hidden count
+  // is known for the button label and the announcement.
+  const completedResult = useMemo(
+    () => (subgraph ? withoutCompleted(subgraph) : null),
+    [subgraph],
   )
+
+  // The completed filter is applied FIRST, then the reference filter (with
+  // reference hidden only the user + needs-review first-level items remain).
+  // The layout below is recomputed on the filtered graph, so there are no gaps.
+  const visibleGraph = useMemo(() => {
+    if (!subgraph || !completedResult) return subgraph
+    const base = showCompleted ? subgraph : completedResult.graph
+    return showReference ? base : withoutReference(base)
+  }, [subgraph, completedResult, showCompleted, showReference])
 
   const scene = useMemo(() => {
     if (selectedUserId === null) {
@@ -294,7 +311,7 @@ function CanvasSurface({ graph, backSlot }: AccessGraphCanvasProps) {
   const [hoverId, setHoverId] = useState<string | null>(null)
   const [focusId, setFocusId] = useState<string | null>(null)
   const emphasis = useMemo(() => ({ setHover: setHoverId, setFocus: setFocusId }), [])
-  const sceneKey = `${selectedUserId}|${showReference}|${rankdir}`
+  const sceneKey = `${selectedUserId}|${showReference}|${showCompleted}|${rankdir}`
   const [prevSceneKey, setPrevSceneKey] = useState(sceneKey)
   if (prevSceneKey !== sceneKey) {
     setPrevSceneKey(sceneKey)
@@ -310,6 +327,12 @@ function CanvasSurface({ graph, backSlot }: AccessGraphCanvasProps) {
     const node = scene.nodes.find((candidate) => candidate.id === selectedItemId)
     return node && isSelectableNodeData(node.data) ? node.id : null
   }, [inDrilldown, selectedItemId, scene.nodes])
+  // A selection whose item was hidden by the completed filter is dropped (not
+  // merely inert), so it cannot silently come back when completed items are
+  // shown again. Selecting a still-visible item is untouched.
+  if (inDrilldown && !showCompleted && selectedItemId !== null && activeItemId === null) {
+    setSelectedItemId(null)
+  }
   // Selection composes with the hover emphasis inside `highlightEdges`; with
   // nothing selected this is exactly `emphasizeEdges`.
   const displayEdges = useMemo(
@@ -376,7 +399,9 @@ function CanvasSurface({ graph, backSlot }: AccessGraphCanvasProps) {
   const [fitOutcome, setFitOutcome] = useState<FitOutcome | null>(null)
   const fitKey = `${
     inDrilldown
-      ? `${selectedUserId}|${showReference ? 'ref' : 'noref'}|${rankdir}`
+      ? `${selectedUserId}|${showReference ? 'ref' : 'noref'}|${rankdir}|${
+          showCompleted ? 'done' : 'nodone'
+        }`
       : 'grid'
   }|${showMinimap ? 'map' : 'nomap'}`
   const itemCount = useMemo(
@@ -387,8 +412,16 @@ function CanvasSurface({ graph, backSlot }: AccessGraphCanvasProps) {
   )
 
   // A degenerate user (no outgoing edges) yields a single-node subgraph. Judged
-  // on the UNFILTERED subgraph so hiding reference never triggers the note.
+  // on the UNFILTERED subgraph so neither the reference nor the completed filter
+  // triggers the empty note.
   const isDegenerate = inDrilldown && (subgraph?.edges.length ?? 0) === 0
+  // Every first-level item is complete and hidden: only the user node is left.
+  // Judged before the reference filter so that toggle cannot change the note.
+  const allCompletedHidden =
+    inDrilldown &&
+    !showCompleted &&
+    !isDegenerate &&
+    (completedResult?.graph.nodes.every((node) => node.kind === 'user') ?? false)
 
   // Mouse convenience: in grid mode, clicking a card also drills in; in
   // drill-down, clicking a first-level card selects / deselects it.
@@ -414,6 +447,14 @@ function CanvasSurface({ graph, backSlot }: AccessGraphCanvasProps) {
       showReference
         ? 'Reference nodes and links hidden.'
         : 'Reference nodes and links shown.',
+    )
+  }
+  const toggleCompleted = () => {
+    setShowCompleted(!showCompleted)
+    setAnnouncement(
+      showCompleted
+        ? `Completed items hidden (${completedResult?.hiddenCount ?? 0}).`
+        : 'Completed items shown.',
     )
   }
   const toggleMinimap = () => {
@@ -477,6 +518,9 @@ function CanvasSurface({ graph, backSlot }: AccessGraphCanvasProps) {
             onToggleLayout={toggleLayout}
             showReference={showReference}
             onToggleReference={toggleReference}
+            showCompleted={showCompleted}
+            onToggleCompleted={toggleCompleted}
+            hiddenCompletedCount={completedResult ? completedResult.hiddenCount : null}
             showMinimap={showMinimap}
             onToggleMinimap={toggleMinimap}
           />
@@ -541,6 +585,13 @@ function CanvasSurface({ graph, backSlot }: AccessGraphCanvasProps) {
         {isDegenerate && (
           <Panel position="top-center">
             <p className="vc-graph-note">No expanded access for this user.</p>
+          </Panel>
+        )}
+        {allCompletedHidden && (
+          <Panel position="top-center">
+            <p className="vc-graph-note">
+              All access items are complete. Show completed items to see them.
+            </p>
           </Panel>
         )}
       </ReactFlow>

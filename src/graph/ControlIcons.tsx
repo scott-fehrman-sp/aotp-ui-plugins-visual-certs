@@ -28,6 +28,21 @@ const paths = {
       <path d="M9.5 12h2.5V6h3M12 12v6.5h3" {...stroke} />
     </>
   ),
+  // A check mark in a circle: completed items are shown.
+  completed: (
+    <>
+      <circle cx="12" cy="12" r="8.5" {...stroke} />
+      <path d="M8 12.5l2.8 2.8L16.2 9.2" {...stroke} />
+    </>
+  ),
+  // The same icon dimmed and struck through: completed items are hidden.
+  completedHidden: (
+    <>
+      <circle cx="12" cy="12" r="8.5" {...stroke} opacity=".4" />
+      <path d="M8 12.5l2.8 2.8L16.2 9.2" {...stroke} opacity=".4" />
+      <path d="M5.5 18.5L18.5 5.5" {...stroke} />
+    </>
+  ),
   minimap: (
     <>
       <rect x="3.5" y="3.5" width="17" height="17" rx="2" {...stroke} />
@@ -38,7 +53,12 @@ const paths = {
 
 export function ControlIcon({ name }: { name: keyof typeof paths }) {
   return (
-    <svg className="vc-graph-control-icon" viewBox="0 0 24 24" aria-hidden="true">
+    <svg
+      className="vc-graph-control-icon"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      data-icon={name}
+    >
       {paths[name]}
     </svg>
   )

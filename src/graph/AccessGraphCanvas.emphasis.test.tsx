@@ -62,7 +62,7 @@ function graph() {
   ])
 }
 
-const btn = (name: string) => screen.getByRole('button', { name })
+const btn = (name: string | RegExp) => screen.getByRole('button', { name })
 const edges = () => spies.edges as Edge[]
 const nodes = () => spies.nodes as Node[]
 const card = (label: string) => screen.getByText(label).closest<HTMLElement>('.vc-graph-card')!
@@ -203,7 +203,7 @@ describe('AccessGraphCanvas hover / focus edge emphasis', () => {
     expect(positions()).toEqual(positionsBefore)
   })
 
-  it('clears a stale emphasis when the reference, layout or user changes', () => {
+  it('clears a stale emphasis when the reference, layout, completed filter or user changes', () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
     fireEvent.mouseEnter(card('login'))
@@ -216,6 +216,13 @@ describe('AccessGraphCanvas hover / focus edge emphasis', () => {
     expect(emphasized()).toHaveLength(1)
     fireEvent.click(btn('Layout: vertical'))
     expect(emphasized()).toHaveLength(0)
+
+    fireEvent.mouseEnter(card('Role A'))
+    expect(emphasized().length).toBeGreaterThan(0)
+    fireEvent.click(btn('Hide completed items'))
+    expect(emphasized()).toHaveLength(0)
+    expect(edges().some((e) => e.style?.opacity !== undefined)).toBe(false)
+    fireEvent.click(btn(/^Show completed items/))
 
     fireEvent.mouseEnter(card('admin'))
     expect(emphasized()).toHaveLength(1)

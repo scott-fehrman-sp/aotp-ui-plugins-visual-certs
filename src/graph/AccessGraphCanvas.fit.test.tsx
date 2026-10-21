@@ -48,7 +48,7 @@ function graph() {
 }
 
 const PX = /^\d+px$/
-const btn = (name: string) => screen.getByRole('button', { name })
+const btn = (name: string | RegExp) => screen.getByRole('button', { name })
 const lastPadding = () => {
   const calls = fitViewSpy.mock.calls as unknown as [{ padding: Record<string, string> }?][]
   return calls.at(-1)?.[0]?.padding
@@ -85,8 +85,23 @@ describe('AccessGraphCanvas overlay-aware fit', () => {
     await expectOneMore()
     fireEvent.click(btn('Layout: vertical'))
     await expectOneMore()
+    fireEvent.click(btn('Hide completed items'))
+    await expectOneMore()
+    fireEvent.click(btn(/^Show completed items/))
+    await expectOneMore()
     fireEvent.click(screen.getByRole('button', { name: /back to all users/i }))
     await expectOneMore()
+  })
+
+  it('does not refit from the disabled Completed button in the grid', async () => {
+    render(<AccessGraphCanvas graph={graph()} />)
+    await waitFor(() => expect(fitViewSpy).toHaveBeenCalled())
+    const calls = fitViewSpy.mock.calls.length
+    const completed = btn('Completed items (open a user to filter)')
+    expect(completed).toBeDisabled()
+    fireEvent.click(completed)
+    await new Promise((resolve) => setTimeout(resolve, 30))
+    expect(fitViewSpy).toHaveBeenCalledTimes(calls)
   })
 
   it('pads the fit by the measured overlay sizes', async () => {
@@ -162,6 +177,58 @@ describe('AccessGraphCanvas overlay-aware fit', () => {
       // The lane (rank-axis coordinate, x in the horizontal layout) of every
       // first-level item is identical shown vs hidden.
       expect(hidden.map((p) => p.x)).toEqual(shown.map((p) => p.x))
+    })
+
+    describe('hiding completed items re-lays out without gaps', () => {
+      /** Needs-review role / access profile / entitlement x2; one completed of each plus extras. */
+      function mixedKinds() {
+        const r = (o: Partial<StatusRow>) => row(o)
+        return statusGraph([
+          r({ id: '1', role: 'Role A', roleId: 'role-a', entitlement: 'read', entitlementId: 'e1', source: 'db', sourceId: 's1', reviewStatus: 'needsReview', accessItemKind: 'role', accessItemId: 'role-a' }),
+          r({ id: '2', role: 'Role B', roleId: 'role-b', entitlement: 'read', entitlementId: 'e1', source: 'db', sourceId: 's1', reviewStatus: 'approved', accessItemKind: 'role', accessItemId: 'role-b' }),
+          r({ id: '3', accessProfile: 'AP One', accessProfileId: 'ap-1', entitlement: 'w', entitlementId: 'e5', source: 'db', sourceId: 's1', reviewStatus: 'revoked', accessItemKind: 'accessProfile', accessItemId: 'ap-1' }),
+          r({ id: '4', entitlement: 'e-one', entitlementId: 'e2', source: 'db', sourceId: 's1', reviewStatus: 'needsReview', accessItemKind: 'entitlement', accessItemId: 'e2' }),
+          r({ id: '5', entitlement: 'e-two', entitlementId: 'e3', source: 'db', sourceId: 's1', reviewStatus: 'reassigned', accessItemKind: 'entitlement', accessItemId: 'e3' }),
+          r({ id: '6', entitlement: 'e-three', entitlementId: 'e4', source: 'db', sourceId: 's1', reviewStatus: 'needsReview', accessItemKind: 'entitlement', accessItemId: 'e4' }),
+        ])
+      }
+
+      it('keeps the lanes in order and packs the remaining cards evenly (horizontal)', () => {
+        render(<AccessGraphCanvas graph={mixedKinds()} />)
+        drillIn()
+        const shownE = ['e-one', 'e-two', 'e-three'].map(translate)
+        fireEvent.click(btn('Hide completed items'))
+        expect(screen.queryByText('AP One')).toBeNull()
+        expect(screen.queryByText('Role B')).toBeNull()
+        expect(screen.queryByText('e-two')).toBeNull()
+        const role = translate('Role A')
+        const ent1 = translate('e-one')
+        const ent3 = translate('e-three')
+        const user = translate('User One')
+        expect(user.x).toBeLessThan(role.x)
+        expect(role.x).toBeLessThan(ent1.x)
+        expect(ent1.x).toBe(ent3.x)
+        // The two remaining entitlements are adjacent (one stride apart), not
+        // separated by the hidden one's slot.
+        const stride = shownE[1].y - shownE[0].y
+        expect(ent3.y - ent1.y).toBe(stride)
+      })
+
+      it('keeps the lanes in order and packs the remaining cards evenly (vertical)', () => {
+        render(<AccessGraphCanvas graph={mixedKinds()} />)
+        drillIn()
+        fireEvent.click(btn('Layout: vertical'))
+        const shownE = ['e-one', 'e-two', 'e-three'].map(translate)
+        fireEvent.click(btn('Hide completed items'))
+        const role = translate('Role A')
+        const ent1 = translate('e-one')
+        const ent3 = translate('e-three')
+        const user = translate('User One')
+        expect(user.y).toBeLessThan(role.y)
+        expect(role.y).toBeLessThan(ent1.y)
+        expect(ent1.y).toBe(ent3.y)
+        expect(ent3.x - ent1.x).toBe(shownE[1].x - shownE[0].x)
+      })
     })
 
     it('a type the user does not hold simply has no cards (the others keep their lanes)', () => {

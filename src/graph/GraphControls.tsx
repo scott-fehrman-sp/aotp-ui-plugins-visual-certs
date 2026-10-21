@@ -10,6 +10,11 @@ interface GraphControlsProps {
   onToggleLayout: () => void
   showReference: boolean
   onToggleReference: () => void
+  /** Completed items (approved / revoked / reassigned) are shown. */
+  showCompleted: boolean
+  onToggleCompleted: () => void
+  /** Completed items the filter hides for this user; null when unknown (grid). */
+  hiddenCompletedCount: number | null
   showMinimap: boolean
   onToggleMinimap: () => void
 }
@@ -17,7 +22,7 @@ interface GraphControlsProps {
 /**
  * The right-side vertical control panel for the access graph, styled after
  * org-graph's floating toolbar. Top to bottom: layout direction, reference
- * nodes/links visibility, minimap visibility.
+ * nodes/links visibility, completed items visibility, minimap visibility.
  */
 export function GraphControls({
   inDrilldown,
@@ -25,6 +30,9 @@ export function GraphControls({
   onToggleLayout,
   showReference,
   onToggleReference,
+  showCompleted,
+  onToggleCompleted,
+  hiddenCompletedCount,
   showMinimap,
   onToggleMinimap,
 }: GraphControlsProps) {
@@ -39,6 +47,13 @@ export function GraphControls({
     : showReference
       ? 'Hide reference nodes and links'
       : 'Show reference nodes and links'
+  const completedLabel = !inDrilldown
+    ? 'Completed items (open a user to filter)'
+    : showCompleted
+      ? 'Hide completed items'
+      : hiddenCompletedCount === null
+        ? 'Show completed items'
+        : `Show completed items (${hiddenCompletedCount} hidden)`
   const minimapLabel = showMinimap ? 'Hide minimap' : 'Show minimap'
 
   return (
@@ -65,6 +80,18 @@ export function GraphControls({
           onClick={onToggleReference}
         >
           <ControlIcon name="reference" />
+        </button>
+      </ControlHint>
+      <ControlHint label={completedLabel}>
+        <button
+          type="button"
+          className={`vc-graph-control${showCompleted ? ' vc-graph-control-active' : ''}`}
+          aria-label={completedLabel}
+          aria-pressed={showCompleted}
+          disabled={!inDrilldown}
+          onClick={onToggleCompleted}
+        >
+          <ControlIcon name={showCompleted ? 'completed' : 'completedHidden'} />
         </button>
       </ControlHint>
       <ControlHint label={minimapLabel}>

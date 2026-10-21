@@ -74,7 +74,17 @@ function longGraph() {
   )
 }
 
-const btn = (name: string) => screen.getByRole('button', { name })
+/** 30 directly held entitlements, the first `completed` of them approved. */
+function longWithCompleted(completed: number) {
+  return statusGraph(
+    Array.from({ length: 30 }, (_, i) => {
+      const n = i + 1
+      return row({ id: String(n), entitlement: `Ent ${n}`, entitlementId: `e${n}`, source: 's', sourceId: 's1', reviewStatus: n <= completed ? 'approved' : 'needsReview', accessItemKind: 'entitlement', accessItemId: `e${n}`, accessItemName: `Ent ${n}` })
+    }),
+  )
+}
+
+const btn = (name: string | RegExp) => screen.getByRole('button', { name })
 const drillIn = (name = 'User One') => fireEvent.click(btn(`Show access for ${name}`))
 const rect = (l: number, t: number, w: number, h: number) =>
   ({ left: l, top: t, width: w, height: h, right: l + w, bottom: t + h, x: l, y: t, toJSON() {} }) as DOMRect
@@ -136,7 +146,12 @@ describe('AccessGraphCanvas readable zoom for long graphs', () => {
     await sizeCanvas(container, 968, 490)
     const plans = () => spies.fitView.mock.calls.length + spies.setViewport.mock.calls.length
     let expected = plans()
-    for (const name of ['Hide minimap', 'Hide reference nodes and links', 'Layout: vertical']) {
+    for (const name of [
+      'Hide minimap',
+      'Hide reference nodes and links',
+      'Hide completed items',
+      'Layout: vertical',
+    ]) {
       fireEvent.click(btn(name))
       expected += 1
       await waitFor(() => expect(plans()).toBe(expected))
@@ -145,6 +160,44 @@ describe('AccessGraphCanvas readable zoom for long graphs', () => {
     act(() => spies.store!.setState({ width: 800, height: 400 }))
     expected += 1
     await waitFor(() => expect(plans()).toBe(expected))
+  })
+
+  describe('hiding completed items', () => {
+    const plans = () => spies.fitView.mock.calls.length + spies.setViewport.mock.calls.length
+
+    it('counts and fits the visible items: a still-long list keeps the readable zoom and hint', async () => {
+      const { container } = render(<AccessGraphCanvas graph={longWithCompleted(10)} />)
+      drillIn()
+      await sizeCanvas(container, 968, 490)
+      expect(screen.getByRole('status')).toHaveTextContent('30 items — scroll or drag to see all')
+
+      const before = plans()
+      fireEvent.click(btn('Hide completed items'))
+      await waitFor(() => expect(plans()).toBe(before + 1))
+      expect(spies.setViewport).toHaveBeenCalledTimes(2)
+      expect(lastZoom()).toBe(READABLE_MIN_ZOOM)
+      expect(screen.getByRole('status')).toHaveTextContent('20 items — scroll or drag to see all')
+
+      const afterHide = plans()
+      fireEvent.click(btn(/^Show completed items/))
+      await waitFor(() => expect(plans()).toBe(afterHide + 1))
+      expect(screen.getByRole('status')).toHaveTextContent('30 items')
+    })
+
+    it('drops back to a normal fit with no hint when few items remain', async () => {
+      const { container } = render(<AccessGraphCanvas graph={longWithCompleted(24)} />)
+      drillIn()
+      await sizeCanvas(container, 968, 490)
+      expect(screen.getByRole('status')).toHaveTextContent('30 items')
+      spies.fitView.mockClear()
+      spies.setViewport.mockClear()
+
+      fireEvent.click(btn('Hide completed items'))
+      await waitFor(() => expect(plans()).toBe(1))
+      expect(spies.fitView).toHaveBeenCalledTimes(1)
+      expect(spies.setViewport).not.toHaveBeenCalled()
+      expect(screen.queryByRole('status')).toBeNull()
+    })
   })
 
   it('shows no hint in the user grid, and no hint once back from the drill-down', async () => {

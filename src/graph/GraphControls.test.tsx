@@ -11,6 +11,9 @@ function setup(overrides: Partial<Props> = {}) {
     onToggleLayout: vi.fn(),
     showReference: true,
     onToggleReference: vi.fn(),
+    showCompleted: true,
+    onToggleCompleted: vi.fn(),
+    hiddenCompletedCount: 0,
     showMinimap: true,
     onToggleMinimap: vi.fn(),
     ...overrides,
@@ -43,54 +46,98 @@ const anchorOf = (button: HTMLElement) =>
   button.closest<HTMLElement>('.vc-graph-hint-anchor')!
 
 describe('GraphControls', () => {
-  it('renders a named toolbar with Layout, Reference, Minimap buttons in order', () => {
+  it('renders a named toolbar with Layout, Reference, Completed, Minimap buttons in order', () => {
     setup()
     const toolbar = screen.getByRole('toolbar', { name: 'Graph controls' })
     const buttons = within(toolbar).getAllByRole('button')
     expect(buttons.map((b) => b.getAttribute('aria-label'))).toEqual([
       'Layout: vertical',
       'Hide reference nodes and links',
+      'Hide completed items',
       'Hide minimap',
     ])
   })
 
   it('labels and presses each button from its state', () => {
-    setup({ rankdir: 'TB', showReference: false, showMinimap: false })
+    setup({
+      rankdir: 'TB',
+      showReference: false,
+      showCompleted: false,
+      hiddenCompletedCount: 12,
+      showMinimap: false,
+    })
     const layout = screen.getByRole('button', { name: 'Layout: horizontal' })
     expect(layout).toHaveAttribute('aria-pressed', 'false')
     const reference = screen.getByRole('button', { name: 'Show reference nodes and links' })
     expect(reference).toHaveAttribute('aria-pressed', 'false')
     const minimap = screen.getByRole('button', { name: 'Show minimap' })
     expect(minimap).toHaveAttribute('aria-pressed', 'false')
-    for (const b of [layout, reference, minimap]) {
+    const completed = screen.getByRole('button', { name: 'Show completed items (12 hidden)' })
+    expect(completed).toHaveAttribute('aria-pressed', 'false')
+    for (const b of [layout, reference, completed, minimap]) {
       expect(b).not.toHaveClass('vc-graph-control-active')
     }
   })
 
   it('marks Layout active/pressed for LR and the others active when shown', () => {
     setup()
-    for (const name of ['Layout: vertical', 'Hide reference nodes and links', 'Hide minimap']) {
+    for (const name of [
+      'Layout: vertical',
+      'Hide reference nodes and links',
+      'Hide completed items',
+      'Hide minimap',
+    ]) {
       const b = screen.getByRole('button', { name })
       expect(b).toHaveAttribute('aria-pressed', 'true')
       expect(b).toHaveClass('vc-graph-control-active')
     }
   })
 
-  it('disables Layout and Reference in the grid but keeps Minimap enabled', () => {
+  it('omits the hidden count when it is unknown', () => {
+    setup({ showCompleted: false, hiddenCompletedCount: null })
+    expect(screen.getByRole('button', { name: 'Show completed items' })).toBeInTheDocument()
+  })
+
+  it('shows a zero hidden count explicitly', () => {
+    setup({ showCompleted: false, hiddenCompletedCount: 0 })
+    expect(
+      screen.getByRole('button', { name: 'Show completed items (0 hidden)' }),
+    ).toBeInTheDocument()
+  })
+
+  it('uses the completed icon when completed items are shown', () => {
+    setup()
+    const shown = screen.getByRole('button', { name: 'Hide completed items' })
+    expect(shown.querySelector('svg')).toHaveAttribute('data-icon', 'completed')
+  })
+
+  it('uses the struck completed icon when completed items are hidden', () => {
+    setup({ showCompleted: false, hiddenCompletedCount: 3 })
+    const hidden = screen.getByRole('button', { name: 'Show completed items (3 hidden)' })
+    expect(hidden.querySelector('svg')).toHaveAttribute('data-icon', 'completedHidden')
+  })
+
+  it('disables Layout, Reference and Completed in the grid but keeps Minimap enabled', () => {
     const props = setup({ inDrilldown: false })
     const layout = screen.getByRole('button', { name: 'Layout (open a user to change)' })
     const reference = screen.getByRole('button', {
       name: 'Reference nodes and links (open a user to change)',
     })
+    const completed = screen.getByRole('button', {
+      name: 'Completed items (open a user to filter)',
+    })
     const minimap = screen.getByRole('button', { name: 'Hide minimap' })
     expect(layout).toBeDisabled()
     expect(reference).toBeDisabled()
+    expect(completed).toBeDisabled()
     expect(minimap).toBeEnabled()
     fireEvent.click(layout)
     fireEvent.click(reference)
+    fireEvent.click(completed)
     fireEvent.click(minimap)
     expect(props.onToggleLayout).not.toHaveBeenCalled()
     expect(props.onToggleReference).not.toHaveBeenCalled()
+    expect(props.onToggleCompleted).not.toHaveBeenCalled()
     expect(props.onToggleMinimap).toHaveBeenCalledTimes(1)
   })
 
@@ -98,9 +145,11 @@ describe('GraphControls', () => {
     const props = setup()
     fireEvent.click(screen.getByRole('button', { name: 'Layout: vertical' }))
     fireEvent.click(screen.getByRole('button', { name: 'Hide reference nodes and links' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Hide completed items' }))
     fireEvent.click(screen.getByRole('button', { name: 'Hide minimap' }))
     expect(props.onToggleLayout).toHaveBeenCalledTimes(1)
     expect(props.onToggleReference).toHaveBeenCalledTimes(1)
+    expect(props.onToggleCompleted).toHaveBeenCalledTimes(1)
     expect(props.onToggleMinimap).toHaveBeenCalledTimes(1)
   })
 
@@ -120,6 +169,16 @@ describe('GraphControls', () => {
       fireEvent.mouseLeave(anchor)
       expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
       expect(button).not.toHaveAttribute('aria-describedby')
+    })
+
+    it('shows the completed label with the hidden count on hover', () => {
+      setup({ showCompleted: false, hiddenCompletedCount: 12 })
+      const anchor = anchorOf(
+        screen.getByRole('button', { name: 'Show completed items (12 hidden)' }),
+      )
+      stubRect(anchor)
+      fireEvent.mouseEnter(anchor)
+      expect(screen.getByRole('tooltip')).toHaveTextContent('Show completed items (12 hidden)')
     })
 
     it('opens on focus and closes on blur', () => {
