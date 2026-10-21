@@ -1,0 +1,58 @@
+{
+  "counts": {
+    "S9 nothing selected: hover emphasizes exactly one edge, others dimmed (shipped behavior)": {
+      "pass": 1,
+      "fail": 0
+    },
+    "S9 hover preview of another item is stable over 20 samples (no flicker)": {
+      "pass": 1,
+      "fail": 0
+    },
+    "S9 preview raises only B user edge (opacity 1) and the selected set is unchanged": {
+      "pass": 1,
+      "fail": 0
+    },
+    "S9 selection stays on A while previewing B": {
+      "pass": 1,
+      "fail": 0
+    },
+    "S9 hovering the selected item adds nothing": {
+      "pass": 1,
+      "fail": 0
+    },
+    "S9 leaving restores the plain selection": {
+      "pass": 1,
+      "fail": 0
+    },
+    "S9 drag-pan started on a card does not toggle selection": {
+      "pass": 1,
+      "fail": 0
+    },
+    "S10 Tab reaches every first-level card as role=button": {
+      "pass": 1,
+      "fail": 0
+    },
+    "S10 Enter selects the focused card": {
+      "pass": 1,
+      "fail": 0
+    },
+    "S10 keyboard selection highlights the same edge set": {
+      "pass": 1,
+      "fail": 0
+    },
+    "S10 Space toggles it off": {
+      "pass": 1,
+      "fail": 0
+    },
+    "S10 Space does not scroll the page/pane or move the viewport": {
+      "pass": 1,
+      "fail": 0
+    },
+    "S10 focus-visible outline still renders on the focused card": {
+      "pass": 1,
+      "fail": 0
+    }
+  },
+  "failures": 0,
+  "results": []
+}

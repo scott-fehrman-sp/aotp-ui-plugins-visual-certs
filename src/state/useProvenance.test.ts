@@ -173,6 +173,11 @@ describe('useProvenance', () => {
     await waitFor(() =>
       expect(apis.listAccessRequestStatusV1).toHaveBeenCalledTimes(2),
     )
-    expect(result.current.byItemId['r1']?.status).toBe('ready')
+    // The call count reaches 2 as soon as the re-fetch STARTS; the entry only
+    // flips back to 'ready' once it resolves. Wait for that too, otherwise a
+    // loaded machine asserts while the entry is still 'loading'.
+    await waitFor(() =>
+      expect(result.current.byItemId['r1']?.status).toBe('ready'),
+    )
   })
 })

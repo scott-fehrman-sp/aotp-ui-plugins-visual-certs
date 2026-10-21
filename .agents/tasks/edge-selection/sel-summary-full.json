@@ -1,0 +1,209 @@
+{
+  "counts": {
+    "pre: first-level cards found, all aria-pressed=false": {
+      "pass": 24,
+      "fail": 0
+    },
+    "pre: reference + user cards have no aria-pressed": {
+      "pass": 24,
+      "fail": 0
+    },
+    "S1 marked edge set == forward-reachable set (+incoming)": {
+      "pass": 256,
+      "fail": 0
+    },
+    "S1 user->item edge: selected class, width 3.5, status color": {
+      "pass": 256,
+      "fail": 0
+    },
+    "S2 lineage edges: status color, solid, 2.5, opacity 1": {
+      "pass": 256,
+      "fail": 0
+    },
+    "S2 associated edge layer z-index above node layer": {
+      "pass": 256,
+      "fail": 0
+    },
+    "S3 every non-associated edge dimmed (< 0.3)": {
+      "pass": 256,
+      "fail": 0
+    },
+    "S4 selected card aria-pressed=true, others false": {
+      "pass": 256,
+      "fail": 0
+    },
+    "S4 selected card carries the selected class": {
+      "pass": 256,
+      "fail": 0
+    },
+    "S4 lineage ref nodes full opacity; other ref nodes dimmed ~0.45": {
+      "pass": 256,
+      "fail": 0
+    },
+    "S4 no status icon on any reference card": {
+      "pass": 256,
+      "fail": 0
+    },
+    "S8 select leaves every node + viewport transform byte-identical": {
+      "pass": 124,
+      "fail": 0
+    },
+    "S2 pixel proof: selected edges painted over the cards they cross (>=50% of crossed samples, and more than baseline)": {
+      "pass": 57,
+      "fail": 2
+    },
+    "S6 deselect restores the baseline edge snapshot exactly": {
+      "pass": 256,
+      "fail": 0
+    },
+    "S8 deselect leaves transforms byte-identical": {
+      "pass": 124,
+      "fail": 0
+    },
+    "S5 reference hidden while selected: only user->item edge highlighted, selection kept": {
+      "pass": 32,
+      "fail": 0
+    },
+    "S5 reference shown again restores the whole lineage highlight": {
+      "pass": 32,
+      "fail": 0
+    },
+    "S6 layout toggle keeps the selection and the highlighted set": {
+      "pass": 64,
+      "fail": 0
+    },
+    "S6 minimap toggle keeps the selection": {
+      "pass": 64,
+      "fail": 0
+    },
+    "S7 Escape clears the selection and stays in the drill-down": {
+      "pass": 64,
+      "fail": 0
+    },
+    "S7 clicking a reference-only card changes nothing": {
+      "pass": 8,
+      "fail": 0
+    },
+    "S7 real click on the empty pane clears the selection": {
+      "pass": 24,
+      "fail": 0
+    },
+    "S7 after a pane click no card keeps focus (no stuck focus emphasis)": {
+      "pass": 24,
+      "fail": 0
+    },
+    "S7 pane click leaves no stuck emphasized edge": {
+      "pass": 24,
+      "fail": 0
+    },
+    "S7 first Escape clears (stays in drill-down)": {
+      "pass": 24,
+      "fail": 0
+    },
+    "S7 second Escape returns to the grid": {
+      "pass": 24,
+      "fail": 0
+    },
+    "S7 re-drilling after Escape-to-grid starts with no selection": {
+      "pass": 24,
+      "fail": 0
+    },
+    "S7 Back to all users clears the selection": {
+      "pass": 24,
+      "fail": 0
+    },
+    "S9 nothing selected: hover emphasizes exactly one edge, others dimmed (shipped behavior)": {
+      "pass": 24,
+      "fail": 0
+    },
+    "S9 hover preview of another item is stable over 20 samples (no flicker)": {
+      "pass": 24,
+      "fail": 0
+    },
+    "S9 preview raises only B user edge (opacity 1) and the selected set is unchanged": {
+      "pass": 24,
+      "fail": 0
+    },
+    "S9 selection stays on A while previewing B": {
+      "pass": 24,
+      "fail": 0
+    },
+    "S9 hovering the selected item adds nothing": {
+      "pass": 24,
+      "fail": 0
+    },
+    "S9 leaving restores the plain selection": {
+      "pass": 24,
+      "fail": 0
+    },
+    "S9 drag-pan started on a card does not toggle selection": {
+      "pass": 24,
+      "fail": 0
+    },
+    "S10 Tab reaches every first-level card as role=button": {
+      "pass": 20,
+      "fail": 4
+    },
+    "S10 Enter selects the focused card": {
+      "pass": 24,
+      "fail": 0
+    },
+    "S10 keyboard selection highlights the same edge set": {
+      "pass": 24,
+      "fail": 0
+    },
+    "S10 Space toggles it off": {
+      "pass": 24,
+      "fail": 0
+    },
+    "S10 Space does not scroll the page/pane or move the viewport": {
+      "pass": 24,
+      "fail": 0
+    },
+    "S10 focus-visible outline still renders on the focused card": {
+      "pass": 24,
+      "fail": 0
+    },
+    "S5 reference shown while selected adds the lineage edges, selection kept": {
+      "pass": 32,
+      "fail": 0
+    },
+    "S5 reference hidden again: only user->item edge highlighted": {
+      "pass": 32,
+      "fail": 0
+    }
+  },
+  "failures": 6,
+  "results": [
+    {
+      "scenario": "standard/1000x700/shown/TB/map-on",
+      "assertion": "S2 pixel proof: selected edges painted over the cards they cross (>=50% of crossed samples, and more than baseline)",
+      "detail": "accessProfile:Billing n=6 sel=0.3333333333333333 base=0"
+    },
+    {
+      "scenario": "standard/1000x700/shown/TB/map-on",
+      "assertion": "S2 pixel proof: selected edges painted over the cards they cross (>=50% of crossed samples, and more than baseline)",
+      "detail": "role:Role A n=21 sel=0.47619047619047616 base=0"
+    },
+    {
+      "scenario": "dense/1700x1000/shown/LR/behaviors",
+      "assertion": "S10 Tab reaches every first-level card as role=button",
+      "detail": "23/25"
+    },
+    {
+      "scenario": "dense/1700x1000/shown/TB/behaviors",
+      "assertion": "S10 Tab reaches every first-level card as role=button",
+      "detail": "23/25"
+    },
+    {
+      "scenario": "dense/1000x700/shown/LR/behaviors",
+      "assertion": "S10 Tab reaches every first-level card as role=button",
+      "detail": "23/25"
+    },
+    {
+      "scenario": "dense/1000x700/shown/TB/behaviors",
+      "assertion": "S10 Tab reaches every first-level card as role=button",
+      "detail": "23/25"
+    }
+  ]
+}
