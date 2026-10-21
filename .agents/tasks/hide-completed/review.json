@@ -1,0 +1,8 @@
+{
+  "verdict": "APPROVED",
+  "findings": [
+    "Hidden-state icon legibility (possible, nit, non-blocking): the dimmed circle and check in the hidden icon are barely visible in 15-toolbar-hidden.png. Optionally raise the dim opacity from .4 to about .55.",
+    "JSDoc wrap (confirmed, nit, non-blocking): the AccessGraphCanvas.tsx header comment leaves 'Selecting' alone on a short line. Reflow it."
+  ],
+  "reviewDoc": "/Users/scott.fehrman/Documents/Projects/SailPoint/ui-plugins-apps/visual-certs/.agents/tasks/hide-completed/review.md"
+}

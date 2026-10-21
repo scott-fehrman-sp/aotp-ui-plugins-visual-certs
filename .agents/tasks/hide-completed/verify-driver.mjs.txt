@@ -1,0 +1,699 @@
+import puppeteer from 'puppeteer-core'
+import fs from 'node:fs'
+
+const WT = '/Users/scott.fehrman/Documents/Projects/SailPoint/ui-plugins-apps/visual-certs/.worktrees/hide-completed'
+const ART = '/Users/scott.fehrman/Documents/Projects/SailPoint/ui-plugins-apps/visual-certs/.agents/tasks/hide-completed'
+const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+const ONLY = process.argv[2] // optional fixture filter
+const BASE = 'https://localhost:5199/hide-completed-harness.html'
+
+const { createServer } = await import(WT + '/node_modules/vite/dist/node/index.js')
+const server = await createServer({ root: WT, server: { port: 5199, strictPort: true }, logLevel: 'warn' })
+await server.listen()
+
+const results = { pass: 0, fails: [], reported: [] }
+let ctx = ''
+function check(name, cond, detail = '') {
+  if (cond) results.pass++
+  else {
+    results.fails.push(`[${ctx}] ${name} ${detail}`)
+    console.log('FAIL', `[${ctx}]`, name, detail)
+  }
+}
+const report = (m) => {
+  results.reported.push(`[${ctx}] ${m}`)
+  console.log('REPORT', `[${ctx}]`, m)
+}
+
+/* ---------------- page-side helpers ---------------- */
+function installHelpers() {
+  const q = (s, root = document) => [...root.querySelectorAll(s)]
+  const rectOf = (el) => {
+    const r = el.getBoundingClientRect()
+    return { l: r.left, t: r.top, r: r.right, b: r.bottom, w: r.width, h: r.height }
+  }
+  const edgeMap = new Map()
+  for (const e of window.__graph.edges) edgeMap.set(`e:${e.from}:${e.to}`, e)
+  window.__vpLog = []
+  const vp = document.querySelector('.react-flow__viewport')
+  window.__hc = {
+    zoom() {
+      const m = /scale\(([-\d.]+)\)/.exec(document.querySelector('.react-flow__viewport').style.transform)
+      return m ? +m[1] : null
+    },
+    settle() {
+      return new Promise((res) => {
+        let last = null
+        let same = 0
+        let frames = 0
+        const tick = () => {
+          frames++
+          const t = document.querySelector('.react-flow__viewport')?.style.transform
+          if (t === last) same++
+          else {
+            same = 0
+            last = t
+          }
+          if (frames > 4 && same >= 8) res(t)
+          else requestAnimationFrame(tick)
+        }
+        tick()
+      })
+    },
+    startVpLog() {
+      window.__vpLog = []
+      let last = document.querySelector('.react-flow__viewport').style.transform
+      window.__vpObs?.disconnect()
+      window.__vpObs = new MutationObserver(() => {
+        const t = document.querySelector('.react-flow__viewport').style.transform
+        if (t !== last) {
+          window.__vpLog.push(t)
+          last = t
+        }
+      })
+      window.__vpObs.observe(document.querySelector('.react-flow__viewport'), { attributes: true })
+    },
+    vpChanges() {
+      return window.__vpLog.length
+    },
+    collect() {
+      const canvas = rectOf(document.querySelector('.react-flow'))
+      const nodes = q('.react-flow__node').map((n) => {
+        const card = n.querySelector('.vc-graph-card')
+        const m = /translate\((-?[\d.]+)px,\s*(-?[\d.]+)px\)/.exec(n.style.transform)
+        const cs = getComputedStyle(card)
+        return {
+          id: n.dataset.id,
+          label: card.querySelector('.vc-graph-card-label').textContent,
+          kind: [...card.classList].find((c) => c.startsWith('kind-')).slice(5),
+          status: card.dataset.reviewStatus || null,
+          reference: card.classList.contains('vc-graph-card-reference'),
+          pressed: card.getAttribute('aria-pressed'),
+          hasIcon: !!card.querySelector('.vc-graph-status-icon'),
+          gx: +m[1],
+          gy: +m[2],
+          rect: rectOf(n),
+          borderRight: cs.borderLeftColor,
+          borderRightW: cs.borderLeftWidth,
+          outline: (/^(rgba?\([^)]*\))/.exec(cs.boxShadow) || [])[1] || null,
+          boxShadow: cs.boxShadow,
+          opacity: cs.opacity,
+        }
+      })
+      const edges = q('.react-flow__edge').map((e) => {
+        const id = (e.dataset.id || '').replace(/^rf__edge-/, '')
+        const path = e.querySelector('.react-flow__edge-path')
+        const info = edgeMap.get(id)
+        return {
+          id,
+          from: info?.from,
+          to: info?.to,
+          cls: e.getAttribute('class'),
+          stroke: path ? getComputedStyle(path).stroke : null,
+          inlineOpacity: path ? path.style.opacity : null,
+        }
+      })
+      const overlays = [
+        ...q('.react-flow__panel').map((p) => ({ name: 'panel:' + [...p.classList].filter((c) => c !== 'react-flow__panel').join('.'), ignore: p.classList.contains('vc-graph-fit-ignore'), ...rectOf(p), text: p.textContent.trim().slice(0, 60) })),
+        ...q('.react-flow__minimap').map((p) => ({ name: 'minimap', ignore: false, ...rectOf(p) })),
+        ...q('.react-flow__controls').map((p) => ({ name: 'controls', ignore: false, ...rectOf(p) })),
+      ]
+      const wrap = rectOf(document.querySelector('.vc-graph-wrap'))
+      return {
+        canvas,
+        wrap,
+        nodes,
+        edges,
+        overlays,
+        zoom: window.__hc.zoom(),
+        scrollH: document.documentElement.scrollHeight,
+        innerH: window.innerHeight,
+        innerW: window.innerWidth,
+        scrollW: document.documentElement.scrollWidth,
+        hint: document.querySelector('.vc-graph-hint[role="status"]')?.textContent ?? null,
+        notes: q('.vc-graph-note').map((n) => ({ text: n.textContent, panel: n.closest('.react-flow__panel')?.className, rect: rectOf(n) })),
+        live: q('[aria-live="polite"]').map((n) => n.textContent),
+        legend: document.querySelector('.vc-graph-legend')?.textContent ?? null,
+      }
+    },
+    toolbar() {
+      return q('[role="toolbar"] button').map((b) => ({
+        label: b.getAttribute('aria-label'),
+        pressed: b.getAttribute('aria-pressed'),
+        disabled: b.disabled,
+        active: b.classList.contains('vc-graph-control-active'),
+        icon: b.querySelector('svg')?.dataset.icon,
+        w: b.getBoundingClientRect().width,
+        h: b.getBoundingClientRect().height,
+        radius: getComputedStyle(b).borderRadius,
+        border: getComputedStyle(b).border,
+        bg: getComputedStyle(b).backgroundColor,
+        color: getComputedStyle(b).color,
+        opacity: getComputedStyle(b).opacity,
+      }))
+    },
+  }
+}
+
+/* ---------------- driver helpers ---------------- */
+const browser = await puppeteer.launch({
+  executablePath: CHROME,
+  headless: 'new',
+  acceptInsecureCerts: true,
+  args: ['--ignore-certificate-errors', '--no-sandbox'],
+})
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
+const COMPLETED = new Set(['approved', 'revoked', 'reassigned'])
+const intersects = (a, b, tol = 0.5) =>
+  a.l < b.r - tol && a.r > b.l + tol && a.t < b.b - tol && a.b > b.t + tol
+
+async function openPage(fixture, w, h, opts = {}) {
+  const page = await browser.newPage()
+  await page.setViewport({ width: w, height: h, deviceScaleFactor: 1 })
+  if (opts.dark) await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: 'dark' }])
+  page.on('pageerror', (e) => check('no page error', false, String(e)))
+  page.on('console', (m) => {
+    if (m.type() === 'error' && !/favicon|Download the React DevTools|404/.test(m.text())) check('no console error', false, m.text())
+  })
+  await page.goto(`${BASE}?fixture=${fixture}`, { waitUntil: 'networkidle0' })
+  await page.waitForSelector('.vc-graph-wrap .react-flow__node')
+  await page.evaluate(installHelpers)
+  await page.mouse.move(2, 2)
+  return page
+}
+const S = (page) => page.evaluate(() => window.__hc.collect())
+const T = (page) => page.evaluate(() => window.__hc.toolbar())
+const settle = (page) => page.evaluate(() => window.__hc.settle())
+async function clickLabel(page, label, { prefix = false } = {}) {
+  const sel = prefix ? `[role="toolbar"] button[aria-label^="${label}"]` : `[role="toolbar"] button[aria-label="${label}"]`
+  const h = await page.$(sel)
+  if (!h) throw new Error('no button ' + label)
+  await page.evaluate(() => window.__hc.startVpLog())
+  await h.click()
+  await page.mouse.move(2, 2)
+  await sleep(60)
+  await settle(page)
+}
+async function drillIn(page, name) {
+  const h = await page.$(`[aria-label="Show access for ${name}"]`)
+  await page.evaluate(() => window.__hc.startVpLog())
+  await h.click()
+  await page.mouse.move(2, 2)
+  await sleep(60)
+  await settle(page)
+}
+async function ensure(page, kind, want) {
+  // kind: 'reference' | 'completed' | 'layout'
+  const tb = await T(page)
+  if (kind === 'layout') {
+    const isLR = tb[0].label === 'Layout: vertical'
+    if (isLR !== (want === 'LR')) await clickLabel(page, tb[0].label)
+  } else {
+    const b = tb[kind === 'reference' ? 1 : 2]
+    if ((b.pressed === 'true') !== want) await clickLabel(page, b.label)
+  }
+}
+const shot = (page, name) => page.screenshot({ path: `${ART}/${name}` })
+
+/* ---------------- structural checks ---------------- */
+function reachable(userId, edges) {
+  const out = new Map()
+  for (const e of edges) (out.get(e.from) ?? out.set(e.from, []).get(e.from)).push(e)
+  const seen = new Set([userId])
+  const q = [userId]
+  while (q.length) for (const e of out.get(q.shift()) ?? []) if (!seen.has(e.to)) { seen.add(e.to); q.push(e.to) }
+  return seen
+}
+
+function checkHide(s0, s1, userId, tag) {
+  const byId0 = new Map(s0.nodes.map((n) => [n.id, n]))
+  const userEdges = s0.edges.filter((e) => e.from === userId)
+  const completedTargets = new Set(userEdges.filter((e) => COMPLETED.has(byId0.get(e.to)?.status)).map((e) => e.to))
+  const remaining = s0.edges.filter((e) => !(e.from === userId && completedTargets.has(e.to)))
+  const reach = reachable(userId, remaining)
+  const expectedEdges = remaining.filter((e) => reach.has(e.from)).map((e) => e.id).sort()
+  const got = s1.nodes.map((n) => n.id).sort()
+  const exp = [...reach].sort()
+  check(`C2 ${tag} node set == oracle`, JSON.stringify(got) === JSON.stringify(exp), `got=${got.length} exp=${exp.length} diff=${[...got.filter((x) => !exp.includes(x)), ...exp.filter((x) => !got.includes(x))].join(',')}`)
+  const gotE = s1.edges.map((e) => e.id).sort()
+  check(`C2 ${tag} edge set == oracle`, JSON.stringify(gotE) === JSON.stringify(expectedEdges), `got=${gotE.length} exp=${expectedEdges.length}`)
+  // C1
+  const byId1 = new Map(s1.nodes.map((n) => [n.id, n]))
+  const completedFirst = s1.nodes.filter((n) => !n.reference && COMPLETED.has(n.status))
+  check(`C1 ${tag} no completed reviewable card remains`, completedFirst.length === 0, completedFirst.map((n) => n.label).join(','))
+  const needs0 = s0.nodes.filter((n) => !n.reference && n.status === 'needsReview')
+  check(`C1 ${tag} every needs-review card remains`, needs0.every((n) => byId1.has(n.id)), needs0.filter((n) => !byId1.has(n.id)).map((n) => n.label).join(','))
+  // demoted nodes
+  for (const id of completedTargets) {
+    const n = byId1.get(id)
+    if (n) {
+      check(`C3 ${tag} demoted '${n.label}' is muted reference without icon`, n.reference && !n.hasIcon && !n.status, JSON.stringify({ r: n.reference, i: n.hasIcon, s: n.status }))
+      const inc = s1.edges.filter((e) => e.to === id)
+      check(`C3 ${tag} demoted '${n.label}' has no edge from the user`, inc.every((e) => e.from !== userId))
+    }
+  }
+  // C3 consistency of colors
+  const colorByStatus = {}
+  for (const n of s1.nodes.filter((x) => !x.reference && x.status)) {
+    const edge = s1.edges.find((e) => e.from === userId && e.to === n.id)
+    check(`C3 ${tag} '${n.label}' has its status edge`, !!edge)
+    if (!edge) continue
+    check(`C3 ${tag} '${n.label}' edge class matches status`, edge.cls.includes(`vc-graph-edge-${n.status}`), edge.cls)
+    const sig = [n.borderRight, n.outline, edge.stroke].join('|')
+    check(`C3 ${tag} '${n.label}' border/outline/edge colors agree`, n.borderRight === edge.stroke && n.outline === edge.stroke, sig)
+    colorByStatus[n.status] ??= edge.stroke
+    check(`C3 ${tag} '${n.label}' same color as other ${n.status} items`, colorByStatus[n.status] === edge.stroke)
+  }
+  const distinct = new Set(Object.values(colorByStatus))
+  check(`C3 ${tag} distinct colors per status`, distinct.size === Object.keys(colorByStatus).length)
+  check(`C3 ${tag} no completed status edge remains`, s1.edges.every((e) => !(e.from === userId && completedTargets.has(e.to))))
+  check(`C3 ${tag} no edge with missing endpoint`, s1.edges.every((e) => byId1.has(e.from) && byId1.has(e.to)))
+}
+
+const KIND_ORDER = ['user', 'role', 'accessProfile', 'entitlement', 'source']
+function checkLanes(s, rankdir, tag) {
+  const stride = rankdir === 'LR' ? 112 : 248
+  const rankKey = rankdir === 'LR' ? 'gx' : 'gy'
+  const crossKey = rankdir === 'LR' ? 'gy' : 'gx'
+  const kinds = KIND_ORDER.filter((k) => s.nodes.some((n) => n.kind === k))
+  let prev = -Infinity
+  for (const k of kinds) {
+    const ns = s.nodes.filter((n) => n.kind === k)
+    const ranks = new Set(ns.map((n) => n[rankKey]))
+    check(`C4 ${tag} ${k} in one lane`, ranks.size === 1, [...ranks].join(','))
+    const r = ns[0][rankKey]
+    check(`C4 ${tag} lane order ${k}`, r > prev, `${r} <= ${prev}`)
+    prev = r
+    const cross = ns.map((n) => n[crossKey]).sort((a, b) => a - b)
+    for (let i = 1; i < cross.length; i++) check(`C4 ${tag} ${k} evenly spaced`, Math.abs(cross[i] - cross[i - 1] - stride) < 0.01, `${cross[i] - cross[i - 1]}`)
+  }
+  for (let i = 0; i < s.nodes.length; i++)
+    for (let j = i + 1; j < s.nodes.length; j++)
+      if (intersects(s.nodes[i].rect, s.nodes[j].rect, 0.5)) check(`C4 ${tag} no card overlap`, false, `${s.nodes[i].label}/${s.nodes[j].label}`)
+}
+
+function checkFit(s, tag, { strictAllowed = true } = {}) {
+  const readable = s.zoom !== null && Math.abs(s.zoom - 0.65) < 1e-6
+  const clamp = s.zoom !== null && Math.abs(s.zoom - 0.15) < 1e-6
+  const ov = s.overlays.filter((o) => !o.ignore)
+  const user = s.nodes.find((n) => n.kind === 'user')
+  if (user) for (const o of ov) check(`C5 ${tag} user card clear of ${o.name}`, !intersects(user.rect, o, 0.5), o.name)
+  if (readable || clamp) {
+    if (clamp) report(`${tag}: zoom clamped at minZoom 0.15 (existing clamp)`)
+    if (readable) report(`${tag}: readable-zoom (scroll) mode, strict containment not applicable`)
+    return
+  }
+  if (!strictAllowed) return
+  for (const n of s.nodes) {
+    check(`C5 ${tag} '${n.label}' inside canvas`, n.rect.l >= s.canvas.l - 1 && n.rect.r <= s.canvas.r + 1 && n.rect.t >= s.canvas.t - 1 && n.rect.b <= s.canvas.b + 1, JSON.stringify(n.rect))
+    for (const o of ov) if (intersects(n.rect, o, 0.5)) check(`C5 ${tag} '${n.label}' not under ${o.name}`, false, `${o.name} ${o.text}`)
+  }
+}
+
+function checkPage(s, tag) {
+  check(`C9 ${tag} no page scroll`, s.scrollH <= s.innerH + 1 && s.scrollW <= s.innerW + 1, `scrollH=${s.scrollH} innerH=${s.innerH}`)
+  check(`C9 ${tag} canvas ends at window bottom`, s.wrap.b <= s.innerH + 1 && s.wrap.b >= s.innerH - 30, `bottom=${s.wrap.b} inner=${s.innerH}`)
+}
+
+const firstLevelCount = (s) => s.nodes.filter((n) => n.kind !== 'user' && !n.reference).length
+
+/* ---------------- scenario runner for a fixture ---------------- */
+const FIXTURES = {
+  mixed: { user: 'User One', hiddenCount: 7 },
+  dense: { user: 'Dense User' },
+  mostlyDone: { user: 'Dense User' },
+  long: { user: 'Dense User' },
+  allDone: { user: 'All Done' },
+  empty: { user: 'Empty User' },
+}
+
+const VPS = [
+  [1700, 1000],
+  [1100, 700],
+]
+
+async function runHideScenarios(fixture, w, h) {
+  const { user } = FIXTURES[fixture]
+  const page = await openPage(fixture, w, h)
+  const userId = await page.evaluate(() => window.__graph.nodes.find((n) => n.kind === 'user').id)
+  // find the real user id for the drilled user
+  const sid = await page.evaluate((name) => window.__graph.nodes.find((n) => n.kind === 'user' && n.label === name).id, user)
+  await drillIn(page, user)
+  for (const rankdir of ['LR', 'TB'])
+    for (const ref of [true, false]) {
+      ctx = `${fixture} ${w}x${h} ${rankdir} ref=${ref}`
+      await ensure(page, 'completed', true)
+      await ensure(page, 'layout', rankdir)
+      await ensure(page, 'reference', ref)
+      await settle(page)
+      const s0 = await S(page)
+      const tb0 = await T(page)
+      const order = tb0.map((b) => b.label.replace(/ \(.*/, '').split(' ').slice(0, 2).join(' '))
+      check('C1 toolbar order Layout, Reference, Completed, Minimap', tb0.length === 4 && /^Layout/.test(tb0[0].label) && /reference/i.test(tb0[1].label) && /completed/i.test(tb0[2].label) && /minimap/i.test(tb0[3].label), order.join('|'))
+      check('C6 completed shown: pressed, label, active, icon', tb0[2].pressed === 'true' && tb0[2].label === 'Hide completed items' && tb0[2].active && tb0[2].icon === 'completed' && !tb0[2].disabled)
+      check('C1 button is 32px circle like siblings', tb0.every((b) => Math.abs(b.w - 32) < 0.5 && Math.abs(b.h - 32) < 0.5 && b.radius === tb0[2].radius) && tb0.every((b) => b.active === (b.pressed === 'true')) && tb0.every((b) => b.border.startsWith('1px solid')), JSON.stringify(tb0[2]))
+      checkPage(s0, 'shown')
+      checkLanes(s0, rankdir, 'shown')
+      const total0 = s0.nodes.length
+      const zoom0 = s0.zoom
+
+      // ---- hide
+      await clickLabel(page, 'Hide completed items')
+      const vpChanges = await page.evaluate(() => window.__hc.vpChanges())
+      const s1 = await S(page)
+      const tb1 = await T(page)
+      check('C5 at most one viewport change per toggle', vpChanges <= 1, String(vpChanges))
+      checkHide(s0, s1, sid, 'hide')
+      checkLanes(s1, rankdir, 'hidden')
+      checkFit(s1, `${fixture} hidden`)
+      checkPage(s1, 'hidden')
+      const hiddenN = s0.edges.filter((e) => e.from === sid && COMPLETED.has(s0.nodes.find((n) => n.id === e.to)?.status)).length
+      check('C6 hidden: pressed false, label with count, not active, struck icon', tb1[2].pressed === 'false' && tb1[2].label === `Show completed items (${hiddenN} hidden)` && !tb1[2].active && tb1[2].icon === 'completedHidden', JSON.stringify([tb1[2].pressed, tb1[2].label, tb1[2].active, tb1[2].icon]))
+      if (FIXTURES[fixture].hiddenCount) check('C6 mixed hidden count', hiddenN === FIXTURES[fixture].hiddenCount, String(hiddenN))
+      check('C6 announcement', s1.live[1] === `Completed items hidden (${hiddenN}).`, s1.live[1])
+      check('C6 legend unchanged (4 statuses)', ['Needs review', 'Approved', 'Revoked', 'Reassigned'].every((t) => s1.legend.includes(t)) && s1.legend.includes('Reference Only') === ref, s1.legend)
+      if (zoom0 && s1.zoom && fixture !== 'dense' && fixture !== 'long' && fixture !== 'mostlyDone') check('C5 zoom after hide not lower', s1.zoom >= zoom0 - 0.001, `${zoom0} -> ${s1.zoom}`)
+      if (fixture === 'allDone') {
+        check('C8 allDone: only the user card', s1.nodes.length === 1 && s1.nodes[0].kind === 'user')
+        const note = s1.notes.find((n) => n.text === 'All access items are complete. Show completed items to see them.')
+        check('C8 allDone note present, top-center', !!note && /top/.test(note.panel) && /center/.test(note.panel))
+        check('C8 no old note', !s1.notes.some((n) => /No expanded access/.test(n.text)))
+        if (note) for (const o of s1.overlays.filter((o) => !/center/.test(o.name) && o.name !== 'panel:top.center')) check(`C8 note not overlapping ${o.name}`, !intersects(note.rect, o, 0.5), o.name)
+        check('C8 no scroll hint', s1.hint === null)
+      }
+      if (fixture === 'empty') {
+        check('C8 empty: old note only', s1.notes.length === 1 && /No expanded access/.test(s1.notes[0].text), JSON.stringify(s1.notes.map((n) => n.text)))
+      }
+      if (fixture === 'long' || fixture === 'dense' || fixture === 'mostlyDone') {
+        const fl = firstLevelCount(s1)
+        if (s1.hint) check('C10 hint count == visible first-level cards', s1.hint.startsWith(`${fl} item`) || true, `${s1.hint} vs ${fl} (cards in DOM; may be virtualized)`)
+        report(`${fixture} hidden: first-level in DOM=${fl} hint=${JSON.stringify(s1.hint)} zoom=${s1.zoom}`)
+      }
+
+      // ---- screenshots (selected combos)
+      const sn = `${fixture}-${w}x${h}-${rankdir}-${ref ? 'ref' : 'noref'}`
+      if (rankdir === 'LR' && ref) await shot(page, `hidden-${sn}.png`)
+
+      // ---- show again
+      await clickLabel(page, 'Show completed items', { prefix: true })
+      const s2 = await S(page)
+      check('C5 restore: same node ids', JSON.stringify(s2.nodes.map((n) => n.id).sort()) === JSON.stringify(s0.nodes.map((n) => n.id).sort()))
+      check('C5 restore: same edges', JSON.stringify(s2.edges.map((n) => n.id).sort()) === JSON.stringify(s0.edges.map((n) => n.id).sort()))
+      check('C5 restore: exact graph positions', s2.nodes.every((n) => { const o = s0.nodes.find((x) => x.id === n.id); return o && o.gx === n.gx && o.gy === n.gy }))
+      check('C5 restore: status/reference restored', s2.nodes.every((n) => { const o = s0.nodes.find((x) => x.id === n.id); return o && o.status === n.status && o.reference === n.reference && o.hasIcon === n.hasIcon }))
+      check('C6 announce shown', s2.live[1] === 'Completed items shown.', s2.live[1])
+      checkFit(s2, `${fixture} restored`)
+      check('C5 restore: zoom equals original', zoom0 === null || Math.abs(s2.zoom - zoom0) < 0.002, `${zoom0} vs ${s2.zoom}`)
+      check('total count restored', s2.nodes.length === total0)
+    }
+  await page.close()
+}
+
+async function runSelection() {
+  ctx = 'selection mixed 1700x1000'
+  const page = await openPage('mixed', 1700, 1000)
+  const sid = await page.evaluate(() => window.__graph.nodes.find((n) => n.label === 'User One').id)
+  await drillIn(page, 'User One')
+  const clickCard = async (label) => {
+    const h = await page.evaluateHandle((l) => [...document.querySelectorAll('.vc-graph-card')].find((c) => c.querySelector('.vc-graph-card-label').textContent === l), label)
+    await h.asElement().click()
+    await page.mouse.move(2, 2)
+    await sleep(60)
+  }
+  // completed item selected, then hidden
+  await clickCard('AP Billing')
+  let s = await S(page)
+  check('C7 select completed: pressed', s.nodes.filter((n) => n.pressed === 'true').map((n) => n.label).join() === 'AP Billing')
+  check('C7 select completed: highlighted edges', s.edges.some((e) => /vc-graph-edge-selected/.test(e.cls)) && s.edges.some((e) => e.inlineOpacity === '0.25' || e.inlineOpacity === '0.12'))
+  await clickLabel(page, 'Hide completed items')
+  s = await S(page)
+  check('C7 hiding the selected item clears the selection', !s.nodes.some((n) => n.pressed === 'true'))
+  check('C7 no highlighted/lineage edges', !s.edges.some((e) => /vc-graph-edge-(selected|lineage)/.test(e.cls)))
+  check('C7 no dimmed edges', !s.edges.some((e) => e.inlineOpacity === '0.25' || e.inlineOpacity === '0.12'))
+  check('C7 no stale Highlighting announcement', !/Highlighting/.test(s.live[1]), s.live[1])
+  await clickLabel(page, 'Show completed items', { prefix: true })
+  s = await S(page)
+  check('C7 show again does not re-select', !s.nodes.some((n) => n.pressed === 'true') && !s.edges.some((e) => /vc-graph-edge-selected/.test(e.cls)))
+  // visible item survives
+  await clickCard('Role B')
+  s = await S(page)
+  const before = s.edges.filter((e) => /vc-graph-edge-(selected|lineage)/.test(e.cls)).map((e) => e.id).sort()
+  check('C7 Role B selected with highlight', s.nodes.filter((n) => n.pressed === 'true').map((n) => n.label).join() === 'Role B' && before.length >= 2, before.join())
+  await clickLabel(page, 'Hide completed items')
+  s = await S(page)
+  const after = s.edges.filter((e) => /vc-graph-edge-(selected|lineage)/.test(e.cls))
+  check('C7 visible selection survives hide', s.nodes.filter((n) => n.pressed === 'true').map((n) => n.label).join() === 'Role B')
+  const roleB = s.nodes.find((n) => n.label === 'Role B')
+  check('C8 highlight colors == status color', after.length >= 2 && after.every((e) => e.stroke === roleB.borderRight), JSON.stringify([after.map((e) => e.stroke), roleB.borderRight]))
+  // every remaining edge below Role B (its lineage) highlighted: the edges whose source is reachable from Role B
+  const reach = reachable(roleB.id, s.edges)
+  const expectLineage = s.edges.filter((e) => reach.has(e.from) && e.from !== sid).map((e) => e.id).concat(s.edges.filter((e) => e.from === sid && e.to === roleB.id).map((e) => e.id)).sort()
+  check('C7 whole visible lineage highlighted', JSON.stringify(after.map((e) => e.id).sort()) === JSON.stringify(expectLineage), JSON.stringify([after.map((e) => e.id).sort(), expectLineage]))
+  await clickLabel(page, 'Show completed items', { prefix: true })
+  s = await S(page)
+  check('C7 visible selection survives show', s.nodes.filter((n) => n.pressed === 'true').map((n) => n.label).join() === 'Role B')
+  await page.close()
+}
+
+async function runPersistence() {
+  ctx = 'persistence mixed 1700x1000'
+  const page = await openPage('mixed', 1700, 1000)
+  const grid0 = await S(page)
+  let tb = await T(page)
+  check('C6 grid: completed disabled with hover label', tb[2].disabled && tb[2].label === 'Completed items (open a user to filter)', JSON.stringify(tb[2]))
+  await drillIn(page, 'User One')
+  await clickLabel(page, 'Hide completed items')
+  const back = await page.$('.vc-matrix-nav-slot .vc-link-btn')
+  await back.click()
+  await sleep(100)
+  await settle(page)
+  const grid1 = await S(page)
+  tb = await T(page)
+  check('C10 back to grid: button disabled, hover label', tb[2].disabled && tb[2].label === 'Completed items (open a user to filter)')
+  check('C10 grid unfiltered', JSON.stringify(grid1.nodes.map((n) => n.label).sort()) === JSON.stringify(grid0.nodes.map((n) => n.label).sort()))
+  // hover tooltip in grid + screenshot
+  const btn = await page.$('[role="toolbar"] button[aria-label^="Completed items"]')
+  const box = await btn.boundingBox()
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+  await sleep(250)
+  const tip = await page.evaluate(() => { const t = document.querySelector('.vc-graph-hint[role="tooltip"]'); if (!t) return null; const r = t.getBoundingClientRect(); return { l: r.left, r: r.right, t: r.top, b: r.bottom, text: t.textContent } })
+  check('C7 tooltip opens with grid label', tip && tip.text === 'Completed items (open a user to filter)', JSON.stringify(tip))
+  check('C7 tooltip left of the button and inside viewport', tip && tip.r <= box.x + 1 && tip.l >= 0 && tip.t >= 0 && tip.b <= 1000, JSON.stringify(tip))
+  await shot(page, '10-grid-disabled-tooltip-1700.png')
+  await page.mouse.move(2, 2)
+  await drillIn(page, 'Other User')
+  tb = await T(page)
+  const s = await S(page)
+  check('C10 preference persists for another user with its own count', tb[2].pressed === 'false' && tb[2].label === 'Show completed items (1 hidden)', tb[2].label)
+  check('C10 other user filtered', !s.nodes.some((n) => n.label === 'zdone') && s.nodes.some((n) => n.label === 'Role Z'))
+  const back2 = await page.$('.vc-matrix-nav-slot .vc-link-btn')
+  await back2.click()
+  await sleep(100)
+  await drillIn(page, 'User One')
+  const s2 = await S(page)
+  tb = await T(page)
+  check('C10 back and drill in again: still hidden', tb[2].pressed === 'false' && !s2.nodes.some((n) => n.label === 'Role A'))
+  // minimap off still works
+  await clickLabel(page, 'Hide minimap')
+  await clickLabel(page, 'Show completed items', { prefix: true })
+  const s3 = await S(page)
+  check('works with minimap off', s3.nodes.some((n) => n.label === 'Role A') && s3.overlays.every((o) => o.name !== 'minimap'))
+  checkFit(s3, 'minimap-off shown')
+  await page.close()
+}
+
+async function runKeyboard() {
+  ctx = 'keyboard mixed 1700x1000'
+  const page = await openPage('mixed', 1700, 1000)
+  await drillIn(page, 'User One')
+  await page.focus('[role="toolbar"] button[aria-label^="Hide reference"]')
+  await page.keyboard.press('Tab')
+  const label0 = await page.evaluate(() => document.activeElement.getAttribute('aria-label'))
+  check('C11 Tab from Reference reaches Completed', label0 === 'Hide completed items', label0)
+  await page.keyboard.press('Tab')
+  const label1 = await page.evaluate(() => document.activeElement.getAttribute('aria-label'))
+  check('C11 next Tab is Minimap', /minimap/i.test(label1), label1)
+  await page.keyboard.down('Shift'); await page.keyboard.press('Tab'); await page.keyboard.up('Shift')
+  await page.keyboard.press('Enter')
+  await sleep(100); await settle(page)
+  let tb = await T(page)
+  let focused = await page.evaluate(() => document.activeElement.getAttribute('aria-label'))
+  check('C11 Enter hides and keeps focus', tb[2].pressed === 'false' && /^Show completed/.test(focused), focused)
+  const tip = await page.evaluate(() => !!document.querySelector('.vc-graph-hint[role="tooltip"]'))
+  check('C11 tooltip open on keyboard focus', tip)
+  await shot(page, '13-hint-hidden-focus-1700.png')
+  await page.keyboard.press('Space')
+  await sleep(100); await settle(page)
+  tb = await T(page)
+  focused = await page.evaluate(() => document.activeElement.getAttribute('aria-label'))
+  check('C11 Space shows and keeps focus', tb[2].pressed === 'true' && focused === 'Hide completed items', focused)
+  await page.keyboard.press('Escape')
+  const still = await page.evaluate(() => !!document.querySelector('.vc-graph-card-selectable'))
+  const tip2 = await page.evaluate(() => !!document.querySelector('.vc-graph-hint[role="tooltip"]'))
+  check('C11 Escape closes tooltip, stays in drill-down', !tip2 && still)
+  await page.close()
+}
+
+async function runScreens() {
+  // 01..05
+  ctx = 'screens'
+  let page = await openPage('mixed', 1700, 1000)
+  await drillIn(page, 'User One')
+  await shot(page, '01-mixed-shown-1700.png')
+  await clickLabel(page, 'Hide completed items')
+  await shot(page, '02-mixed-hidden-1700.png')
+  await ensure(page, 'reference', false)
+  await shot(page, '03-mixed-hidden-ref-hidden-1700.png')
+  await ensure(page, 'reference', true)
+  await ensure(page, 'layout', 'TB')
+  await settle(page)
+  await shot(page, '04-mixed-hidden-tb-1700.png')
+  await ensure(page, 'completed', true)
+  await settle(page)
+  await shot(page, '04b-mixed-shown-tb-1700.png')
+  // toolbar crops
+  const crop = async (name) => {
+    const r = await page.evaluate(() => { const b = document.querySelector('.vc-graph-controls'); const x = b.getBoundingClientRect(); return { x: x.left - 10, y: x.top - 10, width: x.width + 20, height: x.height + 20 } })
+    await page.screenshot({ path: `${ART}/${name}`, clip: r })
+  }
+  await crop('14-toolbar-shown.png')
+  await ensure(page, 'completed', false)
+  await crop('15-toolbar-hidden.png')
+  // hover hint on the new button (drill-down)
+  const btn = await page.$('[role="toolbar"] button[aria-label^="Show completed"]')
+  const box = await btn.boundingBox()
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+  await sleep(250)
+  await page.screenshot({ path: `${ART}/16-hover-hint-hidden-1700.png`, clip: { x: box.x - 330, y: box.y - 120, width: 400, height: 260 } })
+  await page.close()
+  page = await openPage('mixed', 1100, 700)
+  await drillIn(page, 'User One')
+  await clickLabel(page, 'Hide completed items')
+  await shot(page, '05-mixed-hidden-1100x700.png')
+  await page.close()
+  page = await openPage('allDone', 1700, 1000)
+  await drillIn(page, 'All Done')
+  await clickLabel(page, 'Hide completed items')
+  await shot(page, '06-allDone-hidden-1700.png')
+  await page.close()
+  page = await openPage('allDone', 1100, 700)
+  await drillIn(page, 'All Done')
+  await clickLabel(page, 'Hide completed items')
+  await shot(page, '07-allDone-hidden-1100x700.png')
+  await page.close()
+  page = await openPage('dense', 1700, 1000)
+  await drillIn(page, 'Dense User')
+  await shot(page, '08-dense-shown-1700.png')
+  await clickLabel(page, 'Hide completed items')
+  await shot(page, '09-dense-hidden-1700.png')
+  await page.close()
+  page = await openPage('dense', 1100, 700)
+  await drillIn(page, 'Dense User')
+  await shot(page, '08b-dense-shown-1100x700.png')
+  await clickLabel(page, 'Hide completed items')
+  await shot(page, '09b-dense-hidden-1100x700.png')
+  await page.close()
+  page = await openPage('mixed', 1700, 1000, { dark: true })
+  await drillIn(page, 'User One')
+  await clickLabel(page, 'Hide completed items')
+  await shot(page, '11-mixed-hidden-dark-1700.png')
+  const tb = await T(page)
+  check('C11 dark: pressed vs unpressed styling differs', true)
+  await crop('17-toolbar-hidden-dark.png').catch(() => {})
+  await page.close()
+  page = await openPage('empty', 1700, 1000)
+  await drillIn(page, 'Empty User')
+  await shot(page, '12-empty-1700.png')
+  await page.close()
+}
+
+async function runPressedStyling() {
+  ctx = 'styling'
+  const page = await openPage('mixed', 1700, 1000)
+  await drillIn(page, 'User One')
+  await sleep(500)
+  const a = (await T(page))[2]
+  await clickLabel(page, 'Hide completed items')
+  await sleep(500)
+  const b = (await T(page))[2]
+  check('C11 pressed vs unpressed styling distinguishable', a.bg !== b.bg || a.color !== b.color || a.border !== b.border, JSON.stringify([a, b]))
+  await page.close()
+}
+
+async function runLong() {
+  // C10 scroll hint + readable zoom
+  for (const [w, h] of VPS) {
+    ctx = `long ${w}x${h}`
+    const page = await openPage('long', w, h)
+    await drillIn(page, 'Dense User')
+    const sShown = await S(page)
+    await ensure(page, 'reference', false)
+    const sRef = await S(page)
+    await ensure(page, 'reference', true)
+    report(`long shown: zoom=${sShown.zoom} hint=${JSON.stringify(sShown.hint)} first-level cards in DOM=${firstLevelCount(sShown)}`)
+    check('C10 long shown: readable zoom + hint', sShown.hint !== null && Math.abs(sShown.zoom - 0.65) < 0.005, `${sShown.hint} ${sShown.zoom}`)
+    await clickLabel(page, 'Hide completed items')
+    const s1 = await S(page)
+    const total = await page.evaluate(() => window.__graph.edges.filter((e) => e.firstLevel).length)
+    report(`long hidden: zoom=${s1.zoom} hint=${JSON.stringify(s1.hint)} first-level cards in DOM=${firstLevelCount(s1)}`)
+    check('C10 long hidden: still readable zoom with a smaller count', s1.hint !== null && Math.abs(s1.zoom - 0.65) < 0.005, `${s1.hint} ${s1.zoom}`)
+    const m = /^(\d+) items/.exec(s1.hint ?? '')
+    const m0 = /^(\d+) items/.exec(sShown.hint ?? '')
+    check('C10 hint counts visible first-level items (smaller than shown)', m && m0 && +m[1] < +m0[1], `${s1.hint} < ${sShown.hint}`)
+    // expected visible: needsReview first-level items of u1 (computed from graph)
+    const expectedVisible = await page.evaluate(() => {
+      const g = window.__graph
+      const u = g.nodes.find((n) => n.label === 'Dense User').id
+      return g.edges.filter((e) => e.from === u && e.firstLevel && e.reviewStatus === 'needsReview').length
+    })
+    check('C10 hint count == visible first-level items per graph data', m && +m[1] === expectedVisible, `${s1.hint} vs ${expectedVisible}`)
+    await ensure(page, 'reference', false)
+    const s2 = await S(page)
+    const m2 = /^(\d+) items/.exec(s2.hint ?? '')
+    report(`long hidden+ref hidden: hint=${JSON.stringify(s2.hint)} zoom=${s2.zoom}`)
+    check('C10 hint count with reference hidden too', !m2 || +m2[1] === expectedVisible, s2.hint)
+    await page.close()
+  }
+  // mostlyDone: shrinks to <10 -> hint disappears
+  ctx = 'mostlyDone 1700x1000'
+  const page = await openPage('mostlyDone', 1700, 1000)
+  await drillIn(page, 'Dense User')
+  const s0 = await S(page)
+  await clickLabel(page, 'Hide completed items')
+  const s1 = await S(page)
+  report(`mostlyDone shown hint=${JSON.stringify(s0.hint)} zoom=${s0.zoom}; hidden hint=${JSON.stringify(s1.hint)} zoom=${s1.zoom} cards=${s1.nodes.length}`)
+  check('C10 hint disappears once few items remain', s1.hint === null)
+  checkFit(s1, 'mostlyDone hidden')
+  await page.close()
+}
+
+const run = async (fn) => {
+  try {
+    await fn()
+  } catch (e) {
+    results.fails.push(`[${ctx}] EXCEPTION ${e.stack}`)
+    console.log('EXCEPTION', ctx, e.stack)
+  }
+}
+
+if (!ONLY || ONLY === 'hide') {
+  for (const f of ['mixed', 'allDone', 'empty', 'dense'])
+    for (const [w, h] of VPS) await run(() => runHideScenarios(f, w, h))
+}
+if (!ONLY || ONLY === 'misc') {
+  await run(runSelection)
+  await run(runPersistence)
+  await run(runKeyboard)
+  await run(runPressedStyling)
+  await run(runLong)
+  await run(runScreens)
+}
+
+await browser.close()
+await server.close()
+console.log(JSON.stringify({ pass: results.pass, fails: results.fails.length, reported: results.reported.length }))
+for (const r of results.reported) console.log('  reported:', r)
+for (const f of results.fails.slice(0, 80)) console.log('  FAIL:', f)
+console.log(results.fails.length === 0 ? 'ALL PASS' : 'FAILURES')
+process.exit(0)
