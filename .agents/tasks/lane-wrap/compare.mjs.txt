@@ -1,0 +1,24 @@
+import fs from 'node:fs'
+const b = JSON.parse(fs.readFileSync('out-before.json')), a = JSON.parse(fs.readFileSync('out-after.json'))
+let same=0, diff=0, bad=[]
+const wraps = (k)=>Object.values(a[k].summary).some(s=>s.length>1)
+for (const k of Object.keys(a)) {
+  const eq = JSON.stringify(a[k].pos)===JSON.stringify(b[k].pos)
+  if (!wraps(k)) { if (eq) same++; else bad.push(k) } else { if (!eq) diff++; else bad.push('wrapped-but-same '+k) }
+}
+console.log('states', Object.keys(a).length, 'non-wrapping identical to base:', same, 'wrapping differ:', diff, 'problems:', bad)
+for (const f of ['small','edge10']) console.log(f, 'all states identical:', Object.keys(a).filter(k=>k.startsWith(f+'|')).every(k=>JSON.stringify(a[k].pos)===JSON.stringify(b[k].pos)))
+console.log('edge11 wraps (LR 1700 full):', JSON.stringify(a['edge11|1700x1000|LR|ref|comp'].summary.entitlement), 'before', 'single col')
+console.log('\nW8 table (ref shown, completed shown): fixture vp dir | before mode zoom hint passStatus/passAll | after ...')
+for (const f of ['dense','huge','ents31','ents100'])for (const vp of ['1700x1000','1100x700'])for (const d of ['LR','TB']){
+  const k=`${f}|${vp}|${d}|ref|comp`; const x=b[k], y=a[k]
+  const fmt=o=>`${o.mode} ${o.zoom?.toFixed(3)} ${o.hint?'hint('+o.hint.split(' ')[0]+')':'-'} pass ${o.passStatus}/${o.passAll} n=${o.n}`
+  console.log(`${f} ${vp} ${d} | ${fmt(x)} | ${fmt(y)}`)
+}
+console.log('\nreference hidden (status edges only):')
+for (const f of ['dense','huge','ents31','ents100'])for (const vp of ['1700x1000'])for (const d of ['LR','TB']){
+  const k=`${f}|${vp}|${d}|noref|comp`; const x=b[k], y=a[k]
+  console.log(`${f} ${vp} ${d} | ${x.mode} ${x.zoom?.toFixed(3)} pass ${x.passStatus}/${x.passAll} | ${y.mode} ${y.zoom?.toFixed(3)} pass ${y.passStatus}/${y.passAll}`)
+}
+console.log('\nlane summaries after (LR 1700 full):')
+for (const f of ['dense','huge','ents31']) console.log(f, JSON.stringify(a[`${f}|1700x1000|LR|ref|comp`].summary))

@@ -1,0 +1,516 @@
+// TEMPORARY real-browser driver for lane wrapping.
+// usage: node verify.mjs <WT dir> <before|after> [fixture]
+import puppeteer from 'puppeteer-core'
+import fs from 'node:fs'
+
+const WT = process.argv[2]
+const MODE = process.argv[3] // before | after
+const ONLY = process.argv[4]
+const ART = '/Users/scott.fehrman/Documents/Projects/SailPoint/ui-plugins-apps/visual-certs/.agents/tasks/lane-wrap'
+const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+const PORT = MODE === 'before' ? 5198 : 5199
+const BASE = `https://localhost:${PORT}/lane-wrap-harness.html`
+const AFTER = MODE === 'after'
+fs.mkdirSync(ART, { recursive: true })
+
+const { createServer } = await import(WT + '/node_modules/vite/dist/node/index.js')
+const server = await createServer({ root: WT, server: { port: PORT, strictPort: true }, logLevel: 'warn' })
+await server.listen()
+
+const results = { pass: 0, fails: [] }
+let ctx = ''
+function check(name, cond, detail = '') {
+  if (cond) results.pass++
+  else {
+    results.fails.push(`[${ctx}] ${name} ${detail}`)
+    console.log('FAIL', `[${ctx}]`, name, detail)
+  }
+}
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
+
+/* ---------------- page-side helpers ---------------- */
+function installHelpers() {
+  const q = (s, root = document) => [...root.querySelectorAll(s)]
+  const rectOf = (el) => {
+    const r = el.getBoundingClientRect()
+    return { l: r.left, t: r.top, r: r.right, b: r.bottom, w: r.width, h: r.height }
+  }
+  const edgeMap = new Map()
+  for (const e of window.__graph.edges) edgeMap.set(`e:${e.from}:${e.to}`, e)
+  window.__vpLog = []
+  window.__hc = {
+    zoom() {
+      const m = /scale\(([-\d.]+)\)/.exec(document.querySelector('.react-flow__viewport').style.transform)
+      return m ? +m[1] : null
+    },
+    settle() {
+      return new Promise((res) => {
+        let last = null
+        let same = 0
+        let frames = 0
+        const tick = () => {
+          frames++
+          const t = document.querySelector('.react-flow__viewport')?.style.transform
+          if (t === last) same++
+          else {
+            same = 0
+            last = t
+          }
+          if (frames > 4 && same >= 8) res(t)
+          else requestAnimationFrame(tick)
+        }
+        tick()
+      })
+    },
+    startVpLog() {
+      window.__vpLog = []
+      let last = document.querySelector('.react-flow__viewport').style.transform
+      window.__vpObs?.disconnect()
+      window.__vpObs = new MutationObserver(() => {
+        const t = document.querySelector('.react-flow__viewport').style.transform
+        if (t !== last) {
+          window.__vpLog.push(t)
+          last = t
+        }
+      })
+      window.__vpObs.observe(document.querySelector('.react-flow__viewport'), { attributes: true })
+    },
+    vpChanges: () => window.__vpLog.length,
+    collect() {
+      const canvas = rectOf(document.querySelector('.react-flow'))
+      const nodes = q('.react-flow__node').map((n) => {
+        const card = n.querySelector('.vc-graph-card')
+        const m = /translate\((-?[\d.]+)px,\s*(-?[\d.]+)px\)/.exec(n.style.transform)
+        const cs = getComputedStyle(card)
+        return {
+          id: n.dataset.id,
+          label: card.querySelector('.vc-graph-card-label').textContent,
+          kind: [...card.classList].find((c) => c.startsWith('kind-')).slice(5),
+          status: card.dataset.reviewStatus || null,
+          reference: card.classList.contains('vc-graph-card-reference'),
+          pressed: card.getAttribute('aria-pressed'),
+          gx: +m[1],
+          gy: +m[2],
+          rect: rectOf(n),
+          nodeZ: getComputedStyle(n).zIndex,
+          borderRight: cs.borderLeftColor,
+        }
+      })
+      const nodeRect = new Map(nodes.map((n) => [n.id, n.rect]))
+      let passAll = 0
+      let passStatus = 0
+      const edges = q('.react-flow__edge').map((e) => {
+        const id = (e.dataset.id || '').replace(/^rf__edge-/, '')
+        const path = e.querySelector('.react-flow__edge-path')
+        const info = edgeMap.get(id)
+        let behind = false
+        if (path && info) {
+          const ctm = path.getScreenCTM()
+          const len = path.getTotalLength()
+          const svg = path.ownerSVGElement
+          const pt = svg.createSVGPoint()
+          for (let i = 0; i <= 80 && !behind; i++) {
+            const p = path.getPointAtLength((len * i) / 80)
+            pt.x = p.x
+            pt.y = p.y
+            const s = pt.matrixTransform(ctm)
+            for (const [nid, r] of nodeRect) {
+              if (nid === info.from || nid === info.to) continue
+              if (s.x > r.l + 2 && s.x < r.r - 2 && s.y > r.t + 2 && s.y < r.b - 2) {
+                behind = true
+                break
+              }
+            }
+          }
+        }
+        const status = (e.getAttribute('class') || '').includes('vc-graph-edge-status')
+        if (behind) {
+          passAll++
+          if (status) passStatus++
+        }
+        return {
+          id,
+          from: info?.from,
+          to: info?.to,
+          cls: e.getAttribute('class'),
+          stroke: path ? getComputedStyle(path).stroke : null,
+        }
+      })
+      const overlays = [
+        ...q('.react-flow__panel').map((p) => ({ name: 'panel:' + [...p.classList].filter((c) => c !== 'react-flow__panel').join('.'), ignore: p.classList.contains('vc-graph-fit-ignore'), ...rectOf(p) })),
+        ...q('.react-flow__minimap').map((p) => ({ name: 'minimap', ignore: false, ...rectOf(p) })),
+        ...q('.react-flow__controls').map((p) => ({ name: 'controls', ignore: false, ...rectOf(p) })),
+      ]
+      const wrap = rectOf(document.querySelector('.vc-graph-wrap'))
+      const nav = document.querySelector('.vc-matrix-nav') ? rectOf(document.querySelector('.vc-matrix-nav')) : null
+      return {
+        canvas,
+        wrap,
+        nav,
+        nodes,
+        edges,
+        overlays,
+        passAll,
+        passStatus,
+        zoom: window.__hc.zoom(),
+        scrollH: document.documentElement.scrollHeight,
+        innerH: window.innerHeight,
+        scrollW: document.documentElement.scrollWidth,
+        innerW: window.innerWidth,
+        hint: document.querySelector('.vc-graph-hint[role="status"]')?.textContent ?? null,
+      }
+    },
+    toolbar() {
+      return q('[role="toolbar"] button').map((b) => ({
+        label: b.getAttribute('aria-label'),
+        pressed: b.getAttribute('aria-pressed'),
+        disabled: b.disabled,
+      }))
+    },
+  }
+}
+
+/* ---------------- driver helpers ---------------- */
+const browser = await puppeteer.launch({
+  executablePath: CHROME,
+  headless: 'new',
+  acceptInsecureCerts: true,
+  args: ['--ignore-certificate-errors', '--no-sandbox'],
+})
+const intersects = (a, b, tol = 0.5) => a.l < b.r - tol && a.r > b.l + tol && a.t < b.b - tol && a.b > b.t + tol
+
+async function openPage(fixture, w, h, opts = {}) {
+  const page = await browser.newPage()
+  await page.setViewport({ width: w, height: h, deviceScaleFactor: 1 })
+  if (opts.dark) await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: 'dark' }])
+  page.on('pageerror', (e) => check('no page error', false, String(e)))
+  page.on('console', (m) => {
+    if (m.type() === 'error' && !/favicon|Download the React DevTools|404/.test(m.text())) check('no console error', false, m.text())
+  })
+  await page.goto(`${BASE}?fixture=${fixture}`, { waitUntil: 'networkidle0' })
+  await page.waitForSelector('[aria-label="Show access for Wrap User"]')
+  await page.evaluate(installHelpers)
+  await page.mouse.move(2, 2)
+  return page
+}
+const S = (page) => page.evaluate(() => window.__hc.collect())
+const T = (page) => page.evaluate(() => window.__hc.toolbar())
+const settle = (page) => page.evaluate(() => window.__hc.settle())
+async function clickLabel(page, label, { prefix = false } = {}) {
+  const sel = prefix ? `[role="toolbar"] button[aria-label^="${label}"]` : `[role="toolbar"] button[aria-label="${label}"]`
+  const h = await page.$(sel)
+  if (!h) throw new Error('no button ' + label)
+  await page.evaluate(() => window.__hc.startVpLog())
+  await h.click()
+  await page.mouse.move(2, 2)
+  await sleep(60)
+  await settle(page)
+}
+async function drillIn(page) {
+  const h = await page.$('[aria-label="Show access for Wrap User"]')
+  await h.click()
+  await page.waitForSelector('.vc-graph-wrap .react-flow__node .vc-graph-card[data-review-status]')
+  await page.mouse.move(2, 2)
+  await sleep(60)
+  await settle(page)
+}
+async function ensure(page, kind, want) {
+  const tb = await T(page)
+  if (kind === 'layout') {
+    const isLR = tb[0].label === 'Layout: vertical'
+    if (isLR !== (want === 'LR')) await clickLabel(page, tb[0].label)
+  } else {
+    const b = tb[kind === 'reference' ? 1 : 2]
+    if (b.disabled) return
+    if ((b.pressed === 'true') !== want) await clickLabel(page, b.label)
+  }
+}
+const shot = async (page, name) => {
+  if (AFTER) await page.screenshot({ path: `${ART}/${name}` })
+}
+
+/* ---------------- independent oracle ---------------- */
+const KINDS = ['user', 'role', 'accessProfile', 'entitlement', 'source']
+const WRAPS = new Set(['role', 'accessProfile', 'entitlement'])
+const NODE_W = 200
+const NODE_H = 64
+function expectedSizes(n, kind) {
+  if (!WRAPS.has(kind) || n <= 10) return [n]
+  const k = Math.ceil(n / 10)
+  const base = Math.floor(n / k)
+  const larger = n % k
+  return Array.from({ length: k }, (_, i) => (i < larger ? base + 1 : base))
+}
+function checkLayout(s, dir, tag) {
+  const rk = dir === 'LR' ? 'gx' : 'gy'
+  const ck = dir === 'LR' ? 'gy' : 'gx'
+  const bandStep = (dir === 'LR' ? NODE_W : NODE_H) + 120
+  const subStep = (dir === 'LR' ? NODE_W : NODE_H) + 40
+  const extentRank = dir === 'LR' ? NODE_W : NODE_H
+  const extentCross = dir === 'LR' ? NODE_H : NODE_W
+  const stride = extentCross + 48
+  let shift = 0
+  let prevEnd = null
+  const summary = {}
+  KINDS.forEach((kind, idx) => {
+    const ns = s.nodes.filter((n) => n.kind === kind)
+    const sizesWant = expectedSizes(ns.length, kind)
+    if (ns.length === 0) return
+    const groups = new Map()
+    for (const n of ns) (groups.get(n[rk]) ?? groups.set(n[rk], []).get(n[rk])).push(n)
+    const ranks = [...groups.keys()].sort((a, b) => a - b)
+    const sizes = ranks.map((r) => groups.get(r).length)
+    summary[kind] = sizes
+    // W1
+    check(`W1 ${tag} ${kind} sub-lane count`, ranks.length === Math.ceil(ns.length / 10) || (!WRAPS.has(kind) && ranks.length === 1), `${ranks.length} for ${ns.length}`)
+    check(`W1 ${tag} ${kind} sizes balanced as the split rule`, JSON.stringify(sizes) === JSON.stringify(sizesWant), JSON.stringify([sizes, sizesWant]))
+    check(`W1 ${tag} ${kind} sub-lane <= 10 (wrapping kinds)`, !WRAPS.has(kind) || sizes.every((x) => x <= 10), sizes.join())
+    check(`W1 ${tag} ${kind} balanced (differ by <= 1)`, !WRAPS.has(kind) || Math.max(...sizes) - Math.min(...sizes) <= 1)
+    // expected rank coordinates (accumulated shift, absent kinds keep their slot)
+    const base = 24 + idx * bandStep + shift
+    ranks.forEach((r, i) => check(`W2 ${tag} ${kind} rank[${i}] = slot + shift + i*step`, Math.abs(r - (base + i * subStep)) < 0.01, `${r} vs ${base + i * subStep}`))
+    // sub-lane geometry: stride, centered
+    for (const r of ranks) {
+      const cs = groups.get(r).map((n) => n[ck]).sort((a, b) => a - b)
+      for (let i = 1; i < cs.length; i++) check(`W1 ${tag} ${kind} cross stride`, Math.abs(cs[i] - cs[i - 1] - stride) < 0.01, `${cs[i] - cs[i - 1]}`)
+      const mid = (cs[0] + cs[cs.length - 1] + extentCross) / 2
+      check(`W1 ${tag} ${kind} sub-lane centered on cross 0`, Math.abs(mid - extentCross / 2) < 0.01, `mid=${mid}`)
+    }
+    // W2: gaps
+    ranks.forEach((r, i) => {
+      if (i > 0) check(`W2 ${tag} ${kind} sub-lane gap = 40`, Math.abs(r - (ranks[i - 1] + extentRank) - 40) < 0.01)
+    })
+    if (prevEnd !== null) check(`W2 ${tag} ${kind} gap to previous type >= 120 (> 40)`, ranks[0] - prevEnd >= 120 - 0.01, `${ranks[0] - prevEnd}`)
+    prevEnd = ranks[ranks.length - 1] + extentRank
+    if (WRAPS.has(kind)) shift += (ranks.length - 1) * subStep
+  })
+  const user = s.nodes.find((n) => n.kind === 'user')
+  check(`W2 ${tag} user in lane 0, centered`, user && user[rk] === 24 && Math.abs(user[ck]) < 0.01)
+  return summary
+}
+function checkNoOverlap(s, tag) {
+  let bad = 0
+  for (let i = 0; i < s.nodes.length; i++)
+    for (let j = i + 1; j < s.nodes.length; j++)
+      if (intersects(s.nodes[i].rect, s.nodes[j].rect, 0.5)) {
+        bad++
+        if (bad < 4) check(`W3 ${tag} no card overlap`, false, `${s.nodes[i].label}/${s.nodes[j].label}`)
+      }
+  check(`W3 ${tag} no card overlap (total)`, bad === 0, String(bad))
+}
+function modeOf(s) {
+  if (s.zoom === null) return 'n/a'
+  if (Math.abs(s.zoom - 0.65) < 1e-6) return 'readable'
+  if (Math.abs(s.zoom - 0.15) < 1e-6) return 'clamp'
+  return 'fit'
+}
+function checkFit(s, tag) {
+  const mode = modeOf(s)
+  const ov = s.overlays.filter((o) => !o.ignore)
+  const user = s.nodes.find((n) => n.kind === 'user')
+  if (user) for (const o of ov) check(`W6 ${tag} user card clear of ${o.name}`, !intersects(user.rect, o, 0.5), o.name)
+  if (user && s.nav) check(`W6 ${tag} user card clear of back row`, user.rect.t >= s.nav.b - 1 || user.rect.t >= s.canvas.t - 1)
+  if (mode === 'fit') {
+    for (const n of s.nodes) {
+      check(`W6 ${tag} '${n.label}' inside canvas`, n.rect.l >= s.canvas.l - 1 && n.rect.r <= s.canvas.r + 1 && n.rect.t >= s.canvas.t - 1 && n.rect.b <= s.canvas.b + 1, JSON.stringify(n.rect))
+      for (const o of ov) if (intersects(n.rect, o, 0.5)) check(`W6 ${tag} '${n.label}' not under ${o.name}`, false)
+    }
+  }
+  // hint count == visible first-level count
+  const fl = s.nodes.filter((n) => n.kind !== 'user' && !n.reference).length
+  if (s.hint) {
+    const m = /^(\d+) item/.exec(s.hint)
+    check(`W6 ${tag} hint count equals first-level cards`, m && +m[1] === fl, `${s.hint} vs ${fl}`)
+  }
+  check(`W6 ${tag} no page scroll`, s.scrollH <= s.innerH + 1 && s.scrollW <= s.innerW + 1, `scrollH=${s.scrollH} innerH=${s.innerH}`)
+  check(`W6 ${tag} canvas ends at window bottom`, s.wrap.b <= s.innerH + 1 && s.wrap.b >= s.innerH - 30, `bottom=${s.wrap.b} inner=${s.innerH}`)
+}
+function reachable(startId, edges) {
+  const out = new Map()
+  for (const e of edges) (out.get(e.from) ?? out.set(e.from, []).get(e.from)).push(e)
+  const seen = new Set([startId])
+  const qq = [startId]
+  while (qq.length) for (const e of out.get(qq.shift()) ?? []) if (!seen.has(e.to)) { seen.add(e.to); qq.push(e.to) }
+  return seen
+}
+
+/* ---------------- main scenario ---------------- */
+const FIXTURES = ['small', 'edge10', 'edge11', 'dense', 'huge', 'ents31', 'ents100'].filter((f) => !ONLY || f === ONLY)
+const VPS = [[1700, 1000], [1100, 700]]
+const dump = {} // key -> {pos, zoom, mode, hint, passAll, passStatus, summary}
+const SHOTS = {
+  'small|1700x1000|LR|ref|comp': '01-small-LR-1700.png',
+  'small|1700x1000|TB|ref|comp': '01b-small-TB-1700.png',
+  'edge10|1700x1000|LR|ref|comp': '02-edge10-LR-1700.png',
+  'edge11|1700x1000|LR|ref|comp': '03-edge11-LR-1700.png',
+  'edge10|1700x1000|TB|ref|comp': '02b-edge10-TB-1700.png',
+  'edge11|1700x1000|TB|ref|comp': '03b-edge11-TB-1700.png',
+  'dense|1700x1000|LR|ref|comp': '04-dense-LR-1700.png',
+  'dense|1700x1000|TB|ref|comp': '05-dense-TB-1700.png',
+  'dense|1100x700|LR|ref|comp': '06-dense-LR-1100x700.png',
+  'dense|1100x700|TB|ref|comp': '07-dense-TB-1100x700.png',
+  'huge|1700x1000|LR|ref|comp': '08-huge-LR-1700.png',
+  'huge|1700x1000|TB|ref|comp': '09-huge-TB-1700.png',
+  'huge|1100x700|LR|ref|comp': '10-huge-LR-1100x700.png',
+  'huge|1100x700|TB|ref|comp': '10b-huge-TB-1100x700.png',
+  'dense|1700x1000|LR|noref|comp': '11-dense-LR-reference-hidden-1700.png',
+  'dense|1700x1000|LR|ref|nocomp': '12-dense-LR-completed-hidden-1700.png',
+  'dense|1700x1000|TB|ref|nocomp': '13-dense-TB-completed-hidden-1700.png',
+}
+
+for (const fixture of FIXTURES) {
+  for (const [w, h] of VPS) {
+    const page = await openPage(fixture, w, h)
+    await drillIn(page)
+    for (const dir of ['LR', 'TB']) {
+      await ensure(page, 'reference', true)
+      await ensure(page, 'completed', true)
+      await ensure(page, 'layout', dir)
+      await settle(page)
+      const full = await S(page)
+      const fullKey = `${fixture}|${w}x${h}|${dir}|ref|comp`
+      for (const ref of [true, false]) {
+        for (const comp of [true, false]) {
+          const key = `${fixture}|${w}x${h}|${dir}|${ref ? 'ref' : 'noref'}|${comp ? 'comp' : 'nocomp'}`
+          ctx = key
+          await ensure(page, 'reference', ref)
+          await ensure(page, 'completed', comp)
+          await settle(page)
+          const vp = await page.evaluate(() => window.__hc.vpChanges())
+          const s = await S(page)
+          let summary = {}
+          if (AFTER) {
+            summary = checkLayout(s, dir, '')
+            checkNoOverlap(s, '')
+            checkFit(s, '')
+            check('W5 at most one viewport change per toggle step', vp <= 2, String(vp)) // up to 2 toggles may have been applied for one state change
+          }
+          dump[key] = {
+            pos: Object.fromEntries(s.nodes.map((n) => [n.id, [n.gx, n.gy]])),
+            zoom: s.zoom,
+            mode: modeOf(s),
+            hint: s.hint,
+            passAll: s.passAll,
+            passStatus: s.passStatus,
+            n: s.nodes.length,
+            summary,
+          }
+          if (SHOTS[key] && fixture !== 'x') {
+            await page.mouse.move(2, 2)
+            await shot(page, SHOTS[key])
+          }
+        }
+      }
+      // W5: restoring returns identical positions and zoom
+      ctx = `${fixtureKey(fixture, w, h, dir)} restore`
+      await ensure(page, 'reference', true)
+      await ensure(page, 'completed', true)
+      await settle(page)
+      const back = await S(page)
+      if (AFTER) {
+        check('W5 restore: identical positions', JSON.stringify(Object.fromEntries(back.nodes.map((n) => [n.id, [n.gx, n.gy]]))) === JSON.stringify(Object.fromEntries(full.nodes.map((n) => [n.id, [n.gx, n.gy]]))))
+        check('W5 restore: identical zoom', Math.abs(back.zoom - full.zoom) < 0.002, `${full.zoom} vs ${back.zoom}`)
+      }
+    }
+    await page.close()
+  }
+}
+function fixtureKey(f, w, h, d) {
+  return `${f}|${w}x${h}|${d}`
+}
+
+/* ---------------- W5 explicit unwrap/rewrap, W7 interactions ---------------- */
+if (AFTER && (!ONLY || ONLY === 'dense')) {
+  ctx = 'dense unwrap'
+  const page = await openPage('dense', 1700, 1000)
+  await drillIn(page)
+  const entSizes = (s) => {
+    const m = new Map()
+    for (const n of s.nodes.filter((x) => x.kind === 'entitlement')) m.set(n.gx, (m.get(n.gx) ?? 0) + 1)
+    return [...m.entries()].sort((a, b) => a[0] - b[0]).map((e) => e[1])
+  }
+  const s0 = await S(page)
+  check('W5 dense: entitlement lane wraps (reference shown)', entSizes(s0).length >= 2, JSON.stringify(entSizes(s0)))
+  await clickLabel(page, 'Hide completed items')
+  const s1 = await S(page)
+  const firstLevelEnts = s1.nodes.filter((n) => n.kind === 'entitlement' && !n.reference).length
+  check('W5 dense: hiding completed unwraps the entitlement lane (<= 10 cards left)', entSizes(s1).length === 1 && s1.nodes.filter((n) => n.kind === 'entitlement').length <= 10, JSON.stringify(entSizes(s1)) + ' first-level=' + firstLevelEnts)
+  await clickLabel(page, 'Show completed items', { prefix: true })
+  const s2 = await S(page)
+  check('W5 dense: showing completed wraps again', JSON.stringify(entSizes(s2)) === JSON.stringify(entSizes(s0)))
+  await clickLabel(page, 'Hide reference nodes and links')
+  const s3 = await S(page)
+  check('W5 dense: reference hidden, first-level entitlements still wrap (25)', JSON.stringify(entSizes(s3)) === JSON.stringify([9, 8, 8]), JSON.stringify(entSizes(s3)))
+  await clickLabel(page, 'Show reference nodes and links')
+
+  // W7 hover / selection on a first-level card in the LAST sub-column
+  ctx = 'dense interactions LR'
+  await ensure(page, 'layout', 'LR')
+  await settle(page)
+  let s = await S(page)
+  const lastX = Math.max(...s.nodes.filter((n) => n.kind === 'entitlement' && !n.reference).map((n) => n.gx))
+  const target = s.nodes.filter((n) => n.kind === 'entitlement' && !n.reference && n.gx === lastX)[3]
+  check('W7 target is in the last sub-column and visible', target && target.rect.l >= 0 && target.rect.r <= 1700 && target.rect.t >= 0 && target.rect.b <= 1000, JSON.stringify(target?.rect))
+  const cx = target.rect.l + target.rect.w / 2
+  const cy = target.rect.t + target.rect.h / 2
+  await page.mouse.move(cx, cy)
+  await sleep(200)
+  const hov = await page.evaluate((id) => {
+    const em = [...document.querySelectorAll('.react-flow__edge')].filter((e) => (e.getAttribute('class') || '').includes('vc-graph-edge-emphasized'))
+    const zOf = (el) => {
+      for (let n = el; n && n !== document.body; n = n.parentElement) {
+        const z = getComputedStyle(n).zIndex
+        if (z !== 'auto') return +z
+      }
+      return null
+    }
+    const node = document.querySelector(`.react-flow__node[data-id="${id}"]`)
+    return { ids: em.map((e) => e.dataset.id), edgeZ: em.map(zOf), cardZ: +getComputedStyle(node).zIndex }
+  }, target.id)
+  check('W7 hover raises exactly the hovered first-level edge', hov.ids.length === 1 && hov.ids[0].endsWith(`e:${hov.ids[0].split('e:')[1]}`) && hov.ids[0].includes(target.id), JSON.stringify(hov))
+  check('W7 emphasized edge z-index above the cards', hov.edgeZ.every((z) => z !== null && z > hov.cardZ), JSON.stringify(hov))
+  await shot(page, '14-dense-LR-hover-last-sub-column-1700.png')
+  await page.mouse.move(2, 2)
+  await sleep(100)
+  // selection via real click
+  await page.mouse.click(cx, cy)
+  await sleep(150)
+  await page.mouse.move(2, 2)
+  await sleep(100)
+  s = await S(page)
+  const userId = s.nodes.find((n) => n.kind === 'user').id
+  const marked = s.edges.filter((e) => /vc-graph-edge-(selected|lineage)/.test(e.cls)).map((e) => e.id).sort()
+  const graphEdges = await page.evaluate(() => window.__graph.edges.map((e) => ({ from: e.from, to: e.to })))
+  const present = new Set(s.edges.map((e) => `e:${e.from}:${e.to}`))
+  const reach = reachable(target.id, graphEdges)
+  const expectMarked = [`e:${userId}:${target.id}`, ...graphEdges.filter((e) => reach.has(e.from)).map((e) => `e:${e.from}:${e.to}`)].filter((id) => present.has(id)).sort()
+  check('W7 selection marks exactly the forward-reachable lineage', JSON.stringify(marked) === JSON.stringify(expectMarked), JSON.stringify([marked, expectMarked]))
+  check('W7 selected card pressed', s.nodes.filter((n) => n.pressed === 'true').map((n) => n.id).join() === target.id)
+  const ztgt = s.nodes.find((n) => n.id === target.id)
+  const sel = s.edges.filter((e) => /vc-graph-edge-selected/.test(e.cls))
+  check('W7 selected edge stroke equals the card status color', sel.length === 1 && sel[0].stroke === ztgt.borderRight, JSON.stringify([sel.map((e) => e.stroke), ztgt.borderRight]))
+  await shot(page, '15-dense-LR-selected-last-sub-column-1700.png')
+  await page.keyboard.press('Escape')
+  await sleep(100)
+  s = await S(page)
+  check('W7 Escape clears the selection and stays in the drill-down', !s.nodes.some((n) => n.pressed === 'true') && s.nodes.length > 1)
+  // toolbar order + back slot
+  const tb = await T(page)
+  check('W7 toolbar order Layout, Reference, Completed, Minimap', tb.length === 4 && /^Layout/.test(tb[0].label) && /reference/i.test(tb[1].label) && /completed/i.test(tb[2].label) && /minimap/i.test(tb[3].label), tb.map((b) => b.label).join('|'))
+  const slot = await page.evaluate(() => !!document.querySelector('.vc-matrix-nav-slot button'))
+  check('W7 Back to all users sits in the nav row', slot)
+  await page.close()
+
+  // dark-mode screenshot
+  const dark = await openPage('dense', 1700, 1000, { dark: true })
+  await drillIn(dark)
+  await shot(dark, '16-dense-LR-dark-1700.png')
+  await dark.close()
+}
+
+await browser.close()
+await server.close()
+fs.writeFileSync(`/tmp/lw-verify/out-${MODE}.json`, JSON.stringify(dump))
+console.log(`DONE mode=${MODE} pass=${results.pass} fails=${results.fails.length}`)
+if (results.fails.length) fs.writeFileSync(`/tmp/lw-verify/fails-${MODE}.txt`, results.fails.join('\n'))
+process.exit(results.fails.length ? 1 : 0)

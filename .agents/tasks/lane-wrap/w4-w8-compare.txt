@@ -1,0 +1,37 @@
+states 112 non-wrapping identical to base: 48 wrapping differ: 64 problems: []
+small all states identical: true
+edge10 all states identical: true
+edge11 wraps (LR 1700 full): [6,5] before single col
+
+W8 table (ref shown, completed shown): fixture vp dir | before mode zoom hint passStatus/passAll | after ...
+dense 1700x1000 LR | readable 0.650 hint(30) pass 13/13 n=40 | fit 0.611 - pass 28/53 n=40
+dense 1700x1000 TB | readable 0.650 hint(30) pass 9/9 n=40 | fit 0.579 - pass 24/49 n=40
+dense 1100x700 LR | readable 0.650 hint(30) pass 13/13 n=40 | fit 0.331 - pass 28/53 n=40
+dense 1100x700 TB | readable 0.650 hint(30) pass 9/9 n=40 | fit 0.333 - pass 24/49 n=40
+huge 1700x1000 LR | readable 0.650 hint(78) pass 63/63 n=172 | readable 0.650 hint(78) pass 71/265 n=172
+huge 1700x1000 TB | readable 0.650 hint(78) pass 63/63 n=172 | readable 0.650 hint(78) pass 71/265 n=172
+huge 1100x700 LR | readable 0.650 hint(78) pass 63/63 n=172 | readable 0.650 hint(78) pass 71/265 n=172
+huge 1100x700 TB | readable 0.650 hint(78) pass 63/63 n=172 | readable 0.650 hint(78) pass 71/265 n=172
+ents31 1700x1000 LR | readable 0.650 hint(31) pass 0/0 n=34 | fit 0.640 - pass 22/45 n=34
+ents31 1700x1000 TB | readable 0.650 hint(31) pass 0/0 n=34 | fit 0.589 - pass 22/45 n=34
+ents31 1100x700 LR | readable 0.650 hint(31) pass 0/0 n=34 | fit 0.368 - pass 22/45 n=34
+ents31 1100x700 TB | readable 0.650 hint(31) pass 0/0 n=34 | fit 0.319 - pass 22/45 n=34
+ents100 1700x1000 LR | readable 0.650 hint(100) pass 0/0 n=104 | fit 0.387 - pass 90/180 n=104
+ents100 1700x1000 TB | readable 0.650 hint(100) pass 0/0 n=104 | fit 0.377 - pass 90/180 n=104
+ents100 1100x700 LR | readable 0.650 hint(100) pass 0/0 n=104 | readable 0.650 hint(100) pass 90/180 n=104
+ents100 1100x700 TB | readable 0.650 hint(100) pass 0/0 n=104 | readable 0.650 hint(100) pass 90/180 n=104
+
+reference hidden (status edges only):
+dense 1700x1000 LR | readable 0.650 pass 15/15 | fit 0.682 pass 29/29
+dense 1700x1000 TB | readable 0.650 pass 9/9 | fit 0.652 pass 25/25
+huge 1700x1000 LR | readable 0.650 pass 63/63 | fit 0.501 pass 71/71
+huge 1700x1000 TB | readable 0.650 pass 63/63 | fit 0.487 pass 71/71
+ents31 1700x1000 LR | readable 0.650 pass 0/0 | fit 0.757 pass 22/22
+ents31 1700x1000 TB | readable 0.650 pass 0/0 | fit 0.706 pass 22/22
+ents100 1700x1000 LR | readable 0.650 pass 0/0 | fit 0.429 pass 90/90
+ents100 1700x1000 TB | readable 0.650 pass 0/0 | fit 0.422 pass 90/90
+
+lane summaries after (LR 1700 full):
+dense {"user":[1],"role":[1],"accessProfile":[5],"entitlement":[10,10,10],"source":[3]}
+huge {"user":[1],"role":[7,7],"accessProfile":[10,9,9,9],"entitlement":[10,10,10,10,10,10,10,9,9,9,9,9],"source":[5]}
+ents31 {"user":[1],"entitlement":[8,8,8,7],"source":[2]}
