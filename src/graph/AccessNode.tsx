@@ -1,7 +1,8 @@
-import type { ReactNode } from 'react'
+import { useContext, type ReactNode } from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import type { AccessGraphNodeKind, AccessReviewStatus } from '../sailpoint/types'
 import type { AccessSceneNode } from './buildAccessScene'
+import { EmphasisContext } from './EmphasisContext'
 import { NodeTooltip } from './NodeTooltip'
 
 /** Human-readable caption for each layer, shown under the label. */
@@ -109,7 +110,8 @@ export function StatusIcon({
  * (8-handle a11y card, per-kind accent) trimmed to a read-only label — the
  * access graph has no per-node actions.
  */
-export function AccessNode({ data }: NodeProps<AccessSceneNode>) {
+export function AccessNode({ id, data }: NodeProps<AccessSceneNode>) {
+  const { setHover, setFocus } = useContext(EmphasisContext)
   const kindLabel = KIND_LABEL[data.kind]
   const status = data.reviewStatus
   // Review status marks only the user's directly-held access item (drill-down).
@@ -159,6 +161,19 @@ export function AccessNode({ data }: NodeProps<AccessSceneNode>) {
     )
   }
 
+  // Hover / keyboard focus on a FIRST-LEVEL item raises its status edge (see
+  // `emphasizeEdges`). Leave/blur only clear their own id so a quick move from
+  // one card to the next never wipes the newer emphasis.
+  const emphasizable = data.kind !== 'user' && !data.reference
+  const emphasisHandlers = emphasizable
+    ? {
+        onMouseEnter: () => setHover(id),
+        onMouseLeave: () => setHover((cur) => (cur === id ? null : cur)),
+        onFocus: () => setFocus(id),
+        onBlur: () => setFocus((cur) => (cur === id ? null : cur)),
+      }
+    : {}
+
   // Drill-down mode: the original read-only card markup and a11y.
   return (
     <NodeTooltip
@@ -173,6 +188,7 @@ export function AccessNode({ data }: NodeProps<AccessSceneNode>) {
         tabIndex={0}
         aria-label={`${kindLabel}: ${data.label}`}
         data-review-status={status}
+        {...emphasisHandlers}
       >
         <Handles />
         <strong className="vc-graph-card-label">{data.label}</strong>

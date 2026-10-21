@@ -70,6 +70,12 @@ export interface AccessScene {
 export const NODE_WIDTH = 200
 export const NODE_HEIGHT = 64
 
+/**
+ * Stacking order of every card. Status edges sit at 1 and reference edges at 0,
+ * below the cards; `emphasizeEdges` raises a hovered item's edge above this.
+ */
+export const CARD_Z_INDEX = 2
+
 /** Dagre spacing — roomy enough that the 200px cards never crowd a rank. */
 const NODE_SEP = 48
 const RANK_SEP = 120
@@ -296,7 +302,7 @@ export function buildAccessScene(
       // Cards sit above every edge layer (status edges use zIndex 1), so a
       // status line that passes behind another card never strikes through its
       // name. Edges still stack status-over-reference among themselves.
-      zIndex: 2,
+      zIndex: CARD_Z_INDEX,
     }
   })
 

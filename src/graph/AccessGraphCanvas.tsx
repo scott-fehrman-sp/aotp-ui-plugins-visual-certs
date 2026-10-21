@@ -16,6 +16,8 @@ import { buildUserGridScene } from './buildUserGridScene'
 import { userSubgraph } from './userSubgraph'
 import { withoutReference } from './referenceFilter'
 import { computeFitPadding, measureOverlays, toFitViewPadding } from './fitPadding'
+import { emphasizeEdges } from './emphasizeEdges'
+import { EmphasisContext } from './EmphasisContext'
 import { GraphControls } from './GraphControls'
 import { AccessNode, StatusIcon } from './AccessNode'
 import { useColorMode } from './useColorMode'
@@ -196,6 +198,30 @@ function CanvasSurface({ graph }: AccessGraphCanvasProps) {
   }, [graph, selectedUserId, visibleGraph, rankdir, width, showReference])
 
   const inDrilldown = selectedUserId !== null
+
+  // Hover / keyboard-focus emphasis. A card whose scene is replaced (user,
+  // reference or layout change) may unmount without a mouseleave/blur, so any
+  // emphasis is cleared when the scene identity changes (adjust-during-render,
+  // as above). The context value is a stable pair of setters, so hovering
+  // re-renders only this surface (an edge restyle), never every card.
+  const [hoverId, setHoverId] = useState<string | null>(null)
+  const [focusId, setFocusId] = useState<string | null>(null)
+  const emphasis = useMemo(() => ({ setHover: setHoverId, setFocus: setFocusId }), [])
+  const sceneKey = `${selectedUserId}|${showReference}|${rankdir}`
+  const [prevSceneKey, setPrevSceneKey] = useState(sceneKey)
+  if (prevSceneKey !== sceneKey) {
+    setPrevSceneKey(sceneKey)
+    setHoverId(null)
+    setFocusId(null)
+  }
+  // Pointer wins; a keyboard-focused card stays emphasized once the pointer
+  // leaves another card. Purely an edge restyle: no layout or refit input.
+  const emphasisId = hoverId ?? focusId
+  const displayEdges = useMemo(
+    () => emphasizeEdges(scene.edges, inDrilldown ? emphasisId : null),
+    [scene.edges, emphasisId, inDrilldown],
+  )
+
   // A degenerate user (no outgoing edges) yields a single-node subgraph. Judged
   // on the UNFILTERED subgraph so hiding reference never triggers the note.
   const isDegenerate = inDrilldown && (subgraph?.edges.length ?? 0) === 0
@@ -233,9 +259,10 @@ function CanvasSurface({ graph }: AccessGraphCanvasProps) {
       <p className="sr-only" aria-live="polite">
         {announcement}
       </p>
+      <EmphasisContext.Provider value={emphasis}>
       <ReactFlow
         nodes={scene.nodes}
-        edges={scene.edges}
+        edges={displayEdges}
         nodeTypes={nodeTypes}
         colorMode={colorMode}
         nodesDraggable={false}
@@ -326,6 +353,7 @@ function CanvasSurface({ graph }: AccessGraphCanvasProps) {
           </Panel>
         )}
       </ReactFlow>
+      </EmphasisContext.Provider>
     </div>
   )
 }

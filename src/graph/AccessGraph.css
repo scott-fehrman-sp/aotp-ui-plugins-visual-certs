@@ -331,6 +331,16 @@
 }
 
 /*
+ * Hover/focus emphasis (see emphasizeEdges): the raised edge is drawn above the
+ * cards, so it must never take the pointer from the card under it. Otherwise
+ * the pointer would land on the edge, end the hover, and flicker.
+ */
+.vc-graph-wrap .react-flow__edge.vc-graph-edge-emphasized,
+.vc-graph-wrap .react-flow__edge.vc-graph-edge-emphasized * {
+  pointer-events: none !important;
+}
+
+/*
  * Drill-down legend: four rows (needs review / approved / revoked / reassigned),
  * each a status icon + text, in a corner panel styled like the layout toggle /
  * back button. The icon reuses the node's `.vc-graph-status-icon*` classes so
