@@ -1,8 +1,8 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { deriveAccessGraph } from '../domain/accessGraph'
 import type { AccessMatrixRowVM } from '../sailpoint/types'
-import { statusGraph } from '../test/reviewStatusFixture'
+import { buildFixtureGraph, statusGraph } from '../test/reviewStatusFixture'
 import type { StatusRow } from '../test/reviewStatusFixture'
 import { AccessGraphCanvas } from './AccessGraphCanvas'
 
@@ -431,6 +431,204 @@ describe('AccessGraphCanvas', () => {
     expect(entTip).toHaveTextContent('Description:')
     expect(entTip).toHaveTextContent('not set')
   })
+
+  describe('graph controls panel', () => {
+    const liveRegions = () =>
+      Array.from(document.querySelectorAll<HTMLElement>('[aria-live="polite"]'))
+    const announcement = () => liveRegions()[1]
+    const drillIn = (name = 'User One') =>
+      fireEvent.click(screen.getByRole('button', { name: `Show access for ${name}` }))
+    const btn = (name: string | RegExp) => screen.getByRole('button', { name })
+
+    /** Two users, each with a first-level item that also has nested lineage. */
+    function twoStatusUsers() {
+      return statusGraph([
+        row({ id: '1', userId: 'u1', user: 'User One', role: 'Role A', roleId: 'role-a', accessProfile: 'foo', accessProfileId: 'ap-foo', entitlement: 'read', entitlementId: 'e1', source: 'engr db', sourceId: 's1', reviewStatus: 'needsReview', accessItemKind: 'role', accessItemId: 'role-a' }),
+        row({ id: '2', userId: 'u2', user: 'User Two', role: 'Role B', roleId: 'role-b', accessProfile: 'bar', accessProfileId: 'ap-bar', entitlement: 'write', entitlementId: 'e2', source: 'acct db', sourceId: 's2', reviewStatus: 'approved', accessItemKind: 'role', accessItemId: 'role-b' }),
+      ])
+    }
+
+    it('renders the toolbar in a right panel in grid and drill-down, buttons in order', () => {
+      render(<AccessGraphCanvas graph={referenceGraph()} />)
+      const check = () => {
+        const toolbar = screen.getByRole('toolbar', { name: 'Graph controls' })
+        const panel = toolbar.closest('.react-flow__panel')!
+        expect(panel).toHaveClass('right')
+        expect(panel).toHaveClass('vc-graph-controls-panel')
+        const labels = Array.from(toolbar.querySelectorAll('button')).map((b) =>
+          b.getAttribute('aria-label'),
+        )
+        return labels
+      }
+      expect(check()).toEqual([
+        'Layout (open a user to change)',
+        'Reference nodes and links (open a user to change)',
+        'Hide minimap',
+      ])
+      drillIn()
+      expect(check()).toEqual([
+        'Layout: vertical',
+        'Hide reference nodes and links',
+        'Hide minimap',
+      ])
+    })
+
+    it('removes the old layout button from the top-left panel; Back still works', () => {
+      render(<AccessGraphCanvas graph={referenceGraph()} />)
+      drillIn()
+      const nav = document.querySelector('.vc-graph-nav-panel')!
+      expect(within(nav as HTMLElement).getByRole('button', { name: /back to all users/i })).toBeInTheDocument()
+      expect(within(nav as HTMLElement).queryByRole('button', { name: /^Layout/ })).toBeNull()
+      fireEvent.click(btn(/back to all users/i))
+      expect(screen.getByRole('button', { name: 'Show access for User One' })).toBeInTheDocument()
+    })
+
+    it('layout toggle flips the label and pressed state; disabled in the grid', () => {
+      render(<AccessGraphCanvas graph={referenceGraph()} />)
+      expect(btn(/^Layout/)).toBeDisabled()
+      drillIn()
+      expect(btn('Layout: vertical')).toHaveAttribute('aria-pressed', 'true')
+      fireEvent.click(btn('Layout: vertical'))
+      expect(btn('Layout: horizontal')).toHaveAttribute('aria-pressed', 'false')
+      expect(announcement()).toHaveTextContent('Layout changed to horizontal.')
+      fireEvent.click(btn('Layout: horizontal'))
+      expect(btn('Layout: vertical')).toBeInTheDocument()
+      expect(announcement()).toHaveTextContent('Layout changed to vertical.')
+    })
+
+    it('minimap toggle hides/shows the minimap in grid and drill-down', () => {
+      render(<AccessGraphCanvas graph={referenceGraph()} />)
+      expect(document.querySelector('.react-flow__minimap')).not.toBeNull()
+      expect(btn('Hide minimap')).toHaveAttribute('aria-pressed', 'true')
+
+      fireEvent.click(btn('Hide minimap'))
+      expect(document.querySelector('.react-flow__minimap')).toBeNull()
+      expect(btn('Show minimap')).toHaveAttribute('aria-pressed', 'false')
+      expect(announcement()).toHaveTextContent('Minimap hidden.')
+
+      // The hidden preference survives drilling in.
+      drillIn()
+      expect(document.querySelector('.react-flow__minimap')).toBeNull()
+
+      fireEvent.click(btn('Show minimap'))
+      expect(document.querySelector('.react-flow__minimap')).not.toBeNull()
+      expect(announcement()).toHaveTextContent('Minimap shown.')
+    })
+
+    it('reference toggle removes nested items, sources, edges and the legend row; restores them', () => {
+      render(<AccessGraphCanvas graph={referenceGraph()} />)
+      expect(btn(/^Reference nodes/)).toBeDisabled()
+      drillIn()
+      const nestedLabels = ['foo', 'read', 'engr db', 'phone app']
+      for (const t of nestedLabels) expect(screen.getByText(t)).toBeInTheDocument()
+      expect(screen.getByRole('group', { name: /review status legend/i })).toHaveTextContent(
+        'Reference only (not reviewed)',
+      )
+      expect(btn('Hide reference nodes and links')).toHaveAttribute('aria-pressed', 'true')
+
+      fireEvent.click(btn('Hide reference nodes and links'))
+      for (const t of nestedLabels) expect(screen.queryByText(t)).toBeNull()
+      expect(document.querySelector('.vc-graph-card-reference')).toBeNull()
+      expect(document.querySelector('.vc-graph-edge-reference')).toBeNull()
+      expect(btn('Show reference nodes and links')).toHaveAttribute('aria-pressed', 'false')
+      expect(announcement()).toHaveTextContent('Reference nodes and links hidden.')
+
+      // First level, statuses and the four status legend rows are intact.
+      for (const t of ['Role A', 'login', 'User One']) expect(screen.getByText(t)).toBeInTheDocument()
+      expect(document.querySelectorAll('.react-flow__node .vc-graph-status-icon')).toHaveLength(2)
+      const legend = screen.getByRole('group', { name: /review status legend/i })
+      expect(legend).not.toHaveTextContent('Reference only')
+      expect(legend.querySelectorAll('.vc-graph-status-icon')).toHaveLength(4)
+
+      fireEvent.click(btn('Show reference nodes and links'))
+      for (const t of nestedLabels) expect(screen.getByText(t)).toBeInTheDocument()
+      expect(legend).toHaveTextContent('Reference only (not reviewed)')
+      expect(announcement()).toHaveTextContent('Reference nodes and links shown.')
+    })
+
+    it('hidden reference survives switching users and grid round trips', () => {
+      render(<AccessGraphCanvas graph={twoStatusUsers()} />)
+      drillIn('User One')
+      fireEvent.click(btn('Hide reference nodes and links'))
+      expect(screen.queryByText('read')).toBeNull()
+
+      fireEvent.click(btn(/back to all users/i))
+      // Layout/reference are disabled in the grid, but the preference is kept.
+      expect(btn(/^Reference nodes/)).toBeDisabled()
+      drillIn('User Two')
+      expect(screen.getByText('Role B')).toBeInTheDocument()
+      expect(screen.queryByText('write')).toBeNull()
+      expect(screen.queryByText('acct db')).toBeNull()
+      expect(btn('Show reference nodes and links')).toHaveAttribute('aria-pressed', 'false')
+
+      fireEvent.click(btn('Show reference nodes and links'))
+      expect(screen.getByText('write')).toBeInTheDocument()
+    })
+
+    it('layout preference survives switching users', () => {
+      render(<AccessGraphCanvas graph={twoStatusUsers()} />)
+      drillIn('User One')
+      fireEvent.click(btn('Layout: vertical'))
+      fireEvent.click(btn(/back to all users/i))
+      drillIn('User Two')
+      expect(btn('Layout: horizontal')).toBeInTheDocument()
+    })
+
+    it('still renders a node that is both first-level and nested when reference is hidden', async () => {
+      const graph = await buildFixtureGraph()
+      render(<AccessGraphCanvas graph={graph} />)
+      drillIn('Alice Adams')
+      fireEvent.click(btn('Hide reference nodes and links'))
+      // e-read ("Read") is held directly by Alice and also nested under Role A.
+      const card = screen.getByText('Read').closest<HTMLElement>('.vc-graph-card')!
+      expect(card).toHaveAttribute('data-review-status', 'approved')
+      expect(card.className).not.toContain('vc-graph-card-reference')
+      // Nested-only "Write" is gone.
+      expect(screen.queryByText('Write')).toBeNull()
+    })
+
+    it('does not show the no-expanded-access note when hiding reference for a user with lineage', () => {
+      render(<AccessGraphCanvas graph={referenceGraph()} />)
+      drillIn()
+      fireEvent.click(btn('Hide reference nodes and links'))
+      expect(screen.queryByText('No expanded access for this user.')).toBeNull()
+    })
+
+    it('shows the note for a user with no lineage, outside the right panel', () => {
+      const graph = deriveAccessGraph([
+        row({ id: '1', userId: 'u1', user: 'User One' }),
+        row({ id: '2', userId: 'u2', user: 'User Two', entitlement: 'x', entitlementId: 'e9', source: 's', sourceId: 's9' }),
+      ])
+      render(<AccessGraphCanvas graph={graph} />)
+      drillIn('User One')
+      const note = screen.getByText('No expanded access for this user.')
+      const panel = note.closest('.react-flow__panel')!
+      expect(panel).toHaveClass('top')
+      expect(panel).toHaveClass('center')
+      expect(panel).not.toHaveClass('right')
+    })
+
+    it('shows a tooltip on a panel button; Escape closes it first, then leaves the drill-down', () => {
+      render(<AccessGraphCanvas graph={referenceGraph()} />)
+      drillIn()
+      const minimap = btn('Hide minimap')
+      const anchor = minimap.closest<HTMLElement>('.vc-graph-hint-anchor')!
+      stubAnchorRect(anchor)
+      fireEvent.mouseEnter(anchor)
+      expect(screen.getByRole('tooltip')).toHaveTextContent('Hide minimap')
+      fireEvent.mouseLeave(anchor)
+      expect(screen.queryByRole('tooltip')).toBeNull()
+
+      fireEvent.focus(minimap)
+      expect(screen.getByRole('tooltip')).toBeInTheDocument()
+      fireEvent.keyDown(minimap, { key: 'Escape' })
+      expect(screen.queryByRole('tooltip')).toBeNull()
+      expect(screen.getByText('Role A')).toBeInTheDocument()
+
+      fireEvent.keyDown(minimap, { key: 'Escape' })
+      expect(screen.getByRole('button', { name: 'Show access for User One' })).toBeInTheDocument()
+    })
+  })
 })
 
 /**
@@ -452,6 +650,22 @@ function stubRect(el: HTMLElement): void {
       bottom: 184,
       width: 200,
       height: 64,
+      toJSON: () => ({}),
+    }) as DOMRect
+}
+
+/** Scoped rect for a control-panel hint anchor (the anchor itself is measured). */
+function stubAnchorRect(el: HTMLElement): void {
+  el.getBoundingClientRect = () =>
+    ({
+      x: 900,
+      y: 100,
+      top: 100,
+      left: 900,
+      right: 932,
+      bottom: 132,
+      width: 32,
+      height: 32,
       toJSON: () => ({}),
     }) as DOMRect
 }

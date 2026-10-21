@@ -20,6 +20,7 @@ import type {
   AccessSceneNodeData,
   RankDir,
 } from '../sailpoint/types'
+import { isReferenceNode, isStatusEdge } from './referenceFilter'
 
 /**
  * The fixed layer order, user → source. Every node of a given kind is pinned to
@@ -191,7 +192,7 @@ export function buildAccessScene(
         reviewMixed: node.reviewMixed,
         // A non-user node without a status is reference-only: it is shown to
         // explain how access derives, but is not itself reviewed.
-        reference: node.kind !== 'user' && !node.reviewStatus,
+        reference: isReferenceNode(node),
       },
       width: NODE_WIDTH,
       height: NODE_HEIGHT,
@@ -241,7 +242,7 @@ export function buildAccessScene(
       targetHandle: handle.targetHandle,
     }
     // Status edge: the user's first-level hop, drawn above reference edges.
-    if (edge.reviewStatus) {
+    if (isStatusEdge(edge) && edge.reviewStatus) {
       return {
         ...base,
         className: `vc-graph-edge-status vc-graph-edge-${edge.reviewStatus}`,

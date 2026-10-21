@@ -1,0 +1,85 @@
+/*
+ * Right-side vertical control panel for the access graph. Mirrors org-graph's
+ * `.toolbar` / `.icon-button` / `.hint` (App.css) using the graph tokens from
+ * tokens.css only (light + dark come from there). `--panel` is not defined in
+ * this plugin's tokens, so it falls back to `--control`, the same precedent as
+ * NodeTooltip.css.
+ */
+.vc-graph-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel, var(--control));
+  box-shadow: var(--shadow);
+}
+
+.vc-graph-control {
+  box-sizing: border-box;
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--control);
+  color: var(--ink);
+  cursor: pointer;
+  transition:
+    background-color var(--motion-ms) ease,
+    border-color var(--motion-ms) ease,
+    color var(--motion-ms) ease;
+}
+
+.vc-graph-control:hover:not(:disabled),
+.vc-graph-control-active:not(:disabled) {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.vc-graph-control:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* pointer-events: none lets hover land on the hint anchor, so a disabled
+   button still explains itself (disabled buttons can swallow mouse events). */
+.vc-graph-control:disabled {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
+}
+
+.vc-graph-control-icon {
+  display: block;
+  width: 16px;
+  height: 16px;
+}
+
+/* Must be a real box (not display: contents) so it can be measured. */
+.vc-graph-hint-anchor {
+  display: inline-flex;
+}
+
+.vc-graph-hint {
+  position: fixed;
+  z-index: 1000;
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel, var(--control));
+  color: var(--ink);
+  box-shadow: var(--shadow);
+  font-family: var(--sans);
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* Opens to the left of the anchor point, vertically centered. */
+.vc-graph-hint-left {
+  transform: translate(calc(-100% - 8px), -50%);
+}

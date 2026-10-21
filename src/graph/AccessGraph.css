@@ -63,8 +63,9 @@
   border: 0;
 }
 
-/* Inner nav + LR/TB toggle live in a top-left panel, stacked. */
-.vc-graph-wrap .react-flow__panel.top-left {
+/* Back-to-grid nav lives in a top-left panel (the layout toggle moved to the
+   right-side control panel). */
+.vc-graph-wrap .react-flow__panel.vc-graph-nav-panel {
   display: flex;
   flex-direction: column;
   gap: 6px;

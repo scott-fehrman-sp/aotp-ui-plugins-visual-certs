@@ -13,6 +13,8 @@ import type { AccessGraphData, AccessSceneNodeData, RankDir } from '../sailpoint
 import { buildAccessScene, type AccessSceneNode } from './buildAccessScene'
 import { buildUserGridScene } from './buildUserGridScene'
 import { userSubgraph } from './userSubgraph'
+import { withoutReference } from './referenceFilter'
+import { GraphControls } from './GraphControls'
 import { AccessNode, StatusIcon } from './AccessNode'
 import { useColorMode } from './useColorMode'
 import { EmptyState } from '../components/EmptyState'
@@ -39,11 +41,18 @@ const MINIMAP_COLOR: Record<string, string> = {
  * The React Flow canvas for the access graph. It has two modes:
  *
  * 1. OVERVIEW (default): only `user`-kind cards, laid out in a centered grid
- *    (`buildUserGridScene`), each a selectable control. No edges, no direction
- *    toggle — the LR/TB toggle is meaningless without the dagre layout.
+ *    (`buildUserGridScene`), each a selectable control. No edges; the layout and
+ *    reference toggles in the control panel are disabled (they only apply to the
+ *    dagre drill-down layout).
  * 2. DRILL-DOWN: activating a user card shows ONLY that user's forward-reachable
  *    subgraph (`buildAccessScene(userSubgraph(graph, id), rankdir)`), with a
- *    "Back to all users" panel control and Escape returning to the grid.
+ *    "Back to all users" panel control and Escape returning to the grid. The
+ *    reference toggle can hide the reference-only lineage (nested items,
+ *    sources) so only the reviewable first level remains.
+ *
+ * A right-side vertical control panel (`GraphControls`, in both modes) holds the
+ * layout direction, reference visibility and minimap toggles. Those preferences
+ * live in memory and survive switching users and grid/drill-down.
  *
  * Structure mirrors org-graph's `OrgCanvas`: a `ReactFlowProvider` wrapping a
  * surface that reads the viewport width from the React Flow store, derives
@@ -91,6 +100,9 @@ function FitOnSceneChange({ sceneKey }: { sceneKey: string }) {
 
 function CanvasSurface({ graph }: AccessGraphCanvasProps) {
   const [rankdir, setRankdir] = useState<RankDir>('LR')
+  const [showReference, setShowReference] = useState(true)
+  const [showMinimap, setShowMinimap] = useState(true)
+  const [announcement, setAnnouncement] = useState('')
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const colorMode = useColorMode()
   const width = useStore((state) => state.width)
@@ -136,6 +148,13 @@ function CanvasSurface({ graph }: AccessGraphCanvasProps) {
     [graph, selectedUserId],
   )
 
+  // With reference hidden only the user + first-level items/edges remain. The
+  // layout below is recomputed on the filtered graph, so there are no gaps.
+  const visibleGraph = useMemo(
+    () => (subgraph && !showReference ? withoutReference(subgraph) : subgraph),
+    [subgraph, showReference],
+  )
+
   const scene = useMemo(() => {
     if (selectedUserId === null) {
       return buildUserGridScene(
@@ -144,11 +163,12 @@ function CanvasSurface({ graph }: AccessGraphCanvasProps) {
         setSelectedUserId,
       )
     }
-    return buildAccessScene(subgraph ?? { nodes: [], edges: [] }, rankdir)
-  }, [graph, selectedUserId, subgraph, rankdir, width])
+    return buildAccessScene(visibleGraph ?? { nodes: [], edges: [] }, rankdir)
+  }, [graph, selectedUserId, visibleGraph, rankdir, width])
 
   const inDrilldown = selectedUserId !== null
-  // A degenerate user (no outgoing edges) yields a single-node subgraph.
+  // A degenerate user (no outgoing edges) yields a single-node subgraph. Judged
+  // on the UNFILTERED subgraph so hiding reference never triggers the note.
   const isDegenerate = inDrilldown && (subgraph?.edges.length ?? 0) === 0
 
   // Mouse convenience: in grid mode, clicking a card also drills in.
@@ -156,10 +176,33 @@ function CanvasSurface({ graph }: AccessGraphCanvasProps) {
     if (selectedUserId === null) setSelectedUserId(node.id)
   }
 
+  const toggleLayout = () => {
+    const next: RankDir = rankdir === 'LR' ? 'TB' : 'LR'
+    setRankdir(next)
+    setAnnouncement(
+      `Layout changed to ${next === 'LR' ? 'vertical' : 'horizontal'}.`,
+    )
+  }
+  const toggleReference = () => {
+    setShowReference(!showReference)
+    setAnnouncement(
+      showReference
+        ? 'Reference nodes and links hidden.'
+        : 'Reference nodes and links shown.',
+    )
+  }
+  const toggleMinimap = () => {
+    setShowMinimap(!showMinimap)
+    setAnnouncement(showMinimap ? 'Minimap hidden.' : 'Minimap shown.')
+  }
+
   return (
     <div className="vc-graph-wrap">
       <p className="sr-only" aria-live="polite">
         {inDrilldown ? 'Showing access for one user' : `Showing ${userCount} users`}
+      </p>
+      <p className="sr-only" aria-live="polite">
+        {announcement}
       </p>
       <ReactFlow
         nodes={scene.nodes}
@@ -176,32 +219,43 @@ function CanvasSurface({ graph }: AccessGraphCanvasProps) {
         maxZoom={1.8}
         onNodeClick={onNodeClick}
       >
-        <MiniMap
-          pannable
-          zoomable
-          maskColor={colorMode === 'dark' ? 'rgba(16,22,29,0.72)' : 'rgba(238,242,246,0.72)'}
-          nodeColor={(node) =>
-            MINIMAP_COLOR[(node.data as AccessSceneNodeData).kind] ?? '#9aafc2'
+        {showMinimap && (
+          <MiniMap
+            pannable
+            zoomable
+            maskColor={colorMode === 'dark' ? 'rgba(16,22,29,0.72)' : 'rgba(238,242,246,0.72)'}
+            nodeColor={(node) =>
+              MINIMAP_COLOR[(node.data as AccessSceneNodeData).kind] ?? '#9aafc2'
+            }
+          />
+        )}
+        <Controls showInteractive={false} />
+        <FitOnSceneChange
+          sceneKey={
+            inDrilldown
+              ? `${selectedUserId}|${showReference ? 'ref' : 'noref'}|${rankdir}`
+              : 'grid'
           }
         />
-        <Controls showInteractive={false} />
-        <FitOnSceneChange sceneKey={selectedUserId ?? 'grid'} />
+        <Panel position="top-right" className="vc-graph-controls-panel">
+          <GraphControls
+            inDrilldown={inDrilldown}
+            rankdir={rankdir}
+            onToggleLayout={toggleLayout}
+            showReference={showReference}
+            onToggleReference={toggleReference}
+            showMinimap={showMinimap}
+            onToggleMinimap={toggleMinimap}
+          />
+        </Panel>
         {inDrilldown && (
-          <Panel position="top-left">
+          <Panel position="top-left" className="vc-graph-nav-panel">
             <button
               type="button"
               className="vc-graph-toggle"
               onClick={() => setSelectedUserId(null)}
             >
               ← Back to all users
-            </button>
-            <button
-              type="button"
-              className="vc-graph-toggle"
-              aria-pressed={rankdir === 'TB'}
-              onClick={() => setRankdir((d) => (d === 'LR' ? 'TB' : 'LR'))}
-            >
-              {rankdir === 'LR' ? 'Layout: vertical' : 'Layout: horizontal'}
             </button>
           </Panel>
         )}
@@ -225,18 +279,20 @@ function CanvasSurface({ graph }: AccessGraphCanvasProps) {
                 <StatusIcon status="reassigned" decorative />
                 Reassigned
               </span>
-              <span className="vc-graph-legend-row">
-                <span
-                  className="vc-graph-legend-swatch vc-graph-legend-swatch-reference"
-                  aria-hidden="true"
-                />
-                Reference only (not reviewed)
-              </span>
+              {showReference && (
+                <span className="vc-graph-legend-row">
+                  <span
+                    className="vc-graph-legend-swatch vc-graph-legend-swatch-reference"
+                    aria-hidden="true"
+                  />
+                  Reference only (not reviewed)
+                </span>
+              )}
             </div>
           </Panel>
         )}
         {isDegenerate && (
-          <Panel position="top-right">
+          <Panel position="top-center">
             <p className="vc-graph-note">No expanded access for this user.</p>
           </Panel>
         )}
