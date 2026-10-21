@@ -355,9 +355,46 @@
  * cards, so it must never take the pointer from the card under it. Otherwise
  * the pointer would land on the edge, end the hover, and flicker.
  */
+/*
+ * Selection (see highlightEdges): the selected item's user->item edge and its
+ * lineage edges are also drawn above the cards, so they must never take the
+ * pointer from a card (or the pane) under them either.
+ */
 .vc-graph-wrap .react-flow__edge.vc-graph-edge-emphasized,
-.vc-graph-wrap .react-flow__edge.vc-graph-edge-emphasized * {
+.vc-graph-wrap .react-flow__edge.vc-graph-edge-emphasized *,
+.vc-graph-wrap .react-flow__edge.vc-graph-edge-selected,
+.vc-graph-wrap .react-flow__edge.vc-graph-edge-selected *,
+.vc-graph-wrap .react-flow__edge.vc-graph-edge-lineage,
+.vc-graph-wrap .react-flow__edge.vc-graph-edge-lineage * {
   pointer-events: none !important;
+}
+
+/*
+ * Selected first-level card. A neutral second ring (--ink, never one of the four
+ * status colors) sits outside the status ring, separated by a --canvas gap, so
+ * "selected" is unmistakable next to a merely hovered card while the status
+ * ring, stripe and corner icon stay. Specificity beats the status :hover rule.
+ */
+.vc-graph-card-selectable {
+  cursor: pointer;
+}
+
+.vc-graph-card.vc-graph-card-selected,
+.vc-graph-card.vc-graph-card-selected:hover {
+  box-shadow:
+    0 0 0 2px var(--vc-graph-status),
+    0 0 0 5px var(--canvas),
+    0 0 0 7px var(--ink),
+    var(--shadow);
+}
+
+/* Reference cards: lineage of the selected item at full strength, the rest muted. */
+.vc-graph-card.vc-graph-card-reference.vc-graph-card-lineage {
+  opacity: 1;
+}
+
+.vc-graph-card.vc-graph-card-reference.vc-graph-card-reference-dim {
+  opacity: 0.45;
 }
 
 /*

@@ -1,8 +1,10 @@
-import { useContext, type ReactNode } from 'react'
+import { useContext, useId, type KeyboardEvent, type ReactNode } from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import type { AccessGraphNodeKind, AccessReviewStatus } from '../sailpoint/types'
 import type { AccessSceneNode } from './buildAccessScene'
 import { EmphasisContext } from './EmphasisContext'
+import { SelectionContext } from './SelectionContext'
+import { isSelectableNodeData } from './selectEdges'
 import { NodeTooltip } from './NodeTooltip'
 
 /** Human-readable caption for each layer, shown under the label. */
@@ -75,8 +77,11 @@ const STATUS_ICON_SHAPE: Record<AccessReviewStatus, ReactNode> = {
 export function StatusIcon({
   status,
   decorative = false,
+  id,
 }: {
   status: AccessReviewStatus
+  /** Optional DOM id, so a card can point `aria-describedby` at its icon. */
+  id?: string
   /**
    * When true the icon is purely decorative (hidden from the a11y tree) — used
    * in the legend where an adjacent text label already names the status. On a
@@ -90,6 +95,7 @@ export function StatusIcon({
     : { role: 'img', 'aria-label': label }
   return (
     <svg
+      id={id}
       className={`vc-graph-status-icon vc-graph-status-icon-${status}`}
       data-review-status={status}
       viewBox="0 0 18 18"
@@ -112,6 +118,8 @@ export function StatusIcon({
  */
 export function AccessNode({ id, data }: NodeProps<AccessSceneNode>) {
   const { setHover, setFocus } = useContext(EmphasisContext)
+  const { selectedId, lineageNodeIds, toggle } = useContext(SelectionContext)
+  const statusIconId = useId()
   const kindLabel = KIND_LABEL[data.kind]
   const status = data.reviewStatus
   // Review status marks only the user's directly-held access item (drill-down).
@@ -164,8 +172,8 @@ export function AccessNode({ id, data }: NodeProps<AccessSceneNode>) {
   // Hover / keyboard focus on a FIRST-LEVEL item raises its status edge (see
   // `emphasizeEdges`). Leave/blur only clear their own id so a quick move from
   // one card to the next never wipes the newer emphasis.
-  const emphasizable = data.kind !== 'user' && !data.reference
-  const emphasisHandlers = emphasizable
+  const selectable = isSelectableNodeData(data)
+  const emphasisHandlers = selectable
     ? {
         onMouseEnter: () => setHover(id),
         onMouseLeave: () => setHover((cur) => (cur === id ? null : cur)),
@@ -174,7 +182,37 @@ export function AccessNode({ id, data }: NodeProps<AccessSceneNode>) {
       }
     : {}
 
-  // Drill-down mode: the original read-only card markup and a11y.
+  // Selection (see `highlightEdges`): a first-level card is a toggle button.
+  // Mouse selection goes through the canvas's node click; the keyboard is
+  // handled here. Reference-only cards in the selected item's lineage are shown
+  // at full strength, the other reference cards are muted.
+  const selected = selectable && selectedId === id
+  const inLineage = data.reference && lineageNodeIds.has(id)
+  const referenceDimmed = data.reference && selectedId !== null && !inLineage
+  const selectionClass =
+    (selectable ? ' vc-graph-card-selectable' : '') +
+    (selected ? ' vc-graph-card-selected' : '') +
+    (inLineage ? ' vc-graph-card-lineage' : '') +
+    (referenceDimmed ? ' vc-graph-card-reference-dim' : '')
+  const selectionProps = selectable
+    ? {
+        role: 'button',
+        'aria-pressed': selected,
+        // role=button replaces the card's child semantics, so point at the
+        // corner icon to keep the review status announced.
+        'aria-describedby': status ? statusIconId : undefined,
+        onKeyDown: (event: KeyboardEvent) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            // Space would otherwise scroll the pane.
+            event.preventDefault()
+            toggle(id)
+          }
+        },
+      }
+    : {}
+
+  // Drill-down mode: the original read-only card markup and a11y; first-level
+  // cards are also toggle buttons.
   return (
     <NodeTooltip
       kindLabel={kindLabel}
@@ -184,16 +222,17 @@ export function AccessNode({ id, data }: NodeProps<AccessSceneNode>) {
       {...tipProps}
     >
       <article
-        className={`vc-graph-card kind-${data.kind}${statusClass}`}
+        className={`vc-graph-card kind-${data.kind}${statusClass}${selectionClass}`}
         tabIndex={0}
         aria-label={`${kindLabel}: ${data.label}`}
         data-review-status={status}
+        {...selectionProps}
         {...emphasisHandlers}
       >
         <Handles />
         <strong className="vc-graph-card-label">{data.label}</strong>
         <span className="vc-graph-card-kind">{kindLabel}</span>
-        {status ? <StatusIcon status={status} /> : null}
+        {status ? <StatusIcon status={status} id={statusIconId} /> : null}
       </article>
     </NodeTooltip>
   )

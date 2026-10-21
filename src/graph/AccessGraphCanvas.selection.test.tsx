@@ -1,0 +1,504 @@
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import type { Edge, Node } from '@xyflow/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { buildFixtureGraph, statusGraph } from '../test/reviewStatusFixture'
+import type { StatusRow } from '../test/reviewStatusFixture'
+import type { AccessGraphData } from '../sailpoint/types'
+import { AccessGraphCanvas } from './AccessGraphCanvas'
+import { CARD_Z_INDEX } from './buildAccessScene'
+import { DIM_REFERENCE_OPACITY, DIM_STATUS_OPACITY, EMPHASIS_EDGE_Z_INDEX } from './emphasizeEdges'
+import {
+  LINEAGE_EDGE_CLASS,
+  LINEAGE_STROKE_WIDTH,
+  SELECTED_EDGE_CLASS,
+  SELECTION_STROKE_WIDTH,
+  STATUS_STROKE,
+} from './selectEdges'
+
+// A separate file so wrapping ReactFlow (to record the nodes/edges it is given)
+// and mocking fitView / setViewport leaves the other canvas tests untouched.
+// jsdom cannot paint or lay out, so this asserts the DATA handed to React Flow,
+// the card DOM/aria/classes, and that selecting never refits or moves anything;
+// the painting is checked in a real browser.
+const spies = vi.hoisted(() => ({
+  fitView: vi.fn(() => Promise.resolve(true)),
+  setViewport: vi.fn(() => Promise.resolve(true)),
+  edges: [] as unknown[],
+  nodes: [] as unknown[],
+}))
+vi.mock('@xyflow/react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@xyflow/react')>()
+  const Recorded = (props: React.ComponentProps<typeof actual.ReactFlow>) => {
+    spies.edges = props.edges ?? []
+    spies.nodes = props.nodes ?? []
+    return <actual.ReactFlow {...props} />
+  }
+  return {
+    ...actual,
+    ReactFlow: Recorded,
+    useReactFlow: () => ({
+      ...actual.useReactFlow(),
+      fitView: spies.fitView,
+      setViewport: spies.setViewport,
+    }),
+  }
+})
+
+function row(overrides: Partial<StatusRow>): StatusRow {
+  return {
+    id: 'r',
+    userId: 'u1',
+    user: 'User One',
+    role: '',
+    roleId: null,
+    accessProfile: '',
+    accessProfileId: null,
+    entitlement: '',
+    entitlementId: null,
+    source: '',
+    sourceId: null,
+    unresolved: false,
+    ...overrides,
+  }
+}
+
+/**
+ * User One: role-a{ap-foo{e1}} needsReview -> engr db; login approved and admin
+ * revoked held directly, both -> phone app. User Two: pay (needsReview) -> erp.
+ */
+function graph(): AccessGraphData {
+  return statusGraph([
+    row({ id: '1', role: 'Role A', roleId: 'role-a', accessProfile: 'foo', accessProfileId: 'ap-foo', entitlement: 'read', entitlementId: 'e1', source: 'engr db', sourceId: 's1', reviewStatus: 'needsReview', accessItemKind: 'role', accessItemId: 'role-a', accessItemName: 'Role A' }),
+    row({ id: '2', entitlement: 'login', entitlementId: 'e2', source: 'phone app', sourceId: 's2', reviewStatus: 'approved', accessItemKind: 'entitlement', accessItemId: 'e2', accessItemName: 'login' }),
+    row({ id: '3', entitlement: 'admin', entitlementId: 'e3', source: 'phone app', sourceId: 's2', reviewStatus: 'revoked', accessItemKind: 'entitlement', accessItemId: 'e3', accessItemName: 'admin' }),
+    row({ id: '4', userId: 'u2', user: 'User Two', entitlement: 'pay', entitlementId: 'e4', source: 'erp', sourceId: 's3', reviewStatus: 'needsReview', accessItemKind: 'entitlement', accessItemId: 'e4', accessItemName: 'pay' }),
+  ])
+}
+
+const btn = (name: string) => screen.getByRole('button', { name })
+const edges = () => spies.edges as Edge[]
+const nodes = () => spies.nodes as Node[]
+const card = (label: string) => screen.getByText(label).closest<HTMLElement>('.vc-graph-card')!
+const drillIn = (user = 'User One') => fireEvent.click(btn(`Show access for ${user}`))
+const nodeId = (label: string) =>
+  nodes().find((n) => (n.data as { label: string }).label === label)!.id
+const eid = (from: string, to: string) => `e:${from}:${to}`
+const withClass = (name: string) => edges().filter((e) => e.className?.includes(name))
+const selectedEdges = () => withClass(SELECTED_EDGE_CLASS)
+const lineageEdges = () => withClass(LINEAGE_EDGE_CLASS)
+const emphasized = () => withClass('vc-graph-edge-emphasized')
+const snapshot = () => structuredClone(edges())
+const positions = () => nodes().map((n) => ({ id: n.id, ...n.position }))
+const isStatus = (e: Edge) => Boolean((e.data as { reviewStatus?: string } | undefined)?.reviewStatus)
+const pressed = () =>
+  Array.from(document.querySelectorAll<HTMLElement>('.vc-graph-card[aria-pressed="true"]'))
+const liveText = () =>
+  Array.from(document.querySelectorAll('[aria-live]'))
+    .map((el) => el.textContent)
+    .join('|')
+const settle = () =>
+  act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 50))
+  })
+
+/** Per-instance rect (never Element.prototype) so the tooltip's zero-size guard passes. */
+function stubRect(el: HTMLElement): void {
+  const target = (el.firstElementChild ?? el) as HTMLElement
+  target.getBoundingClientRect = () =>
+    ({ x: 40, y: 120, top: 120, left: 40, right: 240, bottom: 184, width: 200, height: 64, toJSON: () => ({}) }) as DOMRect
+}
+
+describe('AccessGraphCanvas item selection', () => {
+  beforeEach(() => {
+    spies.fitView.mockClear()
+    spies.setViewport.mockClear()
+  })
+
+  it('makes first-level cards toggle buttons that keep their names', () => {
+    render(<AccessGraphCanvas graph={graph()} />)
+    drillIn()
+    for (const [kind, label] of [['Role', 'Role A'], ['Entitlement', 'login'], ['Entitlement', 'admin']]) {
+      const button = btn(`${kind}: ${label}`)
+      expect(button).toBe(screen.getByLabelText(`${kind}: ${label}`))
+      expect(button).toHaveAttribute('aria-pressed', 'false')
+      // The corner icon is described by the card so role=button keeps announcing the status.
+      const described = button.getAttribute('aria-describedby')!
+      expect(document.getElementById(described)).toHaveAttribute('data-review-status')
+      expect(document.getElementById(described)).toHaveAccessibleName(/needs review|approved|revoked/i)
+    }
+    // Reference-only cards and the user card are not buttons.
+    for (const label of ['foo', 'read', 'engr db', 'phone app', 'User One']) {
+      const c = card(label)
+      expect(c).not.toHaveAttribute('role')
+      expect(c).not.toHaveAttribute('aria-pressed')
+    }
+  })
+
+  it('keeps the grid user cards as plain drill-in buttons', () => {
+    render(<AccessGraphCanvas graph={graph()} />)
+    const gridCard = btn('Show access for User One')
+    expect(gridCard).not.toHaveAttribute('aria-pressed')
+    fireEvent.click(gridCard)
+    expect(card('Role A')).toBeInTheDocument()
+  })
+
+  it('click selects and highlights the user edge and the whole lineage; click again clears', () => {
+    render(<AccessGraphCanvas graph={graph()} />)
+    drillIn()
+    const before = snapshot()
+    const roleA = card('Role A')
+    fireEvent.click(roleA)
+
+    expect(roleA).toHaveAttribute('aria-pressed', 'true')
+    expect(roleA.className).toContain('vc-graph-card-selected')
+    expect(pressed()).toEqual([roleA])
+
+    const [selected] = selectedEdges()
+    expect(selectedEdges()).toHaveLength(1)
+    expect(selected.id).toBe(eid('user:u1', 'role:role-a'))
+    expect(selected.zIndex).toBe(EMPHASIS_EDGE_Z_INDEX)
+    expect(selected.zIndex).toBeGreaterThan(CARD_Z_INDEX)
+    expect(selected.style?.strokeWidth).toBe(SELECTION_STROKE_WIDTH)
+    expect(selected.style?.strokeDasharray).toBe('6 4')
+    expect(selected.interactionWidth).toBe(0)
+
+    expect(lineageEdges().map((e) => e.id).sort()).toEqual(
+      [
+        eid('role:role-a', 'accessProfile:ap-foo'),
+        eid('accessProfile:ap-foo', 'entitlement:e1'),
+        eid('entitlement:e1', 'source:s1'),
+      ].sort(),
+    )
+    for (const e of lineageEdges()) {
+      expect(e.style).toMatchObject({
+        stroke: STATUS_STROKE.needsReview,
+        strokeWidth: LINEAGE_STROKE_WIDTH,
+        strokeDasharray: 'none',
+        opacity: 1,
+      })
+    }
+    const highlighted = new Set([...selectedEdges(), ...lineageEdges()].map((e) => e.id))
+    const others = edges().filter((e) => !highlighted.has(e.id))
+    expect(others.length).toBeGreaterThan(0)
+    for (const e of others) {
+      expect(e.style?.opacity).toBe(isStatus(e) ? DIM_STATUS_OPACITY : DIM_REFERENCE_OPACITY)
+    }
+
+    fireEvent.click(roleA)
+    expect(roleA).toHaveAttribute('aria-pressed', 'false')
+    expect(selectedEdges()).toHaveLength(0)
+    expect(edges()).toEqual(before)
+  })
+
+  it('selecting another item replaces the selection; a shared downstream edge follows the selection', () => {
+    render(<AccessGraphCanvas graph={graph()} />)
+    drillIn()
+    fireEvent.click(card('login'))
+    expect(lineageEdges().map((e) => e.id)).toEqual([eid('entitlement:e2', 'source:s2')])
+    fireEvent.click(card('admin'))
+    expect(pressed()).toEqual([card('admin')])
+    expect(selectedEdges().map((e) => e.target)).toEqual([nodeId('admin')])
+    expect(lineageEdges().map((e) => e.id)).toEqual([eid('entitlement:e3', 'source:s2')])
+    expect(
+      edges().find((e) => e.id === eid('entitlement:e2', 'source:s2'))!.style?.opacity,
+    ).toBe(DIM_REFERENCE_OPACITY)
+  })
+
+  it('Enter and Space toggle the focused card, and Space does not scroll the pane', () => {
+    render(<AccessGraphCanvas graph={graph()} />)
+    drillIn()
+    const admin = card('admin')
+    admin.focus()
+    expect(fireEvent.keyDown(admin, { key: 'Enter' })).toBe(false)
+    expect(admin).toHaveAttribute('aria-pressed', 'true')
+    expect(fireEvent.keyDown(admin, { key: ' ' })).toBe(false)
+    expect(admin).toHaveAttribute('aria-pressed', 'false')
+    fireEvent.keyDown(admin, { key: ' ' })
+    expect(admin).toHaveAttribute('aria-pressed', 'true')
+    // Other keys do nothing.
+    expect(fireEvent.keyDown(admin, { key: 'a' })).toBe(true)
+    fireEvent.keyDown(admin, { key: 'Tab' })
+    expect(admin).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  it('does nothing when a reference-only card or the user card is clicked or keyed', () => {
+    render(<AccessGraphCanvas graph={graph()} />)
+    drillIn()
+    const edgesBefore = edges()
+    for (const label of ['foo', 'read', 'engr db', 'User One']) {
+      fireEvent.click(card(label))
+      fireEvent.keyDown(card(label), { key: 'Enter' })
+      fireEvent.keyDown(card(label), { key: ' ' })
+    }
+    expect(edges()).toBe(edgesBefore)
+    expect(pressed()).toHaveLength(0)
+  })
+
+  it('does not use React Flow element selection (no competing .selected visual)', () => {
+    const { container } = render(<AccessGraphCanvas graph={graph()} />)
+    drillIn()
+    fireEvent.click(card('login'))
+    fireEvent.click(card('foo'))
+    expect(container.querySelector('.react-flow__node.selected')).toBeNull()
+    expect(container.querySelector('.react-flow__node.selectable')).toBeNull()
+    expect(container.querySelector('.react-flow__edge.selected')).toBeNull()
+  })
+
+  it('clears on a pane click and announces it', () => {
+    const { container } = render(<AccessGraphCanvas graph={graph()} />)
+    drillIn()
+    fireEvent.click(card('login'))
+    expect(pressed()).toHaveLength(1)
+    fireEvent.click(container.querySelector('.react-flow__pane')!)
+    expect(pressed()).toHaveLength(0)
+    expect(selectedEdges()).toHaveLength(0)
+    expect(liveText()).toContain('Selection cleared.')
+  })
+
+  it('a pane click with nothing selected leaves the edges alone', () => {
+    const { container } = render(<AccessGraphCanvas graph={graph()} />)
+    drillIn()
+    const before = edges()
+    fireEvent.click(container.querySelector('.react-flow__pane')!)
+    expect(edges()).toBe(before)
+  })
+
+  it('Escape clears the selection first and only the next Escape returns to the grid', () => {
+    render(<AccessGraphCanvas graph={graph()} />)
+    drillIn()
+    fireEvent.click(card('login'))
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(pressed()).toHaveLength(0)
+    expect(card('login')).toBeInTheDocument()
+    expect(liveText()).toContain('Selection cleared.')
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(btn('Show access for User One')).toBeInTheDocument()
+  })
+
+  it('a single Escape returns to the grid when nothing is selected, also with a hosted back button', () => {
+    const host = document.createElement('div')
+    document.body.appendChild(host)
+    render(<AccessGraphCanvas graph={graph()} backSlot={host} />)
+    drillIn()
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(btn('Show access for User One')).toBeInTheDocument()
+    host.remove()
+  })
+
+  it('ignores Escape typed in an input', () => {
+    render(<AccessGraphCanvas graph={graph()} />)
+    drillIn()
+    fireEvent.click(card('login'))
+    const input = document.createElement('input')
+    document.body.appendChild(input)
+    fireEvent.keyDown(input, { key: 'Escape' })
+    expect(pressed()).toHaveLength(1)
+    input.remove()
+  })
+
+  it('clears the selection on Back to all users and when another user is opened', () => {
+    render(<AccessGraphCanvas graph={graph()} />)
+    drillIn()
+    fireEvent.click(card('login'))
+    fireEvent.click(screen.getByRole('button', { name: /back to all users/i }))
+    drillIn()
+    expect(pressed()).toHaveLength(0)
+    expect(selectedEdges()).toHaveLength(0)
+
+    fireEvent.click(card('login'))
+    fireEvent.click(screen.getByRole('button', { name: /back to all users/i }))
+    drillIn('User Two')
+    expect(pressed()).toHaveLength(0)
+    expect(selectedEdges()).toHaveLength(0)
+    expect(edges().some((e) => e.style?.opacity === DIM_STATUS_OPACITY)).toBe(false)
+  })
+
+  it('clears the selection (and returns to the grid) when the node set changes', () => {
+    const { rerender } = render(<AccessGraphCanvas graph={graph()} />)
+    drillIn()
+    fireEvent.click(card('login'))
+    rerender(<AccessGraphCanvas graph={graph()} />)
+    expect(btn('Show access for User One')).toBeInTheDocument()
+    drillIn()
+    expect(pressed()).toHaveLength(0)
+    expect(selectedEdges()).toHaveLength(0)
+  })
+
+  it('keeps the selection across layout, minimap and reference toggles', () => {
+    render(<AccessGraphCanvas graph={graph()} />)
+    drillIn()
+    fireEvent.click(card('Role A'))
+    const full = snapshot()
+
+    fireEvent.click(btn('Layout: vertical'))
+    expect(pressed()).toEqual([card('Role A')])
+    expect(selectedEdges()[0].targetHandle).toBe('top-in')
+    expect(lineageEdges()).toHaveLength(3)
+
+    fireEvent.click(btn('Hide minimap'))
+    expect(pressed()).toEqual([card('Role A')])
+    fireEvent.click(btn('Show minimap'))
+    fireEvent.click(btn('Layout: horizontal'))
+    expect(edges()).toEqual(full)
+
+    // Reference hidden: only the user -> item edge remains highlighted.
+    fireEvent.click(btn('Hide reference nodes and links'))
+    expect(pressed()).toEqual([card('Role A')])
+    expect(selectedEdges()).toHaveLength(1)
+    expect(lineageEdges()).toHaveLength(0)
+    expect(edges().every(isStatus)).toBe(true)
+    expect(edges().filter((e) => e.style?.opacity === DIM_STATUS_OPACITY)).toHaveLength(
+      edges().length - 1,
+    )
+
+    // Reference shown again: the whole path is back, selection kept.
+    fireEvent.click(btn('Show reference nodes and links'))
+    expect(pressed()).toEqual([card('Role A')])
+    expect(edges()).toEqual(full)
+  })
+
+  it('keeps the selection and recolors it across a status-only refresh', () => {
+    const base = graph()
+    const { rerender } = render(<AccessGraphCanvas graph={base} />)
+    drillIn()
+    fireEvent.click(card('Role A'))
+    expect(lineageEdges()[0].style?.stroke).toBe('var(--vc-warn)')
+    const refreshed: AccessGraphData = {
+      nodes: base.nodes,
+      edges: base.edges.map((e) =>
+        e.to === 'role:role-a' ? { ...e, reviewStatus: 'approved' as const } : e,
+      ),
+    }
+    rerender(<AccessGraphCanvas graph={refreshed} />)
+    expect(pressed()).toEqual([card('Role A')])
+    expect(lineageEdges()).toHaveLength(3)
+    for (const e of lineageEdges()) expect(e.style?.stroke).toBe('var(--vc-allow)')
+  })
+
+  it('previews a different hovered or focused item while the selection stays highlighted', () => {
+    render(<AccessGraphCanvas graph={graph()} />)
+    drillIn()
+    fireEvent.click(card('Role A'))
+    const plain = snapshot()
+
+    fireEvent.mouseEnter(card('admin'))
+    expect(emphasized().map((e) => e.target)).toEqual([nodeId('admin')])
+    expect(emphasized()[0].style?.opacity).toBeUndefined()
+    expect(selectedEdges().map((e) => e.target)).toEqual([nodeId('Role A')])
+    expect(lineageEdges()).toHaveLength(3)
+    fireEvent.mouseLeave(card('admin'))
+    expect(edges()).toEqual(plain)
+
+    fireEvent.focus(card('login'))
+    expect(emphasized().map((e) => e.target)).toEqual([nodeId('login')])
+    fireEvent.blur(card('login'))
+    expect(edges()).toEqual(plain)
+
+    // The selected item itself and reference cards add nothing.
+    fireEvent.mouseEnter(card('Role A'))
+    fireEvent.focus(card('foo'))
+    expect(edges()).toEqual(plain)
+  })
+
+  it('marks lineage reference cards and mutes the other reference cards, with no extra icons', () => {
+    render(<AccessGraphCanvas graph={graph()} />)
+    drillIn()
+    fireEvent.click(card('Role A'))
+    for (const label of ['foo', 'read', 'engr db']) {
+      expect(card(label).className).toContain('vc-graph-card-lineage')
+      expect(card(label).className).not.toContain('vc-graph-card-reference-dim')
+    }
+    expect(card('phone app').className).toContain('vc-graph-card-reference-dim')
+    expect(card('phone app').className).not.toContain('vc-graph-card-lineage')
+    for (const label of ['foo', 'read', 'engr db', 'phone app']) {
+      expect(card(label).querySelector('.vc-graph-status-icon')).toBeNull()
+    }
+    // The selected card keeps its single status icon and status class.
+    expect(card('Role A').querySelectorAll('.vc-graph-status-icon')).toHaveLength(1)
+    expect(card('Role A').className).toContain('vc-graph-card-status-needsReview')
+    // Other first-level cards are untouched.
+    expect(card('login').className).not.toMatch(/lineage|reference-dim|selected/)
+
+    fireEvent.click(card('Role A'))
+    for (const label of ['foo', 'read', 'engr db', 'phone app']) {
+      expect(card(label).className).not.toMatch(/lineage|reference-dim/)
+    }
+  })
+
+  it('announces the selection and its removal in the live region', () => {
+    render(<AccessGraphCanvas graph={graph()} />)
+    drillIn()
+    fireEvent.click(card('Role A'))
+    expect(liveText()).toContain('Highlighting the links for Role A. Press Escape to clear.')
+    fireEvent.click(card('Role A'))
+    expect(liveText()).toContain('Selection cleared.')
+  })
+
+  it('never refits, re-viewports or moves a node when selecting, deselecting or previewing', async () => {
+    const { container } = render(<AccessGraphCanvas graph={graph()} />)
+    drillIn()
+    await waitFor(() => expect(spies.fitView).toHaveBeenCalled())
+    await settle()
+    spies.fitView.mockClear()
+    spies.setViewport.mockClear()
+    const nodesBefore = nodes()
+    const positionsBefore = positions()
+    for (const label of ['login', 'admin', 'Role A']) {
+      fireEvent.click(card(label))
+      fireEvent.mouseEnter(card('login'))
+      fireEvent.mouseLeave(card('login'))
+      fireEvent.keyDown(card(label), { key: 'Enter' })
+    }
+    fireEvent.click(card('login'))
+    fireEvent.click(container.querySelector('.react-flow__pane')!)
+    fireEvent.click(card('admin'))
+    fireEvent.keyDown(window, { key: 'Escape' }) // clears; stays in the drill-down
+    await settle()
+    expect(spies.fitView).not.toHaveBeenCalled()
+    expect(spies.setViewport).not.toHaveBeenCalled()
+    expect(nodes()).toBe(nodesBefore)
+    expect(positions()).toEqual(positionsBefore)
+  })
+
+  it('does not select anything in the user grid', () => {
+    render(<AccessGraphCanvas graph={graph()} />)
+    const grid = btn('Show access for User One')
+    fireEvent.keyDown(grid, { key: 'Escape' })
+    expect(within(document.body).queryByText(/Highlighting the links/)).toBeNull()
+    expect(edges()).toHaveLength(0)
+  })
+
+  it('keeps the tooltip working on a selected card', () => {
+    render(<AccessGraphCanvas graph={graph()} />)
+    drillIn()
+    const login = card('login')
+    stubRect(login.closest<HTMLElement>('.vc-node-tooltip-anchor')!)
+    fireEvent.click(login)
+    fireEvent.mouseEnter(login)
+    expect(screen.getByRole('tooltip')).toBeInTheDocument()
+    expect(login).toHaveAttribute('aria-pressed', 'true')
+  })
+})
+
+describe('AccessGraphCanvas selection: an item both first-level and nested', () => {
+  it('Role A highlights the nested path to Read but not the user -> Read edge; Read only its source edge', async () => {
+    render(<AccessGraphCanvas graph={await buildFixtureGraph()} />)
+    fireEvent.click(btn('Show access for Alice Adams'))
+
+    fireEvent.click(card('Role A'))
+    const ids = new Set(lineageEdges().map((e) => e.id))
+    expect(ids.has(eid('accessProfile:ap-foo', 'entitlement:e-read'))).toBe(true)
+    expect(ids.has(eid('entitlement:e-read', 'source:s-erp'))).toBe(true)
+    expect(ids.has(eid('user:u-a', 'entitlement:e-read'))).toBe(false)
+    const userRead = edges().find((e) => e.id === eid('user:u-a', 'entitlement:e-read'))!
+    expect(userRead.style?.opacity).toBe(DIM_STATUS_OPACITY)
+
+    fireEvent.click(card('Read'))
+    expect(pressed()).toEqual([card('Read')])
+    expect(selectedEdges().map((e) => e.id)).toEqual([eid('user:u-a', 'entitlement:e-read')])
+    expect(lineageEdges().map((e) => e.id)).toEqual([eid('entitlement:e-read', 'source:s-erp')])
+    expect(selectedEdges()[0].style?.stroke).toBe(STATUS_STROKE.approved)
+    const upstream = edges().find((e) => e.id === eid('accessProfile:ap-foo', 'entitlement:e-read'))!
+    expect(upstream.style?.opacity).toBe(DIM_REFERENCE_OPACITY)
+  })
+})

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Controls,
   MiniMap,
@@ -17,8 +17,9 @@ import { buildUserGridScene } from './buildUserGridScene'
 import { userSubgraph } from './userSubgraph'
 import { withoutReference } from './referenceFilter'
 import { computeFitPadding, measureOverlays, planFit, toFitViewPadding } from './fitPadding'
-import { emphasizeEdges } from './emphasizeEdges'
 import { EmphasisContext } from './EmphasisContext'
+import { SelectionContext, type SelectionState } from './SelectionContext'
+import { highlightEdges, isSelectableNodeData, lineageNodeIds } from './selectEdges'
 import { ScrollHint } from './ScrollHint'
 import { GraphControls } from './GraphControls'
 import { AccessNode, StatusIcon } from './AccessNode'
@@ -47,6 +48,9 @@ interface AccessGraphCanvasProps {
   backSlot?: HTMLElement | null
 }
 
+/** Shared empty lineage, so "nothing selected" keeps a stable context value. */
+const NO_LINEAGE: ReadonlySet<string> = new Set()
+
 /** Zoom range of the canvas (also the bounds planFit clamps to). */
 const MIN_ZOOM = 0.15
 const MAX_ZOOM = 1.8
@@ -72,6 +76,19 @@ const MINIMAP_COLOR: Record<string, string> = {
  *    "Back to all users" panel control and Escape returning to the grid. The
  *    reference toggle can hide the reference-only lineage (nested items,
  *    sources) so only the reviewable first level remains.
+ *
+ * SELECTION (drill-down only). Clicking a first-level card (role, access
+ * profile or directly-held entitlement), or pressing Enter / Space on it,
+ * selects it; doing it again deselects. One item at a time. The selected item's
+ * associated edges (its user -> item edge plus every visible edge downstream to
+ * the sources) are highlighted in its status color and all other edges dim; see
+ * `highlightEdges`. Reference-only cards are not selectable. The selection is
+ * cleared by clicking the same card, clicking the empty pane, or Escape (the
+ * first Escape clears the selection, only a second one returns to the grid),
+ * and by drilling into another user, going back, or a new node set. It survives
+ * the layout, reference and minimap toggles and a status-only refresh. Selecting
+ * is a cheap edge restyle: the scene, the node objects and the fit are
+ * untouched, exactly like hover.
  *
  * Every fit (drill-down entry, user switch, reference/layout/minimap toggle,
  * window resize) is overlay-aware: it pads the viewport by the measured size of
@@ -207,6 +224,8 @@ function CanvasSurface({ graph, backSlot }: AccessGraphCanvasProps) {
   const [showMinimap, setShowMinimap] = useState(true)
   const [announcement, setAnnouncement] = useState('')
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
+  // The selected first-level item (node id) whose edges are highlighted.
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null)
   const colorMode = useColorMode()
   const width = useStore((state) => state.width)
 
@@ -220,26 +239,17 @@ function CanvasSurface({ graph, backSlot }: AccessGraphCanvasProps) {
   if (prevNodes !== graph.nodes) {
     setPrevNodes(graph.nodes)
     setSelectedUserId(null)
+    setSelectedItemId(null)
   }
 
-  // Escape returns to the grid while in drill-down (ignore typing contexts).
-  useEffect(() => {
-    if (selectedUserId === null) return
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return
-      const target = event.target
-      const typing =
-        target instanceof HTMLElement &&
-        (target.tagName === 'INPUT' ||
-          target.tagName === 'TEXTAREA' ||
-          target.tagName === 'SELECT' ||
-          target.isContentEditable)
-      if (typing) return
-      setSelectedUserId(null)
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [selectedUserId])
+  // The selected item belongs to one user's drill-down: drilling into another
+  // user, going back to the grid or Escape-to-grid all drop it. (Layout,
+  // reference and minimap toggles and status-only refreshes keep it.)
+  const [prevUserId, setPrevUserId] = useState(selectedUserId)
+  if (prevUserId !== selectedUserId) {
+    setPrevUserId(selectedUserId)
+    setSelectedItemId(null)
+  }
 
   const userCount = useMemo(
     () => graph.nodes.filter((node) => node.kind === 'user').length,
@@ -294,10 +304,72 @@ function CanvasSurface({ graph, backSlot }: AccessGraphCanvasProps) {
   // Pointer wins; a keyboard-focused card stays emphasized once the pointer
   // leaves another card. Purely an edge restyle: no layout or refit input.
   const emphasisId = hoverId ?? focusId
+  // Only a first-level node of the current scene can be the active selection.
+  const activeItemId = useMemo(() => {
+    if (!inDrilldown || selectedItemId === null) return null
+    const node = scene.nodes.find((candidate) => candidate.id === selectedItemId)
+    return node && isSelectableNodeData(node.data) ? node.id : null
+  }, [inDrilldown, selectedItemId, scene.nodes])
+  // Selection composes with the hover emphasis inside `highlightEdges`; with
+  // nothing selected this is exactly `emphasizeEdges`.
   const displayEdges = useMemo(
-    () => emphasizeEdges(scene.edges, inDrilldown ? emphasisId : null),
-    [scene.edges, emphasisId, inDrilldown],
+    () =>
+      highlightEdges(
+        scene.edges,
+        inDrilldown ? activeItemId : null,
+        inDrilldown ? emphasisId : null,
+      ),
+    [scene.edges, activeItemId, emphasisId, inDrilldown],
   )
+  const lineage = useMemo(
+    () => (activeItemId === null ? NO_LINEAGE : lineageNodeIds(scene.edges, activeItemId)),
+    [scene.edges, activeItemId],
+  )
+
+  const clearSelection = useCallback(() => {
+    setSelectedItemId(null)
+    setAnnouncement('Selection cleared.')
+  }, [])
+  const toggleSelection = useCallback(
+    (id: string) => {
+      if (id === activeItemId) {
+        clearSelection()
+        return
+      }
+      const label = scene.nodes.find((node) => node.id === id)?.data.label ?? ''
+      setSelectedItemId(id)
+      setAnnouncement(`Highlighting the links for ${label}. Press Escape to clear.`)
+    },
+    [activeItemId, scene.nodes, clearSelection],
+  )
+  const selection = useMemo<SelectionState>(
+    () => ({ selectedId: activeItemId, lineageNodeIds: lineage, toggle: toggleSelection }),
+    [activeItemId, lineage, toggleSelection],
+  )
+
+  // Escape: the first press clears a selection; only with nothing selected does
+  // it return to the grid (ignore typing contexts).
+  useEffect(() => {
+    if (selectedUserId === null) return
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      const target = event.target
+      const typing =
+        target instanceof HTMLElement &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable)
+      if (typing) return
+      if (activeItemId !== null) {
+        clearSelection()
+        return
+      }
+      setSelectedUserId(null)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [selectedUserId, activeItemId, clearSelection])
 
   // Outcome of the latest refit, used by the scroll hint. Keyed by fitKey so a
   // stale outcome from a previous scene never shows.
@@ -318,9 +390,15 @@ function CanvasSurface({ graph, backSlot }: AccessGraphCanvasProps) {
   // on the UNFILTERED subgraph so hiding reference never triggers the note.
   const isDegenerate = inDrilldown && (subgraph?.edges.length ?? 0) === 0
 
-  // Mouse convenience: in grid mode, clicking a card also drills in.
+  // Mouse convenience: in grid mode, clicking a card also drills in; in
+  // drill-down, clicking a first-level card selects / deselects it.
   const onNodeClick: NodeMouseHandler<AccessSceneNode> = (_event, node) => {
     if (selectedUserId === null) setSelectedUserId(node.id)
+    else if (isSelectableNodeData(node.data)) toggleSelection(node.id)
+  }
+  // Clicking the empty pane (never a card) clears the selection.
+  const onPaneClick = () => {
+    if (activeItemId !== null) clearSelection()
   }
 
   const toggleLayout = () => {
@@ -352,6 +430,7 @@ function CanvasSurface({ graph, backSlot }: AccessGraphCanvasProps) {
         {announcement}
       </p>
       <EmphasisContext.Provider value={emphasis}>
+      <SelectionContext.Provider value={selection}>
       <ReactFlow
         nodes={scene.nodes}
         edges={displayEdges}
@@ -359,13 +438,14 @@ function CanvasSurface({ graph, backSlot }: AccessGraphCanvasProps) {
         colorMode={colorMode}
         nodesDraggable={false}
         nodesConnectable={false}
-        elementsSelectable
+        elementsSelectable={false}
         deleteKeyCode={null}
         panOnScroll
         fitView
         minZoom={MIN_ZOOM}
         maxZoom={MAX_ZOOM}
         onNodeClick={onNodeClick}
+        onPaneClick={onPaneClick}
       >
         {showMinimap && (
           <MiniMap
@@ -464,6 +544,7 @@ function CanvasSurface({ graph, backSlot }: AccessGraphCanvasProps) {
           </Panel>
         )}
       </ReactFlow>
+      </SelectionContext.Provider>
       </EmphasisContext.Provider>
     </div>
   )
