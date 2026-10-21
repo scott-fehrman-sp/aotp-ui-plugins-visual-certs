@@ -34,7 +34,7 @@ export function AccessMatrixView({
   const [backSlot, setBackSlot] = useState<HTMLElement | null>(null)
 
   return (
-    <section aria-label={`Access map for ${campaignName}`}>
+    <section className="vc-matrix-view" aria-label={`Access map for ${campaignName}`}>
       {/* One navigation row: leave the map, and (in a user's drill-down) go back
           to the all-users grid. Kept outside the canvas to save graph space. */}
       <nav className="vc-matrix-nav" aria-label="Access map navigation">
@@ -44,9 +44,10 @@ export function AccessMatrixView({
         <span ref={setBackSlot} className="vc-matrix-nav-slot" />
       </nav>
 
-      <div className="vc-matrix-head">
-        <h2 className="vc-matrix-title">All access paths</h2>
-      </div>
+      {/* The visible "All access paths" sub-heading was removed to give the
+          graph more vertical room. A visually hidden heading keeps the page
+          outline for screen-reader users at zero space cost. */}
+      <h2 className="vc-matrix-sr-heading">All access paths</h2>
 
       {matrix.status === 'loading' && (
         <LoadingState message="Building the access map…" />

@@ -171,6 +171,37 @@ describe('AccessMatrixView', () => {
     expect(onBack).toHaveBeenCalledOnce()
   })
 
+  it('keeps the "All access paths" heading only as a visually hidden heading', () => {
+    const { container } = render(
+      <AccessMatrixView
+        campaignName="Q3 review"
+        matrix={readyState(workedExample())}
+        onBack={vi.fn()}
+      />,
+    )
+    // Still in the accessibility tree for screen readers...
+    const heading = screen.getByRole('heading', { name: 'All access paths' })
+    // ...but it carries the visually-hidden class, not the old visible heading
+    // styles, so it takes no vertical space above the graph.
+    expect(heading).toHaveClass('vc-matrix-sr-heading')
+    expect(container.querySelector('.vc-matrix-head')).toBeNull()
+    expect(container.querySelector('.vc-matrix-title')).toBeNull()
+  })
+
+  it('marks the section so the page shell can hand it the remaining height', () => {
+    const { container } = render(
+      <AccessMatrixView
+        campaignName="Q3 review"
+        matrix={readyState(workedExample())}
+        onBack={vi.fn()}
+      />,
+    )
+    const section = container.querySelector('section.vc-matrix-view')
+    expect(section).not.toBeNull()
+    // The canvas is a direct child so the flex column can size it.
+    expect(section!.querySelector(':scope > .vc-graph-wrap')).not.toBeNull()
+  })
+
   it('calls onBack when the back button is clicked', async () => {
     const onBack = vi.fn()
     render(

@@ -20,6 +20,35 @@
   margin-top: 8px;
 }
 
+/*
+ * Access map screen only: let the graph canvas run to the bottom of the page.
+ * The page shell becomes a full-height flex column and each wrapper down to the
+ * map section passes the remaining height along. Scoped with `:has()` so every
+ * other screen (picker, dashboard, review, sign-off) keeps its normal flow and
+ * its generous bottom padding.
+ */
+.vc-app:has(.vc-matrix-view) {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding-bottom: 12px;
+}
+
+.vc-app:has(.vc-matrix-view) > .vc-main {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.vc-main > .vc-route:has(.vc-matrix-view) {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 .vc-connected {
   color: var(--vc-text-muted);
 }

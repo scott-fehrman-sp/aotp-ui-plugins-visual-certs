@@ -225,7 +225,7 @@ function CampaignRoute({
   } = metrics
 
   return (
-    <div>
+    <div className="vc-route">
       {/* A decision that failed to save surfaces here without losing context. */}
       {decisions.error && (
         <div className="vc-banner vc-banner-error" role="alert">

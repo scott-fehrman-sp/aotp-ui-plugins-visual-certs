@@ -18,11 +18,35 @@
   margin-bottom: 0;
 }
 
-.vc-matrix-head {
-  margin: 4px 0 12px;
+/* Visually hidden heading: available to assistive tech, takes no space. */
+.vc-matrix-sr-heading {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
-.vc-matrix-title {
-  margin: 0;
-  font-size: 20px;
+/*
+ * The map screen fills the rest of the page: the section is a flex column that
+ * takes the space left by the page shell (see the `:has(.vc-matrix-view)` rules
+ * in App.css), and the graph canvas takes whatever the section has left after
+ * the nav row and any banner. `min-height` keeps the canvas usable when the
+ * window is very short (the page then scrolls instead of crushing the graph).
+ */
+.vc-matrix-view {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.vc-matrix-view .vc-graph-wrap {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 360px;
 }
