@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { EmptyState } from '../components/EmptyState'
 import { ErrorState } from '../components/ErrorState'
 import { LoadingState } from '../components/LoadingState'
@@ -26,11 +27,22 @@ export function AccessMatrixView({
   matrix,
   onBack,
 }: AccessMatrixViewProps) {
+  // The element the canvas portals its drill-down "Back to all users" button
+  // into. Held in state (via a callback ref) so the canvas re-renders once the
+  // slot exists. `null` until mounted tells the canvas to wait rather than fall
+  // back to drawing the button inside the graph.
+  const [backSlot, setBackSlot] = useState<HTMLElement | null>(null)
+
   return (
     <section aria-label={`Access map for ${campaignName}`}>
-      <button type="button" className="vc-link-btn" onClick={onBack}>
-        ← Back to overview
-      </button>
+      {/* One navigation row: leave the map, and (in a user's drill-down) go back
+          to the all-users grid. Kept outside the canvas to save graph space. */}
+      <nav className="vc-matrix-nav" aria-label="Access map navigation">
+        <button type="button" className="vc-link-btn" onClick={onBack}>
+          ← Back to overview
+        </button>
+        <span ref={setBackSlot} className="vc-matrix-nav-slot" />
+      </nav>
 
       <div className="vc-matrix-head">
         <h2 className="vc-matrix-title">All access paths</h2>
@@ -73,7 +85,7 @@ export function AccessMatrixView({
             </div>
           )}
 
-          <AccessGraphCanvas graph={matrix.graph} />
+          <AccessGraphCanvas graph={matrix.graph} backSlot={backSlot} />
         </>
       )}
     </section>

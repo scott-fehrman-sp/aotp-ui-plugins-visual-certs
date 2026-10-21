@@ -44,9 +44,6 @@ function App() {
     <div className="vc-app">
       <header className="vc-header">
         <h1 className="vc-title">Access Review</h1>
-        <p className="vc-subtitle">
-          A guided, visual way to review who has access to what.
-        </p>
       </header>
       <main className="vc-main">
         {state.status === 'loading' && (

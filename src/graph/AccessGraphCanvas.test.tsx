@@ -96,6 +96,66 @@ describe('AccessGraphCanvas', () => {
     expect(screen.queryByText('Role A')).not.toBeInTheDocument()
   })
 
+  describe('backSlot (host-placed "Back to all users")', () => {
+    function slot(): HTMLElement {
+      const el = document.createElement('div')
+      document.body.appendChild(el)
+      return el
+    }
+
+    it('portals the button into the slot, not into the canvas, and it returns to the grid', () => {
+      const host = slot()
+      const { container } = render(
+        <AccessGraphCanvas graph={deriveAccessGraph(twoUsers())} backSlot={host} />,
+      )
+      // Grid mode: no back button anywhere.
+      expect(within(host).queryByRole('button')).toBeNull()
+
+      fireEvent.click(screen.getByRole('button', { name: 'Show access for User One' }))
+
+      const back = within(host).getByRole('button', { name: /back to all users/i })
+      expect(back).toBeInTheDocument()
+      // Not drawn inside the graph, and no in-canvas nav panel.
+      expect(container.querySelector('.react-flow')!.contains(back)).toBe(false)
+      expect(container.querySelector('.vc-graph-nav-panel')).toBeNull()
+
+      fireEvent.click(back)
+      expect(screen.getByRole('button', { name: 'Show access for User One' })).toBeInTheDocument()
+      expect(within(host).queryByRole('button')).toBeNull()
+      host.remove()
+    })
+
+    it('Escape still returns to the grid when the button is hosted outside', () => {
+      const host = slot()
+      render(<AccessGraphCanvas graph={deriveAccessGraph(twoUsers())} backSlot={host} />)
+      fireEvent.click(screen.getByRole('button', { name: 'Show access for User One' }))
+      expect(within(host).getByRole('button', { name: /back to all users/i })).toBeInTheDocument()
+
+      fireEvent.keyDown(window, { key: 'Escape' })
+
+      expect(screen.getByRole('button', { name: 'Show access for User One' })).toBeInTheDocument()
+      expect(within(host).queryByRole('button')).toBeNull()
+      host.remove()
+    })
+
+    it('draws no back button at all while the host slot is still pending (null)', () => {
+      const { container } = render(
+        <AccessGraphCanvas graph={deriveAccessGraph(twoUsers())} backSlot={null} />,
+      )
+      fireEvent.click(screen.getByRole('button', { name: 'Show access for User One' }))
+      expect(screen.getByText('Role A')).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /back to all users/i })).toBeNull()
+      expect(container.querySelector('.vc-graph-nav-panel')).toBeNull()
+    })
+
+    it('without a slot prop the button stays inside the canvas, in the top-left panel', () => {
+      const { container } = render(<AccessGraphCanvas graph={deriveAccessGraph(twoUsers())} />)
+      fireEvent.click(screen.getByRole('button', { name: 'Show access for User One' }))
+      const nav = container.querySelector('.vc-graph-nav-panel') as HTMLElement
+      expect(within(nav).getByRole('button', { name: /back to all users/i })).toBeInTheDocument()
+    })
+  })
+
   it('renders an empty state when the graph has no users', () => {
     render(<AccessGraphCanvas graph={{ nodes: [], edges: [] }} />)
     expect(screen.getByText('No users to map')).toBeInTheDocument()

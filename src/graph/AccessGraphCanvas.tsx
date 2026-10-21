@@ -24,6 +24,7 @@ import { GraphControls } from './GraphControls'
 import { AccessNode, StatusIcon } from './AccessNode'
 import { useColorMode } from './useColorMode'
 import { EmptyState } from '../components/EmptyState'
+import { createPortal } from 'react-dom'
 import './AccessGraph.css'
 
 /** React Flow node-type registry for the access graph. */
@@ -32,6 +33,18 @@ const nodeTypes = { access: AccessNode }
 interface AccessGraphCanvasProps {
   /** The derived graph (nodes + edges) from the access matrix. */
   graph: AccessGraphData
+  /**
+   * Where the drill-down "Back to all users" button is rendered, so the host
+   * view can place it OUTSIDE the canvas next to its own "Back to overview"
+   * button (saving the canvas's top-left corner and keeping both back controls
+   * together). The canvas still owns the selected-user state; it just portals
+   * the button into this element.
+   *  - `undefined` (prop omitted): the button renders inside the canvas, in a
+   *    top-left panel, as it always has (standalone use / existing tests).
+   *  - an element: the button is portaled into it.
+   *  - `null`: the host's slot has not mounted yet; render nothing for now.
+   */
+  backSlot?: HTMLElement | null
 }
 
 /** Zoom range of the canvas (also the bounds planFit clamps to). */
@@ -74,7 +87,7 @@ const MINIMAP_COLOR: Record<string, string> = {
  * renders a read-only graph (no dragging, no connecting) with a minimap and
  * controls. When the graph has no users it renders an `EmptyState` instead.
  */
-export function AccessGraphCanvas({ graph }: AccessGraphCanvasProps) {
+export function AccessGraphCanvas({ graph, backSlot }: AccessGraphCanvasProps) {
   const hasUsers = useMemo(
     () => graph.nodes.some((node) => node.kind === 'user'),
     [graph],
@@ -91,7 +104,7 @@ export function AccessGraphCanvas({ graph }: AccessGraphCanvasProps) {
 
   return (
     <ReactFlowProvider>
-      <CanvasSurface graph={graph} />
+      <CanvasSurface graph={graph} backSlot={backSlot} />
     </ReactFlowProvider>
   )
 }
@@ -188,7 +201,7 @@ function FitOnSceneChange({
   return null
 }
 
-function CanvasSurface({ graph }: AccessGraphCanvasProps) {
+function CanvasSurface({ graph, backSlot }: AccessGraphCanvasProps) {
   const [rankdir, setRankdir] = useState<RankDir>('LR')
   const [showReference, setShowReference] = useState(true)
   const [showMinimap, setShowMinimap] = useState(true)
@@ -388,7 +401,7 @@ function CanvasSurface({ graph }: AccessGraphCanvasProps) {
             onToggleMinimap={toggleMinimap}
           />
         </Panel>
-        {inDrilldown && (
+        {inDrilldown && backSlot === undefined && (
           <Panel position="top-left" className="vc-graph-nav-panel">
             <button
               type="button"
@@ -399,6 +412,20 @@ function CanvasSurface({ graph }: AccessGraphCanvasProps) {
             </button>
           </Panel>
         )}
+        {/* Hosted by the parent view: the same button, portaled into the slot
+            next to the view's own "Back to overview" button, outside the canvas. */}
+        {inDrilldown && backSlot
+          ? createPortal(
+              <button
+                type="button"
+                className="vc-link-btn"
+                onClick={() => setSelectedUserId(null)}
+              >
+                ← Back to all users
+              </button>,
+              backSlot,
+            )
+          : null}
         {inDrilldown && (
           <Panel position="bottom-left" className="vc-graph-legend-panel">
             <div className="vc-graph-legend" role="group" aria-label="Review status legend">

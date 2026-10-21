@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { deriveAccessGraph } from '../domain/accessGraph'
@@ -102,6 +102,73 @@ describe('AccessMatrixView', () => {
     )
     expect(screen.getByLabelText('Role: Role A')).toBeInTheDocument()
     expect(screen.getByLabelText('Source: engr db')).toBeInTheDocument()
+  })
+
+  it('puts "Back to all users" in the nav row next to "Back to overview", outside the graph', () => {
+    const { container } = render(
+      <AccessMatrixView
+        campaignName="Q3 review"
+        matrix={readyState(workedExample())}
+        onBack={vi.fn()}
+      />,
+    )
+    const nav = screen.getByRole('navigation', { name: /access map navigation/i })
+
+    // Grid mode: only "Back to overview" is there; there is no per-user back.
+    expect(screen.queryByRole('button', { name: /back to all users/i })).toBeNull()
+    expect(
+      within(nav).getByRole('button', { name: /back to overview/i }),
+    ).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show access for User One' }))
+
+    // Drill-down: both back controls live in the same nav row...
+    const backToUsers = within(nav).getByRole('button', { name: /back to all users/i })
+    expect(backToUsers).toBeInTheDocument()
+    const labels = within(nav)
+      .getAllByRole('button')
+      .map((b) => b.textContent?.trim())
+    expect(labels).toEqual(['← Back to overview', '← Back to all users'])
+
+    // ...and NOT inside the graph canvas (no top-left nav panel either).
+    expect(container.querySelector('.react-flow')!.contains(backToUsers)).toBe(false)
+    expect(container.querySelector('.vc-graph-nav-panel')).toBeNull()
+  })
+
+  it('"Back to all users" in the nav row returns to the user grid', () => {
+    render(
+      <AccessMatrixView
+        campaignName="Q3 review"
+        matrix={readyState(workedExample())}
+        onBack={vi.fn()}
+      />,
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Show access for User One' }))
+    expect(screen.getByLabelText('Role: Role A')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /back to all users/i }))
+
+    // Back on the grid: the user card is back, lineage is gone, and the
+    // per-user back control has left the nav row.
+    expect(
+      screen.getByRole('button', { name: 'Show access for User One' }),
+    ).toBeInTheDocument()
+    expect(screen.queryByLabelText('Role: Role A')).toBeNull()
+    expect(screen.queryByRole('button', { name: /back to all users/i })).toBeNull()
+  })
+
+  it('leaves "Back to overview" working in drill-down too', async () => {
+    const onBack = vi.fn()
+    render(
+      <AccessMatrixView
+        campaignName="Q3 review"
+        matrix={readyState(workedExample())}
+        onBack={onBack}
+      />,
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Show access for User One' }))
+    await userEvent.click(screen.getByRole('button', { name: /back to overview/i }))
+    expect(onBack).toHaveBeenCalledOnce()
   })
 
   it('calls onBack when the back button is clicked', async () => {
