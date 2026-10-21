@@ -7,6 +7,7 @@ import {
   ReactFlowProvider,
   useReactFlow,
   useStore,
+  useStoreApi,
   type NodeMouseHandler,
 } from '@xyflow/react'
 import type { AccessGraphData, AccessSceneNodeData, RankDir } from '../sailpoint/types'
@@ -14,6 +15,7 @@ import { buildAccessScene, type AccessSceneNode } from './buildAccessScene'
 import { buildUserGridScene } from './buildUserGridScene'
 import { userSubgraph } from './userSubgraph'
 import { withoutReference } from './referenceFilter'
+import { computeFitPadding, measureOverlays, toFitViewPadding } from './fitPadding'
 import { GraphControls } from './GraphControls'
 import { AccessNode, StatusIcon } from './AccessNode'
 import { useColorMode } from './useColorMode'
@@ -50,6 +52,10 @@ const MINIMAP_COLOR: Record<string, string> = {
  *    reference toggle can hide the reference-only lineage (nested items,
  *    sources) so only the reviewable first level remains.
  *
+ * Every fit (drill-down entry, user switch, reference/layout/minimap toggle,
+ * window resize) is overlay-aware: it pads the viewport by the measured size of
+ * the legend, minimap, controls and panels so no card sits under them.
+ *
  * A right-side vertical control panel (`GraphControls`, in both modes) holds the
  * layout direction, reference visibility and minimap toggles. Those preferences
  * live in memory and survive switching users and grid/drill-down.
@@ -83,18 +89,36 @@ export function AccessGraphCanvas({ graph }: AccessGraphCanvasProps) {
 }
 
 /**
- * Re-fits the viewport when the user drills in or back out. React Flow's
- * `fitView` prop only fits once on mount, so without this the drill-down keeps
- * the overview grid's zoom (up to 1.8x) and most of the graph sits off-screen.
+ * Re-fits the viewport whenever `fitKey` or the canvas size changes. React
+ * Flow's `fitView` prop only fits once on mount, so without this the drill-down
+ * keeps the overview grid's zoom (up to 1.8x) and most of the graph sits
+ * off-screen.
+ *
+ * The fit is OVERLAY-AWARE: React Flow fits to the whole canvas rectangle and
+ * ignores the widgets drawn over it (legend, minimap, zoom controls, control
+ * panel, back button, notes), so the live rectangle of every `.react-flow__panel`
+ * is measured one frame after the change (once the panels have laid out) and
+ * turned into per-side pixel padding. The graph may end up smaller at small
+ * viewports, but never under an overlay.
  */
-function FitOnSceneChange({ sceneKey }: { sceneKey: string }) {
+function FitOnSceneChange({ fitKey }: { fitKey: string }) {
   const { fitView } = useReactFlow()
+  const store = useStoreApi()
+  // Canvas size changes (window resize) must refit too.
+  const width = useStore((state) => state.width)
+  const height = useStore((state) => state.height)
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
-      void fitView()
+      const root = store.getState().domNode
+      if (!root) {
+        void fitView()
+        return
+      }
+      const { canvas, overlays } = measureOverlays(root)
+      void fitView({ padding: toFitViewPadding(computeFitPadding(canvas, overlays)) })
     })
     return () => cancelAnimationFrame(frame)
-  }, [sceneKey, fitView])
+  }, [fitKey, width, height, fitView, store])
   return null
 }
 
@@ -163,8 +187,13 @@ function CanvasSurface({ graph }: AccessGraphCanvasProps) {
         setSelectedUserId,
       )
     }
-    return buildAccessScene(visibleGraph ?? { nodes: [], edges: [] }, rankdir)
-  }, [graph, selectedUserId, visibleGraph, rankdir, width])
+    // Reference hidden: the graph is only the user + first-level items, so
+    // there is no derivation to show and they share ONE lane after the user
+    // (kind lanes would only add long edges that run behind other cards).
+    return buildAccessScene(visibleGraph ?? { nodes: [], edges: [] }, rankdir, {
+      singleLane: !showReference,
+    })
+  }, [graph, selectedUserId, visibleGraph, rankdir, width, showReference])
 
   const inDrilldown = selectedUserId !== null
   // A degenerate user (no outgoing edges) yields a single-node subgraph. Judged
@@ -231,11 +260,11 @@ function CanvasSurface({ graph }: AccessGraphCanvasProps) {
         )}
         <Controls showInteractive={false} />
         <FitOnSceneChange
-          sceneKey={
+          fitKey={`${
             inDrilldown
               ? `${selectedUserId}|${showReference ? 'ref' : 'noref'}|${rankdir}`
               : 'grid'
-          }
+          }|${showMinimap ? 'map' : 'nomap'}`}
         />
         <Panel position="top-right" className="vc-graph-controls-panel">
           <GraphControls

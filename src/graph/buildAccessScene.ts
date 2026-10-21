@@ -7,6 +7,16 @@
  * `org-graph/src/graph/layout.ts` — and attaches the handle ids / positions the
  * custom node exposes, so the React Flow component never computes geometry.
  *
+ * Two layouts share one node/edge mapping:
+ *
+ * - "lanes" (default): every kind is pinned to its own column (LR) / row (TB)
+ *   so the derivation layers user → role → access profile → entitlement →
+ *   source read left to right. Used while reference content is SHOWN.
+ * - "single lane" (`singleLane: true`): for a graph that holds only the user and
+ *   its first-level items (the output of `withoutReference`). There is no
+ *   derivation to show, so kind lanes would only create long edges that run
+ *   behind other cards; every item goes in ONE lane directly after the user.
+ *
  * It is deliberately framework-pure: no React, no DOM, no I/O, no mutation of
  * the input graph, deterministic output. React Flow's `css: false` in the test
  * runner means this module (and its unit test) exercise all the graph logic
@@ -92,21 +102,77 @@ function handles(direction: RankDir): {
   }
 }
 
+/** Layout options for {@link buildAccessScene}. */
+export interface AccessSceneOptions {
+  /**
+   * Lay out every non-user node in ONE lane directly after the user, ordered by
+   * kind (role, access profile, entitlement), then label, then id. Meant for a
+   * graph that contains only the user and its first-level items (the output of
+   * `withoutReference`); the builder does not filter. Default `false` (lanes).
+   */
+  singleLane?: boolean
+}
+
 /**
- * Builds a positioned scene from the derived graph. Empty graph → empty scene.
- * PURE and deterministic: identical input (same graph + rankdir) yields
- * identical output.
+ * One node's coordinates: the rank-axis position (x for LR, y for TB) and the
+ * de-overlapped cross-axis TOP-LEFT position (y for LR, x for TB).
  */
-export function buildAccessScene(
+interface Placement {
+  rank: number
+  cross: number
+}
+
+/** Case-insensitive, locale-stable label comparison. */
+function compareLabels(a: string, b: string): number {
+  return a.toLowerCase().localeCompare(b.toLowerCase(), 'en')
+}
+
+/**
+ * Single-lane placement: the user is band 0, every other node is band 1, spaced
+ * at the lane stride and centered on the lane's cross-axis midpoint (cross 0),
+ * exactly like a lanes-mode lane. No dagre pass: nothing here depends on edges.
+ */
+function singleLanePlacements(
+  graph: AccessGraphData,
+  bandStep: number,
+  crossStride: number,
+): Map<string, Placement> {
+  const placements = new Map<string, Placement>()
+  const place = (nodes: AccessGraphData['nodes'], band: number) => {
+    const rank = MARGIN + band * bandStep
+    const spanStart = -((nodes.length - 1) * crossStride) / 2
+    nodes.forEach((node, index) => {
+      placements.set(node.id, { rank, cross: spanStart + index * crossStride })
+    })
+  }
+  place(
+    graph.nodes.filter((node) => node.kind === 'user'),
+    0,
+  )
+  const items = graph.nodes
+    .filter((node) => node.kind !== 'user')
+    .sort((a, b) => {
+      const byKind = kindRank(a.kind) - kindRank(b.kind)
+      if (byKind !== 0) return byKind
+      const byLabel = compareLabels(a.label, b.label)
+      if (byLabel !== 0) return byLabel
+      return a.id < b.id ? -1 : a.id > b.id ? 1 : 0
+    })
+  place(items, 1)
+  return placements
+}
+
+/**
+ * Lanes placement: one dagre pass for the cross-axis ORDER, then every kind is
+ * pinned to its fixed band (a column in LR, a row in TB) and each lane is
+ * de-overlapped at a fixed stride.
+ */
+function lanePlacements(
   graph: AccessGraphData,
   rankdir: RankDir,
-): AccessScene {
-  if (graph.nodes.length === 0) {
-    return { nodes: [], edges: [] }
-  }
-
-  const handle = handles(rankdir)
-
+  bandStep: number,
+  crossStride: number,
+): Map<string, Placement> {
   const dagreGraph = new Graph()
   dagreGraph.setDefaultEdgeLabel(() => ({}))
   dagreGraph.setGraph({
@@ -127,12 +193,9 @@ export function buildAccessScene(
 
   layout(dagreGraph)
 
-  // Pin the rank axis to the kind's fixed band so every kind forms its own
-  // column (LR) or row (TB). For LR the rank axis is x (so cards stack along y
-  // within a column); for TB it is y (so cards sit side by side along x within
-  // a row).
   const vertical = rankdir === 'TB'
-  const bandStep = (vertical ? NODE_HEIGHT : NODE_WIDTH) + RANK_SEP
+  // Pin the rank axis to the kind's fixed band so every kind forms its own
+  // column (LR) or row (TB).
   const rankCoordFor = (kind: AccessGraphNodeKind): number =>
     MARGIN + kindRank(kind) * bandStep
 
@@ -142,24 +205,21 @@ export function buildAccessScene(
   // from pinning alone). De-overlap each lane: keep dagre's cross-axis ORDER
   // (preserves a sensible top-to-bottom / left-to-right arrangement and keeps
   // edges from tangling) but re-space the cards at a fixed stride so no two in a
-  // lane can touch. The cross-axis extent is the card height (LR) or width (TB).
-  const crossExtent = vertical ? NODE_WIDTH : NODE_HEIGHT
-  const crossStride = crossExtent + NODE_SEP
+  // lane can touch.
   // dagre's centered cross-axis coordinate per node (x for LR, y for TB).
   const dagreCross = (id: string): number => {
     const placed = dagreGraph.node(id)
     return vertical ? placed.x : placed.y
   }
 
-  // Assign a de-overlapped cross-axis TOP-LEFT coordinate per node, lane by lane.
-  const crossCoord = new Map<string, number>()
+  const placements = new Map<string, Placement>()
   const byKind = new Map<AccessGraphNodeKind, AccessGraphData['nodes']>()
   for (const node of graph.nodes) {
     const lane = byKind.get(node.kind) ?? []
     lane.push(node)
     byKind.set(node.kind, lane)
   }
-  for (const lane of byKind.values()) {
+  for (const [kind, lane] of byKind) {
     // Order within the lane by dagre's cross-axis position, tie-broken by id so
     // the layout stays deterministic.
     const ordered = [...lane].sort((a, b) => {
@@ -170,14 +230,47 @@ export function buildAccessScene(
     // different sizes stay roughly aligned around a common axis.
     const spanStart = -((ordered.length - 1) * crossStride) / 2
     ordered.forEach((node, index) => {
-      crossCoord.set(node.id, spanStart + index * crossStride)
+      placements.set(node.id, {
+        rank: rankCoordFor(kind),
+        cross: spanStart + index * crossStride,
+      })
     })
   }
+  return placements
+}
+
+/**
+ * Builds a positioned scene from the derived graph. Empty graph → empty scene.
+ * PURE and deterministic: identical input (same graph + rankdir + options)
+ * yields identical output.
+ */
+export function buildAccessScene(
+  graph: AccessGraphData,
+  rankdir: RankDir,
+  options: AccessSceneOptions = {},
+): AccessScene {
+  if (graph.nodes.length === 0) {
+    return { nodes: [], edges: [] }
+  }
+
+  const handle = handles(rankdir)
+
+  // Rank axis: x for LR (cards stack along y within a column), y for TB (cards
+  // sit side by side along x within a row). The cross-axis extent is the card
+  // height (LR) or width (TB).
+  const vertical = rankdir === 'TB'
+  const bandStep = (vertical ? NODE_HEIGHT : NODE_WIDTH) + RANK_SEP
+  const crossExtent = vertical ? NODE_WIDTH : NODE_HEIGHT
+  const crossStride = crossExtent + NODE_SEP
+
+  // Per-node coordinates from whichever layout was requested.
+  const placements = options.singleLane
+    ? singleLanePlacements(graph, bandStep, crossStride)
+    : lanePlacements(graph, rankdir, bandStep, crossStride)
 
   const nodes: AccessSceneNode[] = graph.nodes.map((node) => {
-    const rankCoord = rankCoordFor(node.kind)
-    const cross = crossCoord.get(node.id) ?? 0
-    // Rank-axis from the kind band; cross-axis from the de-overlapped lane.
+    const { rank: rankCoord, cross } = placements.get(node.id) ?? { rank: MARGIN, cross: 0 }
+    // Rank-axis from the node's band; cross-axis from the de-overlapped lane.
     const x = vertical ? cross : rankCoord
     const y = vertical ? rankCoord : cross
     return {

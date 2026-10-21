@@ -4,6 +4,7 @@ import type { AccessMatrixRowVM } from '../sailpoint/types'
 import { statusSubgraph } from '../test/reviewStatusFixture'
 import type { StatusRow } from '../test/reviewStatusFixture'
 import { buildAccessScene } from './buildAccessScene'
+import { withoutReference } from './referenceFilter'
 
 function row(overrides: Partial<StatusRow>): StatusRow {
   return {
@@ -469,5 +470,224 @@ describe('buildAccessScene', () => {
         }
       }
     }
+  })
+
+  /** Rows mixing direct entitlements with role→AP→entitlement paths (lane overlap case). */
+  function mixedLaneRows(): AccessMatrixRowVM[] {
+    return [
+      row({ id: 'a', role: 'R', roleId: 'r', accessProfile: 'AP', accessProfileId: 'ap', entitlement: 'e-long-1', entitlementId: 'l1', source: 'src', sourceId: 's' }),
+      row({ id: 'b', role: 'R', roleId: 'r', accessProfile: 'AP', accessProfileId: 'ap', entitlement: 'e-long-2', entitlementId: 'l2', source: 'src', sourceId: 's' }),
+      row({ id: 'c', entitlement: 'e-direct-1', entitlementId: 'd1', source: 'src', sourceId: 's' }),
+      row({ id: 'd', entitlement: 'e-direct-2', entitlementId: 'd2', source: 'src', sourceId: 's' }),
+      row({ id: 'e', entitlement: 'e-direct-3', entitlementId: 'd3', source: 'src', sourceId: 's' }),
+    ]
+  }
+
+  /**
+   * Golden node positions + edge ids captured from the lanes layout BEFORE the
+   * single-lane option existed. Shown-mode layout must never move.
+   */
+  const GOLDEN: Record<
+    string,
+    { nodes: Record<string, [number, number]>; edges: string[] }
+  > = {
+  'worked-LR': {
+    nodes: { 'user:u1': [24, 0], 'role:role-a': [344, 0], 'accessProfile:ap-foo': [664, 56], 'entitlement:e1': [984, 168], 'source:s1': [1304, 112], 'entitlement:e2': [984, 280], 'entitlement:e3': [984, 56], 'accessProfile:ap-bar': [664, -56], 'entitlement:e4': [984, -56], 'source:s2': [1304, 0], 'entitlement:e5': [984, -168], 'entitlement:e6': [984, -280], 'source:s3': [1304, -112] },
+    edges: ['e:user:u1:role:role-a', 'e:role:role-a:accessProfile:ap-foo', 'e:accessProfile:ap-foo:entitlement:e1', 'e:entitlement:e1:source:s1', 'e:accessProfile:ap-foo:entitlement:e2', 'e:entitlement:e2:source:s1', 'e:role:role-a:entitlement:e3', 'e:entitlement:e3:source:s1', 'e:user:u1:accessProfile:ap-bar', 'e:accessProfile:ap-bar:entitlement:e4', 'e:entitlement:e4:source:s2', 'e:accessProfile:ap-bar:entitlement:e5', 'e:entitlement:e5:source:s2', 'e:user:u1:entitlement:e6', 'e:entitlement:e6:source:s3'],
+  },
+  'worked-TB': {
+    nodes: { 'user:u1': [0, 24], 'role:role-a': [0, 208], 'accessProfile:ap-foo': [124, 392], 'entitlement:e1': [372, 576], 'source:s1': [248, 760], 'entitlement:e2': [620, 576], 'entitlement:e3': [124, 576], 'accessProfile:ap-bar': [-124, 392], 'entitlement:e4': [-124, 576], 'source:s2': [0, 760], 'entitlement:e5': [-372, 576], 'entitlement:e6': [-620, 576], 'source:s3': [-248, 760] },
+    edges: ['e:user:u1:role:role-a', 'e:role:role-a:accessProfile:ap-foo', 'e:accessProfile:ap-foo:entitlement:e1', 'e:entitlement:e1:source:s1', 'e:accessProfile:ap-foo:entitlement:e2', 'e:entitlement:e2:source:s1', 'e:role:role-a:entitlement:e3', 'e:entitlement:e3:source:s1', 'e:user:u1:accessProfile:ap-bar', 'e:accessProfile:ap-bar:entitlement:e4', 'e:entitlement:e4:source:s2', 'e:accessProfile:ap-bar:entitlement:e5', 'e:entitlement:e5:source:s2', 'e:user:u1:entitlement:e6', 'e:entitlement:e6:source:s3'],
+  },
+  'nested-LR': {
+    nodes: { 'user:u1': [24, 0], 'role:role-a': [344, 0], 'accessProfile:ap-foo': [664, 0], 'entitlement:e1': [984, 0], 'source:s1': [1304, 0] },
+    edges: ['e:user:u1:role:role-a', 'e:role:role-a:accessProfile:ap-foo', 'e:accessProfile:ap-foo:entitlement:e1', 'e:entitlement:e1:source:s1', 'e:user:u1:entitlement:e1'],
+  },
+  'nested-TB': {
+    nodes: { 'user:u1': [0, 24], 'role:role-a': [0, 208], 'accessProfile:ap-foo': [0, 392], 'entitlement:e1': [0, 576], 'source:s1': [0, 760] },
+    edges: ['e:user:u1:role:role-a', 'e:role:role-a:accessProfile:ap-foo', 'e:accessProfile:ap-foo:entitlement:e1', 'e:entitlement:e1:source:s1', 'e:user:u1:entitlement:e1'],
+  },
+  'mixed-LR': {
+    nodes: { 'user:u1': [24, 0], 'role:r': [344, 0], 'accessProfile:ap': [664, 0], 'entitlement:l1': [984, 224], 'source:s': [1304, 0], 'entitlement:l2': [984, 112], 'entitlement:d1': [984, 0], 'entitlement:d2': [984, -112], 'entitlement:d3': [984, -224] },
+    edges: ['e:user:u1:role:r', 'e:role:r:accessProfile:ap', 'e:accessProfile:ap:entitlement:l1', 'e:entitlement:l1:source:s', 'e:accessProfile:ap:entitlement:l2', 'e:entitlement:l2:source:s', 'e:user:u1:entitlement:d1', 'e:entitlement:d1:source:s', 'e:user:u1:entitlement:d2', 'e:entitlement:d2:source:s', 'e:user:u1:entitlement:d3', 'e:entitlement:d3:source:s'],
+  },
+  'mixed-TB': {
+    nodes: { 'user:u1': [0, 24], 'role:r': [0, 208], 'accessProfile:ap': [0, 392], 'entitlement:l1': [496, 576], 'source:s': [0, 760], 'entitlement:l2': [248, 576], 'entitlement:d1': [0, 576], 'entitlement:d2': [-248, 576], 'entitlement:d3': [-496, 576] },
+    edges: ['e:user:u1:role:r', 'e:role:r:accessProfile:ap', 'e:accessProfile:ap:entitlement:l1', 'e:entitlement:l1:source:s', 'e:accessProfile:ap:entitlement:l2', 'e:entitlement:l2:source:s', 'e:user:u1:entitlement:d1', 'e:entitlement:d1:source:s', 'e:user:u1:entitlement:d2', 'e:entitlement:d2:source:s', 'e:user:u1:entitlement:d3', 'e:entitlement:d3:source:s'],
+  },
+  }
+
+  describe('shown-mode layout is unchanged', () => {
+    const inputs = () => ({
+      worked: deriveAccessGraph(workedExample()),
+      nested: statusSubgraph(referenceRows()),
+      mixed: deriveAccessGraph(mixedLaneRows()),
+    })
+    for (const name of ['worked', 'nested', 'mixed'] as const) {
+      for (const rankdir of ['LR', 'TB'] as const) {
+        it(`${name} ${rankdir}: positions and edge ids match the golden values`, () => {
+          const scene = buildAccessScene(inputs()[name], rankdir)
+          const golden = GOLDEN[`${name}-${rankdir}`]
+          expect(
+            Object.fromEntries(
+              scene.nodes.map((n) => [n.id, [n.position.x, n.position.y]]),
+            ),
+          ).toEqual(golden.nodes)
+          expect(scene.edges.map((e) => e.id)).toEqual(golden.edges)
+        })
+
+        it(`${name} ${rankdir}: omitted / empty / singleLane:false options are identical`, () => {
+          const graph = inputs()[name]
+          const base = buildAccessScene(graph, rankdir)
+          expect(buildAccessScene(graph, rankdir, {})).toEqual(base)
+          expect(buildAccessScene(graph, rankdir, { singleLane: false })).toEqual(base)
+        })
+      }
+    }
+  })
+
+  describe('single-lane (reference hidden) layout', () => {
+    /** First-level items of mixed kind, case, and duplicate labels, plus nested lineage. */
+    function mixedRows(n = 4): StatusRow[] {
+      const statuses = ['needsReview', 'approved', 'revoked', 'reassigned'] as const
+      const rows: StatusRow[] = [
+        row({ id: 'r1', role: 'beta role', roleId: 'r2', entitlement: 'nested-a', entitlementId: 'n1', source: 'src', sourceId: 's1', reviewStatus: 'reassigned', accessItemKind: 'role', accessItemId: 'r2', accessItemName: 'beta role' }),
+        row({ id: 'r2', role: 'Alpha Role', roleId: 'r1', accessProfile: 'AP-n', accessProfileId: 'ap-n', entitlement: 'nested-b', entitlementId: 'n2', source: 'src', sourceId: 's1', reviewStatus: 'needsReview', accessItemKind: 'role', accessItemId: 'r1', accessItemName: 'Alpha Role' }),
+        row({ id: 'p1', accessProfile: 'Zeta AP', accessProfileId: 'ap2', entitlement: 'nested-c', entitlementId: 'n3', source: 'src', sourceId: 's1', reviewStatus: 'approved', accessItemKind: 'accessProfile', accessItemId: 'ap2', accessItemName: 'Zeta AP' }),
+        row({ id: 'p2', accessProfile: 'alpha AP', accessProfileId: 'ap1', entitlement: 'nested-d', entitlementId: 'n4', source: 'src', sourceId: 's1', reviewStatus: 'revoked', accessItemKind: 'accessProfile', accessItemId: 'ap1', accessItemName: 'alpha AP' }),
+      ]
+      const ents: [string, string][] = [
+        ['Delta', 'e-d'],
+        ['charlie', 'e-c'],
+        ['Same', 'e-b'],
+        ['Same', 'e-a'],
+        ['Bravo', 'e-x'],
+        ['echo', 'e-y'],
+      ]
+      ents.slice(0, Math.max(0, n)).forEach(([name, id], i) => {
+        rows.push(row({ id: `e${i}`, entitlement: name, entitlementId: id, source: 'src', sourceId: 's1', reviewStatus: statuses[i % 4], accessItemKind: 'entitlement', accessItemId: id, accessItemName: name }))
+      })
+      return rows
+    }
+    const hiddenGraph = (n?: number) => withoutReference(statusSubgraph(mixedRows(n)))
+    const EXPECTED_ORDER = [
+      'role:r1', // Alpha Role
+      'role:r2', // beta role
+      'accessProfile:ap1', // alpha AP
+      'accessProfile:ap2', // Zeta AP
+      'entitlement:e-x', // Bravo (n=6 only)
+      'entitlement:e-c', // charlie
+      'entitlement:e-d', // Delta
+      'entitlement:e-y', // echo
+      'entitlement:e-a', // Same (id tie-break: e-a < e-b)
+      'entitlement:e-b', // Same
+    ]
+    const rankOf = (n: { position: { x: number; y: number } }, rd: 'LR' | 'TB') =>
+      rd === 'LR' ? n.position.x : n.position.y
+    const crossOf = (n: { position: { x: number; y: number } }, rd: 'LR' | 'TB') =>
+      rd === 'LR' ? n.position.y : n.position.x
+
+    for (const rankdir of ['LR', 'TB'] as const) {
+      describe(rankdir, () => {
+        const extent = rankdir === 'LR' ? 64 : 200
+        const stride = extent + 48
+
+        it('puts every first-level item in ONE lane strictly after the user', () => {
+          const scene = buildAccessScene(hiddenGraph(6), rankdir, { singleLane: true })
+          const user = scene.nodes.find((n) => n.data.kind === 'user')!
+          const items = scene.nodes.filter((n) => n.data.kind !== 'user')
+          expect(items).toHaveLength(10)
+          const lane = rankOf(items[0], rankdir)
+          for (const item of items) expect(rankOf(item, rankdir)).toBe(lane)
+          expect(lane).toBeGreaterThan(rankOf(user, rankdir))
+        })
+
+        it('orders by kind (role, access profile, entitlement), then label case-insensitively, then id', () => {
+          const scene = buildAccessScene(hiddenGraph(6), rankdir, { singleLane: true })
+          const ordered = scene.nodes
+            .filter((n) => n.data.kind !== 'user')
+            .sort((a, b) => crossOf(a, rankdir) - crossOf(b, rankdir))
+            .map((n) => n.id)
+          expect(ordered).toEqual(EXPECTED_ORDER)
+        })
+
+        it('never overlaps cards: consecutive cross gap equals the stride (>= card extent)', () => {
+          for (const n of [0, 1, 2, 3, 6]) {
+            const scene = buildAccessScene(hiddenGraph(n), rankdir, { singleLane: true })
+            const crosses = scene.nodes
+              .filter((x) => x.data.kind !== 'user')
+              .map((x) => crossOf(x, rankdir))
+              .sort((a, b) => a - b)
+            for (let i = 1; i < crosses.length; i++) {
+              expect(crosses[i] - crosses[i - 1]).toBe(stride)
+              expect(crosses[i] - crosses[i - 1]).toBeGreaterThanOrEqual(extent)
+            }
+          }
+        })
+
+        it('centers the user on the lane span (odd, even and single-item lanes)', () => {
+          // 4 fixed items + n entitlements: n=0 -> 4 (even), 1 -> 5 (odd); and a one-item lane.
+          const single = withoutReference(
+            statusSubgraph([
+              row({ id: '1', entitlement: 'only', entitlementId: 'e1', source: 's', sourceId: 's1', reviewStatus: 'approved', accessItemKind: 'entitlement', accessItemId: 'e1', accessItemName: 'only' }),
+            ]),
+          )
+          for (const graph of [hiddenGraph(0), hiddenGraph(1), hiddenGraph(6), single]) {
+            const scene = buildAccessScene(graph, rankdir, { singleLane: true })
+            const user = scene.nodes.find((x) => x.data.kind === 'user')!
+            const crosses = scene.nodes
+              .filter((x) => x.data.kind !== 'user')
+              .map((x) => crossOf(x, rankdir))
+            const laneMid = (Math.min(...crosses) + Math.max(...crosses) + extent) / 2
+            expect(crossOf(user, rankdir) + extent / 2).toBeCloseTo(laneMid, 9)
+          }
+        })
+
+        it('emits exactly the first-level edges with unchanged status styling and node data', () => {
+          const full = statusSubgraph(mixedRows(6))
+          const hidden = withoutReference(full)
+          const single = buildAccessScene(hidden, rankdir, { singleLane: true })
+          const lanes = buildAccessScene(full, rankdir)
+          expect(single.edges.map((e) => e.id)).toEqual(
+            hidden.edges.map((e) => `e:${e.from}:${e.to}`),
+          )
+          for (const edge of single.edges) {
+            expect(edge).toEqual(lanes.edges.find((e) => e.id === edge.id))
+            expect(edge.className).toContain('vc-graph-edge-status')
+          }
+          for (const node of single.nodes) {
+            const laneNode = lanes.nodes.find((n) => n.id === node.id)!
+            // Everything but the position is identical to the lanes-mode node.
+            expect({ ...node, position: null }).toEqual({ ...laneNode, position: null })
+            expect(node.data.reference).toBe(false)
+            expect(node.zIndex).toBe(2)
+          }
+        })
+
+        it('is deterministic, independent of input order, and does not mutate the input', () => {
+          const graph = hiddenGraph(6)
+          const before = JSON.stringify(graph)
+          const a = buildAccessScene(graph, rankdir, { singleLane: true })
+          const b = buildAccessScene(graph, rankdir, { singleLane: true })
+          expect(b).toEqual(a)
+          expect(JSON.stringify(graph)).toBe(before)
+          const shuffled = {
+            nodes: [...graph.nodes].reverse(),
+            edges: [...graph.edges].reverse(),
+          }
+          const c = buildAccessScene(shuffled, rankdir, { singleLane: true })
+          const positions = (scene: typeof a) =>
+            Object.fromEntries(scene.nodes.map((n) => [n.id, n.position]))
+          expect(positions(c)).toEqual(positions(a))
+        })
+      })
+    }
+
+    it('returns an empty scene for an empty graph', () => {
+      expect(buildAccessScene({ nodes: [], edges: [] }, 'LR', { singleLane: true })).toEqual({
+        nodes: [],
+        edges: [],
+      })
+    })
   })
 })
