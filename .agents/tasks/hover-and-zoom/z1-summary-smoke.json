@@ -1,0 +1,94 @@
+{
+ "rows": [
+  {
+   "z": "Z1",
+   "sc": "dense/1700x1000/hidden/LR/map-on",
+   "exempt": {
+    "total": 26,
+    "fullyVisibleClear": 9,
+    "outsideCanvas": 16,
+    "cutByCanvas": 1,
+    "underOverlay": 0
+   },
+   "zoom": 0.65,
+   "stepsToLast": 10,
+   "fitView": {
+    "zoom": 0.210756,
+    "cut": 0,
+    "hintShown": false
+   }
+  }
+ ],
+ "counts": {
+  "Z1 zoom == READABLE_MIN_ZOOM (+/-0.005)": {
+   "pass": 1,
+   "fail": 0
+  },
+  "Z1 effective label font >= 9.5px": {
+   "pass": 1,
+   "fail": 0
+  },
+  "Z1 user + 3 nearest items fully inside canvas": {
+   "pass": 4,
+   "fail": 0
+  },
+  "Z1 user + 3 nearest items clear of every overlay": {
+   "pass": 4,
+   "fail": 0
+  },
+  "Z1 hint present with role=status and the count text": {
+   "pass": 1,
+   "fail": 0
+  },
+  "Z1 hint does not overlap toolbar/Back/legend/minimap/Controls": {
+   "pass": 1,
+   "fail": 0
+  },
+  "Z1 hint inside the canvas": {
+   "pass": 1,
+   "fail": 0
+  },
+  "Z1 wheel reaches the LAST item fully inside canvas, clear of overlays": {
+   "pass": 1,
+   "fail": 0
+  },
+  "Z1 scrolling does not change zoom": {
+   "pass": 1,
+   "fail": 0
+  },
+  "Z1 wheel reaches the FIRST item fully inside canvas, clear of overlays": {
+   "pass": 1,
+   "fail": 0
+  },
+  "Z1 drag pans the viewport": {
+   "pass": 1,
+   "fail": 0
+  },
+  "Z1 ctrl-wheel zoom out bottoms at 0.15": {
+   "pass": 1,
+   "fail": 0
+  },
+  "Z1 fit-view: zoom >= 0.15": {
+   "pass": 1,
+   "fail": 0
+  },
+  "Z1 fit-view shows every node inside the canvas": {
+   "pass": 1,
+   "fail": 0
+  },
+  "Z1 fit-view hides the hint (all in view)": {
+   "pass": 1,
+   "fail": 0
+  },
+  "Z1 resize round trip refits to the readable zoom": {
+   "pass": 1,
+   "fail": 0
+  },
+  "Z1 resize round trip keeps the user card clear": {
+   "pass": 1,
+   "fail": 0
+  }
+ },
+ "failures": 0,
+ "failureSample": []
+}

@@ -1,0 +1,36 @@
+{
+  "verdict": "APPROVED",
+  "summary": "Both changes are implemented as specified and the evidence holds up. Hover/focus on a first-level card raises only that item's incoming status edge (zIndex 10 over cards at 2, stroke 3.5, pointer-events none, interactionWidth 0), dims all other edges through opacity only, and is a provable no-op for the user, reference nodes and the grid (same array reference). Hover state never enters the scene memo, fitKey or FitOnSceneChange deps, so there is no layout, position or refit dependency; the tooltip coexists (test plus screenshot). Real-Chrome pixel checks and screenshots confirm the edge is painted over crossed cards (0% before hover, 100% on hover), so the ViewportPortal fallback was rightly not needed. Long graphs (fit zoom < 0.3) open at 0.65 via planFit/readableViewport while short graphs keep the unchanged fitView path (zoom-equality checked against the pre-change commit), refit triggers are unchanged, minZoom stays 0.15 and Controls is untouched, and the scroll hint is a role=status, pointer-events:none pill shown only in drill-down when the graph is out of view and excluded from overlay measurement. The revised invariant is documented in fitPadding.ts and FitOnSceneChange, and D3/D4/D5 are stated honestly, including the thin 0.315 vs 0.3 margin and the one scenario that fails the near-items-clear-of-overlay check. I re-ran the gates in the worktree: build exit 0, lint clean, npm test 41 files / 389 tests pass. Tests use scoped per-instance rect stubs only (no Element.prototype), pure helpers have dedicated unit tests, harness/driver/puppeteer are absent from the worktree, package.json and package-lock.json are untouched, git status is clean, and no remote ref exists for the branch. Only non-blocking polish items remain.",
+  "findings": [
+    {
+      "severity": "non-blocking",
+      "file": "src/graph/AccessGraphCanvas.tsx",
+      "issue": "The FitOnSceneChange and fitPadding.ts doc comments say the user card and nearest items are clear of every overlay in the long-graph mode. verification.md records one scenario (dense, 1000x700, shown, LR, minimap on) where the 3rd-nearest item (Profile 2) is partly under the minimap; z1-dense-shown-open-1000x700.png confirms it. Confirmed by reading the screenshot and the report.",
+      "fix": "Soften the comment to 'where the canvas allows', and note the known small-viewport exception (shown reference, LR, minimap on at 1000x700; toggling the minimap off clears it)."
+    },
+    {
+      "severity": "non-blocking",
+      "file": ".agents/tasks/hover-and-zoom/verification.md",
+      "issue": "The Z1 table reports 'wheel reaches LAST item' as 16/16, but the note beneath says that in dense 1000x700 shown LR map-on the last item is reached only after also panning horizontally (2-D). The Controls fit-view also leaves nodes cut in the four 1000x700 shown scenarios because of the unchanged 0.15 minZoom. Both are disclosed, but the table headline overstates the wheel result.",
+      "fix": "Relabel the row as 'scroll/drag reaches LAST item (wheel only in 15 of 16)' and mention the four fit-view exceptions next to the 'Controls fit-view shows the whole graph' claim."
+    },
+    {
+      "severity": "non-blocking",
+      "file": "src/graph/ScrollHint.tsx",
+      "issue": "The role=status element is mounted together with its text, and some screen readers do not announce a live region inserted that way. Hint overlap was verified only at 1700 and 1000 px widths; the top-center pill has no check against Back and the toolbar at narrower canvases. Possible, not verified.",
+      "fix": "Optionally keep an empty role=status container mounted and swap the text in, and add one narrow-width (about 800 px) browser check or a max-width with ellipsis on .vc-graph-hint."
+    },
+    {
+      "severity": "non-blocking",
+      "file": "src/graph/fitPadding.ts",
+      "issue": "SCROLL_MODE_FIT_ZOOM (0.3) sits only 0.015 below the lowest standard-graph fit zoom (0.315 at shown, TB, 1000x700, minimap on). A slightly smaller viewport moves a short graph onto the readable path. This is disclosed as D4, but it means the 'short graphs unchanged' guarantee is viewport-dependent.",
+      "fix": "No change required. Optionally add a one-line comment at the constant naming that margin so a future tuner sees it."
+    },
+    {
+      "severity": "non-blocking",
+      "file": "src/graph/fitPadding.ts",
+      "issue": "The scrollAxisPenalty doc comment is one very long line that embeds tuning history ('3 pushed more overlays into the rank axis at 1000x700').",
+      "fix": "Wrap the comment and move the tuning history to the commit message or report."
+    }
+  ]
+}

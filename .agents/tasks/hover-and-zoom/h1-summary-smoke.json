@@ -1,0 +1,126 @@
+{
+ "scenarios": 1,
+ "counts": {
+  "H1-pre: expected first-level card count": {
+   "pass": 1,
+   "fail": 0
+  },
+  "H1-a exactly one emphasized edge, it is the card's incoming edge": {
+   "pass": 5,
+   "fail": 0
+  },
+  "H1-a emphasized edge thicker than default": {
+   "pass": 5,
+   "fail": 0
+  },
+  "H1-a edge layer z-index above card z-index": {
+   "pass": 5,
+   "fail": 0
+  },
+  "H1-g tooltip opens on hover": {
+   "pass": 5,
+   "fail": 0
+  },
+  "H1-b every other edge dimmed (status .25 / reference .12)": {
+   "pass": 5,
+   "fail": 0
+  },
+  "H1-b stroke colors and dashes unchanged": {
+   "pass": 5,
+   "fail": 0
+  },
+  "H1-e node + viewport transforms identical during hover": {
+   "pass": 5,
+   "fail": 0
+  },
+  "H1-c raised edge painted over crossed cards (>=95% of crossing samples)": {
+   "pass": 4,
+   "fail": 0
+  },
+  "H1-c before hover the edge was NOT painted over those cards (<50%)": {
+   "pass": 4,
+   "fail": 0
+  },
+  "H1-d emphasis stable (no flicker) at center": {
+   "pass": 5,
+   "fail": 0
+  },
+  "H1-d elementFromPoint stays inside the card at center": {
+   "pass": 5,
+   "fail": 0
+  },
+  "H1-d emphasis stable (no flicker) at left border": {
+   "pass": 5,
+   "fail": 0
+  },
+  "H1-d elementFromPoint stays inside the card at left border": {
+   "pass": 5,
+   "fail": 0
+  },
+  "H1-d emphasis stable (no flicker) at top border": {
+   "pass": 5,
+   "fail": 0
+  },
+  "H1-d elementFromPoint stays inside the card at top border": {
+   "pass": 5,
+   "fail": 0
+  },
+  "H1-f edge classes/styles string-identical after leave": {
+   "pass": 5,
+   "fail": 0
+  },
+  "H1-e transforms identical after leave": {
+   "pass": 5,
+   "fail": 0
+  },
+  "H1-g focus() emphasizes the card's edge": {
+   "pass": 5,
+   "fail": 0
+  },
+  "H1-g tooltip opens on focus": {
+   "pass": 5,
+   "fail": 0
+  },
+  "H1-g blur restores edges": {
+   "pass": 5,
+   "fail": 0
+  },
+  "H1-e viewport zoom unchanged by hover/focus": {
+   "pass": 1,
+   "fail": 0
+  },
+  "H1-g reference-only node hover changes no edge": {
+   "pass": 6,
+   "fail": 0
+  },
+  "H1-g Tab focus on user/reference card emphasizes nothing": {
+   "pass": 7,
+   "fail": 0
+  },
+  "H1-g Tab focus emphasizes that card's edge": {
+   "pass": 5,
+   "fail": 0
+  },
+  "H1-g Tab focus shows tooltip": {
+   "pass": 5,
+   "fail": 0
+  },
+  "H1-g real Tab reaches every first-level card": {
+   "pass": 1,
+   "fail": 0
+  }
+ },
+ "failures": 0,
+ "perScenario": [
+  {
+   "sc": "standard/1700x1000/shown/LR/map-on",
+   "cards": 5,
+   "crossedCards": 4,
+   "crossedPts": 95,
+   "excludedPts": 0,
+   "minHover": 1,
+   "maxBase": 0
+  }
+ ],
+ "failureSample": []
+}

@@ -1,0 +1,134 @@
+{
+ "scenarios": 1,
+ "counts": {
+  "H1-pre: expected first-level card count": {
+   "pass": 1,
+   "fail": 0
+  },
+  "H1-a exactly one emphasized edge, it is the card's incoming edge": {
+   "pass": 25,
+   "fail": 0
+  },
+  "H1-a emphasized edge thicker than default": {
+   "pass": 25,
+   "fail": 0
+  },
+  "H1-a edge layer z-index above card z-index": {
+   "pass": 25,
+   "fail": 0
+  },
+  "H1-g tooltip opens on hover": {
+   "pass": 25,
+   "fail": 0
+  },
+  "H1-b every other edge dimmed (status .25 / reference .12)": {
+   "pass": 25,
+   "fail": 0
+  },
+  "H1-b stroke colors and dashes unchanged": {
+   "pass": 25,
+   "fail": 0
+  },
+  "H1-e node + viewport transforms identical during hover": {
+   "pass": 25,
+   "fail": 0
+  },
+  "H1-d emphasis stable (no flicker) at center": {
+   "pass": 25,
+   "fail": 0
+  },
+  "H1-d elementFromPoint stays inside the card at center": {
+   "pass": 25,
+   "fail": 0
+  },
+  "H1-d emphasis stable (no flicker) at left border": {
+   "pass": 25,
+   "fail": 0
+  },
+  "H1-d elementFromPoint stays inside the card at left border": {
+   "pass": 25,
+   "fail": 0
+  },
+  "H1-d emphasis stable (no flicker) at top border": {
+   "pass": 25,
+   "fail": 0
+  },
+  "H1-d elementFromPoint stays inside the card at top border": {
+   "pass": 25,
+   "fail": 0
+  },
+  "H1-f edge classes/styles string-identical after leave": {
+   "pass": 25,
+   "fail": 0
+  },
+  "H1-e transforms identical after leave": {
+   "pass": 25,
+   "fail": 0
+  },
+  "H1-c raised edge painted over crossed cards (>=95% of samples; >=90% when the stroke is sub-pixel, i.e. 3.5*zoom < 1px)": {
+   "pass": 5,
+   "fail": 1
+  },
+  "H1-c before hover the edge was NOT painted over those cards (<50%)": {
+   "pass": 6,
+   "fail": 0
+  },
+  "H1-g focus() emphasizes the card's edge": {
+   "pass": 25,
+   "fail": 0
+  },
+  "H1-g tooltip opens on focus": {
+   "pass": 25,
+   "fail": 0
+  },
+  "H1-g blur restores edges": {
+   "pass": 25,
+   "fail": 0
+  },
+  "H1-e viewport zoom unchanged by hover/focus": {
+   "pass": 1,
+   "fail": 0
+  },
+  "H1-g reference-only node hover changes no edge": {
+   "pass": 14,
+   "fail": 0
+  },
+  "H1-g Tab focus on user/reference card emphasizes nothing": {
+   "pass": 15,
+   "fail": 0
+  },
+  "H1-g Tab focus emphasizes that card's edge": {
+   "pass": 25,
+   "fail": 0
+  },
+  "H1-g Tab focus shows tooltip": {
+   "pass": 25,
+   "fail": 0
+  },
+  "H1-g real Tab reaches every first-level card": {
+   "pass": 1,
+   "fail": 0
+  }
+ },
+ "failures": 1,
+ "perScenario": [
+  {
+   "sc": "dense/1700x1000/shown/LR/map-off",
+   "cards": 25,
+   "unreachableOffCanvas": 0,
+   "crossedCards": 6,
+   "crossedPts": 109,
+   "excludedPts": 0,
+   "minHover": 0.8461538461538461,
+   "maxBase": 0,
+   "exactMin": 0
+  }
+ ],
+ "failureSample": [
+  {
+   "scenario": "dense/1700x1000/shown/LR/map-off",
+   "assertion": "H1-c raised edge painted over crossed cards (>=95% of samples; >=90% when the stroke is sub-pixel, i.e. 3.5*zoom < 1px)",
+   "detail": "Entitlement 03: hover(improved) 0.85 exact 0.00 zoom-px 0.33 over 13 pts"
+  }
+ ]
+}

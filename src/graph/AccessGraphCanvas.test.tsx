@@ -240,11 +240,11 @@ describe('AccessGraphCanvas', () => {
 
   const cardFor = (text: string) => screen.getByText(text).closest<HTMLElement>('.vc-graph-card')!
 
-  it('legend lists a Reference only entry distinct from the four statuses', () => {
+  it('legend lists a Reference Only entry distinct from the four statuses', () => {
     render(<AccessGraphCanvas graph={referenceGraph()} />)
     fireEvent.click(screen.getByRole('button', { name: 'Show access for User One' }))
     const legend = screen.getByRole('group', { name: /review status legend/i })
-    expect(legend).toHaveTextContent('Reference only (not reviewed)')
+    expect(legend).toHaveTextContent('Reference Only')
     // The reference entry is a hairline swatch, not a status icon.
     expect(legend.querySelectorAll('.vc-graph-status-icon')).toHaveLength(4)
     expect(legend.querySelector('.vc-graph-legend-swatch-reference')).not.toBeNull()
@@ -522,7 +522,7 @@ describe('AccessGraphCanvas', () => {
       const nestedLabels = ['foo', 'read', 'engr db', 'phone app']
       for (const t of nestedLabels) expect(screen.getByText(t)).toBeInTheDocument()
       expect(screen.getByRole('group', { name: /review status legend/i })).toHaveTextContent(
-        'Reference only (not reviewed)',
+        'Reference Only',
       )
       expect(btn('Hide reference nodes and links')).toHaveAttribute('aria-pressed', 'true')
 
@@ -537,12 +537,12 @@ describe('AccessGraphCanvas', () => {
       for (const t of ['Role A', 'login', 'User One']) expect(screen.getByText(t)).toBeInTheDocument()
       expect(document.querySelectorAll('.react-flow__node .vc-graph-status-icon')).toHaveLength(2)
       const legend = screen.getByRole('group', { name: /review status legend/i })
-      expect(legend).not.toHaveTextContent('Reference only')
+      expect(legend).not.toHaveTextContent('Reference Only')
       expect(legend.querySelectorAll('.vc-graph-status-icon')).toHaveLength(4)
 
       fireEvent.click(btn('Show reference nodes and links'))
       for (const t of nestedLabels) expect(screen.getByText(t)).toBeInTheDocument()
-      expect(legend).toHaveTextContent('Reference only (not reviewed)')
+      expect(legend).toHaveTextContent('Reference Only')
       expect(announcement()).toHaveTextContent('Reference nodes and links shown.')
     })
 

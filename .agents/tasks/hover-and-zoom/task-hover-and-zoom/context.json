@@ -1,0 +1,33 @@
+{
+  "project_type": "Vite + React 19 + TypeScript SailPoint ISC UI plugin; access graph is a React Flow (@xyflow/react ^12.12) canvas with dagre-based pure scene builders",
+  "language": "TypeScript (strict, tsc -b), React function components, plain CSS files (no CSS-in-JS)",
+  "build_system": "Vite 8 + @vitejs/plugin-react + basicSsl (dev server is HTTPS, self-signed, default port 1573 strictPort). npm. Do not touch package.json / package-lock.json (puppeteer-core is installed only with --no-save and removed with `npm ci --ignore-scripts`).",
+  "test_framework": "vitest (jsdom, globals, css:false, setup src/test/setup.ts stubs ResizeObserver/matchMedia/DOMMatrixReadOnly) + @testing-library/react. jsdom cannot lay out React Flow, so layout/paint claims need the real-browser harness.",
+  "build_command": "npm run build   (tsc -b && vite build; must have zero type errors)",
+  "test_command": "npm test   (vitest run). Single file: npx vitest run <path>. Lint: npm run lint (eslint . ; react-hooks v7 forbids setState in effects and ref writes during render; react-refresh forbids non-component exports from component files).",
+  "verification_instructions": "After code changes: npm run build, npm run lint, npm test. Known flake: src/state/useProvenance.test.ts can fail only under full-suite load and passes on isolated re-run (re-run once, never weaken). Then the real-browser protocol in plan.md ('REAL-BROWSER VERIFICATION PROTOCOL'): temporary graph-harness.html + src/test/graph-harness.tsx + harness-driver.mjs, Vite on port 5199 (strictPort, HTTPS), `npm install --no-save puppeteer-core@23`, Chrome at /Applications/Google Chrome.app/Contents/MacOS/Google Chrome with --ignore-certificate-errors --no-sandbox, viewports 1700x1000 and 1000x700. LOOK at every screenshot with read_file. Delete the harness before committing; lint only after deletion.",
+  "snapshot_or_generated_files": "None checked in. Evidence goes to /Users/scott.fehrman/Documents/Projects/SailPoint/ui-plugins-apps/visual-certs/.agents/tasks/hover-and-zoom/ (outside the worktree, never committed). Harness sources are kept in .../hover-and-zoom/harness/ for reuse and deleted from the worktree.",
+  "environment_constraints": "All work in the worktree /Users/scott.fehrman/Documents/Projects/SailPoint/ui-plugins-apps/visual-certs/.worktrees/hover-and-zoom (branch feature/graph-hover-and-readable-zoom). Use absolute paths and `git -C <worktree>`; relative paths land in the parent workspace. Never push. Never `git add .` (add files by name). The shell may refuse to background `npm run dev`; then start Vite through its JS API createServer with the project vite.config.ts from the driver script. Never stub Element.prototype.getBoundingClientRect globally in tests; assign per-instance rects (see rect() in AccessGraphCanvas.fit.test.tsx, stubRect in GraphControls.test.tsx).",
+  "contribution_requirements": "No AGENTS.md/CONTRIBUTING/.kiro steering in the repo. Conventions: pure scene builders (no React/DOM, no mutation, deterministic), doc comments explaining intent, tests next to source, status colors only via --vc-warn/--vc-allow/--vc-deny/--vc-accent tokens, no new runtime dependencies, keep node tooltips, control panel, legend, icons, rings, overview counts untouched.",
+  "key_patterns": "buildAccessScene.ts is pure; node zIndex literal 2 (to export as CARD_Z_INDEX), status edge zIndex 1, reference edge zIndex 0, edge id e:${from}:${to}, status edges have data.reviewStatus and className vc-graph-edge-status vc-graph-edge-<status>, reference edges data.reference. FitOnSceneChange in AccessGraphCanvas.tsx refits in a rAF on [fitKey,width,height,fitView,store] using measureOverlays/computeFitPadding/toFitViewPadding from fitPadding.ts (strip model: each .react-flow__panel overlay is charged to its thinnest side). Derived state is reset with the 'adjust state during render' pattern (prevNodes) because lint forbids setState in effects. AccessNode.tsx drill-down card is <article tabIndex=0 aria-label> wrapped in NodeTooltip; data.reference marks reference nodes, data.interactive marks grid cards. Layout: user and every lane are centered on cross 0, so the user sits at the lane midpoint; canvas height min(70vh,640px) (640 at 1700x1000, 490 at 1000x700). Measured fit zooms: standard hidden 0.785/0.492, shown 0.644/0.404; dense 0.15-0.238.",
+  "relevant_files": [
+    "src/graph/AccessGraphCanvas.tsx",
+    "src/graph/fitPadding.ts",
+    "src/graph/fitPadding.test.ts",
+    "src/graph/buildAccessScene.ts",
+    "src/graph/buildAccessScene.test.ts",
+    "src/graph/AccessNode.tsx",
+    "src/graph/AccessNode.test.tsx",
+    "src/graph/AccessGraph.css",
+    "src/graph/AccessGraphCanvas.fit.test.tsx",
+    "src/graph/AccessGraphCanvas.test.tsx",
+    "src/graph/NodeTooltip.tsx",
+    "src/graph/referenceFilter.ts",
+    "src/test/reviewStatusFixture.ts",
+    "src/main.tsx",
+    "vite.config.ts",
+    ".agents/tasks/layout-fixes/verification.md (in the main repo, not the worktree)",
+    ".agents/tasks/layout-fixes/code-review.md (in the main repo, not the worktree)"
+  ],
+  "directory_structure": "src/graph/ (canvas, node, scene builders, fit math, css, tests), src/test/ (setup.ts, reviewStatusFixture.ts), src/domain/ and src/views/ (do not touch), vite.config.ts at the worktree root. Artifacts root (outside worktree): /Users/scott.fehrman/Documents/Projects/SailPoint/ui-plugins-apps/visual-certs/.agents/tasks/hover-and-zoom/"
+}

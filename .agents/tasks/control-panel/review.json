@@ -1,0 +1,8 @@
+{
+  "verdict": "APPROVED",
+  "findings": [
+    "Non-blocking (possible/likely): fitView ignores overlay panels, so with reference hidden at 1700x1000 the minimap covers part of the bottom-right 'Login' card (screenshot 2-reference-hidden.png). Consider fit padding/inset for the minimap.",
+    "Non-blocking (likely): with reference hidden, straight user-to-first-level status edges run behind intermediate cards (Alice->Admin passes behind Role A and Billing) and can read as a Role A - Billing - Admin chain. Consider offsetting those edges."
+  ],
+  "reviewDoc": "/Users/scott.fehrman/Documents/Projects/SailPoint/ui-plugins-apps/visual-certs/.agents/tasks/control-panel/code-review.md"
+}

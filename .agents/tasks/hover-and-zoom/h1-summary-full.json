@@ -1,0 +1,455 @@
+{
+ "scenarios": 32,
+ "counts": {
+  "H1-pre: expected first-level card count": {
+   "pass": 32,
+   "fail": 0
+  },
+  "H1-a exactly one emphasized edge, it is the card's incoming edge": {
+   "pass": 440,
+   "fail": 0
+  },
+  "H1-a emphasized edge thicker than default": {
+   "pass": 440,
+   "fail": 0
+  },
+  "H1-a edge layer z-index above card z-index": {
+   "pass": 440,
+   "fail": 0
+  },
+  "H1-g tooltip opens on hover": {
+   "pass": 440,
+   "fail": 0
+  },
+  "H1-b every other edge dimmed (status .25 / reference .12)": {
+   "pass": 440,
+   "fail": 0
+  },
+  "H1-b stroke colors and dashes unchanged": {
+   "pass": 440,
+   "fail": 0
+  },
+  "H1-e node + viewport transforms identical during hover": {
+   "pass": 440,
+   "fail": 0
+  },
+  "H1-c raised edge painted over crossed cards (>=95% of samples; >=90% when the stroke is sub-pixel, i.e. 3.5*zoom < 1px)": {
+   "pass": 50,
+   "fail": 1
+  },
+  "H1-c before hover the edge was NOT painted over those cards (<50%)": {
+   "pass": 51,
+   "fail": 0
+  },
+  "H1-d emphasis stable (no flicker) at center": {
+   "pass": 440,
+   "fail": 0
+  },
+  "H1-d elementFromPoint stays inside the card at center": {
+   "pass": 440,
+   "fail": 0
+  },
+  "H1-d emphasis stable (no flicker) at left border": {
+   "pass": 440,
+   "fail": 0
+  },
+  "H1-d elementFromPoint stays inside the card at left border": {
+   "pass": 440,
+   "fail": 0
+  },
+  "H1-d emphasis stable (no flicker) at top border": {
+   "pass": 440,
+   "fail": 0
+  },
+  "H1-d elementFromPoint stays inside the card at top border": {
+   "pass": 440,
+   "fail": 0
+  },
+  "H1-f edge classes/styles string-identical after leave": {
+   "pass": 440,
+   "fail": 0
+  },
+  "H1-e transforms identical after leave": {
+   "pass": 440,
+   "fail": 0
+  },
+  "H1-g focus() emphasizes the card's edge": {
+   "pass": 480,
+   "fail": 0
+  },
+  "H1-g tooltip opens on focus": {
+   "pass": 480,
+   "fail": 0
+  },
+  "H1-g blur restores edges": {
+   "pass": 480,
+   "fail": 0
+  },
+  "H1-e viewport zoom unchanged by hover/focus": {
+   "pass": 32,
+   "fail": 0
+  },
+  "H1-g reference-only node hover changes no edge": {
+   "pass": 160,
+   "fail": 0
+  },
+  "H1-g Tab focus on user/reference card emphasizes nothing": {
+   "pass": 200,
+   "fail": 0
+  },
+  "H1-g Tab focus emphasizes that card's edge": {
+   "pass": 504,
+   "fail": 0
+  },
+  "H1-g Tab focus shows tooltip": {
+   "pass": 504,
+   "fail": 0
+  },
+  "H1-g real Tab reaches every first-level card": {
+   "pass": 32,
+   "fail": 0
+  }
+ },
+ "failures": 1,
+ "perScenario": [
+  {
+   "sc": "standard/1700x1000/shown/LR/map-on",
+   "cards": 5,
+   "unreachableOffCanvas": 0,
+   "crossedCards": 4,
+   "crossedPts": 95,
+   "excludedPts": 0,
+   "minHover": 1,
+   "maxBase": 0,
+   "exactMin": 1
+  },
+  {
+   "sc": "standard/1700x1000/shown/LR/map-off",
+   "cards": 5,
+   "unreachableOffCanvas": 0,
+   "crossedCards": 4,
+   "crossedPts": 98,
+   "excludedPts": 0,
+   "minHover": 1,
+   "maxBase": 0,
+   "exactMin": 1
+  },
+  {
+   "sc": "standard/1700x1000/shown/TB/map-on",
+   "cards": 5,
+   "unreachableOffCanvas": 0,
+   "crossedCards": 3,
+   "crossedPts": 31,
+   "excludedPts": 0,
+   "minHover": 1,
+   "maxBase": 0,
+   "exactMin": 1
+  },
+  {
+   "sc": "standard/1700x1000/shown/TB/map-off",
+   "cards": 5,
+   "unreachableOffCanvas": 0,
+   "crossedCards": 3,
+   "crossedPts": 34,
+   "excludedPts": 0,
+   "minHover": 1,
+   "maxBase": 0,
+   "exactMin": 1
+  },
+  {
+   "sc": "standard/1700x1000/hidden/LR/map-on",
+   "cards": 5,
+   "unreachableOffCanvas": 0,
+   "crossedCards": 0,
+   "crossedPts": 0,
+   "excludedPts": 0,
+   "minHover": 1,
+   "maxBase": 0
+  },
+  {
+   "sc": "standard/1700x1000/hidden/LR/map-off",
+   "cards": 5,
+   "unreachableOffCanvas": 0,
+   "crossedCards": 0,
+   "crossedPts": 0,
+   "excludedPts": 0,
+   "minHover": 1,
+   "maxBase": 0
+  },
+  {
+   "sc": "standard/1700x1000/hidden/TB/map-on",
+   "cards": 5,
+   "unreachableOffCanvas": 0,
+   "crossedCards": 0,
+   "crossedPts": 0,
+   "excludedPts": 0,
+   "minHover": 1,
+   "maxBase": 0
+  },
+  {
+   "sc": "standard/1700x1000/hidden/TB/map-off",
+   "cards": 5,
+   "unreachableOffCanvas": 0,
+   "crossedCards": 0,
+   "crossedPts": 0,
+   "excludedPts": 0,
+   "minHover": 1,
+   "maxBase": 0
+  },
+  {
+   "sc": "standard/1000x700/shown/LR/map-on",
+   "cards": 5,
+   "unreachableOffCanvas": 0,
+   "crossedCards": 4,
+   "crossedPts": 88,
+   "excludedPts": 0,
+   "minHover": 1,
+   "maxBase": 0,
+   "exactMin": 0.9491525423728814
+  },
+  {
+   "sc": "standard/1000x700/shown/LR/map-off",
+   "cards": 5,
+   "unreachableOffCanvas": 0,
+   "crossedCards": 4,
+   "crossedPts": 88,
+   "excludedPts": 0,
+   "minHover": 1,
+   "maxBase": 0,
+   "exactMin": 0.9661016949152542
+  },
+  {
+   "sc": "standard/1000x700/shown/TB/map-on",
+   "cards": 5,
+   "unreachableOffCanvas": 0,
+   "crossedCards": 2,
+   "crossedPts": 15,
+   "excludedPts": 0,
+   "minHover": 1,
+   "maxBase": 0,
+   "exactMin": 1
+  },
+  {
+   "sc": "standard/1000x700/shown/TB/map-off",
+   "cards": 5,
+   "unreachableOffCanvas": 0,
+   "crossedCards": 3,
+   "crossedPts": 26,
+   "excludedPts": 0,
+   "minHover": 1,
+   "maxBase": 0,
+   "exactMin": 1
+  },
+  {
+   "sc": "standard/1000x700/hidden/LR/map-on",
+   "cards": 5,
+   "unreachableOffCanvas": 0,
+   "crossedCards": 0,
+   "crossedPts": 0,
+   "excludedPts": 0,
+   "minHover": 1,
+   "maxBase": 0
+  },
+  {
+   "sc": "standard/1000x700/hidden/LR/map-off",
+   "cards": 5,
+   "unreachableOffCanvas": 0,
+   "crossedCards": 0,
+   "crossedPts": 0,
+   "excludedPts": 0,
+   "minHover": 1,
+   "maxBase": 0
+  },
+  {
+   "sc": "standard/1000x700/hidden/TB/map-on",
+   "cards": 5,
+   "unreachableOffCanvas": 0,
+   "crossedCards": 0,
+   "crossedPts": 0,
+   "excludedPts": 0,
+   "minHover": 1,
+   "maxBase": 0
+  },
+  {
+   "sc": "standard/1000x700/hidden/TB/map-off",
+   "cards": 5,
+   "unreachableOffCanvas": 0,
+   "crossedCards": 0,
+   "crossedPts": 0,
+   "excludedPts": 0,
+   "minHover": 1,
+   "maxBase": 0
+  },
+  {
+   "sc": "dense/1700x1000/shown/LR/map-on",
+   "cards": 22,
+   "unreachableOffCanvas": 3,
+   "crossedCards": 6,
+   "crossedPts": 93,
+   "excludedPts": 0,
+   "minHover": 0.9473684210526315,
+   "maxBase": 0,
+   "exactMin": 0
+  },
+  {
+   "sc": "dense/1700x1000/shown/LR/map-off",
+   "cards": 25,
+   "unreachableOffCanvas": 0,
+   "crossedCards": 6,
+   "crossedPts": 107,
+   "excludedPts": 0,
+   "minHover": 0.8181818181818182,
+   "maxBase": 0,
+   "exactMin": 0
+  },
+  {
+   "sc": "dense/1700x1000/shown/TB/map-on",
+   "cards": 25,
+   "unreachableOffCanvas": 0,
+   "crossedCards": 0,
+   "crossedPts": 0,
+   "excludedPts": 0,
+   "minHover": 1,
+   "maxBase": 0
+  },
+  {
+   "sc": "dense/1700x1000/shown/TB/map-off",
+   "cards": 25,
+   "unreachableOffCanvas": 0,
+   "crossedCards": 0,
+   "crossedPts": 0,
+   "excludedPts": 0,
+   "minHover": 1,
+   "maxBase": 0
+  },
+  {
+   "sc": "dense/1700x1000/hidden/LR/map-on",
+   "cards": 25,
+   "unreachableOffCanvas": 0,
+   "crossedCards": 0,
+   "crossedPts": 0,
+   "excludedPts": 0,
+   "minHover": 1,
+   "maxBase": 0
+  },
+  {
+   "sc": "dense/1700x1000/hidden/LR/map-off",
+   "cards": 25,
+   "unreachableOffCanvas": 0,
+   "crossedCards": 0,
+   "crossedPts": 0,
+   "excludedPts": 0,
+   "minHover": 1,
+   "maxBase": 0
+  },
+  {
+   "sc": "dense/1700x1000/hidden/TB/map-on",
+   "cards": 25,
+   "unreachableOffCanvas": 0,
+   "crossedCards": 0,
+   "crossedPts": 0,
+   "excludedPts": 0,
+   "minHover": 1,
+   "maxBase": 0
+  },
+  {
+   "sc": "dense/1700x1000/hidden/TB/map-off",
+   "cards": 25,
+   "unreachableOffCanvas": 0,
+   "crossedCards": 0,
+   "crossedPts": 0,
+   "excludedPts": 0,
+   "minHover": 1,
+   "maxBase": 0
+  },
+  {
+   "sc": "dense/1000x700/shown/LR/map-on",
+   "cards": 18,
+   "unreachableOffCanvas": 7,
+   "crossedCards": 6,
+   "crossedPts": 93,
+   "excludedPts": 0,
+   "minHover": 0.9473684210526315,
+   "maxBase": 0,
+   "exactMin": 0
+  },
+  {
+   "sc": "dense/1000x700/shown/LR/map-off",
+   "cards": 25,
+   "unreachableOffCanvas": 0,
+   "crossedCards": 6,
+   "crossedPts": 92,
+   "excludedPts": 0,
+   "minHover": 0.9473684210526315,
+   "maxBase": 0,
+   "exactMin": 0
+  },
+  {
+   "sc": "dense/1000x700/shown/TB/map-on",
+   "cards": 16,
+   "unreachableOffCanvas": 9,
+   "crossedCards": 0,
+   "crossedPts": 0,
+   "excludedPts": 0,
+   "minHover": 1,
+   "maxBase": 0
+  },
+  {
+   "sc": "dense/1000x700/shown/TB/map-off",
+   "cards": 16,
+   "unreachableOffCanvas": 9,
+   "crossedCards": 0,
+   "crossedPts": 0,
+   "excludedPts": 0,
+   "minHover": 1,
+   "maxBase": 0
+  },
+  {
+   "sc": "dense/1000x700/hidden/LR/map-on",
+   "cards": 19,
+   "unreachableOffCanvas": 6,
+   "crossedCards": 0,
+   "crossedPts": 0,
+   "excludedPts": 0,
+   "minHover": 1,
+   "maxBase": 0
+  },
+  {
+   "sc": "dense/1000x700/hidden/LR/map-off",
+   "cards": 25,
+   "unreachableOffCanvas": 0,
+   "crossedCards": 0,
+   "crossedPts": 0,
+   "excludedPts": 0,
+   "minHover": 1,
+   "maxBase": 0
+  },
+  {
+   "sc": "dense/1000x700/hidden/TB/map-on",
+   "cards": 22,
+   "unreachableOffCanvas": 3,
+   "crossedCards": 0,
+   "crossedPts": 0,
+   "excludedPts": 0,
+   "minHover": 1,
+   "maxBase": 0
+  },
+  {
+   "sc": "dense/1000x700/hidden/TB/map-off",
+   "cards": 22,
+   "unreachableOffCanvas": 3,
+   "crossedCards": 0,
+   "crossedPts": 0,
+   "excludedPts": 0,
+   "minHover": 1,
+   "maxBase": 0
+  }
+ ],
+ "failureSample": [
+  {
+   "scenario": "dense/1700x1000/shown/LR/map-off",
+   "assertion": "H1-c raised edge painted over crossed cards (>=95% of samples; >=90% when the stroke is sub-pixel, i.e. 3.5*zoom < 1px)",
+   "detail": "Entitlement 03: hover(improved) 0.82 exact 0.00 zoom-px 0.33 over 11 pts"
+  }
+ ]
+}

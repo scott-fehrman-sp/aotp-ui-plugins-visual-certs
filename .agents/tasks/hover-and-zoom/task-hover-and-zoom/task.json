@@ -1,0 +1,7 @@
+{
+  "task_id": "task-hover-and-zoom",
+  "task_description": "Access graph canvas (src/graph): (1) on hover/keyboard focus of a first-level item card, raise that item's user->item status edge above the cards, thicken it, and dim all other edges, without touching layout or refit; (2) open long graphs (fit zoom < 0.3) at a readable zoom (READABLE_MIN_ZOOM) positioned at the start of the graph, scrollable for the rest, with a muted role=status scroll hint, keeping overlay-aware fit for short graphs. Both verified in a real Chrome via a temporary Vite+puppeteer-core harness. Full plan: /Users/scott.fehrman/Documents/Projects/SailPoint/ui-plugins-apps/visual-certs/.agents/tasks/hover-and-zoom/plan.md",
+  "status": "pending",
+  "feature_order": ["FEAT-001", "FEAT-002"],
+  "blocked_reason": null
+}

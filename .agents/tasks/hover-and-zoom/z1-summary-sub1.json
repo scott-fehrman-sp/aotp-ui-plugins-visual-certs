@@ -1,0 +1,174 @@
+{
+ "rows": [
+  {
+   "z": "Z1",
+   "sc": "dense/1000x700/shown/LR/map-on",
+   "exempt": {
+    "total": 40,
+    "fullyVisibleClear": 5,
+    "outsideCanvas": 26,
+    "cutByCanvas": 7,
+    "underOverlay": 2
+   },
+   "zoom": 0.65,
+   "stepsToLast": 143,
+   "lastVia": "2D",
+   "firstVia": "1D",
+   "fitView": {
+    "zoom": 0.15,
+    "cut": 2,
+    "hintShown": true
+   }
+  },
+  {
+   "z": "Z1",
+   "sc": "dense/1000x700/shown/LR/map-off",
+   "exempt": {
+    "total": 40,
+    "fullyVisibleClear": 7,
+    "outsideCanvas": 26,
+    "cutByCanvas": 7,
+    "underOverlay": 0
+   },
+   "zoom": 0.65,
+   "stepsToLast": 143,
+   "lastVia": "2D",
+   "firstVia": "1D",
+   "fitView": {
+    "zoom": 0.15,
+    "cut": 2,
+    "hintShown": true
+   }
+  },
+  {
+   "z": "Z1",
+   "sc": "dense/1000x700/shown/TB/map-on",
+   "exempt": {
+    "total": 40,
+    "fullyVisibleClear": 5,
+    "outsideCanvas": 27,
+    "cutByCanvas": 6,
+    "underOverlay": 2
+   },
+   "zoom": 0.65,
+   "stepsToLast": 127,
+   "lastVia": "2D",
+   "firstVia": "1D",
+   "fitView": {
+    "zoom": 0.15,
+    "cut": 4,
+    "hintShown": true
+   }
+  },
+  {
+   "z": "Z1",
+   "sc": "dense/1000x700/shown/TB/map-off",
+   "exempt": {
+    "total": 40,
+    "fullyVisibleClear": 6,
+    "outsideCanvas": 27,
+    "cutByCanvas": 6,
+    "underOverlay": 1
+   },
+   "zoom": 0.65,
+   "stepsToLast": 127,
+   "lastVia": "2D",
+   "firstVia": "1D",
+   "fitView": {
+    "zoom": 0.15,
+    "cut": 4,
+    "hintShown": true
+   }
+  }
+ ],
+ "counts": {
+  "Z1 zoom == READABLE_MIN_ZOOM (+/-0.005)": {
+   "pass": 4,
+   "fail": 0
+  },
+  "Z1 effective label font >= 9.5px": {
+   "pass": 4,
+   "fail": 0
+  },
+  "Z1 user + 3 nearest items fully inside canvas": {
+   "pass": 16,
+   "fail": 0
+  },
+  "Z1 user + 3 nearest items clear of every overlay": {
+   "pass": 15,
+   "fail": 1
+  },
+  "Z1 hint present with role=status and the count text": {
+   "pass": 4,
+   "fail": 0
+  },
+  "Z1 hint does not overlap toolbar/Back/legend/minimap/Controls": {
+   "pass": 4,
+   "fail": 0
+  },
+  "Z1 hint inside the canvas": {
+   "pass": 4,
+   "fail": 0
+  },
+  "Z1 wheel reaches the LAST item fully inside canvas, clear of overlays": {
+   "pass": 4,
+   "fail": 0
+  },
+  "Z1 scrolling does not change zoom": {
+   "pass": 4,
+   "fail": 0
+  },
+  "Z1 wheel reaches the FIRST item fully inside canvas, clear of overlays": {
+   "pass": 4,
+   "fail": 0
+  },
+  "Z1 drag pans the viewport": {
+   "pass": 4,
+   "fail": 0
+  },
+  "Z1 ctrl-wheel zoom out bottoms at 0.15": {
+   "pass": 4,
+   "fail": 0
+  },
+  "Z1 fit-view: zoom >= 0.15": {
+   "pass": 4,
+   "fail": 0
+  },
+  "Z1 fit-view shows every node inside the canvas": {
+   "pass": 0,
+   "fail": 4
+  },
+  "Z1 fit-view hides the hint (all in view)": {
+   "pass": 4,
+   "fail": 0
+  }
+ },
+ "failures": 5,
+ "failureSample": [
+  {
+   "scenario": "dense/1000x700/shown/LR/map-on",
+   "assertion": "Z1 user + 3 nearest items clear of every overlay",
+   "detail": "nearest item 3 Profile 2"
+  },
+  {
+   "scenario": "dense/1000x700/shown/LR/map-on",
+   "assertion": "Z1 fit-view shows every node inside the canvas",
+   "detail": "2 cut"
+  },
+  {
+   "scenario": "dense/1000x700/shown/LR/map-off",
+   "assertion": "Z1 fit-view shows every node inside the canvas",
+   "detail": "2 cut"
+  },
+  {
+   "scenario": "dense/1000x700/shown/TB/map-on",
+   "assertion": "Z1 fit-view shows every node inside the canvas",
+   "detail": "4 cut"
+  },
+  {
+   "scenario": "dense/1000x700/shown/TB/map-off",
+   "assertion": "Z1 fit-view shows every node inside the canvas",
+   "detail": "4 cut"
+  }
+ ]
+}

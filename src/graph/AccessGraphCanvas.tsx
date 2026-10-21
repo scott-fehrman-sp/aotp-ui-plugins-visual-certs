@@ -425,7 +425,7 @@ function CanvasSurface({ graph }: AccessGraphCanvasProps) {
                     className="vc-graph-legend-swatch vc-graph-legend-swatch-reference"
                     aria-hidden="true"
                   />
-                  Reference only (not reviewed)
+                  Reference Only
                 </span>
               )}
             </div>

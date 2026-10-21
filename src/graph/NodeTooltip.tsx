@@ -162,9 +162,7 @@ export function NodeTooltip({
               {reference ? (
                 <div className="vc-node-tooltip-detail">
                   <p className="vc-node-tooltip-line">
-                    <span className="vc-node-tooltip-value">
-                      Reference only (not reviewed)
-                    </span>
+                    <span className="vc-node-tooltip-value">Reference Only</span>
                   </p>
                 </div>
               ) : null}

@@ -1,0 +1,510 @@
+{
+ "rows": [
+  {
+   "z": "Z1",
+   "sc": "dense/1700x1000/shown/LR/map-on",
+   "exempt": {
+    "total": 40,
+    "fullyVisibleClear": 18,
+    "outsideCanvas": 21,
+    "cutByCanvas": 1,
+    "underOverlay": 0
+   },
+   "zoom": 0.65,
+   "stepsToLast": 10,
+   "lastVia": "1D",
+   "firstVia": "1D",
+   "fitView": {
+    "zoom": 0.175121,
+    "cut": 0,
+    "hintShown": false
+   }
+  },
+  {
+   "z": "Z2",
+   "sc": "standard/1700x1000/shown/LR/map-on",
+   "zoom": 0.644231
+  },
+  {
+   "z": "Z1",
+   "sc": "dense/1700x1000/shown/LR/map-off",
+   "exempt": {
+    "total": 40,
+    "fullyVisibleClear": 18,
+    "outsideCanvas": 21,
+    "cutByCanvas": 1,
+    "underOverlay": 0
+   },
+   "zoom": 0.65,
+   "stepsToLast": 10,
+   "lastVia": "1D",
+   "firstVia": "1D",
+   "fitView": {
+    "zoom": 0.175121,
+    "cut": 0,
+    "hintShown": false
+   }
+  },
+  {
+   "z": "Z2",
+   "sc": "standard/1700x1000/shown/LR/map-off",
+   "zoom": 0.88141
+  },
+  {
+   "z": "Z1",
+   "sc": "dense/1700x1000/shown/TB/map-on",
+   "exempt": {
+    "total": 40,
+    "fullyVisibleClear": 18,
+    "outsideCanvas": 18,
+    "cutByCanvas": 2,
+    "underOverlay": 2
+   },
+   "zoom": 0.65,
+   "stepsToLast": 18,
+   "lastVia": "1D",
+   "firstVia": "1D",
+   "fitView": {
+    "zoom": 0.205087,
+    "cut": 0,
+    "hintShown": false
+   }
+  },
+  {
+   "z": "Z2",
+   "sc": "standard/1700x1000/shown/TB/map-on",
+   "zoom": 0.5025
+  },
+  {
+   "z": "Z1",
+   "sc": "dense/1700x1000/shown/TB/map-off",
+   "exempt": {
+    "total": 40,
+    "fullyVisibleClear": 18,
+    "outsideCanvas": 18,
+    "cutByCanvas": 2,
+    "underOverlay": 2
+   },
+   "zoom": 0.65,
+   "stepsToLast": 18,
+   "lastVia": "1D",
+   "firstVia": "1D",
+   "fitView": {
+    "zoom": 0.205087,
+    "cut": 0,
+    "hintShown": false
+   }
+  },
+  {
+   "z": "Z2",
+   "sc": "standard/1700x1000/shown/TB/map-off",
+   "zoom": 0.6875
+  },
+  {
+   "z": "Z1",
+   "sc": "dense/1700x1000/hidden/LR/map-on",
+   "exempt": {
+    "total": 26,
+    "fullyVisibleClear": 9,
+    "outsideCanvas": 16,
+    "cutByCanvas": 1,
+    "underOverlay": 0
+   },
+   "zoom": 0.65,
+   "stepsToLast": 10,
+   "lastVia": "1D",
+   "firstVia": "1D",
+   "fitView": {
+    "zoom": 0.210756,
+    "cut": 0,
+    "hintShown": false
+   }
+  },
+  {
+   "z": "Z2",
+   "sc": "standard/1700x1000/hidden/LR/map-on",
+   "zoom": 0.785156
+  },
+  {
+   "z": "Z1",
+   "sc": "dense/1700x1000/hidden/LR/map-off",
+   "exempt": {
+    "total": 26,
+    "fullyVisibleClear": 9,
+    "outsideCanvas": 16,
+    "cutByCanvas": 1,
+    "underOverlay": 0
+   },
+   "zoom": 0.65,
+   "stepsToLast": 10,
+   "lastVia": "1D",
+   "firstVia": "1D",
+   "fitView": {
+    "zoom": 0.210756,
+    "cut": 0,
+    "hintShown": false
+   }
+  },
+  {
+   "z": "Z2",
+   "sc": "standard/1700x1000/hidden/LR/map-off",
+   "zoom": 1.07422
+  },
+  {
+   "z": "Z1",
+   "sc": "dense/1700x1000/hidden/TB/map-on",
+   "exempt": {
+    "total": 26,
+    "fullyVisibleClear": 10,
+    "outsideCanvas": 14,
+    "cutByCanvas": 2,
+    "underOverlay": 0
+   },
+   "zoom": 0.65,
+   "stepsToLast": 20,
+   "lastVia": "1D",
+   "firstVia": "1D",
+   "fitView": {
+    "zoom": 0.246424,
+    "cut": 0,
+    "hintShown": false
+   }
+  },
+  {
+   "z": "Z2",
+   "sc": "standard/1700x1000/hidden/TB/map-on",
+   "zoom": 1.20134
+  },
+  {
+   "z": "Z1",
+   "sc": "dense/1700x1000/hidden/TB/map-off",
+   "exempt": {
+    "total": 26,
+    "fullyVisibleClear": 10,
+    "outsideCanvas": 14,
+    "cutByCanvas": 2,
+    "underOverlay": 0
+   },
+   "zoom": 0.65,
+   "stepsToLast": 20,
+   "lastVia": "1D",
+   "firstVia": "1D",
+   "fitView": {
+    "zoom": 0.246424,
+    "cut": 0,
+    "hintShown": false
+   }
+  },
+  {
+   "z": "Z2",
+   "sc": "standard/1700x1000/hidden/TB/map-off",
+   "zoom": 1.20134
+  },
+  {
+   "z": "Z1",
+   "sc": "dense/1000x700/shown/LR/map-on",
+   "exempt": {
+    "total": 40,
+    "fullyVisibleClear": 5,
+    "outsideCanvas": 26,
+    "cutByCanvas": 7,
+    "underOverlay": 2
+   },
+   "zoom": 0.65,
+   "stepsToLast": 143,
+   "lastVia": "2D",
+   "firstVia": "1D",
+   "fitView": {
+    "zoom": 0.15,
+    "cut": 2,
+    "hintShown": true
+   }
+  },
+  {
+   "z": "Z2",
+   "sc": "standard/1000x700/shown/LR/map-on",
+   "zoom": 0.403846
+  },
+  {
+   "z": "Z1",
+   "sc": "dense/1000x700/shown/LR/map-off",
+   "exempt": {
+    "total": 40,
+    "fullyVisibleClear": 7,
+    "outsideCanvas": 26,
+    "cutByCanvas": 7,
+    "underOverlay": 0
+   },
+   "zoom": 0.65,
+   "stepsToLast": 143,
+   "lastVia": "2D",
+   "firstVia": "1D",
+   "fitView": {
+    "zoom": 0.15,
+    "cut": 2,
+    "hintShown": true
+   }
+  },
+  {
+   "z": "Z2",
+   "sc": "standard/1000x700/shown/LR/map-off",
+   "zoom": 0.424324
+  },
+  {
+   "z": "Z1",
+   "sc": "dense/1000x700/shown/TB/map-on",
+   "exempt": {
+    "total": 40,
+    "fullyVisibleClear": 7,
+    "outsideCanvas": 27,
+    "cutByCanvas": 0,
+    "underOverlay": 6
+   },
+   "zoom": 0.65,
+   "stepsToLast": 28,
+   "lastVia": "1D",
+   "firstVia": "1D",
+   "fitView": {
+    "zoom": 0.15,
+    "cut": 4,
+    "hintShown": true
+   }
+  },
+  {
+   "z": "Z2",
+   "sc": "standard/1000x700/shown/TB/map-on",
+   "zoom": 0.315
+  },
+  {
+   "z": "Z1",
+   "sc": "dense/1000x700/shown/TB/map-off",
+   "exempt": {
+    "total": 40,
+    "fullyVisibleClear": 10,
+    "outsideCanvas": 27,
+    "cutByCanvas": 0,
+    "underOverlay": 3
+   },
+   "zoom": 0.65,
+   "stepsToLast": 24,
+   "lastVia": "1D",
+   "firstVia": "1D",
+   "fitView": {
+    "zoom": 0.15,
+    "cut": 4,
+    "hintShown": true
+   }
+  },
+  {
+   "z": "Z2",
+   "sc": "standard/1000x700/shown/TB/map-off",
+   "zoom": 0.436111
+  },
+  {
+   "z": "Z1",
+   "sc": "dense/1000x700/hidden/LR/map-on",
+   "exempt": {
+    "total": 26,
+    "fullyVisibleClear": 7,
+    "outsideCanvas": 18,
+    "cutByCanvas": 1,
+    "underOverlay": 0
+   },
+   "zoom": 0.65,
+   "stepsToLast": 12,
+   "lastVia": "1D",
+   "firstVia": "1D",
+   "fitView": {
+    "zoom": 0.161337,
+    "cut": 0,
+    "hintShown": false
+   }
+  },
+  {
+   "z": "Z2",
+   "sc": "standard/1000x700/hidden/LR/map-on",
+   "zoom": 0.492188
+  },
+  {
+   "z": "Z1",
+   "sc": "dense/1000x700/hidden/LR/map-off",
+   "exempt": {
+    "total": 26,
+    "fullyVisibleClear": 7,
+    "outsideCanvas": 18,
+    "cutByCanvas": 1,
+    "underOverlay": 0
+   },
+   "zoom": 0.65,
+   "stepsToLast": 12,
+   "lastVia": "1D",
+   "firstVia": "1D",
+   "fitView": {
+    "zoom": 0.161337,
+    "cut": 0,
+    "hintShown": false
+   }
+  },
+  {
+   "z": "Z2",
+   "sc": "standard/1000x700/hidden/LR/map-off",
+   "zoom": 0.78125
+  },
+  {
+   "z": "Z1",
+   "sc": "dense/1000x700/hidden/TB/map-on",
+   "exempt": {
+    "total": 26,
+    "fullyVisibleClear": 6,
+    "outsideCanvas": 18,
+    "cutByCanvas": 2,
+    "underOverlay": 0
+   },
+   "zoom": 0.65,
+   "stepsToLast": 26,
+   "lastVia": "1D",
+   "firstVia": "1D",
+   "fitView": {
+    "zoom": 0.15,
+    "cut": 0,
+    "hintShown": false
+   }
+  },
+  {
+   "z": "Z2",
+   "sc": "standard/1000x700/hidden/TB/map-on",
+   "zoom": 0.614094
+  },
+  {
+   "z": "Z1",
+   "sc": "dense/1000x700/hidden/TB/map-off",
+   "exempt": {
+    "total": 26,
+    "fullyVisibleClear": 6,
+    "outsideCanvas": 18,
+    "cutByCanvas": 2,
+    "underOverlay": 0
+   },
+   "zoom": 0.65,
+   "stepsToLast": 26,
+   "lastVia": "1D",
+   "firstVia": "1D",
+   "fitView": {
+    "zoom": 0.15,
+    "cut": 0,
+    "hintShown": false
+   }
+  },
+  {
+   "z": "Z2",
+   "sc": "standard/1000x700/hidden/TB/map-off",
+   "zoom": 0.614094
+  }
+ ],
+ "counts": {
+  "Z1 zoom == READABLE_MIN_ZOOM (+/-0.005)": {
+   "pass": 16,
+   "fail": 0
+  },
+  "Z1 effective label font >= 9.5px": {
+   "pass": 16,
+   "fail": 0
+  },
+  "Z1 user + 3 nearest items fully inside canvas": {
+   "pass": 64,
+   "fail": 0
+  },
+  "Z1 user + 3 nearest items clear of every overlay": {
+   "pass": 63,
+   "fail": 1
+  },
+  "Z1 hint present with role=status and the count text": {
+   "pass": 16,
+   "fail": 0
+  },
+  "Z1 hint does not overlap toolbar/Back/legend/minimap/Controls": {
+   "pass": 16,
+   "fail": 0
+  },
+  "Z1 hint inside the canvas": {
+   "pass": 16,
+   "fail": 0
+  },
+  "Z1 wheel reaches the LAST item fully inside canvas, clear of overlays": {
+   "pass": 16,
+   "fail": 0
+  },
+  "Z1 scrolling does not change zoom": {
+   "pass": 16,
+   "fail": 0
+  },
+  "Z1 wheel reaches the FIRST item fully inside canvas, clear of overlays": {
+   "pass": 16,
+   "fail": 0
+  },
+  "Z1 drag pans the viewport": {
+   "pass": 16,
+   "fail": 0
+  },
+  "Z1 ctrl-wheel zoom out bottoms at 0.15": {
+   "pass": 16,
+   "fail": 0
+  },
+  "Z1 fit-view: zoom >= 0.15": {
+   "pass": 16,
+   "fail": 0
+  },
+  "Z1 fit-view shows every node inside the canvas (unless pinned at minZoom 0.15)": {
+   "pass": 16,
+   "fail": 0
+  },
+  "Z1 hint hidden after fit-view iff everything is in view": {
+   "pass": 16,
+   "fail": 0
+  },
+  "Z2 old strict invariant: no node under an overlay (>0.5px)": {
+   "pass": 16,
+   "fail": 0
+  },
+  "Z2 old strict invariant: every node inside the canvas (1px)": {
+   "pass": 16,
+   "fail": 0
+  },
+  "Z2 no hint": {
+   "pass": 16,
+   "fail": 0
+  },
+  "Z2 zoom equals the pre-change baseline (+/-0.01)": {
+   "pass": 16,
+   "fail": 0
+  },
+  "Z2 zoom equals the documented baseline table (+/-0.01)": {
+   "pass": 4,
+   "fail": 0
+  },
+  "Z2 reference shown: first-level items in per-kind lanes": {
+   "pass": 8,
+   "fail": 0
+  },
+  "Z1 resize round trip refits to the readable zoom": {
+   "pass": 1,
+   "fail": 0
+  },
+  "Z1 resize round trip keeps the user card clear": {
+   "pass": 1,
+   "fail": 0
+  },
+  "Z2 reference hidden: first-level items share ONE lane": {
+   "pass": 8,
+   "fail": 0
+  }
+ },
+ "failures": 1,
+ "failureSample": [
+  {
+   "scenario": "dense/1000x700/shown/LR/map-on",
+   "assertion": "Z1 user + 3 nearest items clear of every overlay",
+   "detail": "nearest item 3 Profile 2"
+  }
+ ]
+}
