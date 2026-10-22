@@ -101,39 +101,77 @@ function ent(
   }
 }
 
+// Fills a role's extra attribute fields with inert defaults so each fixture
+// literal stays focused on id/name/description/refs.
+function mkRole(
+  r: Pick<
+    ResolvedRole,
+    'id' | 'name' | 'description' | 'accessProfileRefs' | 'entitlementRefs'
+  >,
+): ResolvedRole {
+  return {
+    owner: `${r.name || 'role'} owner`,
+    enabled: true,
+    requestable: true,
+    privilegeLevel: '',
+    dimensional: false,
+    created: '',
+    modified: '',
+    ...r,
+  }
+}
+
+// Fills an access profile's extra attribute fields with inert defaults.
+function mkAp(
+  a: Pick<
+    ResolvedAccessProfile,
+    'id' | 'name' | 'description' | 'entitlementRefs'
+  >,
+): ResolvedAccessProfile {
+  return {
+    sourceName: `${a.name || 'ap'} source`,
+    owner: `${a.name || 'ap'} owner`,
+    enabled: true,
+    requestable: true,
+    created: '',
+    modified: '',
+    ...a,
+  }
+}
+
 /** A canned, network-free composition resolver for the fixture. */
 export function fixtureResolver(): AccessCompositionResolver {
   const roles: Record<string, ResolvedRole> = {
-    'role-a': {
+    'role-a': mkRole({
       id: 'role-a',
       name: 'Role A',
       description: 'Role A description',
       accessProfileRefs: [{ id: 'ap-foo', name: 'Foo' }],
       entitlementRefs: [{ id: 'e-del', name: 'Delete' }],
-    },
-    'role-empty': {
+    }),
+    'role-empty': mkRole({
       id: 'role-empty',
       name: 'Empty Role',
       description: '',
       accessProfileRefs: [],
       entitlementRefs: [],
-    },
-    'role-blank': {
+    }),
+    'role-blank': mkRole({
       id: 'role-blank',
       name: '',
       description: '',
       accessProfileRefs: [],
       entitlementRefs: [{ id: 'e-pay', name: 'Pay' }],
-    },
+    }),
   }
   const aps: Record<string, ResolvedAccessProfile> = {
-    'ap-bill': {
+    'ap-bill': mkAp({
       id: 'ap-bill',
       name: 'Billing',
       description: 'Billing description',
       entitlementRefs: [{ id: 'e-pay', name: 'Pay' }],
-    },
-    'ap-foo': {
+    }),
+    'ap-foo': mkAp({
       id: 'ap-foo',
       name: 'Foo',
       description: 'Foo description',
@@ -141,13 +179,13 @@ export function fixtureResolver(): AccessCompositionResolver {
         { id: 'e-read', name: 'Read' },
         { id: 'e-write', name: 'Write' },
       ],
-    },
-    'ap-empty': {
+    }),
+    'ap-empty': mkAp({
       id: 'ap-empty',
       name: 'Empty AP',
       description: '',
       entitlementRefs: [],
-    },
+    }),
   }
   const ents: Record<string, ResolvedEntitlement> = {
     'e-pay': ent('e-pay', 'Pay', 's-erp', 'ERP'),

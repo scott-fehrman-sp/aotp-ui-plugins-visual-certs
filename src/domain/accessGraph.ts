@@ -70,14 +70,33 @@ function detailFor(
     if (row.entitlementAttributes && row.entitlementAttributes.length > 0) {
       detail.attributes = row.entitlementAttributes
     }
+  } else if (kind === 'role') {
+    // The full attribute set for a role. Boolean flags only land when true
+    // (shown as 'Yes'); everything else only when non-empty.
+    if (row.roleDescription) detail.description = row.roleDescription
+    if (row.roleOwner) detail.owner = row.roleOwner
+    if (row.roleEnabled) detail.enabled = 'Yes'
+    if (row.roleRequestable) detail.requestable = 'Yes'
+    if (row.rolePrivilegeLevel) detail.privilegeLevel = row.rolePrivilegeLevel
+    if (row.roleDimensional) detail.dimensional = 'Yes'
+    if (row.roleCreated) detail.created = row.roleCreated
+    if (row.roleModified) detail.modified = row.roleModified
+    if (row.roleId) detail.roleId = row.roleId
+  } else if (kind === 'accessProfile') {
+    // The full attribute set for an access profile.
+    if (row.accessProfileDescription) {
+      detail.description = row.accessProfileDescription
+    }
+    if (row.accessProfileSource) detail.source = row.accessProfileSource
+    if (row.accessProfileOwner) detail.owner = row.accessProfileOwner
+    if (row.accessProfileEnabled) detail.enabled = 'Yes'
+    if (row.accessProfileRequestable) detail.requestable = 'Yes'
+    if (row.accessProfileCreated) detail.created = row.accessProfileCreated
+    if (row.accessProfileModified) detail.modified = row.accessProfileModified
+    if (row.accessProfileId) detail.accessProfileId = row.accessProfileId
   } else {
-    const description =
-      kind === 'role'
-        ? row.roleDescription
-        : kind === 'accessProfile'
-          ? row.accessProfileDescription
-          : row.sourceDescription
-    if (description) detail.description = description
+    // Source node: just its description.
+    if (row.sourceDescription) detail.description = row.sourceDescription
   }
   return Object.keys(detail).length > 0 ? detail : undefined
 }

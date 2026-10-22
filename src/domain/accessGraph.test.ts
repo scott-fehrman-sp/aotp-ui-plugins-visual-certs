@@ -252,12 +252,16 @@ describe('deriveAccessGraph', () => {
       department: 'Engineering',
       location: 'Austin',
     })
-    // Role / AP / entitlement / source nodes carry a description only.
+    // Role / AP nodes carry the description plus their own id (the only other
+    // attribute the enriched rows set); the entitlement / source nodes carry a
+    // description.
     expect(byId.get('role:role-a')?.detail).toEqual({
       description: 'Role A description',
+      roleId: 'role-a',
     })
     expect(byId.get('accessProfile:ap-foo')?.detail).toEqual({
       description: 'AP foo description',
+      accessProfileId: 'ap-foo',
     })
     expect(byId.get('entitlement:ent-read-engr')?.detail?.description).toBeTruthy()
     expect(byId.get('source:src-engr')?.detail?.description).toBeTruthy()
@@ -336,6 +340,72 @@ describe('deriveAccessGraph', () => {
     ])
     const ent = nodes.find((n) => n.kind === 'entitlement')
     expect(ent?.detail?.attributes).toBeUndefined()
+  })
+
+  it('surfaces the full attribute set on a role node', () => {
+    const { nodes } = deriveAccessGraph([
+      row({
+        id: '1',
+        role: 'Role A',
+        roleId: 'role-a',
+        roleDescription: 'The role',
+        roleOwner: 'Dana Owner',
+        roleEnabled: true,
+        roleRequestable: true,
+        rolePrivilegeLevel: 'HIGH',
+        roleDimensional: true,
+        roleCreated: '2024-01-02T00:00:00Z',
+        roleModified: '2024-03-04T00:00:00Z',
+        entitlement: 'read',
+        entitlementId: 'e1',
+        source: 'app',
+        sourceId: 's0',
+      }),
+    ])
+    const roleNode = nodes.find((n) => n.kind === 'role')
+    expect(roleNode?.detail).toEqual({
+      description: 'The role',
+      owner: 'Dana Owner',
+      enabled: 'Yes',
+      requestable: 'Yes',
+      privilegeLevel: 'HIGH',
+      dimensional: 'Yes',
+      created: '2024-01-02T00:00:00Z',
+      modified: '2024-03-04T00:00:00Z',
+      roleId: 'role-a',
+    })
+  })
+
+  it('surfaces the full attribute set on an access-profile node', () => {
+    const { nodes } = deriveAccessGraph([
+      row({
+        id: '1',
+        accessProfile: 'Billing',
+        accessProfileId: 'ap-1',
+        accessProfileDescription: 'The AP',
+        accessProfileSource: 'ERP',
+        accessProfileOwner: 'Dana Owner',
+        accessProfileEnabled: true,
+        accessProfileRequestable: true,
+        accessProfileCreated: '2024-01-02T00:00:00Z',
+        accessProfileModified: '2024-03-04T00:00:00Z',
+        entitlement: 'read',
+        entitlementId: 'e1',
+        source: 'app',
+        sourceId: 's0',
+      }),
+    ])
+    const apNode = nodes.find((n) => n.kind === 'accessProfile')
+    expect(apNode?.detail).toEqual({
+      description: 'The AP',
+      source: 'ERP',
+      owner: 'Dana Owner',
+      enabled: 'Yes',
+      requestable: 'Yes',
+      created: '2024-01-02T00:00:00Z',
+      modified: '2024-03-04T00:00:00Z',
+      accessProfileId: 'ap-1',
+    })
   })
 
   it('marks only the user→access-item edge as first-level, with a review key and no status', () => {

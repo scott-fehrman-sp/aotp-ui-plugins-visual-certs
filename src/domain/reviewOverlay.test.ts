@@ -39,6 +39,13 @@ describe('reviewOverlay', () => {
           description: '',
           accessProfileRefs: [],
           entitlementRefs: [{ id: 'e-pay', name: 'Pay' }],
+          owner: '',
+          enabled: false,
+          requestable: false,
+          privilegeLevel: '',
+          dimensional: false,
+          created: '',
+          modified: '',
         }),
     }
     const items = [

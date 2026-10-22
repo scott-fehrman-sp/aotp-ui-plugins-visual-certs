@@ -52,24 +52,52 @@ function item(overrides: Partial<ReviewItemVM>): ReviewItemVM {
  * Every entitlement resolves to its own source.
  */
 function stubResolver(): AccessCompositionResolver {
+  // Fill the extra role/AP attribute fields with inert defaults so the literals
+  // below stay focused on id/name/description/refs.
+  const mkRole = (
+    r: Pick<
+      ResolvedRole,
+      'id' | 'name' | 'description' | 'accessProfileRefs' | 'entitlementRefs'
+    >,
+  ): ResolvedRole => ({
+    owner: '',
+    enabled: false,
+    requestable: false,
+    privilegeLevel: '',
+    dimensional: false,
+    created: '',
+    modified: '',
+    ...r,
+  })
+  const mkAp = (
+    a: Pick<ResolvedAccessProfile, 'id' | 'name' | 'description' | 'entitlementRefs'>,
+  ): ResolvedAccessProfile => ({
+    sourceName: '',
+    owner: '',
+    enabled: false,
+    requestable: false,
+    created: '',
+    modified: '',
+    ...a,
+  })
   const roles: Record<string, ResolvedRole> = {
-    'role-a': {
+    'role-a': mkRole({
       id: 'role-a',
       name: 'Role A',
       description: 'Role A description',
       accessProfileRefs: [{ id: 'ap-foo', name: 'foo' }],
       entitlementRefs: [{ id: 'ent-delete-engr', name: 'delete' }],
-    },
-    'role-empty': {
+    }),
+    'role-empty': mkRole({
       id: 'role-empty',
       name: 'Empty Role',
       description: 'Role with nothing in it',
       accessProfileRefs: [],
       entitlementRefs: [],
-    },
+    }),
   }
   const aps: Record<string, ResolvedAccessProfile> = {
-    'ap-foo': {
+    'ap-foo': mkAp({
       id: 'ap-foo',
       name: 'foo',
       description: 'AP foo description',
@@ -77,8 +105,8 @@ function stubResolver(): AccessCompositionResolver {
         { id: 'ent-read-engr', name: 'read' },
         { id: 'ent-write-engr', name: 'write' },
       ],
-    },
-    'ap-bar': {
+    }),
+    'ap-bar': mkAp({
       id: 'ap-bar',
       name: 'bar',
       description: 'AP bar description',
@@ -86,13 +114,13 @@ function stubResolver(): AccessCompositionResolver {
         { id: 'ent-read-acct', name: 'read' },
         { id: 'ent-search-acct', name: 'search' },
       ],
-    },
-    'ap-empty': {
+    }),
+    'ap-empty': mkAp({
       id: 'ap-empty',
       name: 'empty ap',
       description: 'AP with no entitlements',
       entitlementRefs: [],
-    },
+    }),
   }
   // Fills the extra attribute fields with inert defaults so each literal below
   // stays focused on the id/name/description/source it actually exercises.
@@ -209,6 +237,12 @@ describe('resolveMatrix', () => {
               name: 'bar2',
               description: 'AP bar2 description',
               entitlementRefs: [{ id: 'ent-read-phone', name: 'read' }],
+              sourceName: '',
+              owner: '',
+              enabled: false,
+              requestable: false,
+              created: '',
+              modified: '',
             })
           : stubResolver().accessProfile(id),
     }
@@ -233,6 +267,12 @@ describe('resolveMatrix', () => {
               name: 'No-id AP',
               description: '',
               entitlementRefs: [{ id: null, name: 'read' }],
+              sourceName: '',
+              owner: '',
+              enabled: false,
+              requestable: false,
+              created: '',
+              modified: '',
             })
           : stubResolver().accessProfile(id),
     }
@@ -263,6 +303,12 @@ describe('resolveMatrix', () => {
           name: 'AP X',
           description: '',
           entitlementRefs: [{ id: null, name: 'does-not-exist' }],
+          sourceName: '',
+          owner: '',
+          enabled: false,
+          requestable: false,
+          created: '',
+          modified: '',
         }),
       entitlementByName: () => Promise.resolve(null),
     }
@@ -306,6 +352,13 @@ describe('resolveMatrix', () => {
       description: 'Role A description',
       accessProfileRefs: [],
       entitlementRefs: [{ id: 'ent-delete-engr', name: 'delete' }],
+      owner: '',
+      enabled: false,
+      requestable: false,
+      privilegeLevel: '',
+      dimensional: false,
+      created: '',
+      modified: '',
     } satisfies ResolvedRole)
     // The hook's resolver caches; here we assert resolveMatrix calls the
     // resolver's `role` once per distinct id when the resolver itself dedupes.

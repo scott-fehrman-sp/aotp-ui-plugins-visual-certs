@@ -90,15 +90,11 @@ export function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps) {
   // (Department / Location anchor the user panel even when blank).
   const visibleUserRows = userRows.filter(([, value, always]) => always || value)
 
-  // The entitlement field set, in a fixed order. Description leads (it is the
-  // most human-readable), then the identifying attribute/value pair, then the
-  // flags, ownership, tags, timestamps and id. A row renders only when it has a
-  // value (every attribute is optional on NodeDetail), so a sparse entitlement
-  // shows only what it actually carries.
-  // Primary entitlement fields, ordered to mirror the ISC entitlement detail
-  // panel (Source, Description, Value, Attribute, Cloud enabled, …). A row
-  // renders only when it has a value (every attribute is optional on
-  // NodeDetail), so a sparse entitlement shows only what it actually carries.
+  // The primary field set for an access-item node (role, access profile,
+  // entitlement), in a fixed per-kind order mirroring the ISC detail panels. A
+  // row renders only when it has a value (every attribute is optional on
+  // NodeDetail), so a sparse item shows only what it actually carries. The
+  // generic kinds (user, source) do not use this list.
   const e = node?.detail ?? {}
   const entitlementRows: Array<[string, string]> = [
     ['Source', e.source ?? ''],
@@ -115,7 +111,36 @@ export function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps) {
     ['Modified', e.modified ?? ''],
     ['Entitlement ID', e.entitlementId ?? ''],
   ]
-  const visibleEntitlementRows = entitlementRows.filter(([, value]) => value)
+  const roleRows: Array<[string, string]> = [
+    ['Description', e.description ?? ''],
+    ['Owner', e.owner ?? ''],
+    ['Enabled', e.enabled ?? ''],
+    ['Requestable', e.requestable ?? ''],
+    ['Privilege level', e.privilegeLevel ?? ''],
+    ['Dimensional', e.dimensional ?? ''],
+    ['Created', e.created ?? ''],
+    ['Modified', e.modified ?? ''],
+    ['Role ID', e.roleId ?? ''],
+  ]
+  const accessProfileRows: Array<[string, string]> = [
+    ['Source', e.source ?? ''],
+    ['Description', e.description ?? ''],
+    ['Owner', e.owner ?? ''],
+    ['Enabled', e.enabled ?? ''],
+    ['Requestable', e.requestable ?? ''],
+    ['Created', e.created ?? ''],
+    ['Modified', e.modified ?? ''],
+    ['Access profile ID', e.accessProfileId ?? ''],
+  ]
+  const primaryRows =
+    node?.kind === 'entitlement'
+      ? entitlementRows
+      : node?.kind === 'role'
+        ? roleRows
+        : node?.kind === 'accessProfile'
+          ? accessProfileRows
+          : []
+  const visiblePrimaryRows = primaryRows.filter(([, value]) => value)
   // The free-form source attributes shown under an "Additional attributes"
   // heading, mirroring the ISC panel. Empty when the entitlement carried none.
   const additionalAttributes = e.attributes ?? []
@@ -190,11 +215,11 @@ export function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps) {
                 </div>
               ))}
             </dl>
-          ) : isEntitlement ? (
+          ) : isAccessItem ? (
             <>
               <dl className="vc-graph-detail-fields">
-                {visibleEntitlementRows.length > 0 ? (
-                  visibleEntitlementRows.map(([label, value]) => (
+                {visiblePrimaryRows.length > 0 ? (
+                  visiblePrimaryRows.map(([label, value]) => (
                     <div key={label} className="vc-graph-detail-row">
                       <dt>{label}</dt>
                       <dd>{value}</dd>
@@ -209,7 +234,7 @@ export function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps) {
                   </div>
                 )}
               </dl>
-              {additionalAttributes.length > 0 ? (
+              {isEntitlement && additionalAttributes.length > 0 ? (
                 <>
                   <p className="vc-graph-detail-subhead">Additional attributes</p>
                   <dl className="vc-graph-detail-fields">

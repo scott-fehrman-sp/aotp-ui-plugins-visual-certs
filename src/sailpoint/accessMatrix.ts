@@ -36,6 +36,23 @@ export interface ResolvedRole {
   accessProfileRefs: Array<{ id: string | null; name: string }>
   /** Entitlement refs attached directly to the role (shallow: id + name only). */
   entitlementRefs: Array<{ id: string | null; name: string }>
+  // --- extra attributes surfaced in the node detail panel --------------------
+  // Each soft-degrades to '' (strings) / false (flags) when the SDK omits it, so
+  // the panel's visibility filter drops blank/false rows.
+  /** Owner display name ('' when no owner). */
+  owner: string
+  /** True if the role is enabled. */
+  enabled: boolean
+  /** True if the role can be directly requested. */
+  requestable: boolean
+  /** The role's privilege level ('' when absent). */
+  privilegeLevel: string
+  /** True if the role is dimensional. */
+  dimensional: boolean
+  /** ISO timestamp the role was created ('' when absent). */
+  created: string
+  /** ISO timestamp the role was last modified ('' when absent). */
+  modified: string
 }
 
 /** An access profile's composition: its entitlement refs (shallow). */
@@ -45,6 +62,19 @@ export interface ResolvedAccessProfile {
   /** Human-readable description for the graph tooltip ('' when absent/null). */
   description: string
   entitlementRefs: Array<{ id: string | null; name: string }>
+  // --- extra attributes surfaced in the node detail panel --------------------
+  /** The source this access profile lives on (display name, '' when absent). */
+  sourceName: string
+  /** Owner display name ('' when no owner). */
+  owner: string
+  /** True if the access profile is enabled. */
+  enabled: boolean
+  /** True if the access profile can be directly requested. */
+  requestable: boolean
+  /** ISO timestamp the access profile was created ('' when absent). */
+  created: string
+  /** ISO timestamp the access profile was last modified ('' when absent). */
+  modified: string
 }
 
 /** A leaf entitlement's name + the source it lives on. */
@@ -248,6 +278,13 @@ export function createAccessCompositionResolver(
           id: ref.id ?? null,
           name: ref.name ?? '',
         })),
+        owner: role.owner?.name ?? '',
+        enabled: role.enabled ?? false,
+        requestable: role.requestable ?? false,
+        privilegeLevel: role.privilegeLevel ?? '',
+        dimensional: role.dimensional ?? false,
+        created: role.created ?? '',
+        modified: role.modified ?? '',
       }
     } catch {
       // Soft-degrade: a per-id failure must never sink the matrix.
@@ -269,6 +306,12 @@ export function createAccessCompositionResolver(
           id: ref.id ?? null,
           name: ref.name ?? '',
         })),
+        sourceName: ap.source?.name ?? '',
+        owner: ap.owner?.name ?? '',
+        enabled: ap.enabled ?? false,
+        requestable: ap.requestable ?? false,
+        created: ap.created ?? '',
+        modified: ap.modified ?? '',
       }
     } catch {
       return null
@@ -394,8 +437,34 @@ interface RowTuple {
   userLocation?: string
   /** Resolved role description, when a role is on this path and resolved. */
   roleDescription?: string
+  /** Resolved role owner display name, when a role is on this path. */
+  roleOwner?: string
+  /** Resolved role enabled flag, when a role is on this path. */
+  roleEnabled?: boolean
+  /** Resolved role requestable flag, when a role is on this path. */
+  roleRequestable?: boolean
+  /** Resolved role privilege level, when a role is on this path. */
+  rolePrivilegeLevel?: string
+  /** Resolved role dimensional flag, when a role is on this path. */
+  roleDimensional?: boolean
+  /** Resolved role created timestamp, when a role is on this path. */
+  roleCreated?: string
+  /** Resolved role modified timestamp, when a role is on this path. */
+  roleModified?: string
   /** Resolved access-profile description, when an AP is on this path. */
   accessProfileDescription?: string
+  /** Resolved access-profile source name, when an AP is on this path. */
+  accessProfileSource?: string
+  /** Resolved access-profile owner display name, when an AP is on this path. */
+  accessProfileOwner?: string
+  /** Resolved access-profile enabled flag, when an AP is on this path. */
+  accessProfileEnabled?: boolean
+  /** Resolved access-profile requestable flag, when an AP is on this path. */
+  accessProfileRequestable?: boolean
+  /** Resolved access-profile created timestamp, when an AP is on this path. */
+  accessProfileCreated?: string
+  /** Resolved access-profile modified timestamp, when an AP is on this path. */
+  accessProfileModified?: string
   /** Resolved entitlement description, on a resolved leaf row. */
   entitlementDescription?: string
   /** Resolved entitlement source-schema attribute name, on a resolved leaf row. */
@@ -515,6 +584,41 @@ async function resolveLeaf(
 }
 
 /**
+ * The role enrichment fragment stamped onto every row whose path includes a
+ * resolved role. Carries the full role attribute set for the detail panel;
+ * never part of the dedup key.
+ */
+function roleEnrichment(role: ResolvedRole): Partial<RowTuple> {
+  return {
+    roleDescription: role.description,
+    roleOwner: role.owner,
+    roleEnabled: role.enabled,
+    roleRequestable: role.requestable,
+    rolePrivilegeLevel: role.privilegeLevel,
+    roleDimensional: role.dimensional,
+    roleCreated: role.created,
+    roleModified: role.modified,
+  }
+}
+
+/**
+ * The access-profile enrichment fragment stamped onto every row whose path
+ * includes a resolved access profile. Carries the full AP attribute set for the
+ * detail panel; never part of the dedup key.
+ */
+function accessProfileEnrichment(ap: ResolvedAccessProfile): Partial<RowTuple> {
+  return {
+    accessProfileDescription: ap.description,
+    accessProfileSource: ap.sourceName,
+    accessProfileOwner: ap.owner,
+    accessProfileEnabled: ap.enabled,
+    accessProfileRequestable: ap.requestable,
+    accessProfileCreated: ap.created,
+    accessProfileModified: ap.modified,
+  }
+}
+
+/**
  * Expands a single review item into zero-or-more raw row tuples by fetching its
  * composition through the resolver. Pure wrt its inputs aside from the resolver
  * calls (which are cached). Degrades unresolved pieces to `unresolved` tuples
@@ -630,7 +734,7 @@ async function expandItem(
           roleId: null,
           accessProfile: ap.name,
           accessProfileId: ap.id,
-          accessProfileDescription: ap.description,
+          ...accessProfileEnrichment(ap),
           entitlement: '',
           entitlementId: null,
           source: '',
@@ -648,7 +752,7 @@ async function expandItem(
           roleId: null,
           accessProfile: ap.name,
           accessProfileId: ap.id,
-          accessProfileDescription: ap.description,
+          ...accessProfileEnrichment(ap),
           ...leaf,
         }
       }),
@@ -682,7 +786,7 @@ async function expandItem(
         ...base,
         role: role.name,
         roleId: role.id,
-        roleDescription: role.description,
+        ...roleEnrichment(role),
         accessProfile: '',
         accessProfileId: null,
         entitlement: '',
@@ -704,7 +808,7 @@ async function expandItem(
         ...base,
         role: role.name,
         roleId: role.id,
-        roleDescription: role.description,
+        ...roleEnrichment(role),
         accessProfile: apRef.name,
         accessProfileId: apRef.id,
         entitlement: '',
@@ -721,10 +825,10 @@ async function expandItem(
         ...base,
         role: role.name,
         roleId: role.id,
-        roleDescription: role.description,
+        ...roleEnrichment(role),
         accessProfile: ap.name,
         accessProfileId: ap.id,
-        accessProfileDescription: ap.description,
+        ...accessProfileEnrichment(ap),
         ...leaf,
       })
     }
@@ -737,7 +841,7 @@ async function expandItem(
       ...base,
       role: role.name,
       roleId: role.id,
-      roleDescription: role.description,
+      ...roleEnrichment(role),
       accessProfile: '',
       accessProfileId: null,
       ...leaf,

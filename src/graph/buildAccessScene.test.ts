@@ -143,6 +143,7 @@ describe('buildAccessScene', () => {
     })
     expect(byId.get('role:role-a')?.data.detail).toEqual({
       description: 'Role A description',
+      roleId: 'role-a',
     })
     expect(byId.get('source:s1')?.data.detail).toEqual({
       description: 'Engineering database',

@@ -302,8 +302,34 @@ export interface AccessMatrixRowVM {
    * never part of the dedup key.
    */
   roleDescription?: string
+  /** The role's owner display name. Role rows only. */
+  roleOwner?: string
+  /** True when the role is enabled. Role rows only. */
+  roleEnabled?: boolean
+  /** True when the role is directly requestable. Role rows only. */
+  roleRequestable?: boolean
+  /** The role's privilege level. Role rows only. */
+  rolePrivilegeLevel?: string
+  /** True when the role is dimensional. Role rows only. */
+  roleDimensional?: boolean
+  /** The role's created timestamp (ISO). Role rows only. */
+  roleCreated?: string
+  /** The role's last-modified timestamp (ISO). Role rows only. */
+  roleModified?: string
   /** The access profile's description, same semantics as {@link roleDescription}. */
   accessProfileDescription?: string
+  /** The access profile's source name. Access-profile rows only. */
+  accessProfileSource?: string
+  /** The access profile's owner display name. Access-profile rows only. */
+  accessProfileOwner?: string
+  /** True when the access profile is enabled. Access-profile rows only. */
+  accessProfileEnabled?: boolean
+  /** True when the access profile is directly requestable. Access-profile rows only. */
+  accessProfileRequestable?: boolean
+  /** The access profile's created timestamp (ISO). Access-profile rows only. */
+  accessProfileCreated?: string
+  /** The access profile's last-modified timestamp (ISO). Access-profile rows only. */
+  accessProfileModified?: string
   /** The entitlement's description, same semantics as {@link roleDescription}. */
   entitlementDescription?: string
   /** The entitlement's source-schema attribute name (e.g. `memberOf`). Leaf rows only. */
@@ -401,6 +427,20 @@ export interface NodeDetail {
    * when the entitlement carried none.
    */
   attributes?: Array<[string, string]>
+  // --- role / access-profile attribute fields --------------------------------
+  // Set only on a role or access-profile node (several keys above — source,
+  // owner, requestable, created, modified, description — are reused). Each only
+  // when non-empty / non-default so a sparse item stays compact.
+  /** 'Yes' when the role / access profile is enabled (omitted otherwise). */
+  enabled?: string
+  /** The role's privilege level. Role nodes only. */
+  privilegeLevel?: string
+  /** 'Yes' when the role is dimensional (omitted otherwise). Role nodes only. */
+  dimensional?: string
+  /** The role's own id. Role nodes only. */
+  roleId?: string
+  /** The access profile's own id. Access-profile nodes only. */
+  accessProfileId?: string
   // --- user-node identity fields ---------------------------------------------
   department?: string
   location?: string

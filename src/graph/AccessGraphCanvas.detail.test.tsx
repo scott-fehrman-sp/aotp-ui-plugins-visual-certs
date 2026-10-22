@@ -36,6 +36,7 @@ function graph(): AccessGraphData {
       id: '1',
       role: 'Role A',
       roleId: 'role-a',
+      roleDescription: 'Role A description',
       accessProfile: 'foo',
       accessProfileId: 'ap-foo',
       entitlement: 'read',
