@@ -44,6 +44,10 @@ function App() {
     <div className="vc-app">
       <header className="vc-header">
         <h1 className="vc-title">Access Review</h1>
+        {/* Right-aligned slot in the app header. Views deeper in the tree (e.g.
+            the access map's unresolved-paths notice) portal content here so it
+            sits inline with the title instead of stealing canvas space. */}
+        <div id="vc-header-slot" className="vc-header-slot" />
       </header>
       <main className="vc-main">
         {state.status === 'loading' && (

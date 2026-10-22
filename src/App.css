@@ -7,7 +7,22 @@
 }
 
 .vc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
   margin-bottom: 12px;
+}
+
+/* Right-aligned header slot: holds content portaled up from deeper views (the
+   access map's unresolved notice). Shrinks before the title and never wraps the
+   title out of place. */
+.vc-header-slot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
 .vc-title {

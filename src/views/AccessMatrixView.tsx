@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { EmptyState } from '../components/EmptyState'
 import { ErrorState } from '../components/ErrorState'
 import { LoadingState } from '../components/LoadingState'
@@ -32,6 +33,14 @@ export function AccessMatrixView({
   // slot exists. `null` until mounted tells the canvas to wait rather than fall
   // back to drawing the button inside the graph.
   const [backSlot, setBackSlot] = useState<HTMLElement | null>(null)
+
+  // The app-header slot the unresolved notice portals into so it sits inline
+  // with the "Access Review" title (top-right) instead of taking room above the
+  // graph. Resolved after mount; `null` falls back to no header notice.
+  const [headerSlot, setHeaderSlot] = useState<HTMLElement | null>(null)
+  useEffect(() => {
+    setHeaderSlot(document.getElementById('vc-header-slot'))
+  }, [])
 
   return (
     <section className="vc-matrix-view" aria-label={`Access map for ${campaignName}`}>
@@ -73,18 +82,22 @@ export function AccessMatrixView({
 
       {matrix.status === 'ready' && matrix.rows.length > 0 && (
         <>
-          {matrix.unresolvedCount > 0 && (
-            <div className="vc-banner" role="status">
-              <span>
-                {matrix.unresolvedCount}{' '}
-                {matrix.unresolvedCount === 1
-                  ? 'access path couldn’t'
-                  : 'access paths couldn’t'}{' '}
-                be fully resolved and{' '}
-                {matrix.unresolvedCount === 1 ? 'is' : 'are'} marked Unresolved.
-              </span>
-            </div>
-          )}
+          {matrix.unresolvedCount > 0 &&
+            headerSlot &&
+            createPortal(
+              <div className="vc-banner vc-matrix-unresolved" role="status">
+                <span>
+                  {matrix.unresolvedCount}{' '}
+                  {matrix.unresolvedCount === 1
+                    ? 'access path couldn’t'
+                    : 'access paths couldn’t'}{' '}
+                  be fully resolved and{' '}
+                  {matrix.unresolvedCount === 1 ? 'is' : 'are'} marked
+                  Unresolved.
+                </span>
+              </div>,
+              headerSlot,
+            )}
 
           <AccessGraphCanvas graph={matrix.graph} backSlot={backSlot} />
         </>

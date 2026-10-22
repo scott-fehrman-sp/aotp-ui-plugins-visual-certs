@@ -257,7 +257,14 @@ describe('AccessMatrixView', () => {
     expect(reload).toHaveBeenCalledOnce()
   })
 
-  it('shows a non-fatal banner when there are unresolved rows', () => {
+  it('portals a non-fatal unresolved notice into the app header slot', () => {
+    // The real App renders this slot in its header; the view portals the notice
+    // into it so it sits inline with the "Access Review" title, not above the
+    // graph. Provide the slot here to mirror that structure.
+    const headerSlot = document.createElement('div')
+    headerSlot.id = 'vc-header-slot'
+    document.body.appendChild(headerSlot)
+
     const rows = [
       row({ id: 'x', role: 'Role A', roleId: 'role-a', unresolved: true }),
     ]
@@ -271,5 +278,9 @@ describe('AccessMatrixView', () => {
     const banner = screen.getByRole('status')
     expect(banner).toHaveTextContent(/1 access path/i)
     expect(banner).toHaveTextContent(/Unresolved/i)
+    // It lands in the header slot, not inside the matrix view / above the graph.
+    expect(headerSlot).toContainElement(banner)
+
+    document.body.removeChild(headerSlot)
   })
 })

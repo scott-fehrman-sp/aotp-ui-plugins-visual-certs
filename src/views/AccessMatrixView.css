@@ -45,6 +45,25 @@
   flex-direction: column;
 }
 
+/*
+ * The non-fatal "N access paths couldn't be resolved" notice. It is portaled
+ * into the app header's right-aligned slot (see App.tsx `#vc-header-slot`) so it
+ * sits inline with the "Access Review" title at the top-right and never steals
+ * the vertical room the graph canvas needs. Rendered as a compact card so a long
+ * message wraps to a couple of lines rather than widening the header.
+ */
+.vc-matrix-unresolved {
+  margin: 0;
+  max-width: 340px;
+  padding: 8px 12px;
+  font-size: 13px;
+  line-height: 1.35;
+  text-align: left;
+  background: var(--vc-surface);
+  border: 1px solid var(--vc-border);
+  box-shadow: 0 1px 4px rgba(16, 24, 40, 0.12);
+}
+
 .vc-matrix-view .vc-graph-wrap {
   flex: 1 1 auto;
   height: auto;
