@@ -415,11 +415,7 @@
  * back button. The icon reuses the node's `.vc-graph-status-icon*` classes so
  * the legend visually matches the node corner icons.
  */
-/* Lift the legend above React Flow's bottom-left zoom/fit Controls (80px tall)
-   * so the two panels do not overlap and the Controls stay clickable. */
-.vc-graph-wrap .react-flow__panel.vc-graph-legend-panel {
-  margin-bottom: 104px;
-}
+/* The legend sits in the top-right corner. */
 
 .vc-graph-legend {
   display: flex;

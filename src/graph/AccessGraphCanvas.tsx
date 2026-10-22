@@ -596,7 +596,7 @@ function CanvasSurface({ graph, backSlot, motionMs: motionMsProp }: AccessGraphC
             active={fitOutcome?.fitKey === fitKey && fitOutcome.long}
           />
         )}
-        <Panel position="top-right" className="vc-graph-controls-panel">
+        <Panel position="top-left" className="vc-graph-controls-panel">
           <GraphControls
             inDrilldown={inDrilldown}
             rankdir={rankdir}
@@ -636,7 +636,7 @@ function CanvasSurface({ graph, backSlot, motionMs: motionMsProp }: AccessGraphC
             )
           : null}
         {inDrilldown && (
-          <Panel position="bottom-left" className="vc-graph-legend-panel">
+          <Panel position="top-right" className="vc-graph-legend-panel">
             <div className="vc-graph-legend" role="group" aria-label="Review status legend">
               <p className="vc-graph-legend-title">Review status</p>
               <span className="vc-graph-legend-row">

@@ -3,8 +3,8 @@ import { createPortal } from 'react-dom'
 
 /**
  * Hover/focus tooltip for the graph control buttons, ported from org-graph's
- * `Hint`. It always opens to the LEFT of its anchor (the panel is docked to the
- * right edge), vertically centered. The popover is portaled to `document.body`
+ * `Hint`. It always opens to the RIGHT of its anchor (the panel is docked to the
+ * left edge), vertically centered. The popover is portaled to `document.body`
  * so the canvas' `overflow: hidden` cannot clip it.
  *
  * The anchor is `display: inline-flex` (see GraphControls.css) so it has a real
@@ -28,7 +28,7 @@ export function ControlHint({
     // A truly zero-size box means the anchor is not laid out; positioning from
     // it would pin the tooltip to the origin.
     if (!rect || (rect.width === 0 && rect.height === 0)) return
-    setPoint({ x: rect.left, y: rect.top + rect.height / 2 })
+    setPoint({ x: rect.right, y: rect.top + rect.height / 2 })
     setOpen(true)
   }
 
@@ -56,7 +56,7 @@ export function ControlHint({
             <div
               id={id}
               role="tooltip"
-              className="vc-graph-hint vc-graph-hint-left"
+              className="vc-graph-hint vc-graph-hint-right"
               style={{ left: point.x, top: point.y }}
             >
               {label}

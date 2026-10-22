@@ -154,7 +154,7 @@ describe('GraphControls', () => {
   })
 
   describe('tooltip', () => {
-    it('opens on hover to the left of the anchor and closes on leave', () => {
+    it('opens on hover to the right of the anchor and closes on leave', () => {
       setup()
       const button = screen.getByRole('button', { name: 'Hide minimap' })
       const anchor = anchorOf(button)
@@ -163,9 +163,9 @@ describe('GraphControls', () => {
       const tip = screen.getByRole('tooltip')
       expect(tip).toHaveTextContent('Hide minimap')
       expect(button).toHaveAttribute('aria-describedby', tip.id)
-      expect(tip.style.left).toBe('900px')
+      expect(tip.style.left).toBe('932px')
       expect(tip.style.top).toBe('116px')
-      expect(tip).toHaveClass('vc-graph-hint-left')
+      expect(tip).toHaveClass('vc-graph-hint-right')
       fireEvent.mouseLeave(anchor)
       expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
       expect(button).not.toHaveAttribute('aria-describedby')

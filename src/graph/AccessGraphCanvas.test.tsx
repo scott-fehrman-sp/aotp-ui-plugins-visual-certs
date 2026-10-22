@@ -508,12 +508,12 @@ describe('AccessGraphCanvas', () => {
       ])
     }
 
-    it('renders the toolbar in a right panel in grid and drill-down, buttons in order', () => {
+    it('renders the toolbar in a left panel in grid and drill-down, buttons in order', () => {
       render(<AccessGraphCanvas graph={referenceGraph()} />)
       const check = () => {
         const toolbar = screen.getByRole('toolbar', { name: 'Graph controls' })
         const panel = toolbar.closest('.react-flow__panel')!
-        expect(panel).toHaveClass('right')
+        expect(panel).toHaveClass('left')
         expect(panel).toHaveClass('vc-graph-controls-panel')
         const labels = Array.from(toolbar.querySelectorAll('button')).map((b) =>
           b.getAttribute('aria-label'),
