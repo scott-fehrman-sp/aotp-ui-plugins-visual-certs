@@ -24,6 +24,7 @@ import type {
   ResolvedEntitlement,
   ResolvedRole,
 } from '../sailpoint/accessMatrix'
+import { emptyResolvedIdentity } from '../sailpoint/identities'
 import { userSubgraph } from '../graph/userSubgraph'
 import type {
   AccessGraphData,
@@ -154,7 +155,21 @@ export function fixtureResolver(): AccessCompositionResolver {
     accessProfile: (id) => Promise.resolve(aps[id] ?? null),
     entitlement: (id) => Promise.resolve(ents[id] ?? null),
     source: (id) => Promise.resolve(sources[id] ?? null),
-    identity: () => Promise.resolve({ department: 'Finance', location: 'Austin' }),
+    identity: () =>
+      Promise.resolve(
+        emptyResolvedIdentity({
+          department: 'Finance',
+          location: 'Austin',
+          email: 'alice.adams@example.com',
+          title: 'Staff Engineer',
+          phone: '+1 555 0100',
+          isManager: 'Yes',
+          manager: 'Carol Chen',
+          lifecycleState: 'active',
+          identityState: 'ACTIVE',
+          identityId: 'u-a',
+        }),
+      ),
   }
 }
 

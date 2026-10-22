@@ -6,6 +6,7 @@ import type {
   ResolvedEntitlement,
   ResolvedRole,
 } from './accessMatrix'
+import { emptyResolvedIdentity } from './identities'
 import type { ReviewItemVM } from './types'
 
 function item(overrides: Partial<ReviewItemVM>): ReviewItemVM {
@@ -104,7 +105,10 @@ function stubResolver(): AccessCompositionResolver {
     accessProfile: (id) => Promise.resolve(aps[id] ?? null),
     entitlement: (id) => Promise.resolve(ents[id] ?? null),
     source: (id) => Promise.resolve(sources[id] ?? null),
-    identity: () => Promise.resolve({ department: 'Engineering', location: 'Austin' }),
+    identity: () =>
+      Promise.resolve(
+        emptyResolvedIdentity({ department: 'Engineering', location: 'Austin' }),
+      ),
   }
 }
 
@@ -191,7 +195,7 @@ describe('resolveMatrix', () => {
       accessProfile: () => Promise.resolve(null),
       entitlement: () => Promise.resolve(null),
       source: () => Promise.resolve(null),
-      identity: () => Promise.resolve({ department: '', location: '' }),
+      identity: () => Promise.resolve(emptyResolvedIdentity()),
     }
     const items = [
       item({ id: 'e', accessKind: 'entitlement', accessId: 'ent-x', accessName: 'read' }),
@@ -335,7 +339,7 @@ describe('resolveMatrix', () => {
   it('soft-degrades a failed IDENTITY fetch to empty department/location without dropping rows', async () => {
     const resolver: AccessCompositionResolver = {
       ...stubResolver(),
-      identity: () => Promise.resolve({ department: '', location: '' }),
+      identity: () => Promise.resolve(emptyResolvedIdentity()),
     }
     const rows = await resolveMatrix(workedExampleItems(), resolver)
     expect(rows).toHaveLength(6)

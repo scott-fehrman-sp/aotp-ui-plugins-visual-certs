@@ -26,6 +26,7 @@ import { useGraphTransition } from './useGraphTransition'
 import { useMotionMs } from './useMotionMs'
 import { ScrollHint } from './ScrollHint'
 import { GraphControls } from './GraphControls'
+import { NodeDetailPanel } from './NodeDetailPanel'
 import { AccessNode, StatusIcon } from './AccessNode'
 import { useColorMode } from './useColorMode'
 import { EmptyState } from '../components/EmptyState'
@@ -301,10 +302,18 @@ function CanvasSurface({ graph, backSlot, motionMs: motionMsProp }: AccessGraphC
   const [showMinimap, setShowMinimap] = useState(true)
   // The review-status legend (drill-down only) is shown by default.
   const [showLegend, setShowLegend] = useState(true)
+  // The right-side node detail fly-out is hidden by default; the reviewer opens
+  // it from the control panel.
+  const [showDetail, setShowDetail] = useState(false)
   const [announcement, setAnnouncement] = useState('')
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   // The selected first-level item (node id) whose edges are highlighted.
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null)
+  // The node whose details the fly-out panel describes. Independent of the
+  // edge-highlight selection above: ANY node kind (including the user node,
+  // deeper hops and reference-only nodes) can be the detail target, whereas
+  // `selectedItemId` is restricted to first-level reviewable items.
+  const [detailNodeId, setDetailNodeId] = useState<string | null>(null)
   const colorMode = useColorMode()
   const width = useStore((state) => state.width)
 
@@ -319,6 +328,7 @@ function CanvasSurface({ graph, backSlot, motionMs: motionMsProp }: AccessGraphC
     setPrevNodes(graph.nodes)
     setSelectedUserId(null)
     setSelectedItemId(null)
+    setDetailNodeId(null)
   }
 
   // The selected item belongs to one user's drill-down: drilling into another
@@ -328,6 +338,9 @@ function CanvasSurface({ graph, backSlot, motionMs: motionMsProp }: AccessGraphC
   if (prevUserId !== selectedUserId) {
     setPrevUserId(selectedUserId)
     setSelectedItemId(null)
+    // Entering, leaving or switching a user's drill-down shows a different node
+    // set, so a detail target from the previous scene no longer applies.
+    setDetailNodeId(null)
   }
 
   const userCount = useMemo(
@@ -415,6 +428,20 @@ function CanvasSurface({ graph, backSlot, motionMs: motionMsProp }: AccessGraphC
   // shown again. Selecting a still-visible item is untouched.
   if (inDrilldown && !showCompleted && selectedItemId !== null && activeItemId === null) {
     setSelectedItemId(null)
+  }
+  // The data of the node the detail fly-out describes, resolved against the
+  // CURRENT scene so a node hidden by the reference / completed filter (or gone
+  // after a layout / mode change) simply yields `null` rather than stale data.
+  // Any kind qualifies — unlike `selectedItemId` this is not limited to
+  // first-level reviewable items.
+  const detailNode = useMemo(
+    () => scene.nodes.find((candidate) => candidate.id === detailNodeId)?.data ?? null,
+    [scene.nodes, detailNodeId],
+  )
+  // Drop a detail target the filters have hidden so it cannot silently return
+  // when the filter is relaxed, mirroring the selection's drop-if-hidden rule.
+  if (detailNodeId !== null && detailNode === null) {
+    setDetailNodeId(null)
   }
   // Selection composes with the hover emphasis inside `highlightEdges`; with
   // nothing selected this is exactly `emphasizeEdges`.
@@ -509,12 +536,23 @@ function CanvasSurface({ graph, backSlot, motionMs: motionMsProp }: AccessGraphC
   // Mouse convenience: in grid mode, clicking a card also drills in; in
   // drill-down, clicking a first-level card selects / deselects it.
   const onNodeClick: NodeMouseHandler<AccessSceneNode> = (_event, node) => {
-    if (selectedUserId === null) setSelectedUserId(node.id)
-    else if (isSelectableNodeData(node.data)) toggleSelection(node.id)
+    if (selectedUserId === null) {
+      // Grid mode: clicking a user card drills into that user. The detail
+      // target is set in the drill-down scene (below) once the user is open;
+      // setting it here would be dropped by the scene-change reset anyway.
+      setSelectedUserId(node.id)
+      return
+    }
+    // Drill-down: the click both drives the detail fly-out (any node kind) and,
+    // for a first-level reviewable item, toggles the edge-highlight selection.
+    setDetailNodeId((current) => (current === node.id ? null : node.id))
+    if (isSelectableNodeData(node.data)) toggleSelection(node.id)
   }
-  // Clicking the empty pane (never a card) clears the selection.
+  // Clicking the empty pane (never a card) clears the selection and the detail
+  // target.
   const onPaneClick = () => {
     if (activeItemId !== null) clearSelection()
+    setDetailNodeId(null)
   }
 
   const toggleLayout = () => {
@@ -547,6 +585,10 @@ function CanvasSurface({ graph, backSlot, motionMs: motionMsProp }: AccessGraphC
   const toggleLegend = () => {
     setShowLegend(!showLegend)
     setAnnouncement(showLegend ? 'Legend hidden.' : 'Legend shown.')
+  }
+  const toggleDetail = () => {
+    setShowDetail(!showDetail)
+    setAnnouncement(showDetail ? 'Details panel hidden.' : 'Details panel shown.')
   }
 
   return (
@@ -616,6 +658,8 @@ function CanvasSurface({ graph, backSlot, motionMs: motionMsProp }: AccessGraphC
             onToggleMinimap={toggleMinimap}
             showLegend={showLegend}
             onToggleLegend={toggleLegend}
+            showDetail={showDetail}
+            onToggleDetail={toggleDetail}
           />
         </Panel>
         {inDrilldown && backSlot === undefined && (
@@ -643,36 +687,48 @@ function CanvasSurface({ graph, backSlot, motionMs: motionMsProp }: AccessGraphC
               backSlot,
             )
           : null}
-        {inDrilldown && showLegend && (
-          <Panel position="top-right" className="vc-graph-legend-panel">
-            <div className="vc-graph-legend" role="group" aria-label="Review status legend">
-              <p className="vc-graph-legend-title">Review status</p>
-              <span className="vc-graph-legend-row">
-                <StatusIcon status="needsReview" decorative />
-                Needs review
-              </span>
-              <span className="vc-graph-legend-row">
-                <StatusIcon status="approved" decorative />
-                Approved
-              </span>
-              <span className="vc-graph-legend-row">
-                <StatusIcon status="revoked" decorative />
-                Revoked
-              </span>
-              <span className="vc-graph-legend-row">
-                <StatusIcon status="reassigned" decorative />
-                Reassigned
-              </span>
-              {showReference && (
+        {/* Both top-right overlays share ONE panel so they stack in a column
+            instead of colliding at the same corner (React Flow pins every
+            same-position panel to top:0;right:0). The legend sits above the
+            detail fly-out when both are shown. */}
+        {((inDrilldown && showLegend) || showDetail) && (
+          <Panel position="top-right" className="vc-graph-right-stack">
+            {inDrilldown && showLegend && (
+              <div className="vc-graph-legend" role="group" aria-label="Review status legend">
+                <p className="vc-graph-legend-title">Review status</p>
                 <span className="vc-graph-legend-row">
-                  <span
-                    className="vc-graph-legend-swatch vc-graph-legend-swatch-reference"
-                    aria-hidden="true"
-                  />
-                  Reference Only
+                  <StatusIcon status="needsReview" decorative />
+                  Needs review
                 </span>
-              )}
-            </div>
+                <span className="vc-graph-legend-row">
+                  <StatusIcon status="approved" decorative />
+                  Approved
+                </span>
+                <span className="vc-graph-legend-row">
+                  <StatusIcon status="revoked" decorative />
+                  Revoked
+                </span>
+                <span className="vc-graph-legend-row">
+                  <StatusIcon status="reassigned" decorative />
+                  Reassigned
+                </span>
+                {showReference && (
+                  <span className="vc-graph-legend-row">
+                    <span
+                      className="vc-graph-legend-swatch vc-graph-legend-swatch-reference"
+                      aria-hidden="true"
+                    />
+                    Reference Only
+                  </span>
+                )}
+              </div>
+            )}
+            {showDetail && (
+              <NodeDetailPanel
+                node={detailNode}
+                onClose={() => setShowDetail(false)}
+              />
+            )}
           </Panel>
         )}
         {isDegenerate && (

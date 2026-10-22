@@ -18,6 +18,8 @@ function setup(overrides: Partial<Props> = {}) {
     onToggleMinimap: vi.fn(),
     showLegend: true,
     onToggleLegend: vi.fn(),
+    showDetail: true,
+    onToggleDetail: vi.fn(),
     ...overrides,
   }
   render(<GraphControls {...props} />)
@@ -48,7 +50,7 @@ const anchorOf = (button: HTMLElement) =>
   button.closest<HTMLElement>('.vc-graph-hint-anchor')!
 
 describe('GraphControls', () => {
-  it('renders a named toolbar with Layout, Reference, Completed, Legend, Minimap buttons in order', () => {
+  it('renders a named toolbar with Layout, Reference, Completed, Legend, Minimap, Detail buttons in order', () => {
     setup()
     const toolbar = screen.getByRole('toolbar', { name: 'Graph controls' })
     const buttons = within(toolbar).getAllByRole('button')
@@ -58,6 +60,7 @@ describe('GraphControls', () => {
       'Hide completed items',
       'Hide legend',
       'Hide minimap',
+      'Hide details panel',
     ])
   })
 
@@ -90,6 +93,7 @@ describe('GraphControls', () => {
       'Hide completed items',
       'Hide legend',
       'Hide minimap',
+      'Hide details panel',
     ]) {
       const b = screen.getByRole('button', { name })
       expect(b).toHaveAttribute('aria-pressed', 'true')
@@ -121,7 +125,7 @@ describe('GraphControls', () => {
     expect(hidden.querySelector('svg')).toHaveAttribute('data-icon', 'completedHidden')
   })
 
-  it('disables Layout, Reference, Completed and Legend in the grid but keeps Minimap enabled', () => {
+  it('disables Layout, Reference, Completed and Legend in the grid but keeps Minimap and Detail enabled', () => {
     const props = setup({ inDrilldown: false })
     const layout = screen.getByRole('button', { name: 'Layout (open a user to change)' })
     const reference = screen.getByRole('button', {
@@ -132,21 +136,25 @@ describe('GraphControls', () => {
     })
     const legend = screen.getByRole('button', { name: 'Legend (open a user to change)' })
     const minimap = screen.getByRole('button', { name: 'Hide minimap' })
+    const detail = screen.getByRole('button', { name: 'Hide details panel' })
     expect(layout).toBeDisabled()
     expect(reference).toBeDisabled()
     expect(completed).toBeDisabled()
     expect(legend).toBeDisabled()
     expect(minimap).toBeEnabled()
+    expect(detail).toBeEnabled()
     fireEvent.click(layout)
     fireEvent.click(reference)
     fireEvent.click(completed)
     fireEvent.click(legend)
     fireEvent.click(minimap)
+    fireEvent.click(detail)
     expect(props.onToggleLayout).not.toHaveBeenCalled()
     expect(props.onToggleReference).not.toHaveBeenCalled()
     expect(props.onToggleCompleted).not.toHaveBeenCalled()
     expect(props.onToggleLegend).not.toHaveBeenCalled()
     expect(props.onToggleMinimap).toHaveBeenCalledTimes(1)
+    expect(props.onToggleDetail).toHaveBeenCalledTimes(1)
   })
 
   it('enables all buttons in drill-down and fires their handlers', () => {
@@ -156,11 +164,21 @@ describe('GraphControls', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Hide completed items' }))
     fireEvent.click(screen.getByRole('button', { name: 'Hide legend' }))
     fireEvent.click(screen.getByRole('button', { name: 'Hide minimap' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Hide details panel' }))
     expect(props.onToggleLayout).toHaveBeenCalledTimes(1)
     expect(props.onToggleReference).toHaveBeenCalledTimes(1)
     expect(props.onToggleCompleted).toHaveBeenCalledTimes(1)
     expect(props.onToggleLegend).toHaveBeenCalledTimes(1)
     expect(props.onToggleMinimap).toHaveBeenCalledTimes(1)
+    expect(props.onToggleDetail).toHaveBeenCalledTimes(1)
+  })
+
+  it('labels the detail button for the shown/hidden states', () => {
+    setup({ showDetail: false })
+    const detail = screen.getByRole('button', { name: 'Show details panel' })
+    expect(detail).toHaveAttribute('aria-pressed', 'false')
+    expect(detail).not.toHaveClass('vc-graph-control-active')
+    expect(detail.querySelector('svg')).toHaveAttribute('data-icon', 'detail')
   })
 
   describe('tooltip', () => {

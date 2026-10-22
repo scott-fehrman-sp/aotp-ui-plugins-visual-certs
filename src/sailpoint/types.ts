@@ -275,6 +275,26 @@ export interface AccessMatrixRowVM {
   /** The user's location, same semantics as {@link userDepartment}. */
   userLocation?: string
   /**
+   * Richer per-identity detail for the user node's detail panel (email, title,
+   * manager, lifecycle state, etc.), same enrichment semantics as
+   * {@link userDepartment}: attaches to `userId`, lands on every row for that
+   * user, '' / absent when the identity lookup soft-degraded, never part of the
+   * dedup key.
+   */
+  userEmail?: string
+  userTitle?: string
+  userPhone?: string
+  /** 'Yes' / 'No' / '' — whether the identity manages others. */
+  userIsManager?: string
+  /** Manager's display name, from the identity's `managerRef.name`. */
+  userManager?: string
+  /** Lifecycle state name (e.g. "active"), from `lifecycleState.stateName`. */
+  userLifecycleState?: string
+  /** Identity status (e.g. "ACTIVE"), from `identityStatus`. */
+  userIdentityState?: string
+  /** The identity's own id (shown as "Identity ID"). */
+  userIdentityId?: string
+  /**
    * The role's human-readable description, for the role-node tooltip. Present
    * only on a resolved role row; '' / absent when unavailable. Enrichment only;
    * never part of the dedup key.
@@ -311,6 +331,34 @@ export interface AccessMatrixRowVM {
   accessItemName?: string
 }
 
+/**
+ * Extra, per-kind detail surfaced on a graph node (its tooltip historically,
+ * now the detail panel). For a `user` node the identity fields (department,
+ * location, email, title, phone, manager, lifecycle state, …); for every other
+ * kind just `description`. Each key is set only when non-empty, so a bare node
+ * carries no `detail` at all. Enrichment only; never part of node identity.
+ */
+export interface NodeDetail {
+  /** Non-user node: the item's description. */
+  description?: string
+  // --- user-node identity fields ---------------------------------------------
+  department?: string
+  location?: string
+  email?: string
+  title?: string
+  phone?: string
+  /** 'Yes' / 'No' — whether the identity manages others. */
+  isManager?: string
+  /** Manager's display name. */
+  manager?: string
+  /** Lifecycle state name (e.g. "active"). */
+  lifecycleState?: string
+  /** Identity status (e.g. "ACTIVE"). */
+  identityState?: string
+  /** The identity's own id. */
+  identityId?: string
+}
+
 /** The kind of a graph node — the five node layers of the matrix. */
 export type AccessGraphNodeKind =
   | 'user'
@@ -332,13 +380,13 @@ export interface AccessGraphNode {
   /** Human-readable label (the display name). */
   label: string
   /**
-   * Extra detail surfaced in the node's hover/focus tooltip. For a `user` node,
-   * `department`/`location`; for every other kind, `description`. Each key is
-   * set only when non-empty, and `detail` is omitted entirely when a node has
-   * no extra data — so a bare node stays `{ id, kind, label }`. Enrichment only;
-   * first-wins on dedupe (the first row to introduce a node id sets its detail).
+   * Extra detail surfaced in the node's detail panel ({@link NodeDetail}). For
+   * a `user` node the identity fields; for every other kind `description`. Each
+   * key is set only when non-empty, and `detail` is omitted entirely when a node
+   * has no extra data — so a bare node stays `{ id, kind, label }`. Enrichment
+   * only; first-wins on dedupe (the first row to introduce a node id sets it).
    */
-  detail?: { description?: string; department?: string; location?: string }
+  detail?: NodeDetail
   /**
    * Review status of this node, set ONLY by `userSubgraph`, and only on the
    * target of the viewed user's own first-level edge (copied from that edge, so
@@ -452,12 +500,12 @@ export interface AccessSceneNodeData extends Record<string, unknown> {
    */
   onSelect?: () => void
   /**
-   * Extra detail threaded from {@link AccessGraphNode.detail} for the node's
-   * tooltip: `department`/`location` on a user card, `description` on every
-   * other kind. Omitted when the node has no extra data (tooltip then shows
-   * only kind + label). Enrichment only.
+   * Extra detail threaded from {@link AccessGraphNode.detail} for the detail
+   * panel ({@link NodeDetail}): the identity fields on a user node,
+   * `description` on every other kind. Omitted when the node has no extra data.
+   * Enrichment only.
    */
-  detail?: { description?: string; department?: string; location?: string }
+  detail?: NodeDetail
   /**
    * Review status threaded from {@link AccessGraphNode.reviewStatus}: set only
    * on the user's directly-held access-item card in drill-down so the node can

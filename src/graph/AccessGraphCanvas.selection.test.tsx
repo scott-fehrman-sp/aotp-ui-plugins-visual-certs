@@ -101,13 +101,6 @@ const settle = () =>
     await new Promise((resolve) => setTimeout(resolve, 50))
   })
 
-/** Per-instance rect (never Element.prototype) so the tooltip's zero-size guard passes. */
-function stubRect(el: HTMLElement): void {
-  const target = (el.firstElementChild ?? el) as HTMLElement
-  target.getBoundingClientRect = () =>
-    ({ x: 40, y: 120, top: 120, left: 40, right: 240, bottom: 184, width: 200, height: 64, toJSON: () => ({}) }) as DOMRect
-}
-
 describe('AccessGraphCanvas item selection', () => {
   beforeEach(() => {
     spies.fitView.mockClear()
@@ -468,15 +461,14 @@ describe('AccessGraphCanvas item selection', () => {
     expect(edges()).toHaveLength(0)
   })
 
-  it('keeps the tooltip working on a selected card', () => {
+  it('selects a card and shows no hover tooltip (the panel carries that info)', () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
     const login = card('login')
-    stubRect(login.closest<HTMLElement>('.vc-node-tooltip-anchor')!)
     fireEvent.click(login)
     fireEvent.mouseEnter(login)
-    expect(screen.getByRole('tooltip')).toBeInTheDocument()
     expect(login).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.queryByRole('tooltip')).toBeNull()
   })
 })
 

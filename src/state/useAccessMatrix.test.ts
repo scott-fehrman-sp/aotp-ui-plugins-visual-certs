@@ -1,8 +1,8 @@
 import { renderHook, waitFor } from '@testing-library/react'
 import type { AccessProfilesApi } from 'sailpoint-api-client/access_profiles/api'
 import type { EntitlementsApi } from 'sailpoint-api-client/entitlements/api'
+import type { IdentitiesApi } from 'sailpoint-api-client/identities/api'
 import type { RolesApi } from 'sailpoint-api-client/roles/api'
-import type { SearchApi } from 'sailpoint-api-client/search/api'
 import type { SourcesApi } from 'sailpoint-api-client/sources/api'
 import { describe, expect, it, vi } from 'vitest'
 import type { ReviewItemVM } from '../sailpoint/types'
@@ -98,21 +98,29 @@ function fakeApis() {
       data: { id, name: id, description: descriptions[id] ?? '' },
     })
   })
-  // Identity department/location lookup via the search index.
-  const searchPostV1 = vi.fn().mockResolvedValue({
-    data: [{ id: 'u1', attributes: { department: 'Engineering', location: 'Austin' } }],
+  // Full identity detail lookup via IdentitiesApi.getIdentityV1.
+  const getIdentityV1 = vi.fn().mockResolvedValue({
+    data: {
+      id: 'u1',
+      emailAddress: 'user.one@example.com',
+      isManager: true,
+      managerRef: { id: 'mgr', name: 'Manager One' },
+      lifecycleState: { stateName: 'active' },
+      identityStatus: 'ACTIVE',
+      attributes: { department: 'Engineering', location: 'Austin', title: 'Engineer' },
+    },
   })
   return {
     rolesApi: { getRoleV1 } as unknown as RolesApi,
     accessProfilesApi: { getAccessProfileV1 } as unknown as AccessProfilesApi,
     entitlementsApi: { getEntitlementV1 } as unknown as EntitlementsApi,
     sourcesApi: { getSourceV1 } as unknown as SourcesApi,
-    searchApi: { searchPostV1 } as unknown as SearchApi,
+    identitiesApi: { getIdentityV1 } as unknown as IdentitiesApi,
     getRoleV1,
     getAccessProfileV1,
     getEntitlementV1,
     getSourceV1,
-    searchPostV1,
+    getIdentityV1,
   }
 }
 
@@ -133,7 +141,7 @@ describe('useAccessMatrix', () => {
         apis.accessProfilesApi,
         apis.entitlementsApi,
         apis.sourcesApi,
-        apis.searchApi,
+        apis.identitiesApi,
         'c1',
         workedExampleItems(),
       ),
@@ -155,7 +163,7 @@ describe('useAccessMatrix', () => {
           apis.accessProfilesApi,
           apis.entitlementsApi,
           apis.sourcesApi,
-          apis.searchApi,
+          apis.identitiesApi,
           'c1',
           list,
         ),
@@ -185,7 +193,7 @@ describe('useAccessMatrix', () => {
           apis.accessProfilesApi,
           apis.entitlementsApi,
           apis.sourcesApi,
-          apis.searchApi,
+          apis.identitiesApi,
           'c1',
           list,
         ),
@@ -215,7 +223,7 @@ describe('useAccessMatrix', () => {
           apis.accessProfilesApi,
           apis.entitlementsApi,
           apis.sourcesApi,
-          apis.searchApi,
+          apis.identitiesApi,
           'c1',
           list,
         ),

@@ -11,10 +11,10 @@
  */
 import type { AccessProfilesApi } from 'sailpoint-api-client/access_profiles/api'
 import type { EntitlementsApi } from 'sailpoint-api-client/entitlements/api'
+import type { IdentitiesApi } from 'sailpoint-api-client/identities/api'
 import type { RolesApi } from 'sailpoint-api-client/roles/api'
-import type { SearchApi } from 'sailpoint-api-client/search/api'
 import type { SourcesApi } from 'sailpoint-api-client/sources/api'
-import { fetchIdentityAttributes } from './identities'
+import { fetchIdentityDetail, type ResolvedIdentity } from './identities'
 import type {
   AccessGraphNodeKind,
   AccessMatrixRowVM,
@@ -79,11 +79,12 @@ export interface AccessCompositionResolver {
    */
   source(id: string): Promise<{ id: string; name: string; description: string } | null>
   /**
-   * A user's department + location, for the user-node tooltip. Backed by a
-   * per-identity cache (fetch-once, concurrent-dedupe). Soft-degrades to empty
-   * strings; returns null only when there is nothing to fetch (empty id).
+   * A user's full identity detail (department, location, email, title, phone,
+   * manager, lifecycle / identity state, isManager, identity id) for the user
+   * node's detail panel. Backed by a per-identity cache (fetch-once,
+   * concurrent-dedupe). Soft-degrades every field to '' and never throws.
    */
-  identity(id: string): Promise<{ department: string; location: string } | null>
+  identity(id: string): Promise<ResolvedIdentity>
 }
 
 /**
@@ -103,7 +104,7 @@ export function createAccessCompositionResolver(
   accessProfilesApi: AccessProfilesApi,
   entitlementsApi: EntitlementsApi,
   sourcesApi: SourcesApi,
-  searchApi: SearchApi,
+  identitiesApi: IdentitiesApi,
 ): AccessCompositionResolver {
   const roleCache = new Map<string, Promise<ResolvedRole | null>>()
   const apCache = new Map<string, Promise<ResolvedAccessProfile | null>>()
@@ -113,11 +114,8 @@ export function createAccessCompositionResolver(
     string,
     Promise<{ id: string; name: string; description: string } | null>
   >()
-  // Per-identity cache for the user department/location lookup.
-  const identityCache = new Map<
-    string,
-    Promise<{ department: string; location: string } | null>
-  >()
+  // Per-identity cache for the user detail lookup.
+  const identityCache = new Map<string, Promise<ResolvedIdentity>>()
 
   const cached = <T>(
     cache: Map<string, Promise<T | null>>,
@@ -220,12 +218,16 @@ export function createAccessCompositionResolver(
     }
   }
 
-  const fetchIdentity = async (
-    id: string,
-  ): Promise<{ department: string; location: string } | null> => {
-    // fetchIdentityAttributes itself soft-degrades to empty strings (never
-    // throws), so this always resolves to a usable object.
-    return fetchIdentityAttributes(searchApi, id)
+  // Identity has its own fetch-once cache (not the generic `cached` helper)
+  // because it resolves to a non-null `ResolvedIdentity` — `fetchIdentityDetail`
+  // soft-degrades every failure (and the empty id) to an all-'' object rather
+  // than null, so the user node always has a usable detail to render.
+  const identity = (id: string): Promise<ResolvedIdentity> => {
+    const hit = identityCache.get(id)
+    if (hit) return hit
+    const promise = fetchIdentityDetail(identitiesApi, id)
+    identityCache.set(id, promise)
+    return promise
   }
 
   return {
@@ -233,7 +235,7 @@ export function createAccessCompositionResolver(
     accessProfile: (id) => cached(apCache, id, fetchAccessProfile),
     entitlement: (id) => cached(entCache, id, fetchEntitlement),
     source,
-    identity: (id) => cached(identityCache, id, fetchIdentity),
+    identity,
   }
 }
 
@@ -339,7 +341,7 @@ async function expandItem(
   // so resolve once per item and fold into `base` — it then lands on EVERY row
   // for this user, including the degenerate all-blank `access` row and any
   // unresolved row. Soft-degrades to '' (never throws, never blanks the matrix).
-  const attrs = await resolver.identity(item.identityId)
+  const identity = await resolver.identity(item.identityId)
   // The directly-held access-item identity (kind, id, name) attaches to the
   // review item itself (independent of how its composition expands), so fold it
   // into `base` and let it land on EVERY row — exactly like department/location.
@@ -356,8 +358,16 @@ async function expandItem(
   const base = {
     userId: item.identityId,
     user: item.personName,
-    userDepartment: attrs?.department ?? '',
-    userLocation: attrs?.location ?? '',
+    userDepartment: identity.department,
+    userLocation: identity.location,
+    userEmail: identity.email,
+    userTitle: identity.title,
+    userPhone: identity.phone,
+    userIsManager: identity.isManager,
+    userManager: identity.manager,
+    userLifecycleState: identity.lifecycleState,
+    userIdentityState: identity.identityState,
+    userIdentityId: identity.identityId || item.identityId,
     accessItemKind,
     accessItemId: item.accessId ?? null,
     accessItemName: item.accessName,

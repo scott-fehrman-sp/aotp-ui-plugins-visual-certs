@@ -9,6 +9,7 @@
  * sibling org-graph plugin, trimmed to the three fields this picker shows.
  */
 import { Index, SearchApi } from 'sailpoint-api-client/search/api'
+import { IdentitiesApi } from 'sailpoint-api-client/identities/api'
 import { FriendlyError, toFriendlyError } from './certifications'
 import type { IdentityOption } from './types'
 
@@ -88,8 +89,8 @@ function toIdentityOption(row: unknown): IdentityOption | null {
 }
 
 /**
- * Identity attribute keys probed for the graph tooltip's department / location
- * lines. Tenants map these attributes under different names, so each is read
+ * Identity attribute keys probed for the user node's department / location.
+ * Tenants map these attributes under different names, so each is read
  * defensively with {@link firstString} (first non-empty wins, default ''):
  *   - department: 'department', 'departmentName', 'dept'
  *   - location:   'location', 'city', 'region', 'locality', 'workLocation'
@@ -98,43 +99,129 @@ const DEPARTMENT_KEYS = ['department', 'departmentName', 'dept']
 const LOCATION_KEYS = ['location', 'city', 'region', 'locality', 'workLocation']
 
 /**
- * Looks up ONE identity's department + location for the access-graph node
- * tooltip. Enrichment only: unlike {@link searchIdentities} (which throws for
- * the picker), this soft-degrades — an empty id or ANY error yields
- * `{ department: '', location: '' }` and never throws, so a failed lookup can
- * never blank a matrix row.
- *
- * Reads the identities search index by id and probes the row's `attributes`
- * (which may also carry the values at the top level) across the D3 key lists
- * above, mirroring {@link toIdentityOption}'s defensive untyped access.
+ * The richer per-identity detail the user node's detail panel shows. Mirrors
+ * the set the sibling org-graph plugin surfaces (email, title, phone, manager,
+ * lifecycle / identity state, isManager, identity id) plus the existing
+ * department / location. Every field is a plain display string so the panel
+ * renders it directly; '' means "unknown / not set".
  */
-export async function fetchIdentityAttributes(
-  api: SearchApi,
+export interface ResolvedIdentity {
+  department: string
+  location: string
+  email: string
+  title: string
+  phone: string
+  /** 'Yes' / 'No' / '' — whether the identity manages others. */
+  isManager: string
+  /** Manager's display name, from `managerRef.name`. */
+  manager: string
+  /** Lifecycle state name, from `lifecycleState.stateName`. */
+  lifecycleState: string
+  /** Identity status, from `identityStatus`. */
+  identityState: string
+  /** The identity's own id. */
+  identityId: string
+}
+
+/**
+ * A {@link ResolvedIdentity} with every field blank, optionally overridden.
+ * Used as the soft-degrade fallback and as a convenient base for test stubs
+ * that only care about a field or two.
+ */
+export function emptyResolvedIdentity(
+  overrides: Partial<ResolvedIdentity> = {},
+): ResolvedIdentity {
+  return {
+    department: '',
+    location: '',
+    email: '',
+    title: '',
+    phone: '',
+    isManager: '',
+    manager: '',
+    lifecycleState: '',
+    identityState: '',
+    identityId: '',
+    ...overrides,
+  }
+}
+
+/** Title lives under `attributes` and is tenant-mapped; probe a few key names. */
+const TITLE_KEYS = ['title', 'jobTitle', 'jobtitle']
+/** Phone likewise lives under `attributes` across several tenant key names. */
+const PHONE_KEYS = [
+  'phone',
+  'workPhone',
+  'workphone',
+  'telephone',
+  'telephoneNumber',
+  'telephonenumber',
+  'phoneNumber',
+  'phonenumber',
+  'mobilePhone',
+  'mobilephone',
+  'mobile',
+]
+
+/**
+ * Looks up ONE identity's full detail for the access-graph user detail panel
+ * via `IdentitiesApi.getIdentityV1`, which returns the authoritative identity
+ * object (email, isManager, managerRef, lifecycleState, attributes). Enrichment
+ * only: an empty id or ANY error soft-degrades to {@link EMPTY_IDENTITY} and
+ * never throws, so a failed lookup can never blank a matrix row.
+ *
+ * Title and phone are not first-class on the Identity object, so they are read
+ * defensively from `attributes` (tenant-mapped key names), mirroring how
+ * department / location are probed in {@link fetchIdentityAttributes}.
+ * Department / location are read from `attributes` too so this single call
+ * supersedes the Search-index lookup for a user who has a full identity record.
+ */
+export async function fetchIdentityDetail(
+  api: IdentitiesApi,
   identityId: string,
-): Promise<{ department: string; location: string }> {
-  if (!identityId) return { department: '', location: '' }
+): Promise<ResolvedIdentity> {
+  if (!identityId) return emptyResolvedIdentity()
   try {
-    const res = await api.searchPostV1({
-      search: {
-        indices: [Index.Identities],
-        query: { query: `id:${escapeSearchTerm(identityId)}` },
-      },
-      limit: 1,
-      count: false,
-    })
-    const row = (res.data ?? [])[0]
-    if (!isRecord(row)) return { department: '', location: '' }
-    const attributes = isRecord(row.attributes) ? row.attributes : {}
-    // Department/location can live at the top level or under attributes,
-    // depending on how the identity was indexed, so check both defensively.
+    const res = await api.getIdentityV1({ id: identityId })
+    const identity = (isRecord(res.data) ? res.data : {}) as Record<string, unknown>
+    const attributes = isRecord(identity.attributes)
+      ? (identity.attributes as Record<string, unknown>)
+      : {}
+    const managerRef = isRecord(identity.managerRef)
+      ? (identity.managerRef as Record<string, unknown>)
+      : {}
+    const lifecycle = isRecord(identity.lifecycleState)
+      ? (identity.lifecycleState as Record<string, unknown>)
+      : {}
+    const email =
+      firstString(identity, ['emailAddress', 'email']) ||
+      firstString(attributes, ['email', 'emailAddress'])
     const department =
-      firstString(row, DEPARTMENT_KEYS) || firstString(attributes, DEPARTMENT_KEYS)
+      firstString(attributes, DEPARTMENT_KEYS) || firstString(identity, DEPARTMENT_KEYS)
     const location =
-      firstString(row, LOCATION_KEYS) || firstString(attributes, LOCATION_KEYS)
-    return { department, location }
+      firstString(attributes, LOCATION_KEYS) || firstString(identity, LOCATION_KEYS)
+    const title = firstString(attributes, TITLE_KEYS)
+    const phone = firstString(attributes, PHONE_KEYS)
+    const manager = firstString(managerRef, ['name'])
+    const lifecycleState = firstString(lifecycle, ['stateName'])
+    const identityState = firstString(identity, ['identityStatus'])
+    const isManager =
+      identity.isManager === true ? 'Yes' : identity.isManager === false ? 'No' : ''
+    return {
+      department,
+      location,
+      email,
+      title,
+      phone,
+      isManager,
+      manager,
+      lifecycleState,
+      identityState,
+      identityId: firstString(identity, ['id']) || identityId,
+    }
   } catch {
-    // Soft-degrade: a failed attribute lookup must never blank a matrix row.
-    return { department: '', location: '' }
+    // Soft-degrade: a failed identity fetch must never blank a matrix row.
+    return emptyResolvedIdentity()
   }
 }
 

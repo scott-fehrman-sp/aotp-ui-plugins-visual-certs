@@ -25,6 +25,7 @@ import {
   CertificationSummariesApi,
   Configuration,
   EntitlementsApi,
+  IdentitiesApi,
   IdentityHistoryApi,
   RolesApi,
   SearchApi,
@@ -53,6 +54,8 @@ export interface PluginRuntime {
   entitlementsApi: EntitlementsApi
   /** Resolves a source's human-readable description for the graph tooltip. */
   sourcesApi: SourcesApi
+  /** Resolves a user's full identity detail for the access-graph detail panel. */
+  identitiesApi: IdentitiesApi
 }
 
 /** Options for {@link initPlugin}, mainly to support testing. */
@@ -161,6 +164,11 @@ export async function initPlugin(
   // the same autoconfigured Configuration; source read is covered by the
   // manifest's existing `sp:scopes:all`, so no manifest change.
   const sourcesApi = new SourcesApi(configuration)
+  // Resolves a user's full identity detail (email, manager, lifecycle state,
+  // etc.) for the access-graph user detail panel. Reuses the same autoconfigured
+  // Configuration; identity read is covered by the manifest's existing
+  // `sp:scopes:all`, so no manifest change.
+  const identitiesApi = new IdentitiesApi(configuration)
 
   return {
     sdk,
@@ -175,5 +183,6 @@ export async function initPlugin(
     accessProfilesApi,
     entitlementsApi,
     sourcesApi,
+    identitiesApi,
   }
 }

@@ -20,13 +20,16 @@ interface GraphControlsProps {
   /** The review-status legend is shown (drill-down only). */
   showLegend: boolean
   onToggleLegend: () => void
+  /** The right-side node detail fly-out panel is shown. */
+  showDetail: boolean
+  onToggleDetail: () => void
 }
 
 /**
  * The left-side vertical control panel for the access graph, styled after
  * org-graph's floating toolbar. Top to bottom: layout direction, reference
  * nodes/links visibility, completed items visibility, legend visibility,
- * minimap visibility.
+ * minimap visibility, node detail panel visibility.
  */
 export function GraphControls({
   inDrilldown,
@@ -41,6 +44,8 @@ export function GraphControls({
   onToggleMinimap,
   showLegend,
   onToggleLegend,
+  showDetail,
+  onToggleDetail,
 }: GraphControlsProps) {
   const leftToRight = rankdir === 'LR'
   const layoutLabel = !inDrilldown
@@ -66,6 +71,7 @@ export function GraphControls({
       ? 'Hide legend'
       : 'Show legend'
   const minimapLabel = showMinimap ? 'Hide minimap' : 'Show minimap'
+  const detailLabel = showDetail ? 'Hide details panel' : 'Show details panel'
 
   return (
     <div className="vc-graph-controls" role="toolbar" aria-label="Graph controls">
@@ -126,6 +132,17 @@ export function GraphControls({
           onClick={onToggleMinimap}
         >
           <ControlIcon name="minimap" />
+        </button>
+      </ControlHint>
+      <ControlHint label={detailLabel}>
+        <button
+          type="button"
+          className={`vc-graph-control${showDetail ? ' vc-graph-control-active' : ''}`}
+          aria-label={detailLabel}
+          aria-pressed={showDetail}
+          onClick={onToggleDetail}
+        >
+          <ControlIcon name="detail" />
         </button>
       </ControlHint>
     </div>

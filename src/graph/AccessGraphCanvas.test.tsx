@@ -265,7 +265,7 @@ describe('AccessGraphCanvas', () => {
     render(<AccessGraphCanvas graph={referenceGraph()} />)
     fireEvent.click(screen.getByRole('button', { name: /show access for/i }))
     const legend = screen.getByRole('group', { name: /review status legend/i })
-    expect(legend.closest('.react-flow__panel')).toHaveClass('vc-graph-legend-panel')
+    expect(legend.closest('.react-flow__panel')).toHaveClass('vc-graph-right-stack')
   })
 
   it('legend toggle hides and restores the legend panel in drill-down', () => {
@@ -379,137 +379,29 @@ describe('AccessGraphCanvas', () => {
     expect(screen.getByRole('button', { name: 'Show access for User One' })).toBeInTheDocument()
   })
 
-  it('shows a styled tooltip with the kind and full (untruncated) label on hover', () => {
-    // A role name long enough that the card would ellipsis-clip it; the tooltip
-    // must still reveal the complete name so a reviewer can read it on hover.
+  it('shows no hover/focus tooltip on cards (the detail panel carries that info)', () => {
+    // The node hover tooltip was removed; the right-side detail panel surfaces
+    // the kind / full label / detail / status instead. The card keeps its full
+    // untruncated name via its accessible name.
     const longRole = 'Enterprise Data Platform Administrator (Production)'
     const graph = deriveAccessGraph([
       row({ id: '1', userId: 'u1', user: 'User One', role: longRole, roleId: 'r1', accessProfile: 'foo', accessProfileId: 'ap1', entitlement: 'read', entitlementId: 'e1', source: 'engr db', sourceId: 's1' }),
     ])
     render(<AccessGraphCanvas graph={graph} />)
 
-    // No tooltip until hovered.
+    const userCard = screen.getByRole('button', { name: 'Show access for User One' })
+    fireEvent.mouseEnter(userCard)
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
-
-    // Hovering the grid-mode user card opens a styled (role=tooltip) popover.
-    const userCard = screen.getByRole('button', { name: 'Show access for User One' })
-    const userAnchor = userCard.closest<HTMLElement>('.vc-node-tooltip-anchor')!
-    stubRect(userAnchor)
-    fireEvent.mouseEnter(userAnchor)
-    const userTip = screen.getByRole('tooltip')
-    expect(userTip).toHaveTextContent('User')
-    expect(userTip).toHaveTextContent('User One')
-    // It closes on mouse leave.
-    fireEvent.mouseLeave(userAnchor)
+    fireEvent.focus(userCard)
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
+    fireEvent.mouseLeave(userCard)
 
-    // Drill in; hovering the long role card reveals the full name.
+    // Drill in; the long role card still never opens a tooltip, but its full
+    // name is its accessible name (the card carries it via aria-label).
     fireEvent.click(userCard)
-    const roleAnchor = screen.getByText(longRole).closest<HTMLElement>('.vc-node-tooltip-anchor')!
-    stubRect(roleAnchor)
-    fireEvent.mouseEnter(roleAnchor)
-    const roleTip = screen.getByRole('tooltip')
-    expect(roleTip).toHaveTextContent('Role')
-    expect(roleTip).toHaveTextContent(longRole)
-  })
-
-  it('opens the node tooltip on keyboard focus too', () => {
-    const graph = deriveAccessGraph([
-      row({ id: '1', userId: 'u1', user: 'User One', entitlement: 'read', entitlementId: 'e1', source: 'engr db', sourceId: 's1' }),
-    ])
-    render(<AccessGraphCanvas graph={graph} />)
-
-    const anchor = screen
-      .getByRole('button', { name: 'Show access for User One' })
-      .closest<HTMLElement>('.vc-node-tooltip-anchor')!
-    stubRect(anchor)
-    fireEvent.focus(anchor)
-    expect(screen.getByRole('tooltip')).toHaveTextContent('User One')
-  })
-
-  it('shows department + location on the user tooltip and description on a role tooltip', () => {
-    // The user carries department/location; the role carries a description.
-    const graph = deriveAccessGraph([
-      row({
-        id: '1',
-        userId: 'u1',
-        user: 'User One',
-        userDepartment: 'Engineering',
-        userLocation: 'Austin',
-        role: 'Role A',
-        roleId: 'r1',
-        roleDescription: 'Grants engineering platform access',
-        entitlement: 'read',
-        entitlementId: 'e1',
-        source: 'engr db',
-        sourceId: 's1',
-      }),
-    ])
-    render(<AccessGraphCanvas graph={graph} />)
-
-    // Hover the user card: Department + Location lines appear.
-    const userCard = screen.getByRole('button', { name: 'Show access for User One' })
-    const userAnchor = userCard.closest<HTMLElement>('.vc-node-tooltip-anchor')!
-    stubRect(userAnchor)
-    fireEvent.mouseEnter(userAnchor)
-    const userTip = screen.getByRole('tooltip')
-    expect(userTip).toHaveTextContent('Department:')
-    expect(userTip).toHaveTextContent('Engineering')
-    expect(userTip).toHaveTextContent('Location:')
-    expect(userTip).toHaveTextContent('Austin')
-    // A user tooltip never shows a Description label.
-    expect(userTip).not.toHaveTextContent('Description:')
-    fireEvent.mouseLeave(userAnchor)
-
-    // Drill in; hover the role: its Description appears.
-    fireEvent.click(userCard)
-    const roleAnchor = screen.getByText('Role A').closest<HTMLElement>('.vc-node-tooltip-anchor')!
-    stubRect(roleAnchor)
-    fireEvent.mouseEnter(roleAnchor)
-    const roleTip = screen.getByRole('tooltip')
-    expect(roleTip).toHaveTextContent('Description:')
-    expect(roleTip).toHaveTextContent('Grants engineering platform access')
-  })
-
-  it('shows "not set" for a non-user node missing a description; user tooltip never shows Description', () => {
-    // No department/location/description anywhere.
-    const graph = deriveAccessGraph([
-      row({ id: '1', userId: 'u1', user: 'User One', entitlement: 'read', entitlementId: 'e1', source: 'engr db', sourceId: 's1' }),
-    ])
-    render(<AccessGraphCanvas graph={graph} />)
-
-    // A user node never shows a Description line (users have dept/location only).
-    const userCard = screen.getByRole('button', { name: 'Show access for User One' })
-    const userAnchor = userCard.closest<HTMLElement>('.vc-node-tooltip-anchor')!
-    stubRect(userAnchor)
-    fireEvent.mouseEnter(userAnchor)
-    const userTip = screen.getByRole('tooltip')
-    expect(userTip).toHaveTextContent('User One')
-    expect(userTip).not.toHaveTextContent('Department:')
-    expect(userTip).not.toHaveTextContent('Location:')
-    expect(userTip).not.toHaveTextContent('Description:')
-    fireEvent.mouseLeave(userAnchor)
-
-    // Drill in; a source node with no description still shows the Description
-    // line, with the value "not set".
-    fireEvent.click(userCard)
-    const sourceAnchor = screen.getByText('engr db').closest<HTMLElement>('.vc-node-tooltip-anchor')!
-    stubRect(sourceAnchor)
-    fireEvent.mouseEnter(sourceAnchor)
-    const sourceTip = screen.getByRole('tooltip')
-    expect(sourceTip).toHaveTextContent('Source')
-    expect(sourceTip).toHaveTextContent('engr db')
-    expect(sourceTip).toHaveTextContent('Description:')
-    expect(sourceTip).toHaveTextContent('not set')
-    fireEvent.mouseLeave(sourceAnchor)
-
-    // The entitlement node (also no description) shows "not set" too.
-    const entAnchor = screen.getByText('read').closest<HTMLElement>('.vc-node-tooltip-anchor')!
-    stubRect(entAnchor)
-    fireEvent.mouseEnter(entAnchor)
-    const entTip = screen.getByRole('tooltip')
-    expect(entTip).toHaveTextContent('Description:')
-    expect(entTip).toHaveTextContent('not set')
+    const roleCard = screen.getByLabelText(`Role: ${longRole}`)
+    fireEvent.mouseEnter(roleCard)
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
   })
 
   describe('graph controls panel', () => {
@@ -546,6 +438,7 @@ describe('AccessGraphCanvas', () => {
         'Completed items (open a user to filter)',
         'Legend (open a user to change)',
         'Hide minimap',
+        'Show details panel',
       ])
       drillIn()
       expect(check()).toEqual([
@@ -554,6 +447,7 @@ describe('AccessGraphCanvas', () => {
         'Hide completed items',
         'Hide legend',
         'Hide minimap',
+        'Show details panel',
       ])
     })
 
@@ -909,29 +803,6 @@ describe('AccessGraphCanvas', () => {
     })
   })
 })
-
-/**
- * jsdom never lays out, so `getBoundingClientRect` returns an all-zero rect and
- * the tooltip (correctly) refuses to open on a zero-size box — the real-browser
- * guard against positioning at the origin. Give THIS anchor a plausible,
- * non-zero box so the measurement path runs as it does in a browser. Scoped to
- * the element under test so it never perturbs layout-sensitive chart tests.
- */
-function stubRect(el: HTMLElement): void {
-  const card = (el.firstElementChild ?? el) as HTMLElement
-  card.getBoundingClientRect = () =>
-    ({
-      x: 40,
-      y: 120,
-      top: 120,
-      left: 40,
-      right: 240,
-      bottom: 184,
-      width: 200,
-      height: 64,
-      toJSON: () => ({}),
-    }) as DOMRect
-}
 
 /** Scoped rect for a control-panel hint anchor (the anchor itself is measured). */
 function stubAnchorRect(el: HTMLElement): void {

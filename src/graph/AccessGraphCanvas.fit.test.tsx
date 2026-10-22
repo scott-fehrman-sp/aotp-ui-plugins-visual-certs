@@ -111,7 +111,7 @@ describe('AccessGraphCanvas overlay-aware fit', () => {
     // Scoped, per-instance rects (never Element.prototype).
     const root = container.querySelector<HTMLElement>('.react-flow')!
     root.getBoundingClientRect = () => rect(0, 0, 968, 490)
-    const legend = container.querySelector<HTMLElement>('.vc-graph-legend-panel')!
+    const legend = container.querySelector<HTMLElement>('.vc-graph-right-stack')!
     legend.getBoundingClientRect = () => rect(15, 200, 236, 186) // right 251, bottom 386
     fireEvent.click(btn('Hide minimap')) // triggers a refit
     await waitFor(() => expect(parseInt(lastPadding()!.left, 10)).toBeGreaterThanOrEqual(251 + 12))

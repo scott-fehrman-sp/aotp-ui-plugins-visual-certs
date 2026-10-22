@@ -11,6 +11,7 @@ import type {
   AccessGraphNode,
   AccessGraphNodeKind,
   AccessMatrixRowVM,
+  NodeDetail,
 } from '../sailpoint/types'
 import { reviewKey } from './reviewOverlay'
 
@@ -19,23 +20,32 @@ interface Level {
   id: string
   kind: AccessGraphNodeKind
   label: string
-  /** Extra tooltip detail for this node (department/location or description). */
-  detail?: { description?: string; department?: string; location?: string }
+  /** Extra detail for this node (user identity fields, or a description). */
+  detail?: NodeDetail
 }
 
 /**
- * Builds a node's tooltip `detail` from the row, keeping only non-empty keys.
- * Returns `undefined` when there is nothing to show so a bare node stays
- * `{ id, kind, label }` (and the tooltip renders only kind + label).
+ * Builds a node's `detail` from the row, keeping only non-empty keys. Returns
+ * `undefined` when there is nothing to show so a bare node stays
+ * `{ id, kind, label }` (and the detail panel renders only kind + label). For a
+ * user node the identity fields; for every other kind the item's description.
  */
 function detailFor(
   kind: AccessGraphNodeKind,
   row: AccessMatrixRowVM,
 ): Level['detail'] {
-  const detail: { description?: string; department?: string; location?: string } = {}
+  const detail: NodeDetail = {}
   if (kind === 'user') {
     if (row.userDepartment) detail.department = row.userDepartment
     if (row.userLocation) detail.location = row.userLocation
+    if (row.userEmail) detail.email = row.userEmail
+    if (row.userTitle) detail.title = row.userTitle
+    if (row.userPhone) detail.phone = row.userPhone
+    if (row.userIsManager) detail.isManager = row.userIsManager
+    if (row.userManager) detail.manager = row.userManager
+    if (row.userLifecycleState) detail.lifecycleState = row.userLifecycleState
+    if (row.userIdentityState) detail.identityState = row.userIdentityState
+    if (row.userIdentityId) detail.identityId = row.userIdentityId
   } else {
     const description =
       kind === 'role'

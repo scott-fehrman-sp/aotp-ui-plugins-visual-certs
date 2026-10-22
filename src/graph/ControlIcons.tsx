@@ -58,6 +58,15 @@ const paths = {
       <path d="M10.5 6.75H20M10.5 12H20M10.5 17.25H20" {...stroke} />
     </>
   ),
+  // A side panel: a framed rectangle with a docked right-hand column, the
+  // visual shorthand for the fly-out details panel.
+  detail: (
+    <>
+      <rect x="3.5" y="4.5" width="17" height="15" rx="2" {...stroke} />
+      <path d="M14 4.5V19.5" {...stroke} />
+      <path d="M16.5 9H18M16.5 12H18M16.5 15H18" {...stroke} />
+    </>
+  ),
 }
 
 export function ControlIcon({ name }: { name: keyof typeof paths }) {

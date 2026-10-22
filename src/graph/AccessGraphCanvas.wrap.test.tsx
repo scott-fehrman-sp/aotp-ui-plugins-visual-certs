@@ -94,13 +94,6 @@ function translate(label: string) {
 const entPositions = (n: number) => Array.from({ length: n }, (_, i) => translate(`Ent ${pad(i)}`))
 const distinct = (values: number[]) => [...new Set(values)].sort((a, b) => a - b)
 
-/** Per-instance rect (never Element.prototype) so the tooltip's zero-size guard passes. */
-function stubRect(el: HTMLElement): void {
-  const target = (el.firstElementChild ?? el) as HTMLElement
-  target.getBoundingClientRect = () =>
-    ({ x: 40, y: 120, top: 120, left: 40, right: 240, bottom: 184, width: 200, height: 64, toJSON: () => ({}) }) as DOMRect
-}
-
 describe('AccessGraphCanvas lane wrapping', () => {
   beforeEach(() => {
     spies.fitView.mockClear()
@@ -266,12 +259,11 @@ describe('AccessGraphCanvas lane wrapping', () => {
       expect(withClass('vc-graph-edge-emphasized')).toHaveLength(0)
     })
 
-    it('still opens the tooltip', () => {
+    it('opens no hover tooltip (the detail panel carries that info)', () => {
       open()
       const target = card(last)
-      stubRect(target.closest<HTMLElement>('.vc-node-tooltip-anchor')!)
       fireEvent.mouseEnter(target)
-      expect(screen.getByRole('tooltip')).toBeInTheDocument()
+      expect(screen.queryByRole('tooltip')).toBeNull()
     })
   })
 

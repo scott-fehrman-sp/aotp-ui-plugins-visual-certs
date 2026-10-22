@@ -74,13 +74,6 @@ const snapshot = () => structuredClone(edges())
 const positions = () => nodes().map((n) => ({ id: n.id, ...n.position }))
 const isStatus = (e: Edge) => Boolean((e.data as { reviewStatus?: string } | undefined)?.reviewStatus)
 
-/** Per-instance rect (never Element.prototype) so the tooltip's zero-size guard passes. */
-function stubRect(el: HTMLElement): void {
-  const target = (el.firstElementChild ?? el) as HTMLElement
-  target.getBoundingClientRect = () =>
-    ({ x: 40, y: 120, top: 120, left: 40, right: 240, bottom: 184, width: 200, height: 64, toJSON: () => ({}) }) as DOMRect
-}
-
 describe('AccessGraphCanvas hover / focus edge emphasis', () => {
   beforeEach(() => {
     spies.fitView.mockClear()
@@ -240,21 +233,20 @@ describe('AccessGraphCanvas hover / focus edge emphasis', () => {
     expect(edges()).toHaveLength(0)
   })
 
-  it('keeps the tooltip working while the emphasis applies', () => {
+  it('emphasizes on hover and on keyboard focus (no hover tooltip)', () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
     const login = card('login')
-    stubRect(login.closest<HTMLElement>('.vc-node-tooltip-anchor')!)
     fireEvent.mouseEnter(login)
-    expect(screen.getByRole('tooltip')).toBeInTheDocument()
+    // The hover tooltip was removed; only the edge emphasis responds.
+    expect(screen.queryByRole('tooltip')).toBeNull()
     expect(emphasized()).toHaveLength(1)
     fireEvent.mouseLeave(login)
-    expect(screen.queryByRole('tooltip')).toBeNull()
+    expect(emphasized()).toHaveLength(0)
 
     const admin = card('admin')
-    stubRect(admin.closest<HTMLElement>('.vc-node-tooltip-anchor')!)
     fireEvent.focus(admin)
-    expect(screen.getByRole('tooltip')).toBeInTheDocument()
+    expect(screen.queryByRole('tooltip')).toBeNull()
     expect(emphasized()).toHaveLength(1)
   })
 })

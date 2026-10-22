@@ -1,0 +1,221 @@
+/*
+ * The right-side fly-out node detail panel. Shares the legend's card look
+ * (bordered, rounded, shadowed, `var(--control)` background) from AccessGraph.css
+ * but is a taller, wider panel sized to read a full description. Mounted inside a
+ * React Flow `top-right` Panel, so it floats over the canvas at its top-right.
+ * `--panel` falls back to `--control` (same precedent as GraphControls.css).
+ */
+
+/*
+ * The shared top-right column that stacks the legend above the detail panel in
+ * ONE React Flow panel (React Flow pins every same-position panel to the same
+ * corner, so two separate top-right panels would overlap). `align-items:
+ * flex-end` keeps each child hugging the right edge even when they differ in
+ * width (the narrow legend vs the wider detail card).
+ */
+.vc-graph-right-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-end;
+  /* Keep the whole stack inside the canvas (the panel sits 15px from the top;
+     leave a matching gap at the bottom). The detail card scrolls internally
+     when the legend above it leaves it little room. */
+  max-height: calc(min(70vh, 640px) - 30px);
+  min-height: 0;
+  /* Panels disable pointer events on the wrapper; re-enable so the detail
+     panel's close button and scrolling work. */
+  pointer-events: auto;
+}
+
+.vc-graph-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 260px;
+  /* In the shared right stack this card takes the room left under the legend
+     and scrolls its own body; `min-height: 0` lets it shrink below content. */
+  flex: 0 1 auto;
+  min-height: 0;
+  padding: 12px 14px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel, var(--control));
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 13px;
+  box-shadow: var(--shadow);
+}
+
+.vc-graph-detail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.vc-graph-detail-title {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.vc-graph-detail-close {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--control);
+  color: var(--ink);
+  cursor: pointer;
+  transition:
+    background-color var(--motion-ms) ease,
+    border-color var(--motion-ms) ease;
+}
+
+.vc-graph-detail-close:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.vc-graph-detail-close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.vc-graph-detail-empty {
+  margin: 0;
+  color: var(--muted);
+}
+
+.vc-graph-detail-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* The per-kind glyph + caption pill sit on one row, the icon first. */
+.vc-graph-detail-kind-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* The per-kind glyph, reused from the node card (same SVG shapes). Tinted per
+   kind to match the caption pill beside it. */
+.vc-graph-detail-kind-icon {
+  display: block;
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  color: var(--accent);
+}
+
+.vc-graph-detail-kind-icon.kind-user {
+  color: var(--vc-graph-user);
+}
+
+.vc-graph-detail-kind-icon.kind-role {
+  color: var(--vc-graph-role);
+}
+
+.vc-graph-detail-kind-icon.kind-accessProfile {
+  color: var(--vc-graph-accessProfile);
+}
+
+.vc-graph-detail-kind-icon.kind-entitlement {
+  color: var(--vc-graph-entitlement);
+}
+
+.vc-graph-detail-kind-icon.kind-source {
+  color: var(--vc-graph-source);
+}
+
+/* Kind caption pill — tinted per kind to match the node card's left-border
+   accent and the glyph beside it. Explicit per-kind rules rather than a shared
+   custom property, which the cards do not expose. */
+.vc-graph-detail-kind {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.vc-graph-detail-kind.kind-user {
+  color: var(--vc-graph-user);
+}
+
+.vc-graph-detail-kind.kind-role {
+  color: var(--vc-graph-role);
+}
+
+.vc-graph-detail-kind.kind-accessProfile {
+  color: var(--vc-graph-accessProfile);
+}
+
+.vc-graph-detail-kind.kind-entitlement {
+  color: var(--vc-graph-entitlement);
+}
+
+.vc-graph-detail-kind.kind-source {
+  color: var(--vc-graph-source);
+}
+
+.vc-graph-detail-label {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+.vc-graph-detail-fields {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vc-graph-detail-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.vc-graph-detail-row dt {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+}
+
+.vc-graph-detail-row dd {
+  margin: 0;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.vc-graph-detail-unset {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.vc-graph-detail-note {
+  margin: 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  line-height: 1.4;
+}
