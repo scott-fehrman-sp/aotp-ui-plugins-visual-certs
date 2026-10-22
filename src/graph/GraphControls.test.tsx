@@ -16,6 +16,8 @@ function setup(overrides: Partial<Props> = {}) {
     hiddenCompletedCount: 0,
     showMinimap: true,
     onToggleMinimap: vi.fn(),
+    showLegend: true,
+    onToggleLegend: vi.fn(),
     ...overrides,
   }
   render(<GraphControls {...props} />)
@@ -46,7 +48,7 @@ const anchorOf = (button: HTMLElement) =>
   button.closest<HTMLElement>('.vc-graph-hint-anchor')!
 
 describe('GraphControls', () => {
-  it('renders a named toolbar with Layout, Reference, Completed, Minimap buttons in order', () => {
+  it('renders a named toolbar with Layout, Reference, Completed, Legend, Minimap buttons in order', () => {
     setup()
     const toolbar = screen.getByRole('toolbar', { name: 'Graph controls' })
     const buttons = within(toolbar).getAllByRole('button')
@@ -54,6 +56,7 @@ describe('GraphControls', () => {
       'Layout: vertical',
       'Hide reference nodes and links',
       'Hide completed items',
+      'Hide legend',
       'Hide minimap',
     ])
   })
@@ -85,6 +88,7 @@ describe('GraphControls', () => {
       'Layout: vertical',
       'Hide reference nodes and links',
       'Hide completed items',
+      'Hide legend',
       'Hide minimap',
     ]) {
       const b = screen.getByRole('button', { name })
@@ -117,7 +121,7 @@ describe('GraphControls', () => {
     expect(hidden.querySelector('svg')).toHaveAttribute('data-icon', 'completedHidden')
   })
 
-  it('disables Layout, Reference and Completed in the grid but keeps Minimap enabled', () => {
+  it('disables Layout, Reference, Completed and Legend in the grid but keeps Minimap enabled', () => {
     const props = setup({ inDrilldown: false })
     const layout = screen.getByRole('button', { name: 'Layout (open a user to change)' })
     const reference = screen.getByRole('button', {
@@ -126,18 +130,22 @@ describe('GraphControls', () => {
     const completed = screen.getByRole('button', {
       name: 'Completed items (open a user to filter)',
     })
+    const legend = screen.getByRole('button', { name: 'Legend (open a user to change)' })
     const minimap = screen.getByRole('button', { name: 'Hide minimap' })
     expect(layout).toBeDisabled()
     expect(reference).toBeDisabled()
     expect(completed).toBeDisabled()
+    expect(legend).toBeDisabled()
     expect(minimap).toBeEnabled()
     fireEvent.click(layout)
     fireEvent.click(reference)
     fireEvent.click(completed)
+    fireEvent.click(legend)
     fireEvent.click(minimap)
     expect(props.onToggleLayout).not.toHaveBeenCalled()
     expect(props.onToggleReference).not.toHaveBeenCalled()
     expect(props.onToggleCompleted).not.toHaveBeenCalled()
+    expect(props.onToggleLegend).not.toHaveBeenCalled()
     expect(props.onToggleMinimap).toHaveBeenCalledTimes(1)
   })
 
@@ -146,10 +154,12 @@ describe('GraphControls', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Layout: vertical' }))
     fireEvent.click(screen.getByRole('button', { name: 'Hide reference nodes and links' }))
     fireEvent.click(screen.getByRole('button', { name: 'Hide completed items' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Hide legend' }))
     fireEvent.click(screen.getByRole('button', { name: 'Hide minimap' }))
     expect(props.onToggleLayout).toHaveBeenCalledTimes(1)
     expect(props.onToggleReference).toHaveBeenCalledTimes(1)
     expect(props.onToggleCompleted).toHaveBeenCalledTimes(1)
+    expect(props.onToggleLegend).toHaveBeenCalledTimes(1)
     expect(props.onToggleMinimap).toHaveBeenCalledTimes(1)
   })
 

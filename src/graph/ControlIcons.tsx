@@ -49,6 +49,15 @@ const paths = {
       <rect x="12" y="12" width="6.5" height="6.5" rx="1" {...stroke} />
     </>
   ),
+  // A keyed list: three swatches, each with a line of text beside it.
+  legend: (
+    <>
+      <rect x="4" y="5" width="3.5" height="3.5" rx="0.8" {...stroke} />
+      <rect x="4" y="10.25" width="3.5" height="3.5" rx="0.8" {...stroke} />
+      <rect x="4" y="15.5" width="3.5" height="3.5" rx="0.8" {...stroke} />
+      <path d="M10.5 6.75H20M10.5 12H20M10.5 17.25H20" {...stroke} />
+    </>
+  ),
 }
 
 export function ControlIcon({ name }: { name: keyof typeof paths }) {

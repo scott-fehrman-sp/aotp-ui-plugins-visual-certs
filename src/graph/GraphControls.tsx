@@ -17,12 +17,16 @@ interface GraphControlsProps {
   hiddenCompletedCount: number | null
   showMinimap: boolean
   onToggleMinimap: () => void
+  /** The review-status legend is shown (drill-down only). */
+  showLegend: boolean
+  onToggleLegend: () => void
 }
 
 /**
- * The right-side vertical control panel for the access graph, styled after
+ * The left-side vertical control panel for the access graph, styled after
  * org-graph's floating toolbar. Top to bottom: layout direction, reference
- * nodes/links visibility, completed items visibility, minimap visibility.
+ * nodes/links visibility, completed items visibility, legend visibility,
+ * minimap visibility.
  */
 export function GraphControls({
   inDrilldown,
@@ -35,6 +39,8 @@ export function GraphControls({
   hiddenCompletedCount,
   showMinimap,
   onToggleMinimap,
+  showLegend,
+  onToggleLegend,
 }: GraphControlsProps) {
   const leftToRight = rankdir === 'LR'
   const layoutLabel = !inDrilldown
@@ -54,6 +60,11 @@ export function GraphControls({
       : hiddenCompletedCount === null
         ? 'Show completed items'
         : `Show completed items (${hiddenCompletedCount} hidden)`
+  const legendLabel = !inDrilldown
+    ? 'Legend (open a user to change)'
+    : showLegend
+      ? 'Hide legend'
+      : 'Show legend'
   const minimapLabel = showMinimap ? 'Hide minimap' : 'Show minimap'
 
   return (
@@ -92,6 +103,18 @@ export function GraphControls({
           onClick={onToggleCompleted}
         >
           <ControlIcon name={showCompleted ? 'completed' : 'completedHidden'} />
+        </button>
+      </ControlHint>
+      <ControlHint label={legendLabel}>
+        <button
+          type="button"
+          className={`vc-graph-control${showLegend ? ' vc-graph-control-active' : ''}`}
+          aria-label={legendLabel}
+          aria-pressed={showLegend}
+          disabled={!inDrilldown}
+          onClick={onToggleLegend}
+        >
+          <ControlIcon name="legend" />
         </button>
       </ControlHint>
       <ControlHint label={minimapLabel}>

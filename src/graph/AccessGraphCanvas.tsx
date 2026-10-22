@@ -107,9 +107,9 @@ const MINIMAP_COLOR: Record<string, string> = {
  * window resize) is overlay-aware: it pads the viewport by the measured size of
  * the legend, minimap, controls and panels so no card sits under them.
  *
- * A right-side vertical control panel (`GraphControls`, in both modes) holds the
- * layout direction, reference visibility, completed-items visibility and
- * minimap toggles. Those preferences live in memory and survive switching users
+ * A left-side vertical control panel (`GraphControls`, in both modes) holds the
+ * layout direction, reference visibility, completed-items visibility, legend
+ * visibility and minimap toggles. Those preferences live in memory and survive switching users
  * and grid/drill-down. The completed toggle (drill-down only) hides the
  * first-level items whose status is approved / revoked / reassigned plus any
  * lineage left orphaned (`withoutCompleted`), re-lays out and refits once.
@@ -299,6 +299,8 @@ function CanvasSurface({ graph, backSlot, motionMs: motionMsProp }: AccessGraphC
   // Completed (approved / revoked / reassigned) items are shown by default.
   const [showCompleted, setShowCompleted] = useState(true)
   const [showMinimap, setShowMinimap] = useState(true)
+  // The review-status legend (drill-down only) is shown by default.
+  const [showLegend, setShowLegend] = useState(true)
   const [announcement, setAnnouncement] = useState('')
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   // The selected first-level item (node id) whose edges are highlighted.
@@ -482,7 +484,7 @@ function CanvasSurface({ graph, backSlot, motionMs: motionMsProp }: AccessGraphC
     inDrilldown
       ? `${selectedUserId}|${showReference ? 'ref' : 'noref'}|${rankdir}|${
           showCompleted ? 'done' : 'nodone'
-        }`
+        }|${showLegend ? 'legend' : 'nolegend'}`
       : 'grid'
   }|${showMinimap ? 'map' : 'nomap'}`
   const itemCount = useMemo(
@@ -541,6 +543,10 @@ function CanvasSurface({ graph, backSlot, motionMs: motionMsProp }: AccessGraphC
   const toggleMinimap = () => {
     setShowMinimap(!showMinimap)
     setAnnouncement(showMinimap ? 'Minimap hidden.' : 'Minimap shown.')
+  }
+  const toggleLegend = () => {
+    setShowLegend(!showLegend)
+    setAnnouncement(showLegend ? 'Legend hidden.' : 'Legend shown.')
   }
 
   return (
@@ -608,6 +614,8 @@ function CanvasSurface({ graph, backSlot, motionMs: motionMsProp }: AccessGraphC
             hiddenCompletedCount={completedResult ? completedResult.hiddenCount : null}
             showMinimap={showMinimap}
             onToggleMinimap={toggleMinimap}
+            showLegend={showLegend}
+            onToggleLegend={toggleLegend}
           />
         </Panel>
         {inDrilldown && backSlot === undefined && (
@@ -635,7 +643,7 @@ function CanvasSurface({ graph, backSlot, motionMs: motionMsProp }: AccessGraphC
               backSlot,
             )
           : null}
-        {inDrilldown && (
+        {inDrilldown && showLegend && (
           <Panel position="top-right" className="vc-graph-legend-panel">
             <div className="vc-graph-legend" role="group" aria-label="Review status legend">
               <p className="vc-graph-legend-title">Review status</p>

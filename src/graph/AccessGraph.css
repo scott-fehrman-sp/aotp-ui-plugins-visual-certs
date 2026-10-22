@@ -179,11 +179,31 @@
   white-space: nowrap;
 }
 
-.vc-graph-card-kind {
-  font-size: 12px;
+/* Per-kind glyph in the lower-left corner, in place of the old type-name text.
+   Tinted to match each kind's left-border accent. */
+.vc-graph-card-kind-icon {
+  display: block;
   color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+}
+
+.vc-graph-card-kind-icon.kind-user {
+  color: var(--vc-graph-user);
+}
+
+.vc-graph-card-kind-icon.kind-role {
+  color: var(--vc-graph-role);
+}
+
+.vc-graph-card-kind-icon.kind-accessProfile {
+  color: var(--vc-graph-accessProfile);
+}
+
+.vc-graph-card-kind-icon.kind-entitlement {
+  color: var(--vc-graph-entitlement);
+}
+
+.vc-graph-card-kind-icon.kind-source {
+  color: var(--vc-graph-source);
 }
 
 /* Per-kind left-border accent. */

@@ -268,6 +268,26 @@ describe('AccessGraphCanvas', () => {
     expect(legend.closest('.react-flow__panel')).toHaveClass('vc-graph-legend-panel')
   })
 
+  it('legend toggle hides and restores the legend panel in drill-down', () => {
+    render(<AccessGraphCanvas graph={referenceGraph()} />)
+    // Disabled in the grid, where there is no legend.
+    expect(screen.getByRole('button', { name: /^Legend \(open a user/ })).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', { name: /show access for/i }))
+
+    const legendGroup = () => screen.queryByRole('group', { name: /review status legend/i })
+    expect(legendGroup()).toBeInTheDocument()
+    const toggle = () => screen.getByRole('button', { name: /^(Hide|Show) legend$/ })
+    expect(toggle()).toHaveAttribute('aria-pressed', 'true')
+
+    fireEvent.click(toggle())
+    expect(legendGroup()).not.toBeInTheDocument()
+    expect(toggle()).toHaveAttribute('aria-pressed', 'false')
+
+    fireEvent.click(toggle())
+    expect(legendGroup()).toBeInTheDocument()
+    expect(toggle()).toHaveAttribute('aria-pressed', 'true')
+  })
+
   /** role-a{ap-foo{e1}} needsReview; e2 held directly (approved). */
   function referenceGraph() {
     return statusGraph([
@@ -524,6 +544,7 @@ describe('AccessGraphCanvas', () => {
         'Layout (open a user to change)',
         'Reference nodes and links (open a user to change)',
         'Completed items (open a user to filter)',
+        'Legend (open a user to change)',
         'Hide minimap',
       ])
       drillIn()
@@ -531,6 +552,7 @@ describe('AccessGraphCanvas', () => {
         'Layout: vertical',
         'Hide reference nodes and links',
         'Hide completed items',
+        'Hide legend',
         'Hide minimap',
       ])
     })
@@ -809,7 +831,7 @@ describe('AccessGraphCanvas', () => {
         expect(panel).toHaveClass('top')
         expect(panel).toHaveClass('center')
         expect(label('No expanded access for this user.')).toBeNull()
-        expect(nodeLabels()).toEqual(['User TwoUser'])
+        expect(nodeLabels()).toEqual(['User Two'])
         fireEvent.click(btn('Show completed items (2 hidden)'))
         expect(label('All access items are complete. Show completed items to see them.')).toBeNull()
         expect(label('Role X')).toBeInTheDocument()
