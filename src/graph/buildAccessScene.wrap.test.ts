@@ -13,7 +13,9 @@ import {
   CARD_Z_INDEX,
   MAX_ITEMS_PER_LANE,
   NODE_HEIGHT,
+  NODE_USER_HEIGHT,
   NODE_WIDTH,
+  nodeHeightFor,
   splitLane,
   WRAP_GAP,
   type AccessScene,
@@ -314,7 +316,9 @@ describe('lane wrap past MAX_ITEMS_PER_LANE', () => {
       expect(subs.map((s) => s.rank)).toEqual([984, 1224])
       expect(subs[0].nodes.map((n) => n.position.y)).toEqual([-280, -168, -56, 56, 168, 280])
       expect(subs[1].nodes.map((n) => n.position.y)).toEqual([-224, -112, 0, 112, 224])
-      expect(scene.nodes.find((n) => n.data.kind === 'user')!.position).toEqual({ x: 24, y: 0 })
+      // The taller user card is lifted by half its extra height so its center
+      // stays on the lane axis (top-left y = 0 - (128 - 64) / 2 = -32).
+      expect(scene.nodes.find((n) => n.data.kind === 'user')!.position).toEqual({ x: 24, y: -32 })
       expect(lane(scene, 'source')[0].position.x).toBe(1304 + 240)
     })
     it('TB: rows 104 apart, axes swapped, source shifted by one step', () => {
@@ -388,7 +392,18 @@ describe('lane wrap past MAX_ITEMS_PER_LANE', () => {
         const scene = sceneOf(ents(15, 0, (i) => `s${pad(i)}`), d)
         const user = scene.nodes.find((n) => n.data.kind === 'user')!
         expect(rankOf(user, d)).toBe(MARGIN)
-        expect(crossOf(user, d)).toBeCloseTo(0, 9)
+        // The user card's cross-axis CENTER sits on the lane axis. The taller
+        // user card (NODE_USER_HEIGHT in LR, where the cross axis is Y) is
+        // lifted by half its extra height so its center lines up exactly where a
+        // standard card's would (top-left at the lane origin, center at
+        // extent/2). In TB the extra height is on the rank axis, so the cross
+        // position is unchanged.
+        const userCrossExtent = d === 'LR' ? NODE_USER_HEIGHT : NODE_WIDTH
+        const standardCrossExtent = d === 'LR' ? NODE_HEIGHT : NODE_WIDTH
+        expect(crossOf(user, d) + userCrossExtent / 2).toBeCloseTo(
+          standardCrossExtent / 2,
+          9,
+        )
         expect(lane(scene, 'source')).toHaveLength(15)
         expect(sizes(scene, 'source', d)).toEqual([15])
         const crosses = lane(scene, 'source')
@@ -418,7 +433,8 @@ describe('lane wrap past MAX_ITEMS_PER_LANE', () => {
           expect(node.data.reviewStatus).toBe(src.reviewStatus)
           expect(node.data.reviewMixed).toBe(src.reviewMixed)
           expect(node.width).toBe(NODE_WIDTH)
-          expect(node.height).toBe(NODE_HEIGHT)
+          // The user card is taller; every other kind keeps NODE_HEIGHT.
+          expect(node.height).toBe(nodeHeightFor(src.kind))
           expect(node.sourcePosition).toBe(d === 'LR' ? Position.Right : Position.Bottom)
           expect(node.targetPosition).toBe(d === 'LR' ? Position.Left : Position.Top)
           expect(node.draggable).toBe(false)

@@ -179,6 +179,31 @@
   white-space: nowrap;
 }
 
+/* An inactive identity (lifecycle/identity state not "active"): strike the
+   name so a reviewer sees at a glance the person is not active. */
+.vc-graph-card-label-inactive {
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+}
+
+/* The extra identity lines on a user card (title, department, location /
+   country). Smaller and muted beneath the name, each clipped to one line. */
+.vc-graph-card-info {
+  display: block;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The taller user card packs several lines, so anchor its content to the top
+   (the shorter cards keep their vertical centering from `.vc-graph-card`). */
+.vc-graph-card.kind-user {
+  justify-content: flex-start;
+}
+
 /* Per-kind glyph in the lower-left corner, in place of the old type-name text.
    Tinted to match each kind's left-border accent. */
 .vc-graph-card-kind-icon {

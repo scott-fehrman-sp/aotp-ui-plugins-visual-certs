@@ -97,6 +97,7 @@ function toIdentityOption(row: unknown): IdentityOption | null {
  */
 const DEPARTMENT_KEYS = ['department', 'departmentName', 'dept']
 const LOCATION_KEYS = ['location', 'city', 'region', 'locality', 'workLocation']
+const COUNTRY_KEYS = ['country', 'countryName', 'countryCode']
 
 /**
  * The richer per-identity detail the user node's detail panel shows. Mirrors
@@ -108,6 +109,7 @@ const LOCATION_KEYS = ['location', 'city', 'region', 'locality', 'workLocation']
 export interface ResolvedIdentity {
   department: string
   location: string
+  country: string
   email: string
   title: string
   phone: string
@@ -134,6 +136,7 @@ export function emptyResolvedIdentity(
   return {
     department: '',
     location: '',
+    country: '',
     email: '',
     title: '',
     phone: '',
@@ -200,6 +203,8 @@ export async function fetchIdentityDetail(
       firstString(attributes, DEPARTMENT_KEYS) || firstString(identity, DEPARTMENT_KEYS)
     const location =
       firstString(attributes, LOCATION_KEYS) || firstString(identity, LOCATION_KEYS)
+    const country =
+      firstString(attributes, COUNTRY_KEYS) || firstString(identity, COUNTRY_KEYS)
     const title = firstString(attributes, TITLE_KEYS)
     const phone = firstString(attributes, PHONE_KEYS)
     const manager = firstString(managerRef, ['name'])
@@ -210,6 +215,7 @@ export async function fetchIdentityDetail(
     return {
       department,
       location,
+      country,
       email,
       title,
       phone,

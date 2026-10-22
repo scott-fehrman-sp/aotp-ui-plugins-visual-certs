@@ -248,6 +248,7 @@ describe('AccessGraphCanvas node detail panel', () => {
       ['Phone', '+1 555 0100'],
       ['Department', 'Finance'],
       ['Location', 'Austin'],
+      ['Country', 'USA'],
       ['Manager', 'Carol Chen'],
       ['Is manager', 'Yes'],
       ['Lifecycle state', 'active'],

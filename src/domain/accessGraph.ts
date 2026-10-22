@@ -38,6 +38,7 @@ function detailFor(
   if (kind === 'user') {
     if (row.userDepartment) detail.department = row.userDepartment
     if (row.userLocation) detail.location = row.userLocation
+    if (row.userCountry) detail.country = row.userCountry
     if (row.userEmail) detail.email = row.userEmail
     if (row.userTitle) detail.title = row.userTitle
     if (row.userPhone) detail.phone = row.userPhone

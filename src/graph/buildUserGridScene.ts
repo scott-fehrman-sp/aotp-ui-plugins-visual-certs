@@ -15,7 +15,7 @@
  */
 import type { AccessGraphData } from '../sailpoint/types'
 import {
-  NODE_HEIGHT,
+  NODE_USER_HEIGHT,
   NODE_WIDTH,
   type AccessScene,
   type AccessSceneNode,
@@ -53,8 +53,10 @@ export function buildUserGridScene(
     ),
   )
   const rows = Math.ceil(users.length / columns)
+  // Every grid card is a USER, so the taller user-card height drives both the
+  // cell size and the row stride.
   const totalWidth = columns * NODE_WIDTH + (columns - 1) * GAP_X
-  const totalHeight = rows * NODE_HEIGHT + (rows - 1) * GAP_Y
+  const totalHeight = rows * NODE_USER_HEIGHT + (rows - 1) * GAP_Y
   const originX = -totalWidth / 2
   const originY = -totalHeight / 2
 
@@ -66,7 +68,7 @@ export function buildUserGridScene(
       type: 'access',
       position: {
         x: originX + column * (NODE_WIDTH + GAP_X),
-        y: originY + row * (NODE_HEIGHT + GAP_Y),
+        y: originY + row * (NODE_USER_HEIGHT + GAP_Y),
       },
       data: {
         kind: node.kind,
@@ -76,7 +78,7 @@ export function buildUserGridScene(
         onSelect: onSelect ? () => onSelect(node.id) : undefined,
       },
       width: NODE_WIDTH,
-      height: NODE_HEIGHT,
+      height: NODE_USER_HEIGHT,
       draggable: false,
       connectable: false,
     }

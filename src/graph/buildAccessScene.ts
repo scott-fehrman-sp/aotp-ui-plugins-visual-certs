@@ -79,6 +79,19 @@ export interface AccessScene {
  */
 export const NODE_WIDTH = 200
 export const NODE_HEIGHT = 64
+/**
+ * The user node is taller than the others so its card can show extra identity
+ * lines (title, department, location / country) beneath the name. Only the user
+ * kind uses this height; every other kind stays {@link NODE_HEIGHT}. The user
+ * always sits alone in its own rank, so the extra height only affects that
+ * lane's own cross-axis spacing, never the other lanes.
+ */
+export const NODE_USER_HEIGHT = 128
+
+/** The laid-out box height for a node of the given kind. */
+export function nodeHeightFor(kind: AccessGraphNodeKind): number {
+  return kind === 'user' ? NODE_USER_HEIGHT : NODE_HEIGHT
+}
 
 /**
  * Stacking order of every card. Status edges sit at 1 and reference edges at 0,
@@ -254,7 +267,10 @@ function lanePlacements(
   })
 
   for (const node of graph.nodes) {
-    dagreGraph.setNode(node.id, { width: NODE_WIDTH, height: NODE_HEIGHT })
+    dagreGraph.setNode(node.id, {
+      width: NODE_WIDTH,
+      height: nodeHeightFor(node.kind),
+    })
   }
   for (const edge of graph.edges) {
     dagreGraph.setEdge(edge.from, edge.to)
@@ -350,9 +366,16 @@ export function buildAccessScene(
 
   const nodes: AccessSceneNode[] = graph.nodes.map((node) => {
     const { rank: rankCoord, cross } = placements.get(node.id) ?? { rank: MARGIN, cross: 0 }
+    const height = nodeHeightFor(node.kind)
     // Rank-axis from the node's band; cross-axis from the de-overlapped lane.
     const x = vertical ? cross : rankCoord
-    const y = vertical ? rankCoord : cross
+    let y = vertical ? rankCoord : cross
+    // In LR the cross axis is Y and a lane is centered on its cross midpoint.
+    // The placement centers the STANDARD card box; a taller user card must be
+    // lifted by half its extra height so its vertical CENTER still sits on the
+    // lane axis (and lines up with the role lane beside it). In TB the extra
+    // height is on the rank axis and grows into the inter-rank gap, so no nudge.
+    if (!vertical) y -= (height - NODE_HEIGHT) / 2
     return {
       id: node.id,
       type: 'access',
@@ -368,7 +391,7 @@ export function buildAccessScene(
         reference: isReferenceNode(node),
       },
       width: NODE_WIDTH,
-      height: NODE_HEIGHT,
+      height,
       sourcePosition: handle.sourcePosition,
       targetPosition: handle.targetPosition,
       draggable: false,

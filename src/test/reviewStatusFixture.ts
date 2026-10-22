@@ -160,6 +160,7 @@ export function fixtureResolver(): AccessCompositionResolver {
         emptyResolvedIdentity({
           department: 'Finance',
           location: 'Austin',
+          country: 'USA',
           email: 'alice.adams@example.com',
           title: 'Staff Engineer',
           phone: '+1 555 0100',

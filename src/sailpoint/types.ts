@@ -274,6 +274,8 @@ export interface AccessMatrixRowVM {
   userDepartment?: string
   /** The user's location, same semantics as {@link userDepartment}. */
   userLocation?: string
+  /** The user's country, same semantics as {@link userDepartment}. */
+  userCountry?: string
   /**
    * Richer per-identity detail for the user node's detail panel (email, title,
    * manager, lifecycle state, etc.), same enrichment semantics as
@@ -344,6 +346,7 @@ export interface NodeDetail {
   // --- user-node identity fields ---------------------------------------------
   department?: string
   location?: string
+  country?: string
   email?: string
   title?: string
   phone?: string

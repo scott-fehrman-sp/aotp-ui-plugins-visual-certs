@@ -360,6 +360,7 @@ async function expandItem(
     user: item.personName,
     userDepartment: identity.department,
     userLocation: identity.location,
+    userCountry: identity.country,
     userEmail: identity.email,
     userTitle: identity.title,
     userPhone: identity.phone,

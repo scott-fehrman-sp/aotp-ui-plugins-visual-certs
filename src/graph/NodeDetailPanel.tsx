@@ -70,6 +70,7 @@ export function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps) {
     ['Phone', d.phone ?? '', false],
     ['Department', d.department ?? '', true],
     ['Location', d.location ?? '', true],
+    ['Country', d.country ?? '', false],
     ['Manager', d.manager ?? '', false],
     ['Is manager', d.isManager ?? '', false],
     ['Lifecycle state', d.lifecycleState ?? '', false],

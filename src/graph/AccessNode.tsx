@@ -118,6 +118,49 @@ export function StatusIcon({
  * (8-handle a11y card, per-kind accent) trimmed to a read-only label — the
  * access graph has no per-node actions.
  */
+/**
+ * The inside of a card: the name line plus, for a USER node, extra identity
+ * lines (title, department, and a combined location / country line) whenever
+ * the detail carries them. The name is struck through when the identity's
+ * LIFECYCLE STATE is set and is anything other than "active" (case-insensitive),
+ * signalling an inactive / terminated identity. Non-user cards and users without
+ * extra detail render exactly the bare name line as before.
+ */
+function CardBody({ data }: { data: AccessSceneNode['data'] }) {
+  const isUser = data.kind === 'user'
+  const detail = data.detail
+  // The lifecycle state (e.g. "active") is the signal, NOT the identity state
+  // (e.g. "UNREGISTERED") — a registered-but-provisioning identity can be
+  // lifecycle-active while its identity state is unregistered.
+  const lifecycle = detail?.lifecycleState ?? ''
+  // Struck through only when the lifecycle state is KNOWN and not active; an
+  // unset state leaves the name untouched (we cannot assert it is inactive).
+  const inactive = isUser && lifecycle !== '' && lifecycle.toLowerCase() !== 'active'
+
+  // The combined "Location / Country" line: join whichever are present.
+  const locationCountry = isUser
+    ? [detail?.location, detail?.country].filter((part): part is string => Boolean(part)).join(' / ')
+    : ''
+  const infoLines: string[] = isUser
+    ? [detail?.title ?? '', detail?.department ?? '', locationCountry].filter(Boolean)
+    : []
+
+  return (
+    <>
+      <strong
+        className={`vc-graph-card-label${inactive ? ' vc-graph-card-label-inactive' : ''}`}
+      >
+        {data.label}
+      </strong>
+      {infoLines.map((line, index) => (
+        <span key={index} className="vc-graph-card-info">
+          {line}
+        </span>
+      ))}
+    </>
+  )
+}
+
 export function AccessNode({ id, data }: NodeProps<AccessSceneNode>) {
   const { setHover, setFocus } = useContext(EmphasisContext)
   const { selectedId, lineageNodeIds, toggle } = useContext(SelectionContext)
@@ -152,7 +195,7 @@ export function AccessNode({ id, data }: NodeProps<AccessSceneNode>) {
             }
           }}
         >
-          <strong className="vc-graph-card-label">{data.label}</strong>
+          <CardBody data={data} />
           <KindIcon kind={data.kind} className="vc-graph-card-kind-icon" />
           {status ? <StatusIcon status={status} /> : null}
         </article>
@@ -218,7 +261,7 @@ export function AccessNode({ id, data }: NodeProps<AccessSceneNode>) {
         {...selectionProps}
         {...emphasisHandlers}
       >
-        <strong className="vc-graph-card-label">{data.label}</strong>
+        <CardBody data={data} />
         <KindIcon kind={data.kind} className="vc-graph-card-kind-icon" />
         {status ? <StatusIcon status={status} id={statusIconId} /> : null}
       </article>
