@@ -1,5 +1,12 @@
 import { describe, expect, it, vi } from 'vitest'
-import { resolveMatrix } from './accessMatrix'
+import type {
+  AccessProfilesApi,
+  EntitlementsApi,
+  IdentitiesApi,
+  RolesApi,
+  SourcesApi,
+} from 'sailpoint-api-client'
+import { createAccessCompositionResolver, resolveMatrix } from './accessMatrix'
 import type {
   AccessCompositionResolver,
   ResolvedAccessProfile,
@@ -87,23 +94,46 @@ function stubResolver(): AccessCompositionResolver {
       entitlementRefs: [],
     },
   }
+  // Fills the extra attribute fields with inert defaults so each literal below
+  // stays focused on the id/name/description/source it actually exercises.
+  const mkEnt = (
+    e: Pick<
+      ResolvedEntitlement,
+      'id' | 'name' | 'description' | 'sourceId' | 'sourceName' | 'sourceDescription'
+    >,
+  ): ResolvedEntitlement => ({
+    attribute: '',
+    value: '',
+    objectType: '',
+    privileged: false,
+    cloudGoverned: false,
+    requestable: false,
+    owner: '',
+    tags: '',
+    created: '',
+    modified: '',
+    ...e,
+  })
   const ents: Record<string, ResolvedEntitlement> = {
-    'ent-read-engr': { id: 'ent-read-engr', name: 'read', description: 'read engr', sourceId: 'src-engr', sourceName: 'engr db', sourceDescription: 'Engineering database' },
-    'ent-write-engr': { id: 'ent-write-engr', name: 'write', description: 'write engr', sourceId: 'src-engr', sourceName: 'engr db', sourceDescription: 'Engineering database' },
-    'ent-delete-engr': { id: 'ent-delete-engr', name: 'delete', description: 'delete engr', sourceId: 'src-engr', sourceName: 'engr db', sourceDescription: 'Engineering database' },
-    'ent-read-acct': { id: 'ent-read-acct', name: 'read', description: 'read acct', sourceId: 'src-acct', sourceName: 'accounting db', sourceDescription: 'Accounting database' },
-    'ent-search-acct': { id: 'ent-search-acct', name: 'search', description: 'search acct', sourceId: 'src-acct', sourceName: 'accounting db', sourceDescription: 'Accounting database' },
-    'ent-read-phone': { id: 'ent-read-phone', name: 'read', description: 'read phone', sourceId: 'src-phone', sourceName: 'phone app', sourceDescription: 'Phone application' },
+    'ent-read-engr': mkEnt({ id: 'ent-read-engr', name: 'read', description: 'read engr', sourceId: 'src-engr', sourceName: 'engr db', sourceDescription: 'Engineering database' }),
+    'ent-write-engr': mkEnt({ id: 'ent-write-engr', name: 'write', description: 'write engr', sourceId: 'src-engr', sourceName: 'engr db', sourceDescription: 'Engineering database' }),
+    'ent-delete-engr': mkEnt({ id: 'ent-delete-engr', name: 'delete', description: 'delete engr', sourceId: 'src-engr', sourceName: 'engr db', sourceDescription: 'Engineering database' }),
+    'ent-read-acct': mkEnt({ id: 'ent-read-acct', name: 'read', description: 'read acct', sourceId: 'src-acct', sourceName: 'accounting db', sourceDescription: 'Accounting database' }),
+    'ent-search-acct': mkEnt({ id: 'ent-search-acct', name: 'search', description: 'search acct', sourceId: 'src-acct', sourceName: 'accounting db', sourceDescription: 'Accounting database' }),
+    'ent-read-phone': mkEnt({ id: 'ent-read-phone', name: 'read', description: 'read phone', sourceId: 'src-phone', sourceName: 'phone app', sourceDescription: 'Phone application' }),
   }
   const sources: Record<string, { id: string; name: string; description: string }> = {
     'src-engr': { id: 'src-engr', name: 'engr db', description: 'Engineering database' },
     'src-acct': { id: 'src-acct', name: 'accounting db', description: 'Accounting database' },
     'src-phone': { id: 'src-phone', name: 'phone app', description: 'Phone application' },
   }
+  const entsByName: Record<string, ResolvedEntitlement> = {}
+  for (const e of Object.values(ents)) entsByName[e.name] = e
   return {
     role: (id) => Promise.resolve(roles[id] ?? null),
     accessProfile: (id) => Promise.resolve(aps[id] ?? null),
     entitlement: (id) => Promise.resolve(ents[id] ?? null),
+    entitlementByName: (name) => Promise.resolve(entsByName[name] ?? null),
     source: (id) => Promise.resolve(sources[id] ?? null),
     identity: () =>
       Promise.resolve(
@@ -189,11 +219,69 @@ describe('resolveMatrix', () => {
     expect(rows).toHaveLength(2)
   })
 
+  it('resolves an id-less entitlement ref by name (recovering its source + attributes)', async () => {
+    // An AP whose entitlement ref carries a NAME but no id (what triggers the
+    // bare, source-less node in the field). resolveLeaf must fall back to the
+    // by-name lookup so the row still gets the full source + attributes.
+    const resolver: AccessCompositionResolver = {
+      ...stubResolver(),
+      accessProfile: (id) =>
+        id === 'ap-noid'
+          ? Promise.resolve({
+              id: 'ap-noid',
+              name: 'No-id AP',
+              description: '',
+              entitlementRefs: [{ id: null, name: 'read' }],
+            })
+          : stubResolver().accessProfile(id),
+    }
+    const items = [
+      item({ id: 'i', accessKind: 'accessProfile', accessId: 'ap-noid', accessName: 'No-id AP' }),
+    ]
+    const rows = await resolveMatrix(items, resolver)
+    expect(rows).toHaveLength(1)
+    const [r] = rows
+    expect(r.unresolved).toBe(false)
+    expect(r.entitlement).toBe('read')
+    // The name lookup backfilled a real id + source + description (the stub's
+    // entsByName maps the name 'read' to ent-read-phone on phone app).
+    expect(r.entitlementId).toBe('ent-read-phone')
+    expect(r.source).toBe('phone app')
+    expect(r.sourceId).toBe('src-phone')
+    expect(r.entitlementDescription).toBe('read phone')
+  })
+
+  it('still emits an unresolved row when both id and name lookups fail', async () => {
+    // A name-only ref whose name matches nothing: both the (absent) id path and
+    // the by-name path return null, so the row degrades honestly.
+    const resolver: AccessCompositionResolver = {
+      ...stubResolver(),
+      accessProfile: () =>
+        Promise.resolve({
+          id: 'ap-x',
+          name: 'AP X',
+          description: '',
+          entitlementRefs: [{ id: null, name: 'does-not-exist' }],
+        }),
+      entitlementByName: () => Promise.resolve(null),
+    }
+    const items = [
+      item({ id: 'i', accessKind: 'accessProfile', accessId: 'ap-x', accessName: 'AP X' }),
+    ]
+    const rows = await resolveMatrix(items, resolver)
+    expect(rows).toHaveLength(1)
+    expect(rows[0].unresolved).toBe(true)
+    expect(rows[0].entitlement).toBe('does-not-exist')
+    expect(rows[0].entitlementId).toBeNull()
+    expect(rows[0].source).toBe('')
+  })
+
   it('emits an unresolved row (no throw) when the resolver returns null for a leaf', async () => {
     const resolver: AccessCompositionResolver = {
       role: () => Promise.resolve(null),
       accessProfile: () => Promise.resolve(null),
       entitlement: () => Promise.resolve(null),
+      entitlementByName: () => Promise.resolve(null),
       source: () => Promise.resolve(null),
       identity: () => Promise.resolve(emptyResolvedIdentity()),
     }
@@ -315,6 +403,16 @@ describe('resolveMatrix', () => {
                 sourceName: 'phone app',
                 // Mirrors what fetchEntitlement produces when source() → null.
                 sourceDescription: '',
+                attribute: '',
+                value: '',
+                objectType: '',
+                privileged: false,
+                cloudGoverned: false,
+                requestable: false,
+                owner: '',
+                tags: '',
+                created: '',
+                modified: '',
               }
             : null,
         ),
@@ -478,5 +576,93 @@ describe('resolveMatrix', () => {
       accessItemKind: 'role',
       accessItemId: 'role-empty',
     })
+  })
+})
+
+describe('createAccessCompositionResolver entitlementByName', () => {
+  // Minimal APIs: only the methods the by-name path touches. `listEntitlementsV1`
+  // returns the same full EntitlementV2 body getEntitlementV1 does.
+  function makeResolver() {
+    const listEntitlementsV1 = vi.fn().mockImplementation(({ filters }) => {
+      // Honor the `name eq "<name>"` filter the resolver builds.
+      const match = /name eq "(.*)"/.exec(filters ?? '')
+      const name = match?.[1] ?? ''
+      const bodies: Record<string, unknown> = {
+        read: {
+          id: 'ent-read-engr',
+          name: 'read',
+          description: 'read engr',
+          attribute: 'memberOf',
+          value: 'cn=readers',
+          sourceSchemaObjectType: 'group',
+          cloudGoverned: true,
+          requestable: true,
+          tags: ['PII', 'SOX'],
+          owner: { id: 'o1', type: 'IDENTITY', name: 'Dana Owner' },
+          privilegeLevel: { privileged: true },
+          created: '2024-01-02T00:00:00Z',
+          modified: '2024-03-04T00:00:00Z',
+          source: { id: 'src-engr', type: 'SOURCE', name: 'engr db' },
+        },
+      }
+      const body = bodies[name]
+      return Promise.resolve({ data: body ? [body] : [] })
+    })
+    const getSourceV1 = vi.fn().mockResolvedValue({
+      data: { id: 'src-engr', name: 'engr db', description: 'Engineering database' },
+    })
+    const resolver = createAccessCompositionResolver(
+      {} as unknown as RolesApi,
+      {} as unknown as AccessProfilesApi,
+      { listEntitlementsV1 } as unknown as EntitlementsApi,
+      { getSourceV1 } as unknown as SourcesApi,
+      {} as unknown as IdentitiesApi,
+    )
+    return { resolver, listEntitlementsV1, getSourceV1 }
+  }
+
+  it('resolves an entitlement by name, recovering its source + full attributes', async () => {
+    const { resolver, listEntitlementsV1 } = makeResolver()
+    const ent = await resolver.entitlementByName('read')
+    expect(listEntitlementsV1).toHaveBeenCalledWith({
+      filters: 'name eq "read"',
+      limit: 1,
+    })
+    expect(ent).toEqual({
+      id: 'ent-read-engr',
+      name: 'read',
+      description: 'read engr',
+      sourceId: 'src-engr',
+      sourceName: 'engr db',
+      sourceDescription: 'Engineering database',
+      attribute: 'memberOf',
+      value: 'cn=readers',
+      objectType: 'group',
+      privileged: true,
+      cloudGoverned: true,
+      requestable: true,
+      owner: 'Dana Owner',
+      tags: 'PII, SOX',
+      created: '2024-01-02T00:00:00Z',
+      modified: '2024-03-04T00:00:00Z',
+    })
+  })
+
+  it('soft-degrades to null when no entitlement matches the name', async () => {
+    const { resolver } = makeResolver()
+    expect(await resolver.entitlementByName('nope')).toBeNull()
+  })
+
+  it('short-circuits an empty name without hitting the API', async () => {
+    const { resolver, listEntitlementsV1 } = makeResolver()
+    expect(await resolver.entitlementByName('')).toBeNull()
+    expect(listEntitlementsV1).not.toHaveBeenCalled()
+  })
+
+  it('caches by name: a repeated lookup hits the API once', async () => {
+    const { resolver, listEntitlementsV1 } = makeResolver()
+    await resolver.entitlementByName('read')
+    await resolver.entitlementByName('read')
+    expect(listEntitlementsV1).toHaveBeenCalledTimes(1)
   })
 })

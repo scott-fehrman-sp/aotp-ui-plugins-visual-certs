@@ -264,12 +264,54 @@ describe('deriveAccessGraph', () => {
   })
 
   it('omits detail entirely for a node with no extra data', () => {
+    // A row with no ids, names or descriptions beyond a bare entitlement name:
+    // the user node (no identity fields), the entitlement node (no id, source,
+    // or description) and the source node (no description) all stay bare.
     const { nodes } = deriveAccessGraph([
-      row({ id: '1', entitlement: 'read', entitlementId: 'e1', source: 'app', sourceId: 's0' }),
+      row({ id: '1', entitlement: 'read' }),
     ])
     for (const node of nodes) {
       expect(node.detail).toBeUndefined()
     }
+  })
+
+  it('surfaces the full attribute set on an entitlement node', () => {
+    const { nodes } = deriveAccessGraph([
+      row({
+        id: '1',
+        entitlement: 'read',
+        entitlementId: 'e1',
+        entitlementDescription: 'Read access',
+        entitlementAttribute: 'memberOf',
+        entitlementValue: 'cn=readers',
+        entitlementObjectType: 'group',
+        entitlementPrivileged: true,
+        entitlementCloudGoverned: true,
+        entitlementRequestable: true,
+        entitlementOwner: 'Dana Owner',
+        entitlementTags: 'PII, SOX',
+        entitlementCreated: '2024-01-02T00:00:00Z',
+        entitlementModified: '2024-03-04T00:00:00Z',
+        source: 'app',
+        sourceId: 's0',
+      }),
+    ])
+    const ent = nodes.find((n) => n.kind === 'entitlement')
+    expect(ent?.detail).toEqual({
+      description: 'Read access',
+      source: 'app',
+      attribute: 'memberOf',
+      value: 'cn=readers',
+      objectType: 'group',
+      privileged: 'Yes',
+      cloudGoverned: 'Yes',
+      requestable: 'Yes',
+      owner: 'Dana Owner',
+      tags: 'PII, SOX',
+      created: '2024-01-02T00:00:00Z',
+      modified: '2024-03-04T00:00:00Z',
+      entitlementId: 'e1',
+    })
   })
 
   it('marks only the user→access-item edge as first-level, with a review key and no status', () => {

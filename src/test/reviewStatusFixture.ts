@@ -87,6 +87,16 @@ function ent(
     sourceId,
     sourceName,
     sourceDescription: `${sourceName} description`,
+    attribute: 'memberOf',
+    value: `cn=${name}`,
+    objectType: 'group',
+    privileged: false,
+    cloudGoverned: false,
+    requestable: true,
+    owner: `${name} owner`,
+    tags: '',
+    created: '',
+    modified: '',
   }
 }
 
@@ -150,10 +160,14 @@ export function fixtureResolver(): AccessCompositionResolver {
     's-erp': { id: 's-erp', name: 'ERP', description: 'ERP description' },
     's-dir': { id: 's-dir', name: 'Directory', description: 'Directory description' },
   }
+  // Name -> resolved entitlement, for the id-less fallback lookup.
+  const entsByName: Record<string, ResolvedEntitlement> = {}
+  for (const e of Object.values(ents)) entsByName[e.name] = e
   return {
     role: (id) => Promise.resolve(roles[id] ?? null),
     accessProfile: (id) => Promise.resolve(aps[id] ?? null),
     entitlement: (id) => Promise.resolve(ents[id] ?? null),
+    entitlementByName: (name) => Promise.resolve(entsByName[name] ?? null),
     source: (id) => Promise.resolve(sources[id] ?? null),
     identity: () =>
       Promise.resolve(

@@ -10,7 +10,10 @@
  * directly unit-testable with stubbed composition — no network.
  */
 import type { AccessProfilesApi } from 'sailpoint-api-client/access_profiles/api'
-import type { EntitlementsApi } from 'sailpoint-api-client/entitlements/api'
+import type {
+  EntitlementsApi,
+  EntitlementV2,
+} from 'sailpoint-api-client/entitlements/api'
 import type { IdentitiesApi } from 'sailpoint-api-client/identities/api'
 import type { RolesApi } from 'sailpoint-api-client/roles/api'
 import type { SourcesApi } from 'sailpoint-api-client/sources/api'
@@ -58,6 +61,30 @@ export interface ResolvedEntitlement {
    * regardless (soft-degrade).
    */
   sourceDescription: string
+  // --- extra attributes surfaced in the node detail panel --------------------
+  // Each is soft-degraded to '' (strings) / false (flags) when the SDK omits
+  // it, so a sparse entitlement never shows a wall of "not set" lines (the
+  // panel's visibility filter drops blank/false rows).
+  /** The source-schema attribute name backing this entitlement (e.g. `memberOf`). */
+  attribute: string
+  /** The entitlement's raw value on the source. */
+  value: string
+  /** The source-schema object type (e.g. `group`). */
+  objectType: string
+  /** True if the entitlement is marked privileged by its privilege level. */
+  privileged: boolean
+  /** True if the entitlement is cloud governed. */
+  cloudGoverned: boolean
+  /** True if the entitlement can be directly requested. */
+  requestable: boolean
+  /** Owner display name ('' when no owner). */
+  owner: string
+  /** Comma-joined tag list ('' when none). */
+  tags: string
+  /** ISO timestamp the entitlement was created ('' when absent). */
+  created: string
+  /** ISO timestamp the entitlement was last modified ('' when absent). */
+  modified: string
 }
 
 /**
@@ -70,8 +97,16 @@ export interface AccessCompositionResolver {
   role(id: string): Promise<ResolvedRole | null>
   /** AP body (entitlement refs). null = soft-degraded. */
   accessProfile(id: string): Promise<ResolvedAccessProfile | null>
-  /** Entitlement body (name + source). null = soft-degraded. */
+  /** Entitlement body (name + source + attributes). null = soft-degraded. */
   entitlement(id: string): Promise<ResolvedEntitlement | null>
+  /**
+   * Resolves an entitlement by NAME, for refs that carry no id (a role or
+   * access profile that referenced an entitlement by name only). Backed by the
+   * list endpoint + a per-name cache. Every entitlement is source-backed, so
+   * this recovers the source + attributes a bare name-only ref would lose.
+   * null = soft-degraded (no match or any failure).
+   */
+  entitlementByName(name: string): Promise<ResolvedEntitlement | null>
   /**
    * A source's name + description, for the source-node tooltip. Backed by a
    * per-source-id cache so a source shared by many entitlements is fetched at
@@ -109,6 +144,8 @@ export function createAccessCompositionResolver(
   const roleCache = new Map<string, Promise<ResolvedRole | null>>()
   const apCache = new Map<string, Promise<ResolvedAccessProfile | null>>()
   const entCache = new Map<string, Promise<ResolvedEntitlement | null>>()
+  // Per-NAME cache for the id-less fallback lookup (keyed by entitlement name).
+  const entByNameCache = new Map<string, Promise<ResolvedEntitlement | null>>()
   // Per-source-id cache: a source shared by many entitlements is fetched once.
   const sourceCache = new Map<
     string,
@@ -199,20 +236,69 @@ export function createAccessCompositionResolver(
   ): Promise<ResolvedEntitlement | null> => {
     try {
       const res = await entitlementsApi.getEntitlementV1({ id })
-      const ent = res.data
-      const sourceId = ent.source?.id ?? null
-      // Route the source description through the per-source-id cache so a source
-      // shared by many entitlements is fetched at most once. Keep `sourceName`
-      // from the entitlement body regardless of whether the source fetch works.
-      const resolvedSource = sourceId ? await source(sourceId) : null
-      return {
-        id: ent.id ?? id,
-        name: ent.name ?? '',
-        description: ent.description ?? '',
-        sourceId,
-        sourceName: ent.source?.name ?? '',
-        sourceDescription: resolvedSource?.description ?? '',
-      }
+      return await mapEntitlement(res.data, id)
+    } catch {
+      return null
+    }
+  }
+
+  // Maps a raw SDK entitlement body to a ResolvedEntitlement, routing the
+  // source description through the per-source-id cache so a source shared by
+  // many entitlements is fetched at most once. Shared by the by-id and by-name
+  // fetch paths. `fallbackId` is the id we already knew (the lookup id for
+  // getEntitlementV1, or null for a name lookup) and backfills `id` when the
+  // body omits it.
+  const mapEntitlement = async (
+    ent: EntitlementV2,
+    fallbackId: string | null,
+  ): Promise<ResolvedEntitlement> => {
+    const sourceId = ent.source?.id ?? null
+    const resolvedSource = sourceId ? await source(sourceId) : null
+    // The SDK models `privileged` inside `privilegeLevel`; treat the presence
+    // of a truthy privilege indicator as "privileged". Guard with optional
+    // chaining so a missing block degrades to false rather than throwing.
+    const privilege = ent.privilegeLevel as { privileged?: boolean } | undefined
+    return {
+      id: ent.id ?? fallbackId ?? '',
+      name: ent.name ?? '',
+      description: ent.description ?? '',
+      sourceId,
+      sourceName: ent.source?.name ?? '',
+      sourceDescription: resolvedSource?.description ?? '',
+      attribute: ent.attribute ?? '',
+      value: ent.value ?? '',
+      objectType: ent.sourceSchemaObjectType ?? '',
+      privileged: privilege?.privileged ?? false,
+      cloudGoverned: ent.cloudGoverned ?? false,
+      requestable: ent.requestable ?? false,
+      owner: ent.owner?.name ?? '',
+      tags: (ent.tags ?? []).join(', '),
+      created: ent.created ?? '',
+      modified: ent.modified ?? '',
+    }
+  }
+
+  // Resolves an entitlement by NAME when no id is known (a role/AP referenced
+  // it by name only). Uses the list endpoint with a `name eq` filter; takes the
+  // first match. Every entitlement is source-backed, so this recovers the
+  // source + attributes a bare name-only ref would otherwise lose. Soft-degrades
+  // (no match / any failure) to null exactly like the by-id path. The empty
+  // name short-circuits to null (nothing to look up).
+  const fetchEntitlementByName = async (
+    name: string,
+  ): Promise<ResolvedEntitlement | null> => {
+    if (!name) return null
+    try {
+      // Escape embedded double-quotes so a name with a quote can't break the
+      // filter expression.
+      const escaped = name.replace(/"/g, '\\"')
+      const res = await entitlementsApi.listEntitlementsV1({
+        filters: `name eq "${escaped}"`,
+        limit: 1,
+      })
+      const match = res.data?.[0]
+      if (!match) return null
+      return await mapEntitlement(match, match.id ?? null)
     } catch {
       return null
     }
@@ -234,6 +320,8 @@ export function createAccessCompositionResolver(
     role: (id) => cached(roleCache, id, fetchRole),
     accessProfile: (id) => cached(apCache, id, fetchAccessProfile),
     entitlement: (id) => cached(entCache, id, fetchEntitlement),
+    entitlementByName: (name) =>
+      cached(entByNameCache, name, fetchEntitlementByName),
     source,
     identity,
   }
@@ -265,6 +353,26 @@ interface RowTuple {
   accessProfileDescription?: string
   /** Resolved entitlement description, on a resolved leaf row. */
   entitlementDescription?: string
+  /** Resolved entitlement source-schema attribute name, on a resolved leaf row. */
+  entitlementAttribute?: string
+  /** Resolved entitlement value, on a resolved leaf row. */
+  entitlementValue?: string
+  /** Resolved entitlement source-schema object type, on a resolved leaf row. */
+  entitlementObjectType?: string
+  /** Resolved entitlement privileged flag, on a resolved leaf row. */
+  entitlementPrivileged?: boolean
+  /** Resolved entitlement cloud-governed flag, on a resolved leaf row. */
+  entitlementCloudGoverned?: boolean
+  /** Resolved entitlement requestable flag, on a resolved leaf row. */
+  entitlementRequestable?: boolean
+  /** Resolved entitlement owner display name, on a resolved leaf row. */
+  entitlementOwner?: string
+  /** Resolved entitlement tags (comma-joined), on a resolved leaf row. */
+  entitlementTags?: string
+  /** Resolved entitlement created timestamp, on a resolved leaf row. */
+  entitlementCreated?: string
+  /** Resolved entitlement modified timestamp, on a resolved leaf row. */
+  entitlementModified?: string
   /** Resolved SOURCE description, on a resolved leaf row. */
   sourceDescription?: string
   /** Kind of the user's directly-held access item (first hop off the user). */
@@ -303,8 +411,25 @@ async function resolveLeaf(
   unresolved: boolean
   entitlementDescription?: string
   sourceDescription?: string
+  entitlementAttribute?: string
+  entitlementValue?: string
+  entitlementObjectType?: string
+  entitlementPrivileged?: boolean
+  entitlementCloudGoverned?: boolean
+  entitlementRequestable?: boolean
+  entitlementOwner?: string
+  entitlementTags?: string
+  entitlementCreated?: string
+  entitlementModified?: string
 }> {
-  const resolved = ref.id ? await resolver.entitlement(ref.id) : null
+  // Prefer the id (exact, one round-trip). When the parent body referenced the
+  // entitlement by NAME only (no id), fall back to a by-name lookup rather than
+  // giving up: every entitlement is source-backed, so the name lookup still
+  // recovers the source + attributes. Only when BOTH fail do we emit a bare,
+  // unresolved row.
+  const resolved = ref.id
+    ? await resolver.entitlement(ref.id)
+    : await resolver.entitlementByName(ref.name)
   if (!resolved) {
     // Keep the ref's name/id (known from the parent body) so the row is still
     // meaningful; the source could not be fetched, so mark unresolved.
@@ -318,12 +443,25 @@ async function resolveLeaf(
   }
   return {
     entitlement: resolved.name,
-    entitlementId: resolved.id,
+    // A by-name lookup may land an entitlement with no id in its body; coerce
+    // the empty string back to null so rowKey falls back to the name key rather
+    // than treating "" as a distinct id.
+    entitlementId: resolved.id || null,
     source: resolved.sourceName,
     sourceId: resolved.sourceId,
     unresolved: false,
     entitlementDescription: resolved.description,
     sourceDescription: resolved.sourceDescription,
+    entitlementAttribute: resolved.attribute,
+    entitlementValue: resolved.value,
+    entitlementObjectType: resolved.objectType,
+    entitlementPrivileged: resolved.privileged,
+    entitlementCloudGoverned: resolved.cloudGoverned,
+    entitlementRequestable: resolved.requestable,
+    entitlementOwner: resolved.owner,
+    entitlementTags: resolved.tags,
+    entitlementCreated: resolved.created,
+    entitlementModified: resolved.modified,
   }
 }
 

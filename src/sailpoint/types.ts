@@ -306,6 +306,26 @@ export interface AccessMatrixRowVM {
   accessProfileDescription?: string
   /** The entitlement's description, same semantics as {@link roleDescription}. */
   entitlementDescription?: string
+  /** The entitlement's source-schema attribute name (e.g. `memberOf`). Leaf rows only. */
+  entitlementAttribute?: string
+  /** The entitlement's raw value on the source. Leaf rows only. */
+  entitlementValue?: string
+  /** The entitlement's source-schema object type (e.g. `group`). Leaf rows only. */
+  entitlementObjectType?: string
+  /** True when the entitlement is privileged. Leaf rows only. */
+  entitlementPrivileged?: boolean
+  /** True when the entitlement is cloud governed. Leaf rows only. */
+  entitlementCloudGoverned?: boolean
+  /** True when the entitlement is directly requestable. Leaf rows only. */
+  entitlementRequestable?: boolean
+  /** The entitlement owner's display name. Leaf rows only. */
+  entitlementOwner?: string
+  /** The entitlement's tags, comma-joined. Leaf rows only. */
+  entitlementTags?: string
+  /** The entitlement's created timestamp (ISO). Leaf rows only. */
+  entitlementCreated?: string
+  /** The entitlement's last-modified timestamp (ISO). Leaf rows only. */
+  entitlementModified?: string
   /** The source's description, same semantics as {@link roleDescription}. */
   sourceDescription?: string
   /**
@@ -343,6 +363,33 @@ export interface AccessMatrixRowVM {
 export interface NodeDetail {
   /** Non-user node: the item's description. */
   description?: string
+  // --- entitlement-node attribute fields -------------------------------------
+  // Set only on an entitlement node, each only when non-empty / non-default, so
+  // a sparse entitlement never shows a wall of "not set" lines.
+  /** The source this entitlement lives on (display name). */
+  source?: string
+  /** The source-schema attribute name backing the entitlement (e.g. `memberOf`). */
+  attribute?: string
+  /** The entitlement's raw value on the source. */
+  value?: string
+  /** The source-schema object type (e.g. `group`). */
+  objectType?: string
+  /** 'Yes' when the entitlement is privileged (omitted otherwise). */
+  privileged?: string
+  /** 'Yes' when the entitlement is cloud governed (omitted otherwise). */
+  cloudGoverned?: string
+  /** 'Yes' when the entitlement is directly requestable (omitted otherwise). */
+  requestable?: string
+  /** Entitlement owner's display name. */
+  owner?: string
+  /** Comma-joined tag list. */
+  tags?: string
+  /** Created timestamp (ISO). */
+  created?: string
+  /** Last-modified timestamp (ISO). */
+  modified?: string
+  /** The entitlement's own id. */
+  entitlementId?: string
   // --- user-node identity fields ---------------------------------------------
   department?: string
   location?: string

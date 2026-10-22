@@ -28,7 +28,8 @@ interface Level {
  * Builds a node's `detail` from the row, keeping only non-empty keys. Returns
  * `undefined` when there is nothing to show so a bare node stays
  * `{ id, kind, label }` (and the detail panel renders only kind + label). For a
- * user node the identity fields; for every other kind the item's description.
+ * user node the identity fields; an entitlement node its full attribute set;
+ * every other kind the item's description.
  */
 function detailFor(
   kind: AccessGraphNodeKind,
@@ -47,15 +48,30 @@ function detailFor(
     if (row.userLifecycleState) detail.lifecycleState = row.userLifecycleState
     if (row.userIdentityState) detail.identityState = row.userIdentityState
     if (row.userIdentityId) detail.identityId = row.userIdentityId
+  } else if (kind === 'entitlement') {
+    // The full attribute set for an entitlement leaf. Boolean flags only land
+    // when true (shown as 'Yes'); everything else only when non-empty, so a
+    // sparse entitlement still collapses to just name + whatever it has.
+    if (row.entitlementDescription) detail.description = row.entitlementDescription
+    if (row.source) detail.source = row.source
+    if (row.entitlementAttribute) detail.attribute = row.entitlementAttribute
+    if (row.entitlementValue) detail.value = row.entitlementValue
+    if (row.entitlementObjectType) detail.objectType = row.entitlementObjectType
+    if (row.entitlementPrivileged) detail.privileged = 'Yes'
+    if (row.entitlementCloudGoverned) detail.cloudGoverned = 'Yes'
+    if (row.entitlementRequestable) detail.requestable = 'Yes'
+    if (row.entitlementOwner) detail.owner = row.entitlementOwner
+    if (row.entitlementTags) detail.tags = row.entitlementTags
+    if (row.entitlementCreated) detail.created = row.entitlementCreated
+    if (row.entitlementModified) detail.modified = row.entitlementModified
+    if (row.entitlementId) detail.entitlementId = row.entitlementId
   } else {
     const description =
       kind === 'role'
         ? row.roleDescription
         : kind === 'accessProfile'
           ? row.accessProfileDescription
-          : kind === 'entitlement'
-            ? row.entitlementDescription
-            : row.sourceDescription
+          : row.sourceDescription
     if (description) detail.description = description
   }
   return Object.keys(detail).length > 0 ? detail : undefined

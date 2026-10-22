@@ -59,6 +59,7 @@ export function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps) {
   const description = node?.detail?.description ?? ''
   const status = node?.reviewStatus
   const isUser = node?.kind === 'user'
+  const isEntitlement = node?.kind === 'entitlement'
   // The user field set, in a fixed order that mirrors the org-graph detail
   // panel. A field renders only when it has a value, so a sparse identity never
   // shows a wall of "not set" lines; Department / Location always render (they
@@ -80,6 +81,29 @@ export function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps) {
   // Keep a field when it has a value or is one of the always-shown anchors
   // (Department / Location anchor the user panel even when blank).
   const visibleUserRows = userRows.filter(([, value, always]) => always || value)
+
+  // The entitlement field set, in a fixed order. Description leads (it is the
+  // most human-readable), then the identifying attribute/value pair, then the
+  // flags, ownership, tags, timestamps and id. A row renders only when it has a
+  // value (every attribute is optional on NodeDetail), so a sparse entitlement
+  // shows only what it actually carries.
+  const e = node?.detail ?? {}
+  const entitlementRows: Array<[string, string]> = [
+    ['Description', e.description ?? ''],
+    ['Source', e.source ?? ''],
+    ['Attribute', e.attribute ?? ''],
+    ['Value', e.value ?? ''],
+    ['Object type', e.objectType ?? ''],
+    ['Privileged', e.privileged ?? ''],
+    ['Cloud governed', e.cloudGoverned ?? ''],
+    ['Requestable', e.requestable ?? ''],
+    ['Owner', e.owner ?? ''],
+    ['Tags', e.tags ?? ''],
+    ['Created', e.created ?? ''],
+    ['Modified', e.modified ?? ''],
+    ['Entitlement ID', e.entitlementId ?? ''],
+  ]
+  const visibleEntitlementRows = entitlementRows.filter(([, value]) => value)
 
   return (
     <section
@@ -133,6 +157,24 @@ export function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps) {
                   </dd>
                 </div>
               ))}
+            </dl>
+          ) : isEntitlement ? (
+            <dl className="vc-graph-detail-fields">
+              {visibleEntitlementRows.length > 0 ? (
+                visibleEntitlementRows.map(([label, value]) => (
+                  <div key={label} className="vc-graph-detail-row">
+                    <dt>{label}</dt>
+                    <dd>{value}</dd>
+                  </div>
+                ))
+              ) : (
+                <div className="vc-graph-detail-row">
+                  <dt>Description</dt>
+                  <dd>
+                    <span className="vc-graph-detail-unset">not set</span>
+                  </dd>
+                </div>
+              )}
             </dl>
           ) : (
             <dl className="vc-graph-detail-fields">
