@@ -11,7 +11,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 12px;
+  margin-bottom: 4px;
 }
 
 /* Right side of the header: the portal slot plus the theme toggle, kept
@@ -38,12 +38,12 @@
 
 .vc-title {
   margin: 0;
-  font-size: 32px;
+  font-size: 24px;
   letter-spacing: -0.5px;
 }
 
 .vc-main {
-  margin-top: 8px;
+  margin-top: 0;
 }
 
 /*
@@ -58,6 +58,9 @@
   flex-direction: column;
   min-height: 100vh;
   min-height: 100dvh;
+  /* Keep the same top padding as every other screen so the header/title sits at
+     a consistent vertical position; only the bottom is trimmed to give the
+     canvas more height. */
   padding-bottom: 12px;
 }
 

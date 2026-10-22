@@ -3,8 +3,11 @@
 }
 
 .vc-signoff-title {
-  margin: 8px 0 16px;
-  font-size: 24px;
+  /* Normalized to the shared section-title size; the element above (back link
+     or status icon) owns the gap above, so the title only needs bottom spacing
+     to the content that follows. */
+  margin: 0 0 16px;
+  font-size: var(--vc-section-title);
 }
 
 .vc-signoff-icon {

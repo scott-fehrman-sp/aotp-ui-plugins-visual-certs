@@ -30,6 +30,11 @@
   --vc-shadow: 0 1px 3px rgba(16, 24, 40, 0.08), 0 1px 2px rgba(16, 24, 40, 0.06);
   --vc-radius: 10px;
 
+  /* Shared size for each screen's top-level section heading (the <h2> under the
+     app title), so the picker, dashboard, review, and sign-off headings stay
+     the same size in one place. */
+  --vc-section-title: 22px;
+
   --vc-sans: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 
   font-family: var(--vc-sans);

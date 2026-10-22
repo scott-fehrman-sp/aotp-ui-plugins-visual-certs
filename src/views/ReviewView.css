@@ -9,7 +9,7 @@
 
 .vc-review-title {
   margin: 0;
-  font-size: 22px;
+  font-size: var(--vc-section-title);
 }
 
 .vc-review-head-right {

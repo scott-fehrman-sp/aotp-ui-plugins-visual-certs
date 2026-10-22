@@ -3,14 +3,17 @@
  * the left and right edges of the page/iframe. The gutter scales with viewport
  * width so there is always a comfortable margin on both sides.
  */
+/* No extra horizontal inset: the picker aligns to the same page gutter as the
+   app header and every other screen, so the title/content never shift sideways
+   between interfaces. */
 .vc-picker {
-  padding-left: clamp(24px, 6vw, 96px);
-  padding-right: clamp(24px, 6vw, 96px);
+  padding-left: 0;
+  padding-right: 0;
 }
 
 .vc-picker-title {
   margin: 0 0 4px;
-  font-size: 22px;
+  font-size: var(--vc-section-title);
 }
 
 .vc-picker-sub {
