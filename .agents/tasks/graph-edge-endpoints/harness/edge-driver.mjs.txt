@@ -1,0 +1,465 @@
+// TEMPORARY driver (never committed). Run from the worktree root:
+//   node edge-driver.mjs --mode prod|dev --port 5198 --label NAME [--only a,b] [--motion on|off|both]
+//        [--sizes 1700x1000,1100x700] [--layouts LR,TB] [--fixtures mixed,dense,shot1,lane11] [--conc 3]
+import fs from 'node:fs'
+import path from 'node:path'
+import puppeteer from 'puppeteer-core'
+
+const args = Object.fromEntries(
+  process.argv.slice(2).reduce((acc, a, i, all) => (a.startsWith('--') ? [...acc, [a.slice(2), all[i + 1]]] : acc), []),
+)
+const MODE = args.mode ?? 'prod'
+const PORT = Number(args.port ?? (MODE === 'dev' ? 5199 : 5198))
+const LABEL = args.label ?? 'run'
+const CONC = Number(args.conc ?? 3)
+const SIZES = (args.sizes ?? '1700x1000,1100x700').split(',').map((s) => s.split('x').map(Number))
+const LAYOUTS = (args.layouts ?? 'LR,TB').split(',')
+const MOTIONS = args.motion === 'on' ? ['on'] : args.motion === 'off' ? ['off'] : ['on', 'off']
+const ONLY = args.only ? args.only.split(',') : null
+const OUT = args.out ?? `edge-results-${LABEL}.json`
+const ROOT = process.cwd()
+const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+const TOL = 1.5
+
+/* ------------------------------------------------------------------ server */
+async function serve() {
+  const vite = await import(path.join(ROOT, 'node_modules/vite/dist/node/index.js'))
+  if (MODE === 'dev') {
+    const server = await vite.createServer({
+      root: ROOT,
+      configFile: path.join(ROOT, 'vite.config.ts'),
+      logLevel: 'error',
+      server: { port: PORT, strictPort: true, host: 'localhost' },
+    })
+    await server.listen()
+    return { url: `https://localhost:${PORT}`, close: () => server.close() }
+  }
+  const cfg = path.join(ROOT, 'vite.edge-harness.config.ts')
+  await vite.build({ root: ROOT, configFile: cfg, logLevel: 'error' })
+  const server = await vite.preview({ root: ROOT, configFile: cfg, logLevel: 'error', preview: { port: PORT, strictPort: true, host: 'localhost' } })
+  return { url: `http://localhost:${PORT}`, close: () => new Promise((r) => server.httpServer.close(r)) }
+}
+
+/* --------------------------------------------------------- in-page helpers */
+const INJECT = () => {
+  const SELECTOR_BUSY =
+    '.react-flow__node.entering,.react-flow__node.exiting,.react-flow__edge.entering,.react-flow__edge.exiting,.vc-graph-edge-settling,.vc-graph-edge-arriving'
+  window.__settle = async (timeout = 8000) => {
+    const vp = document.querySelector('.react-flow__viewport')
+    let last = ''
+    let same = 0
+    const t0 = performance.now()
+    while (performance.now() - t0 < timeout) {
+      await new Promise((r) => requestAnimationFrame(r))
+      const busy = !!document.querySelector(SELECTOR_BUSY)
+      const anims = document
+        .getAnimations()
+        .filter((a) => a.playState === 'running' && a.effect && a.effect.getComputedTiming().iterations !== Infinity).length
+      const tr = vp ? getComputedStyle(vp).transform : ''
+      if (!busy && anims === 0 && tr === last && vp) same++
+      else same = 0
+      last = tr
+      if (same >= 10) return { settled: true, ms: Math.round(performance.now() - t0) }
+    }
+    return { settled: false, ms: Math.round(performance.now() - t0), busy: !!document.querySelector(SELECTOR_BUSY) }
+  }
+  window.__sampler = {
+    on: false,
+    start() {
+      this.on = true
+      this.frames = []
+      const loop = () => {
+        if (!this.on) return
+        this.frames.push(Array.from(document.querySelectorAll('.react-flow__edge')).map((g) => g.getAttribute('data-id')))
+        requestAnimationFrame(loop)
+      }
+      loop()
+    },
+    stop() {
+      this.on = false
+      return this.frames
+    },
+  }
+  window.__measure = (rankdir) => {
+    const vp = document.querySelector('.react-flow__viewport')
+    const zoom = new DOMMatrixReadOnly(getComputedStyle(vp).transform).a
+    const nodes = {}
+    document.querySelectorAll('.react-flow__node').forEach((el) => {
+      const id = el.getAttribute('data-id')
+      const r = el.getBoundingClientRect()
+      const card = el.querySelector('.vc-graph-card')
+      const cr = card ? card.getBoundingClientRect() : null
+      const hs = {}
+      el.querySelectorAll('.react-flow__handle').forEach((h) => {
+        const hr = h.getBoundingClientRect()
+        hs[h.getAttribute('data-handleid')] = { l: hr.left, r: hr.right, t: hr.top, b: hr.bottom }
+      })
+      nodes[id] = {
+        l: r.left, r: r.right, t: r.top, b: r.bottom, w: r.width, h: r.height,
+        card: cr && { l: cr.left, r: cr.right, t: cr.top, b: cr.bottom },
+        cls: el.className.replace(/\s+/g, ' '),
+        cardCls: card ? card.className.replace(/\s+/g, ' ') : '',
+        handles: hs,
+        first: window.__first && window.__first[id],
+      }
+    })
+    const ids = Object.keys(nodes)
+    const edges = []
+    document.querySelectorAll('.react-flow__edge').forEach((g) => {
+      const eid = g.getAttribute('data-id') || (g.getAttribute('data-testid') || '').replace(/^rf__edge-/, '')
+      const p = g.querySelector('.react-flow__edge-path')
+      if (!p) return
+      let from = null, to = null
+      for (const a of ids) {
+        if (eid.startsWith('e:' + a + ':')) {
+          const rest = eid.slice(('e:' + a + ':').length)
+          if (nodes[rest]) { from = a; to = rest; break }
+        }
+      }
+      const ctm = p.getScreenCTM()
+      const L = p.getTotalLength()
+      const s = new DOMPoint(p.getPointAtLength(0).x, p.getPointAtLength(0).y).matrixTransform(ctm)
+      const e = new DOMPoint(p.getPointAtLength(L).x, p.getPointAtLength(L).y).matrixTransform(ctm)
+      const rec = { id: eid, from, to, cls: g.getAttribute('class'), start: [s.x, s.y], end: [e.x, e.y] }
+      if (from && to) {
+        const A = nodes[from], B = nodes[to]
+        const vertical = rankdir === 'TB'
+        if (!vertical) {
+          rec.srcAlong = s.x - A.r // + = outside (right of the card)
+          rec.srcCross = s.y - (A.t + A.b) / 2
+          rec.tgtAlong = B.l - e.x // + = outside (left of the card)
+          rec.tgtCross = e.y - (B.t + B.b) / 2
+          const hA = A.handles['right-out'], hB = B.handles['left-in']
+          if (hA) { rec.srcVsHandle = s.x - hA.r; rec.srcVsHandleCross = s.y - (hA.t + hA.b) / 2 }
+          if (hB) { rec.tgtVsHandle = hB.l - e.x; rec.tgtVsHandleCross = e.y - (hB.t + hB.b) / 2 }
+        } else {
+          rec.srcAlong = s.y - A.b
+          rec.srcCross = s.x - (A.l + A.r) / 2
+          rec.tgtAlong = B.t - e.y
+          rec.tgtCross = e.x - (B.l + B.r) / 2
+          const hA = A.handles['bottom-out'], hB = B.handles['top-in']
+          if (hA) { rec.srcVsHandle = s.y - hA.b; rec.srcVsHandleCross = s.x - (hA.l + hA.r) / 2 }
+          if (hB) { rec.tgtVsHandle = hB.t - e.y; rec.tgtVsHandleCross = e.x - (hB.l + hB.r) / 2 }
+        }
+      }
+      edges.push(rec)
+    })
+    return { zoom, nodes, edges }
+  }
+}
+
+/* --------------------------------------------------------------- scenarios */
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
+
+class Run {
+  constructor(page, ctx) {
+    this.page = page
+    this.ctx = ctx
+    this.steps = []
+  }
+  async settle(label) {
+    const s = await this.page.evaluate(() => window.__settle())
+    if (!s.settled) this.steps.push({ step: `${label}:NOT-SETTLED`, settleInfo: s })
+    return s
+  }
+  async measure(label) {
+    const s = await this.settle(label)
+    const m1 = await this.page.evaluate((r) => window.__measure(r), this.layout)
+    await sleep(500)
+    const m2 = await this.page.evaluate((r) => window.__measure(r), this.layout)
+    this.steps.push(summarize(label, m1, m2, s))
+  }
+  async toolbar(prefix) {
+    await this.page.click(`button[aria-label^="${prefix}"]`)
+    await this.park()
+  }
+  async park() {
+    await this.page.mouse.move(2, 2)
+  }
+  async drill(user = 'Amos Cunningham') {
+    await this.settle('grid')
+    await this.page.click(`article[aria-label="Show access for ${user}"]`)
+    await this.park()
+  }
+  async drillEarly(user = 'Amos Cunningham') {
+    await this.page.waitForSelector(`article[aria-label="Show access for ${user}"]`)
+    await sleep(250)
+    await this.page.click(`article[aria-label="Show access for ${user}"]`)
+    await this.park()
+  }
+  async layoutTo(want) {
+    if (want === 'TB' && this.layout !== 'TB') {
+      await this.settle('pre-layout')
+      await this.page.click('button[aria-label^="Layout"]')
+      await this.park()
+      this.layout = 'TB'
+    }
+  }
+  async click(sel) {
+    await this.settle('pre-click')
+    await this.page.click(sel)
+  }
+}
+
+function summarize(step, m1, m2, settleInfo) {
+  const rows = []
+  let maxAlong = 0, maxCross = 0, minAlong = 0, maxAlongPos = 0
+  let drift = 0
+  const byId2 = new Map(m2.edges.map((e) => [e.id, e]))
+  for (const e of m1.edges) {
+    if (e.from === null) { rows.push({ id: e.id, unparsed: true }); continue }
+    for (const side of ['src', 'tgt']) {
+      const along = e[`${side}Along`], cross = e[`${side}Cross`]
+      maxAlong = Math.max(maxAlong, Math.abs(along))
+      maxCross = Math.max(maxCross, Math.abs(cross))
+      minAlong = Math.min(minAlong, along)
+      maxAlongPos = Math.max(maxAlongPos, along)
+      const bad = Math.abs(along) > TOL || Math.abs(cross) > TOL
+      if (bad) {
+        const node = m1.nodes[side === 'src' ? e.from : e.to]
+        rows.push({
+          edge: e.id, side, along: +along.toFixed(2), cross: +cross.toFixed(2),
+          vsHandle: +(e[`${side}VsHandle`] ?? NaN).toFixed(2),
+          nodeCls: node.cls, firstCls: node.first?.cls, firstCardTransform: node.first?.cardTransform,
+        })
+      }
+    }
+    const o = byId2.get(e.id)
+    if (o) drift = Math.max(drift, Math.abs(o.end[0] - e.end[0]), Math.abs(o.end[1] - e.end[1]), Math.abs(o.start[0] - e.start[0]), Math.abs(o.start[1] - e.start[1]))
+  }
+  const byFirst = {}
+  for (const e of m1.edges) {
+    if (e.from === null) continue
+    for (const side of ['src', 'tgt']) {
+      const node = m1.nodes[side === 'src' ? e.from : e.to]
+      const fc = node.first?.cls ?? 'none'
+      const key = /entering/.test(fc) ? 'firstEntering' : /reveal/.test(fc) ? 'firstReveal' : 'firstPlain'
+      const bad = Math.abs(e[`${side}VsHandle`] ?? 0) > 0.5
+      byFirst[key] = byFirst[key] ?? { endpoints: 0, staleHandle: 0 }
+      byFirst[key].endpoints++
+      if (bad) byFirst[key].staleHandle++
+    }
+  }
+  // Max distance between the path end and the handle's actual current DOM position.
+  let maxVsHandle = 0
+  for (const e of m1.edges) {
+    for (const k of ['srcVsHandle', 'tgtVsHandle', 'srcVsHandleCross', 'tgtVsHandleCross']) {
+      if (typeof e[k] === 'number') maxVsHandle = Math.max(maxVsHandle, Math.abs(e[k]))
+    }
+  }
+  return {
+    step, zoom: +m1.zoom.toFixed(3), nEdges: m1.edges.length, nNodes: Object.keys(m1.nodes).length,
+    maxAlong: +maxAlong.toFixed(2), maxCross: +maxCross.toFixed(2),
+    minAlong: +minAlong.toFixed(2), maxAlongOutside: +maxAlongPos.toFixed(2),
+    maxVsHandle: +maxVsHandle.toFixed(2), drift: +drift.toFixed(2),
+    fails: rows.filter((r) => !r.unparsed).length, unparsed: rows.filter((r) => r.unparsed).length,
+    worst: rows.slice(0, 6), byFirst, settle: settleInfo,
+  }
+}
+
+async function sampled(r, label, action) {
+  await r.settle('pre-' + label)
+  await r.page.evaluate(() => window.__sampler.start())
+  await action()
+  await r.settle(label + '-sampled')
+  const frames = await r.page.evaluate(() => window.__sampler.stop())
+  const first = new Set(frames[0]), last = new Set(frames[frames.length - 1])
+  const staying = [...first].filter((id) => last.has(id))
+  let blinkEdges = 0, blinkFrames = 0
+  for (const id of staying) {
+    const miss = frames.filter((f) => !f.includes(id)).length
+    if (miss) { blinkEdges++; blinkFrames += miss }
+  }
+  r.steps.push({ step: 'blink:' + label, blinkEdges, blinkFrames, staying: staying.length, frames: frames.length })
+  await r.measure(label)
+}
+
+const FIRST_AP = { mixed: 'Billing AP', dense: 'Profile 2', shot1: 'ERP Employee Access', lane11: null }
+const FIRST_ENT = { mixed: 'All Employee Entra', dense: 'Entitlement 07', shot1: 'All_Employee_Entra', lane11: 'Ent 05' }
+const apSel = (f) => `article[aria-label="Access profile: ${FIRST_AP[f]}"]`
+const entSel = (f) => `article[aria-label="Entitlement: ${FIRST_ENT[f]}"]`
+const mixedEntFix = (f) => (f === 'mixed' ? 'Entitlement: All Employee Entra' : null)
+
+const SCENARIOS = {
+  'drill-initial': async (r) => {
+    await r.drill(); await r.layoutTo(r.layoutWant); await r.measure('drilled')
+  },
+  'drill-early': async (r) => {
+    await r.drillEarly(); await r.layoutTo(r.layoutWant); await r.measure('drilled-early')
+  },
+  'drill-wait': async (r) => {
+    await r.drill(); await r.layoutTo(r.layoutWant); await r.measure('drilled'); await sleep(2000); await r.measure('drilled+2s')
+  },
+  'hide-completed': async (r) => {
+    await r.drill(); await r.layoutTo(r.layoutWant); await r.measure('shown')
+    await r.settle('x'); await r.toolbar('Hide completed'); await r.measure('completed-hidden')
+    await r.settle('x'); await r.toolbar('Show completed'); await r.measure('completed-shown')
+  },
+  reference: async (r) => {
+    await r.drill(); await r.layoutTo(r.layoutWant); await r.measure('shown')
+    await r.settle('x'); await r.toolbar('Hide reference'); await r.measure('ref-hidden')
+    await r.settle('x'); await r.toolbar('Show reference'); await r.measure('ref-shown')
+  },
+  layout: async (r) => {
+    await r.drill(); await r.layoutTo(r.layoutWant); await r.measure('start')
+    const other = r.layout === 'LR' ? 'TB' : 'LR'
+    await r.settle('x'); await r.page.click('button[aria-label^="Layout"]'); await r.park(); r.layout = other
+    await r.measure(`to-${other}`)
+    const back = other === 'LR' ? 'TB' : 'LR'
+    await r.settle('x'); await r.page.click('button[aria-label^="Layout"]'); await r.park(); r.layout = back
+    await r.measure(`back-to-${back}`)
+  },
+  select: async (r) => {
+    await r.drill(); await r.layoutTo(r.layoutWant); await r.measure('drilled')
+    if (r.fixture !== 'lane11') {
+      await r.click(apSel(r.fixture)); await r.park(); await r.measure('ap-selected')
+      await r.click(apSel(r.fixture)); await r.park(); await r.measure('ap-deselected')
+    }
+    await r.click(entSel(r.fixture)); await r.park(); await r.measure('ent-selected')
+  },
+  hover: async (r) => {
+    await r.drill(); await r.layoutTo(r.layoutWant); await r.measure('drilled')
+    await r.settle('x')
+    const sel = r.fixture === 'lane11' ? entSel(r.fixture) : apSel(r.fixture)
+    await r.page.hover(sel); await sleep(400); await r.measure('hover')
+    await r.page.hover(entSel(r.fixture)); await sleep(400); await r.measure('hover-ent')
+  },
+  'select-toggle': async (r) => {
+    await r.drill(); await r.layoutTo(r.layoutWant)
+    await r.click(r.fixture === 'lane11' ? entSel(r.fixture) : apSel(r.fixture)); await r.park(); await r.measure('selected')
+    await r.settle('x'); await r.toolbar('Hide completed'); await r.measure('sel+completed-hidden')
+    await r.settle('x'); await r.toolbar('Hide reference'); await r.measure('sel+ref-hidden')
+    await r.settle('x'); await r.toolbar('Show reference'); await r.measure('sel+ref-shown')
+    await r.settle('x'); await r.page.click('button[aria-label^="Layout"]'); await r.park(); r.layout = r.layout === 'LR' ? 'TB' : 'LR'; await r.measure('sel+layout')
+    await r.settle('x'); await r.toolbar('Show completed'); await r.measure('sel+completed-shown')
+  },
+  wrap: async (r) => {
+    await r.drill(); await r.layoutTo(r.layoutWant); await r.measure('11-wrapped')
+    await r.settle('x'); await r.toolbar('Hide completed'); await r.measure('10-single')
+    await r.settle('x'); await r.toolbar('Show completed'); await r.measure('11-wrapped-again')
+  },
+  'back-other': async (r) => {
+    await r.drill(); await r.layoutTo(r.layoutWant); await r.measure('user1')
+    await r.settle('x'); await r.page.click('.vc-matrix-nav-slot button'); await r.park()
+    await r.settle('grid-again'); await r.page.click('article[aria-label="Show access for Beth Baker"]'); await r.park()
+    await r.measure('user2')
+    await r.settle('x'); await r.page.click('.vc-matrix-nav-slot button'); await r.park()
+    await r.settle('grid-again2'); await r.page.click('article[aria-label="Show access for Amos Cunningham"]'); await r.park()
+    await r.measure('user1-again')
+  },
+  resize: async (r) => {
+    await r.drill(); await r.layoutTo(r.layoutWant); await r.measure('drilled')
+    const [w, h] = r.size
+    await r.page.setViewport({ width: Math.round(w * 0.7), height: Math.round(h * 0.8) }); await sleep(300); await r.measure('resized-smaller')
+    await r.page.setViewport({ width: w, height: h }); await sleep(300); await r.measure('resized-back')
+  },
+  rapid: async (r) => {
+    await r.drill(); await r.layoutTo(r.layoutWant); await r.measure('drilled')
+    await r.settle('x')
+    for (let i = 0; i < 5; i++) {
+      await r.page.click('button[aria-label*="reference nodes and links"]'); await sleep(90)
+    }
+    await r.park(); await r.measure('after-5-toggles')
+    await r.settle('x')
+    for (let i = 0; i < 4; i++) {
+      await r.page.click('button[aria-label*="completed items"]'); await sleep(90)
+    }
+    await r.park(); await r.measure('after-4-completed-toggles')
+  },
+  zoom: async (r) => {
+    await r.drill(); await r.layoutTo(r.layoutWant); await r.measure('drilled')
+    await r.settle('x')
+    for (let i = 0; i < 8; i++) { await r.page.click('.react-flow__controls-zoomin'); await sleep(260) }
+    await r.park(); await r.measure('max-zoom')
+    for (let i = 0; i < 8; i++) { await r.page.click('.react-flow__controls-zoomout'); await sleep(260) }
+    await r.park(); await r.measure('min-zoom')
+  },
+  blink: async (r) => {
+    await r.drill(); await r.layoutTo(r.layoutWant); await r.measure('drilled')
+    await sampled(r, 'hide-completed', () => r.toolbar('Hide completed'))
+    await sampled(r, 'show-completed', () => r.toolbar('Show completed'))
+    await sampled(r, 'hide-reference', () => r.toolbar('Hide reference'))
+    await sampled(r, 'show-reference', () => r.toolbar('Show reference'))
+    await sampled(r, 'layout', async () => { await r.page.click('button[aria-label^="Layout"]'); await r.park(); r.layout = r.layout === 'LR' ? 'TB' : 'LR' })
+  },
+  'shot1-select': async (r) => {
+    await r.drill(); await r.layoutTo(r.layoutWant)
+    await r.click(apSel('shot1')); await r.park(); await r.measure('ap-selected')
+    await r.click(entSel('shot1')); await r.park(); await r.measure('ent-selected-AllEmployeeEntra')
+  },
+}
+// Which (scenario -> fixtures) pairs run.
+const PLAN = [
+  ['drill-initial', ['mixed', 'dense', 'shot1', 'lane11']],
+  ['drill-early', ['mixed', 'dense']],
+  ['drill-wait', ['mixed', 'dense']],
+  ['hide-completed', ['mixed', 'dense']],
+  ['reference', ['mixed', 'dense']],
+  ['layout', ['mixed', 'dense']],
+  ['select', ['mixed', 'dense', 'shot1']],
+  ['hover', ['mixed', 'dense']],
+  ['select-toggle', ['mixed', 'dense']],
+  ['wrap', ['lane11']],
+  ['back-other', ['mixed']],
+  ['resize', ['mixed', 'dense']],
+  ['rapid', ['mixed', 'dense']],
+  ['shot1-select', ['shot1']],
+  ['zoom', ['mixed', 'dense']],
+  ['blink', ['mixed', 'dense']],
+]
+
+/* -------------------------------------------------------------------- main */
+const srv = await serve()
+console.log('serving', srv.url)
+const browser = await puppeteer.launch({
+  executablePath: CHROME,
+  headless: true,
+  args: ['--ignore-certificate-errors', '--no-sandbox', '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows'],
+})
+
+const jobs = []
+for (const [scenario, fixtures] of PLAN) {
+  if (ONLY && !ONLY.includes(scenario)) continue
+  for (const fixture of fixtures) for (const size of SIZES) for (const layout of LAYOUTS) for (const motion of MOTIONS) {
+    jobs.push({ scenario, fixture, size, layout, motion })
+  }
+}
+console.log('jobs', jobs.length)
+const results = []
+let next = 0
+async function worker() {
+  while (next < jobs.length) {
+    const job = jobs[next++]
+    const ctx = await browser.createBrowserContext()
+    const page = await ctx.newPage()
+    const errors = []
+    page.on('pageerror', (e) => errors.push(String(e)))
+    page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') errors.push(`${m.type()}: ${m.text().slice(0, 200)}`) })
+    try {
+      await page.setViewport({ width: job.size[0], height: job.size[1] })
+      if (job.motion === 'off') await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }])
+      await page.evaluateOnNewDocument(INJECT)
+      await page.goto(`${srv.url}/edge-harness.html?fixture=${job.fixture}`, { waitUntil: 'load' })
+      await page.waitForSelector('.react-flow__node', { timeout: 15000 })
+      const run = new Run(page, job)
+      run.layout = 'LR'
+      run.layoutWant = job.layout
+      run.fixture = job.fixture
+      run.size = job.size
+      await SCENARIOS[job.scenario](run)
+      results.push({ ...job, steps: run.steps, errors: errors.filter((e) => !/favicon|getNodesBounds|Failed to load resource/.test(e)).slice(0, 3) })
+    } catch (e) {
+      results.push({ ...job, error: String(e).slice(0, 300), steps: [] })
+    }
+    await ctx.close()
+    const last = results[results.length - 1]
+    const mx = Math.max(0, ...last.steps.map((s) => s.maxAlong ?? 0))
+    console.log(`${job.scenario} ${job.fixture} ${job.size.join('x')} ${job.layout} motion-${job.motion}: maxAlong=${mx}${last.error ? ' ERROR ' + last.error : ''}`)
+  }
+}
+await Promise.all(Array.from({ length: CONC }, worker))
+await browser.close()
+await srv.close()
+fs.writeFileSync(OUT, JSON.stringify({ label: LABEL, mode: MODE, tol: TOL, results }, null, 1))
+console.log('wrote', OUT)
+process.exit(0)

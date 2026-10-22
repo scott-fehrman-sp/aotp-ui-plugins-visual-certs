@@ -1,0 +1,10 @@
+{
+  "verdict": "APPROVED",
+  "findings": [
+    "Entering edges are restyled by highlightEdges (only exiting edges are excluded), departing from the brief; confirmed safe because React Flow puts style on the inner path and className on the outer g, and T7 shows monotonic fades. Non-blocking: mention in the PR description.",
+    "Residual edge/card detachment during large layout moves even with the fade refinement (up to 242 px for up to 9 frames at opacity > 0.5 in LR<->TB; 89 px for hide-completed). Non-blocking polish: consider delaying the arrive animation further for long moves.",
+    "FitOnSceneChange depends on `placed`, so a data refresh that moves cards refits when motion is on (baseline and motion 0 do not). Possible, not observed; non-blocking, mention in the PR.",
+    "Two dev-server timing misses (drill-dense camera start/end 245-250 ms / 678-683 ms vs 250/670 ms limits); production build passes 437/437. Dev-mode overhead, no action."
+  ],
+  "reviewDoc": "/Users/scott.fehrman/Documents/Projects/SailPoint/ui-plugins-apps/visual-certs/.agents/tasks/graph-motion/code-review.md"
+}

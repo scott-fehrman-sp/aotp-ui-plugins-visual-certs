@@ -1,0 +1,1421 @@
+{
+ "label": "main-prod",
+ "mode": "prod",
+ "tol": 1.5,
+ "results": [
+  {
+   "scenario": "back-other",
+   "fixture": "mixed",
+   "size": [
+    1700,
+    1000
+   ],
+   "layout": "LR",
+   "motion": "off",
+   "steps": [
+    {
+     "step": "user1",
+     "zoom": 0.819,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 2.87,
+     "maxCross": 0,
+     "minAlong": -2.87,
+     "maxAlongOutside": 0,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 32,
+     "unparsed": 0,
+     "worst": [
+      {
+       "edge": "e:user:u1:role:role-fin",
+       "side": "tgt",
+       "along": -2.87,
+       "cross": 0,
+       "vsHandle": 0,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access",
+       "firstCardTransform": "none"
+      },
+      {
+       "edge": "e:role:role-fin:accessProfile:ap-fin",
+       "side": "tgt",
+       "along": -2.87,
+       "cross": 0,
+       "vsHandle": 0,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access",
+       "firstCardTransform": "none"
+      },
+      {
+       "edge": "e:accessProfile:ap-fin:entitlement:fin-e1",
+       "side": "tgt",
+       "along": -2.87,
+       "cross": 0,
+       "vsHandle": 0,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access",
+       "firstCardTransform": "none"
+      },
+      {
+       "edge": "e:entitlement:fin-e1:source:s-erp",
+       "side": "tgt",
+       "along": -2.87,
+       "cross": 0,
+       "vsHandle": 0,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access",
+       "firstCardTransform": "none"
+      },
+      {
+       "edge": "e:role:role-fin:entitlement:fin-e2",
+       "side": "tgt",
+       "along": -2.87,
+       "cross": 0,
+       "vsHandle": 0,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access",
+       "firstCardTransform": "none"
+      },
+      {
+       "edge": "e:entitlement:fin-e2:source:s-dir",
+       "side": "tgt",
+       "along": -2.87,
+       "cross": 0,
+       "vsHandle": 0,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access",
+       "firstCardTransform": "none"
+      }
+     ],
+     "settle": {
+      "settled": true,
+      "ms": 171
+     }
+    },
+    {
+     "step": "user2",
+     "zoom": 0.952,
+     "nEdges": 7,
+     "nNodes": 8,
+     "maxAlong": 3.33,
+     "maxCross": 0,
+     "minAlong": -3.33,
+     "maxAlongOutside": 0,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 7,
+     "unparsed": 0,
+     "worst": [
+      {
+       "edge": "e:accessProfile:ap-bill:entitlement:e-pay",
+       "side": "tgt",
+       "along": -3.33,
+       "cross": 0,
+       "vsHandle": 0,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access",
+       "firstCardTransform": "none"
+      },
+      {
+       "edge": "e:entitlement:e-pay:source:s-erp",
+       "side": "tgt",
+       "along": -3.33,
+       "cross": 0,
+       "vsHandle": 0,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access",
+       "firstCardTransform": "none"
+      },
+      {
+       "edge": "e:accessProfile:ap-bill:entitlement:e-refund",
+       "side": "tgt",
+       "along": -3.33,
+       "cross": 0,
+       "vsHandle": 0,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access",
+       "firstCardTransform": "none"
+      },
+      {
+       "edge": "e:entitlement:e-refund:source:s-crm",
+       "side": "tgt",
+       "along": -3.33,
+       "cross": 0,
+       "vsHandle": 0,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access",
+       "firstCardTransform": "none"
+      },
+      {
+       "edge": "e:user:u2:accessProfile:ap-bill",
+       "side": "tgt",
+       "along": -3.33,
+       "cross": 0,
+       "vsHandle": 0,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access",
+       "firstCardTransform": "none"
+      },
+      {
+       "edge": "e:user:u2:entitlement:e-login",
+       "side": "tgt",
+       "along": -3.33,
+       "cross": 0,
+       "vsHandle": 0,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access",
+       "firstCardTransform": "none"
+      }
+     ],
+     "settle": {
+      "settled": true,
+      "ms": 180
+     }
+    },
+    {
+     "step": "user1-again",
+     "zoom": 0.819,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 2.87,
+     "maxCross": 0,
+     "minAlong": -2.87,
+     "maxAlongOutside": 0,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 32,
+     "unparsed": 0,
+     "worst": [
+      {
+       "edge": "e:user:u1:role:role-fin",
+       "side": "tgt",
+       "along": -2.87,
+       "cross": 0,
+       "vsHandle": 0,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access",
+       "firstCardTransform": "none"
+      },
+      {
+       "edge": "e:role:role-fin:accessProfile:ap-fin",
+       "side": "tgt",
+       "along": -2.87,
+       "cross": 0,
+       "vsHandle": 0,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access",
+       "firstCardTransform": "none"
+      },
+      {
+       "edge": "e:accessProfile:ap-fin:entitlement:fin-e1",
+       "side": "tgt",
+       "along": -2.87,
+       "cross": 0,
+       "vsHandle": 0,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access",
+       "firstCardTransform": "none"
+      },
+      {
+       "edge": "e:entitlement:fin-e1:source:s-erp",
+       "side": "tgt",
+       "along": -2.87,
+       "cross": 0,
+       "vsHandle": 0,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access",
+       "firstCardTransform": "none"
+      },
+      {
+       "edge": "e:role:role-fin:entitlement:fin-e2",
+       "side": "tgt",
+       "along": -2.87,
+       "cross": 0,
+       "vsHandle": 0,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access",
+       "firstCardTransform": "none"
+      },
+      {
+       "edge": "e:entitlement:fin-e2:source:s-dir",
+       "side": "tgt",
+       "along": -2.87,
+       "cross": 0,
+       "vsHandle": 0,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access",
+       "firstCardTransform": "none"
+      }
+     ],
+     "settle": {
+      "settled": true,
+      "ms": 182
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "scenario": "back-other",
+   "fixture": "mixed",
+   "size": [
+    1700,
+    1000
+   ],
+   "layout": "TB",
+   "motion": "off",
+   "steps": [
+    {
+     "step": "user1",
+     "zoom": 0.725,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.36,
+     "maxCross": 1.09,
+     "minAlong": -0.36,
+     "maxAlongOutside": 0,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 182
+     }
+    },
+    {
+     "step": "user2",
+     "zoom": 0.819,
+     "nEdges": 7,
+     "nNodes": 8,
+     "maxAlong": 0.41,
+     "maxCross": 1.23,
+     "minAlong": -0.41,
+     "maxAlongOutside": 0,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 180
+     }
+    },
+    {
+     "step": "user1-again",
+     "zoom": 0.725,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.36,
+     "maxCross": 1.09,
+     "minAlong": -0.36,
+     "maxAlongOutside": 0,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 182
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "scenario": "back-other",
+   "fixture": "mixed",
+   "size": [
+    1700,
+    1000
+   ],
+   "layout": "LR",
+   "motion": "on",
+   "steps": [
+    {
+     "step": "user1",
+     "zoom": 0.819,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 7.61,
+     "maxCross": 0.02,
+     "minAlong": -7.61,
+     "maxAlongOutside": 0,
+     "maxVsHandle": 4.84,
+     "drift": 0,
+     "fails": 53,
+     "unparsed": 0,
+     "worst": [
+      {
+       "edge": "e:user:u1:role:role-fin",
+       "side": "tgt",
+       "along": -7.61,
+       "cross": 0.02,
+       "vsHandle": -4.74,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:role:role-fin:accessProfile:ap-fin",
+       "side": "src",
+       "along": -5.25,
+       "cross": 0.02,
+       "vsHandle": -4.84,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:role:role-fin:accessProfile:ap-fin",
+       "side": "tgt",
+       "along": -7.61,
+       "cross": 0.02,
+       "vsHandle": -4.74,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:accessProfile:ap-fin:entitlement:fin-e1",
+       "side": "src",
+       "along": -5.25,
+       "cross": 0.02,
+       "vsHandle": -4.84,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:accessProfile:ap-fin:entitlement:fin-e1",
+       "side": "tgt",
+       "along": -7.61,
+       "cross": 0.02,
+       "vsHandle": -4.74,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:entitlement:fin-e1:source:s-erp",
+       "side": "src",
+       "along": -5.25,
+       "cross": 0.02,
+       "vsHandle": -4.84,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      }
+     ],
+     "settle": {
+      "settled": true,
+      "ms": 677
+     }
+    },
+    {
+     "step": "user2",
+     "zoom": 0.952,
+     "nEdges": 7,
+     "nNodes": 8,
+     "maxAlong": 8.84,
+     "maxCross": 0.03,
+     "minAlong": -8.84,
+     "maxAlongOutside": 0,
+     "maxVsHandle": 5.63,
+     "drift": 0,
+     "fails": 12,
+     "unparsed": 0,
+     "worst": [
+      {
+       "edge": "e:accessProfile:ap-bill:entitlement:e-pay",
+       "side": "src",
+       "along": -6.1,
+       "cross": 0.03,
+       "vsHandle": -5.63,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:accessProfile:ap-bill:entitlement:e-pay",
+       "side": "tgt",
+       "along": -8.84,
+       "cross": 0.03,
+       "vsHandle": -5.51,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:entitlement:e-pay:source:s-erp",
+       "side": "src",
+       "along": -6.1,
+       "cross": 0.03,
+       "vsHandle": -5.63,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:entitlement:e-pay:source:s-erp",
+       "side": "tgt",
+       "along": -8.84,
+       "cross": 0.03,
+       "vsHandle": -5.51,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:accessProfile:ap-bill:entitlement:e-refund",
+       "side": "src",
+       "along": -6.1,
+       "cross": 0.03,
+       "vsHandle": -5.63,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:accessProfile:ap-bill:entitlement:e-refund",
+       "side": "tgt",
+       "along": -8.84,
+       "cross": 0.03,
+       "vsHandle": -5.51,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      }
+     ],
+     "settle": {
+      "settled": true,
+      "ms": 698
+     }
+    },
+    {
+     "step": "user1-again",
+     "zoom": 0.819,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 7.61,
+     "maxCross": 0.02,
+     "minAlong": -7.61,
+     "maxAlongOutside": 0,
+     "maxVsHandle": 4.84,
+     "drift": 0,
+     "fails": 53,
+     "unparsed": 0,
+     "worst": [
+      {
+       "edge": "e:user:u1:role:role-fin",
+       "side": "tgt",
+       "along": -7.61,
+       "cross": 0.02,
+       "vsHandle": -4.74,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:role:role-fin:accessProfile:ap-fin",
+       "side": "src",
+       "along": -5.25,
+       "cross": 0.02,
+       "vsHandle": -4.84,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:role:role-fin:accessProfile:ap-fin",
+       "side": "tgt",
+       "along": -7.61,
+       "cross": 0.02,
+       "vsHandle": -4.74,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:accessProfile:ap-fin:entitlement:fin-e1",
+       "side": "src",
+       "along": -5.25,
+       "cross": 0.02,
+       "vsHandle": -4.84,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:accessProfile:ap-fin:entitlement:fin-e1",
+       "side": "tgt",
+       "along": -7.61,
+       "cross": 0.02,
+       "vsHandle": -4.74,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:entitlement:fin-e1:source:s-erp",
+       "side": "src",
+       "along": -5.25,
+       "cross": 0.02,
+       "vsHandle": -4.84,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      }
+     ],
+     "settle": {
+      "settled": true,
+      "ms": 698
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "scenario": "back-other",
+   "fixture": "mixed",
+   "size": [
+    1700,
+    1000
+   ],
+   "layout": "TB",
+   "motion": "on",
+   "steps": [
+    {
+     "step": "user1",
+     "zoom": 0.725,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.36,
+     "maxCross": 1.09,
+     "minAlong": -0.36,
+     "maxAlongOutside": 0,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 656
+     }
+    },
+    {
+     "step": "user2",
+     "zoom": 0.819,
+     "nEdges": 7,
+     "nNodes": 8,
+     "maxAlong": 1.96,
+     "maxCross": 1.23,
+     "minAlong": -1.96,
+     "maxAlongOutside": 0,
+     "maxVsHandle": 1.55,
+     "drift": 0,
+     "fails": 12,
+     "unparsed": 0,
+     "worst": [
+      {
+       "edge": "e:accessProfile:ap-bill:entitlement:e-pay",
+       "side": "src",
+       "along": -1.91,
+       "cross": 1.18,
+       "vsHandle": -1.5,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:accessProfile:ap-bill:entitlement:e-pay",
+       "side": "tgt",
+       "along": -1.96,
+       "cross": 1.18,
+       "vsHandle": -1.55,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:entitlement:e-pay:source:s-erp",
+       "side": "src",
+       "along": -1.91,
+       "cross": 1.18,
+       "vsHandle": -1.5,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:entitlement:e-pay:source:s-erp",
+       "side": "tgt",
+       "along": -1.96,
+       "cross": 1.18,
+       "vsHandle": -1.55,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:accessProfile:ap-bill:entitlement:e-refund",
+       "side": "src",
+       "along": -1.91,
+       "cross": 1.18,
+       "vsHandle": -1.5,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:accessProfile:ap-bill:entitlement:e-refund",
+       "side": "tgt",
+       "along": -1.96,
+       "cross": 1.18,
+       "vsHandle": -1.55,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      }
+     ],
+     "settle": {
+      "settled": true,
+      "ms": 714
+     }
+    },
+    {
+     "step": "user1-again",
+     "zoom": 0.725,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 1.73,
+     "maxCross": 1.09,
+     "minAlong": -1.73,
+     "maxAlongOutside": 0,
+     "maxVsHandle": 1.37,
+     "drift": 0,
+     "fails": 53,
+     "unparsed": 0,
+     "worst": [
+      {
+       "edge": "e:user:u1:role:role-fin",
+       "side": "tgt",
+       "along": -1.73,
+       "cross": 1.04,
+       "vsHandle": -1.37,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:role:role-fin:accessProfile:ap-fin",
+       "side": "src",
+       "along": -1.69,
+       "cross": 1.04,
+       "vsHandle": -1.33,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:role:role-fin:accessProfile:ap-fin",
+       "side": "tgt",
+       "along": -1.73,
+       "cross": 1.04,
+       "vsHandle": -1.37,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:accessProfile:ap-fin:entitlement:fin-e1",
+       "side": "src",
+       "along": -1.69,
+       "cross": 1.04,
+       "vsHandle": -1.33,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:accessProfile:ap-fin:entitlement:fin-e1",
+       "side": "tgt",
+       "along": -1.73,
+       "cross": 1.04,
+       "vsHandle": -1.37,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:entitlement:fin-e1:source:s-erp",
+       "side": "src",
+       "along": -1.69,
+       "cross": 1.04,
+       "vsHandle": -1.33,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      }
+     ],
+     "settle": {
+      "settled": true,
+      "ms": 698
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "scenario": "back-other",
+   "fixture": "mixed",
+   "size": [
+    1100,
+    700
+   ],
+   "layout": "LR",
+   "motion": "off",
+   "steps": [
+    {
+     "step": "user1",
+     "zoom": 0.47,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 1.65,
+     "maxCross": 0,
+     "minAlong": -1.65,
+     "maxAlongOutside": 0,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 32,
+     "unparsed": 0,
+     "worst": [
+      {
+       "edge": "e:user:u1:role:role-fin",
+       "side": "tgt",
+       "along": -1.65,
+       "cross": 0,
+       "vsHandle": 0,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access",
+       "firstCardTransform": "none"
+      },
+      {
+       "edge": "e:role:role-fin:accessProfile:ap-fin",
+       "side": "tgt",
+       "along": -1.65,
+       "cross": 0,
+       "vsHandle": 0,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access",
+       "firstCardTransform": "none"
+      },
+      {
+       "edge": "e:accessProfile:ap-fin:entitlement:fin-e1",
+       "side": "tgt",
+       "along": -1.65,
+       "cross": 0,
+       "vsHandle": 0,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access",
+       "firstCardTransform": "none"
+      },
+      {
+       "edge": "e:entitlement:fin-e1:source:s-erp",
+       "side": "tgt",
+       "along": -1.65,
+       "cross": 0,
+       "vsHandle": 0,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access",
+       "firstCardTransform": "none"
+      },
+      {
+       "edge": "e:role:role-fin:entitlement:fin-e2",
+       "side": "tgt",
+       "along": -1.65,
+       "cross": 0,
+       "vsHandle": 0,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access",
+       "firstCardTransform": "none"
+      },
+      {
+       "edge": "e:entitlement:fin-e2:source:s-dir",
+       "side": "tgt",
+       "along": -1.65,
+       "cross": 0,
+       "vsHandle": 0,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access",
+       "firstCardTransform": "none"
+      }
+     ],
+     "settle": {
+      "settled": true,
+      "ms": 179
+     }
+    },
+    {
+     "step": "user2",
+     "zoom": 0.547,
+     "nEdges": 7,
+     "nNodes": 8,
+     "maxAlong": 1.91,
+     "maxCross": 0,
+     "minAlong": -1.91,
+     "maxAlongOutside": 0,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 7,
+     "unparsed": 0,
+     "worst": [
+      {
+       "edge": "e:accessProfile:ap-bill:entitlement:e-pay",
+       "side": "tgt",
+       "along": -1.91,
+       "cross": 0,
+       "vsHandle": 0,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access",
+       "firstCardTransform": "none"
+      },
+      {
+       "edge": "e:entitlement:e-pay:source:s-erp",
+       "side": "tgt",
+       "along": -1.91,
+       "cross": 0,
+       "vsHandle": 0,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access",
+       "firstCardTransform": "none"
+      },
+      {
+       "edge": "e:accessProfile:ap-bill:entitlement:e-refund",
+       "side": "tgt",
+       "along": -1.91,
+       "cross": 0,
+       "vsHandle": 0,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access",
+       "firstCardTransform": "none"
+      },
+      {
+       "edge": "e:entitlement:e-refund:source:s-crm",
+       "side": "tgt",
+       "along": -1.91,
+       "cross": 0,
+       "vsHandle": 0,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access",
+       "firstCardTransform": "none"
+      },
+      {
+       "edge": "e:user:u2:accessProfile:ap-bill",
+       "side": "tgt",
+       "along": -1.91,
+       "cross": 0,
+       "vsHandle": 0,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access",
+       "firstCardTransform": "none"
+      },
+      {
+       "edge": "e:user:u2:entitlement:e-login",
+       "side": "tgt",
+       "along": -1.91,
+       "cross": 0,
+       "vsHandle": 0,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access",
+       "firstCardTransform": "none"
+      }
+     ],
+     "settle": {
+      "settled": true,
+      "ms": 180
+     }
+    },
+    {
+     "step": "user1-again",
+     "zoom": 0.47,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 1.65,
+     "maxCross": 0,
+     "minAlong": -1.65,
+     "maxAlongOutside": 0,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 32,
+     "unparsed": 0,
+     "worst": [
+      {
+       "edge": "e:user:u1:role:role-fin",
+       "side": "tgt",
+       "along": -1.65,
+       "cross": 0,
+       "vsHandle": 0,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access",
+       "firstCardTransform": "none"
+      },
+      {
+       "edge": "e:role:role-fin:accessProfile:ap-fin",
+       "side": "tgt",
+       "along": -1.65,
+       "cross": 0,
+       "vsHandle": 0,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access",
+       "firstCardTransform": "none"
+      },
+      {
+       "edge": "e:accessProfile:ap-fin:entitlement:fin-e1",
+       "side": "tgt",
+       "along": -1.65,
+       "cross": 0,
+       "vsHandle": 0,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access",
+       "firstCardTransform": "none"
+      },
+      {
+       "edge": "e:entitlement:fin-e1:source:s-erp",
+       "side": "tgt",
+       "along": -1.65,
+       "cross": 0,
+       "vsHandle": 0,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access",
+       "firstCardTransform": "none"
+      },
+      {
+       "edge": "e:role:role-fin:entitlement:fin-e2",
+       "side": "tgt",
+       "along": -1.65,
+       "cross": 0,
+       "vsHandle": 0,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access",
+       "firstCardTransform": "none"
+      },
+      {
+       "edge": "e:entitlement:fin-e2:source:s-dir",
+       "side": "tgt",
+       "along": -1.65,
+       "cross": 0,
+       "vsHandle": 0,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access",
+       "firstCardTransform": "none"
+      }
+     ],
+     "settle": {
+      "settled": true,
+      "ms": 180
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "scenario": "back-other",
+   "fixture": "mixed",
+   "size": [
+    1100,
+    700
+   ],
+   "layout": "LR",
+   "motion": "on",
+   "steps": [
+    {
+     "step": "user1",
+     "zoom": 0.47,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 4.37,
+     "maxCross": 0.01,
+     "minAlong": -4.37,
+     "maxAlongOutside": 0,
+     "maxVsHandle": 2.78,
+     "drift": 0,
+     "fails": 53,
+     "unparsed": 0,
+     "worst": [
+      {
+       "edge": "e:user:u1:role:role-fin",
+       "side": "tgt",
+       "along": -4.37,
+       "cross": 0.01,
+       "vsHandle": -2.72,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:role:role-fin:accessProfile:ap-fin",
+       "side": "src",
+       "along": -3.02,
+       "cross": 0.01,
+       "vsHandle": -2.78,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:role:role-fin:accessProfile:ap-fin",
+       "side": "tgt",
+       "along": -4.37,
+       "cross": 0.01,
+       "vsHandle": -2.72,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:accessProfile:ap-fin:entitlement:fin-e1",
+       "side": "src",
+       "along": -3.02,
+       "cross": 0.01,
+       "vsHandle": -2.78,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:accessProfile:ap-fin:entitlement:fin-e1",
+       "side": "tgt",
+       "along": -4.37,
+       "cross": 0.01,
+       "vsHandle": -2.72,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:entitlement:fin-e1:source:s-erp",
+       "side": "src",
+       "along": -3.01,
+       "cross": 0.01,
+       "vsHandle": -2.78,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      }
+     ],
+     "settle": {
+      "settled": true,
+      "ms": 585
+     }
+    },
+    {
+     "step": "user2",
+     "zoom": 0.547,
+     "nEdges": 7,
+     "nNodes": 8,
+     "maxAlong": 5.08,
+     "maxCross": 0.02,
+     "minAlong": -5.08,
+     "maxAlongOutside": 0,
+     "maxVsHandle": 3.23,
+     "drift": 0,
+     "fails": 12,
+     "unparsed": 0,
+     "worst": [
+      {
+       "edge": "e:accessProfile:ap-bill:entitlement:e-pay",
+       "side": "src",
+       "along": -3.5,
+       "cross": 0.02,
+       "vsHandle": -3.23,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:accessProfile:ap-bill:entitlement:e-pay",
+       "side": "tgt",
+       "along": -5.08,
+       "cross": 0.02,
+       "vsHandle": -3.16,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:entitlement:e-pay:source:s-erp",
+       "side": "src",
+       "along": -3.5,
+       "cross": 0.02,
+       "vsHandle": -3.23,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:entitlement:e-pay:source:s-erp",
+       "side": "tgt",
+       "along": -5.08,
+       "cross": 0.02,
+       "vsHandle": -3.16,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:accessProfile:ap-bill:entitlement:e-refund",
+       "side": "src",
+       "along": -3.5,
+       "cross": 0.02,
+       "vsHandle": -3.23,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:accessProfile:ap-bill:entitlement:e-refund",
+       "side": "tgt",
+       "along": -5.08,
+       "cross": 0.02,
+       "vsHandle": -3.16,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      }
+     ],
+     "settle": {
+      "settled": true,
+      "ms": 678
+     }
+    },
+    {
+     "step": "user1-again",
+     "zoom": 0.47,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 4.37,
+     "maxCross": 0.01,
+     "minAlong": -4.37,
+     "maxAlongOutside": 0,
+     "maxVsHandle": 2.78,
+     "drift": 0,
+     "fails": 53,
+     "unparsed": 0,
+     "worst": [
+      {
+       "edge": "e:user:u1:role:role-fin",
+       "side": "tgt",
+       "along": -4.37,
+       "cross": 0.01,
+       "vsHandle": -2.72,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:role:role-fin:accessProfile:ap-fin",
+       "side": "src",
+       "along": -3.02,
+       "cross": 0.01,
+       "vsHandle": -2.78,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:role:role-fin:accessProfile:ap-fin",
+       "side": "tgt",
+       "along": -4.37,
+       "cross": 0.01,
+       "vsHandle": -2.72,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:accessProfile:ap-fin:entitlement:fin-e1",
+       "side": "src",
+       "along": -3.02,
+       "cross": 0.01,
+       "vsHandle": -2.78,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:accessProfile:ap-fin:entitlement:fin-e1",
+       "side": "tgt",
+       "along": -4.37,
+       "cross": 0.01,
+       "vsHandle": -2.72,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      },
+      {
+       "edge": "e:entitlement:fin-e1:source:s-erp",
+       "side": "src",
+       "along": -3.01,
+       "cross": 0.01,
+       "vsHandle": -2.78,
+       "nodeCls": "react-flow__node react-flow__node-access",
+       "firstCls": "react-flow__node react-flow__node-access entering",
+       "firstCardTransform": "matrix(0.94, 0, 0, 0.94, 0, 0)"
+      }
+     ],
+     "settle": {
+      "settled": true,
+      "ms": 697
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "scenario": "back-other",
+   "fixture": "mixed",
+   "size": [
+    1100,
+    700
+   ],
+   "layout": "TB",
+   "motion": "off",
+   "steps": [
+    {
+     "step": "user1",
+     "zoom": 0.393,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.2,
+     "maxCross": 0.59,
+     "minAlong": -0.2,
+     "maxAlongOutside": 0,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 182
+     }
+    },
+    {
+     "step": "user2",
+     "zoom": 0.444,
+     "nEdges": 7,
+     "nNodes": 8,
+     "maxAlong": 0.22,
+     "maxCross": 0.67,
+     "minAlong": -0.22,
+     "maxAlongOutside": 0,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 181
+     }
+    },
+    {
+     "step": "user1-again",
+     "zoom": 0.393,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.2,
+     "maxCross": 0.59,
+     "minAlong": -0.2,
+     "maxAlongOutside": 0,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 183
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "scenario": "back-other",
+   "fixture": "mixed",
+   "size": [
+    1100,
+    700
+   ],
+   "layout": "TB",
+   "motion": "on",
+   "steps": [
+    {
+     "step": "user1",
+     "zoom": 0.393,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.2,
+     "maxCross": 0.59,
+     "minAlong": -0.2,
+     "maxAlongOutside": 0,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 665
+     }
+    },
+    {
+     "step": "user2",
+     "zoom": 0.444,
+     "nEdges": 7,
+     "nNodes": 8,
+     "maxAlong": 1.06,
+     "maxCross": 0.67,
+     "minAlong": -1.06,
+     "maxAlongOutside": 0,
+     "maxVsHandle": 0.84,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 698
+     }
+    },
+    {
+     "step": "user1-again",
+     "zoom": 0.393,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.94,
+     "maxCross": 0.59,
+     "minAlong": -0.94,
+     "maxAlongOutside": 0,
+     "maxVsHandle": 0.74,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 698
+     }
+    }
+   ],
+   "errors": []
+  }
+ ]
+}

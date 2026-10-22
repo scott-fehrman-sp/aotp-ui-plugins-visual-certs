@@ -1,0 +1,150 @@
+// TEMPORARY real-browser harness (never committed).
+// ?fixture=mixed|dense|shot1|lane11|shot2   &strict=0 to disable StrictMode
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import '@xyflow/react/dist/style.css'
+import '../graph/tokens.css'
+import '../index.css'
+import '../App.css'
+import { AccessMatrixView } from '../views/AccessMatrixView'
+import { statusGraph } from './reviewStatusFixture'
+import type { StatusRow } from './reviewStatusFixture'
+import type { AccessGraphData, AccessReviewStatus } from '../sailpoint/types'
+
+const STATUSES: AccessReviewStatus[] = ['needsReview', 'approved', 'revoked', 'reassigned']
+
+function row(o: Partial<StatusRow>): StatusRow {
+  return {
+    id: 'r', userId: 'u1', user: 'Amos Cunningham',
+    role: '', roleId: null, accessProfile: '', accessProfileId: null,
+    entitlement: '', entitlementId: null, source: '', sourceId: null,
+    unresolved: false, ...o,
+  }
+}
+
+let n = 0
+const rid = () => `r${++n}`
+
+function second(): StatusRow[] {
+  return [
+    row({ id: rid(), userId: 'u2', user: 'Beth Baker', accessProfile: 'Billing', accessProfileId: 'ap-bill', entitlement: 'Pay', entitlementId: 'e-pay', source: 'ERP', sourceId: 's-erp', reviewStatus: 'needsReview', accessItemKind: 'accessProfile', accessItemId: 'ap-bill', accessItemName: 'Billing' }),
+    row({ id: rid(), userId: 'u2', user: 'Beth Baker', entitlement: 'Login', entitlementId: 'e-login', source: 'Directory', sourceId: 's-dir', reviewStatus: 'approved', accessItemKind: 'entitlement', accessItemId: 'e-login', accessItemName: 'Login' }),
+    row({ id: rid(), userId: 'u3', user: 'Carl Cole', entitlement: 'Login', entitlementId: 'e-login', source: 'Directory', sourceId: 's-dir', reviewStatus: 'needsReview', accessItemKind: 'entitlement', accessItemId: 'e-login', accessItemName: 'Login' }),
+  ]
+}
+
+/** 2 roles, 3 APs, 6 entitlements, all four statuses, nested lineage, sources. */
+function mixed(): AccessGraphData {
+  const s = (id: string, name: string) => ({ source: name, sourceId: id })
+  const rows: StatusRow[] = [
+    row({ id: rid(), role: 'Finance Role', roleId: 'role-fin', accessProfile: 'Finance AP', accessProfileId: 'ap-fin', entitlement: 'Fin Ent 1', entitlementId: 'fin-e1', ...s('s-erp', 'ERP'), reviewStatus: 'needsReview', accessItemKind: 'role', accessItemId: 'role-fin', accessItemName: 'Finance Role' }),
+    row({ id: rid(), role: 'Finance Role', roleId: 'role-fin', entitlement: 'Fin Ent 2', entitlementId: 'fin-e2', ...s('s-dir', 'Directory') }),
+    row({ id: rid(), role: 'Support Role', roleId: 'role-sup', entitlement: 'Sup Ent', entitlementId: 'sup-e', ...s('s-dir', 'Directory'), reviewStatus: 'approved', accessItemKind: 'role', accessItemId: 'role-sup', accessItemName: 'Support Role' }),
+    row({ id: rid(), accessProfile: 'Billing AP', accessProfileId: 'ap-bill', entitlement: 'Pay', entitlementId: 'e-pay', ...s('s-erp', 'ERP'), reviewStatus: 'revoked', accessItemKind: 'accessProfile', accessItemId: 'ap-bill', accessItemName: 'Billing AP' }),
+    row({ id: rid(), accessProfile: 'Billing AP', accessProfileId: 'ap-bill', entitlement: 'Refund', entitlementId: 'e-refund', ...s('s-crm', 'CRM') }),
+    row({ id: rid(), accessProfile: 'Reporting AP', accessProfileId: 'ap-rep', entitlement: 'View Reports', entitlementId: 'e-rep', ...s('s-crm', 'CRM'), reviewStatus: 'reassigned', accessItemKind: 'accessProfile', accessItemId: 'ap-rep', accessItemName: 'Reporting AP' }),
+    row({ id: rid(), accessProfile: 'Audit AP', accessProfileId: 'ap-aud', entitlement: 'Audit Read', entitlementId: 'e-aud', ...s('s-erp', 'ERP'), reviewStatus: 'approved', accessItemKind: 'accessProfile', accessItemId: 'ap-aud', accessItemName: 'Audit AP' }),
+    ...['Login:needsReview', 'Admin:approved', 'Delete:revoked', 'Internal Employee:reassigned', 'Read:needsReview', 'All Employee Entra:approved'].map((x, i) => {
+      const [name, st] = x.split(':')
+      return row({ id: rid(), entitlement: name, entitlementId: `ent-${i}`, ...s(i % 2 ? 's-dir' : 's-erp', i % 2 ? 'Directory' : 'ERP'), reviewStatus: st as AccessReviewStatus, accessItemKind: 'entitlement', accessItemId: `ent-${i}`, accessItemName: name })
+    }),
+    ...second(),
+  ]
+  return statusGraph(rows)
+}
+
+/** 4 APs, 1 role, 25 first-level entitlements, nested nodes, 3 sources. */
+function dense(): AccessGraphData {
+  const rows: StatusRow[] = []
+  const src = (i: number) => ({ source: `Source ${(i % 3) + 1}`, sourceId: `s${(i % 3) + 1}` })
+  for (let p = 1; p <= 4; p++) {
+    for (let e = 1; e <= 2; e++) {
+      rows.push(row({
+        id: rid(), accessProfile: `Profile ${p}`, accessProfileId: `ap-${p}`,
+        entitlement: `AP${p} Ent ${e}`, entitlementId: `ap${p}-e${e}`, ...src(p + e),
+        ...(e === 1 ? { reviewStatus: STATUSES[p % 4], accessItemKind: 'accessProfile' as const, accessItemId: `ap-${p}`, accessItemName: `Profile ${p}` } : {}),
+      }))
+    }
+  }
+  rows.push(
+    row({ id: rid(), role: 'Finance Role', roleId: 'role-fin', accessProfile: 'Finance AP', accessProfileId: 'ap-fin', entitlement: 'Fin Ent 1', entitlementId: 'fin-e1', ...src(1), reviewStatus: 'needsReview', accessItemKind: 'role', accessItemId: 'role-fin', accessItemName: 'Finance Role' }),
+    row({ id: rid(), role: 'Finance Role', roleId: 'role-fin', entitlement: 'Fin Ent 2', entitlementId: 'fin-e2', ...src(2) }),
+  )
+  for (let i = 1; i <= 25; i++) {
+    const nn = String(i).padStart(2, '0')
+    rows.push(row({ id: rid(), entitlement: `Entitlement ${nn}`, entitlementId: `ent-${nn}`, ...src(i), reviewStatus: STATUSES[i % 4], accessItemKind: 'entitlement', accessItemId: `ent-${nn}`, accessItemName: `Entitlement ${nn}` }))
+  }
+  return statusGraph([...rows, ...second()])
+}
+
+/** Screenshot 1: AP "ERP Employee Access" (needsReview) with 13 nested entitlements (wrapped lane) -> PRISM. */
+function shot1(): AccessGraphData {
+  const rows: StatusRow[] = []
+  const names = ['View_Reports', 'Internal_Employee', 'User', 'Approve_Orders', 'Create_Orders', 'Edit_Orders', 'Close_Books', 'Open_Books', 'Run_Payroll', 'View_Payroll', 'Admin_Console', 'Audit_Trail', 'Export_Data']
+  names.forEach((nm, i) => rows.push(row({
+    id: rid(), accessProfile: 'ERP Employee Access', accessProfileId: 'ap-erp', entitlement: nm, entitlementId: `erp-${i}`, source: 'PRISM', sourceId: 's-prism',
+    ...(i === 0 ? { reviewStatus: 'needsReview' as const, accessItemKind: 'accessProfile' as const, accessItemId: 'ap-erp', accessItemName: 'ERP Employee Access' } : {}),
+  })))
+  rows.push(
+    row({ id: rid(), accessProfile: 'Travel AP', accessProfileId: 'ap-trv', entitlement: 'Book_Travel', entitlementId: 'trv-1', source: 'PRISM', sourceId: 's-prism', reviewStatus: 'approved', accessItemKind: 'accessProfile', accessItemId: 'ap-trv', accessItemName: 'Travel AP' }),
+    row({ id: rid(), entitlement: 'All_Employee_Entra', entitlementId: 'ent-entra', source: 'Entra ID - tessailpoint', sourceId: 's-entra', reviewStatus: 'approved', accessItemKind: 'entitlement', accessItemId: 'ent-entra', accessItemName: 'All_Employee_Entra' }),
+    row({ id: rid(), entitlement: 'Legacy_Login', entitlementId: 'ent-leg', source: 'Entra ID - tessailpoint', sourceId: 's-entra', reviewStatus: 'revoked', accessItemKind: 'entitlement', accessItemId: 'ent-leg', accessItemName: 'Legacy_Login' }),
+  )
+  return statusGraph([...rows, ...second()])
+}
+
+/** 11 first-level entitlements, one approved: hide-completed takes the lane 11 -> 10. */
+function lane11(): AccessGraphData {
+  const rows: StatusRow[] = []
+  for (let i = 1; i <= 11; i++) {
+    const nn = String(i).padStart(2, '0')
+    rows.push(row({ id: rid(), entitlement: `Ent ${nn}`, entitlementId: `l-${nn}`, source: `Src ${(i % 2) + 1}`, sourceId: `ls${(i % 2) + 1}`, reviewStatus: i === 3 ? 'approved' : 'needsReview', accessItemKind: 'entitlement', accessItemId: `l-${nn}`, accessItemName: `Ent ${nn}` }))
+  }
+  return statusGraph([...rows, ...second()])
+}
+
+const params = new URLSearchParams(location.search)
+const name = params.get('fixture') ?? 'mixed'
+const graph = { mixed, dense, shot1, lane11 }[name as 'mixed']?.() ?? mixed()
+const matrix = {
+  status: 'ready' as const,
+  rows: [row({ id: 'x' })],
+  graph,
+  unresolvedCount: 0,
+  error: null,
+  reload: () => {},
+}
+
+// Record, for every card wrapper, the class list and the card's computed
+// transform AT THE MOMENT IT FIRST APPEARED in the DOM.
+const first: Record<string, { cls: string; cardTransform: string; t: number }> = {}
+;(window as unknown as { __first: typeof first }).__first = first
+new MutationObserver((records) => {
+  for (const r of records) {
+    r.addedNodes.forEach((added) => {
+      if (!(added instanceof HTMLElement)) return
+      const els = added.matches('.react-flow__node') ? [added] : Array.from(added.querySelectorAll('.react-flow__node'))
+      for (const el of els) {
+        const id = el.getAttribute('data-id')!
+        if (!id || first[id]) continue
+        const card = el.querySelector('.vc-graph-card')
+        first[id] = { cls: el.className, cardTransform: card ? getComputedStyle(card).transform : 'none', t: performance.now() }
+      }
+    })
+  }
+}).observe(document, { childList: true, subtree: true })
+
+const tree = (
+  <div className="vc-app">
+    <header className="vc-header">
+      <h1 className="vc-title">Access Review</h1>
+    </header>
+    <main className="vc-main">
+      <div className="vc-route">
+        <AccessMatrixView campaignName="Harness" matrix={matrix} onBack={() => {}} />
+      </div>
+    </main>
+  </div>
+)
+const root = createRoot(document.getElementById('root')!)
+root.render(params.get('strict') === '0' ? tree : <StrictMode>{tree}</StrictMode>)

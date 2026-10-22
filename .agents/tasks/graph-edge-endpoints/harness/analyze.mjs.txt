@@ -1,0 +1,41 @@
+import fs from 'node:fs'
+const [file, mode = 'table'] = process.argv.slice(2)
+const d = JSON.parse(fs.readFileSync(file))
+const rows = []
+for (const r of d.results) {
+  const steps = r.steps.filter((s) => s.maxAlong !== undefined)
+  const unsettled = r.steps.filter((s) => s.step.includes('NOT-SETTLED')).length
+  rows.push({
+    key: `${r.scenario}|${r.fixture}`, scenario: r.scenario, fixture: r.fixture, size: r.size.join('x'), layout: r.layout, motion: r.motion,
+    maxAlong: Math.max(0, ...steps.map((s) => s.maxAlong)), maxCross: Math.max(0, ...steps.map((s) => s.maxCross)),
+    maxVsHandle: Math.max(0, ...steps.map((s) => s.maxVsHandle)), drift: Math.max(0, ...steps.map((s) => s.drift)),
+    fails: steps.reduce((a, s) => a + s.fails, 0), unparsed: steps.reduce((a, s) => a + s.unparsed, 0), unsettled,
+    err: r.error || (r.errors && r.errors.length ? r.errors.join(';') : ''), zoom: steps.map((s) => s.zoom),
+    steps,
+  })
+}
+const f = (x) => x.toFixed(2).padStart(6)
+if (mode === 'table') {
+  // per scenario x motion x layout: max over fixtures and sizes
+  const groups = new Map()
+  for (const r of rows) {
+    const k = `${r.scenario}|${r.motion}|${r.layout}`
+    const g = groups.get(k) ?? { n: 0, along: 0, cross: 0, vsh: 0, fails: 0, drift: 0, uns: 0, err: 0 }
+    g.n++; g.along = Math.max(g.along, r.maxAlong); g.cross = Math.max(g.cross, r.maxCross); g.vsh = Math.max(g.vsh, r.maxVsHandle)
+    g.drift = Math.max(g.drift, r.drift); g.fails += r.fails; g.uns += r.unsettled; g.err += r.err ? 1 : 0
+    groups.set(k, g)
+  }
+  console.log('scenario | motion | layout | runs | max|dxBorder| | max|dCross| | max|edge-vs-handleDOM| | drift | failingEndpoints | unsettled | errs')
+  for (const [k, g] of [...groups].sort()) {
+    const [s, m, l] = k.split('|')
+    console.log(`${s.padEnd(15)} ${m.padEnd(3)} ${l} n=${g.n} ${f(g.along)} ${f(g.cross)} ${f(g.vsh)} ${f(g.drift)} fails=${g.fails} uns=${g.uns} err=${g.err}`)
+  }
+}
+if (mode === 'summary') {
+  for (const motion of ['on', 'off']) for (const layout of ['LR', 'TB']) {
+    const rs = rows.filter((r) => r.motion === motion && r.layout === layout)
+    console.log(motion, layout, 'runs', rs.length, 'maxAlong', Math.max(0, ...rs.map((r) => r.maxAlong)).toFixed(2), 'maxCross', Math.max(0, ...rs.map((r) => r.maxCross)).toFixed(2),
+      'maxVsHandle', Math.max(0, ...rs.map((r) => r.maxVsHandle)).toFixed(2), 'fails', rs.reduce((a, r) => a + r.fails, 0), 'unsettled', rs.reduce((a, r) => a + r.unsettled, 0), 'errors', rs.filter((r) => r.err).length)
+  }
+}
+if (mode === 'errs') for (const r of rows) if (r.err || r.unsettled) console.log(r.key, r.size, r.layout, r.motion, r.unsettled, r.err)

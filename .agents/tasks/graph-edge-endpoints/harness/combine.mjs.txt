@@ -1,0 +1,69 @@
+import fs from 'node:fs'
+const load = (f) => JSON.parse(fs.readFileSync(f)).results
+const mainProd = [...load('main-prod.json').filter((r) => r.scenario !== 'back-other'), ...load('main-prod-back.json').filter((r) => r.scenario === 'back-other'), ...load('edge-ends-zb.json')]
+const sets = {
+  'pre 44435ae': [...load('pre-prod.json'), ...load('bisect-pre-zb.json')],
+  'main on': mainProd.filter((r) => r.motion === 'on'),
+  'main off': mainProd.filter((r) => r.motion === 'off'),
+  'main-nomeasured on': load('nomeas-prod.json').filter((r) => r.motion === 'on'),
+  'fixB on': [...load('protoB1-prod.json'), ...load('protoB1-zb.json')].filter((r) => r.motion === 'on'),
+  'fixB off': [...load('protoB1-prod.json'), ...load('protoB1-zb.json')].filter((r) => r.motion === 'off'),
+}
+const max = (rs, key, layout) => {
+  let a = 0, c = 0, v = 0, n = 0
+  for (const r of rs) {
+    if (layout && r.layout !== layout) continue
+    n++
+    for (const s of r.steps) { if (s.maxAlong === undefined) continue; a = Math.max(a, s.maxAlong); c = Math.max(c, s.maxCross); v = Math.max(v, s.maxVsHandle) }
+  }
+  return n ? `${a.toFixed(2)} / ${c.toFixed(2)}` : 'n/a'
+}
+const scenarios = [...new Set(Object.values(sets).flat().map((r) => r.scenario))]
+const names = Object.keys(sets)
+const lines = []
+for (const layout of ['LR', 'TB']) {
+  lines.push(`\n#### ${layout} (max |dxBorder| / max |dCross| in px, over fixtures x 2 sizes)\n`)
+  lines.push(`| scenario | ${names.join(' | ')} |`)
+  lines.push(`|---|${names.map(() => '---').join('|')}|`)
+  for (const sc of scenarios) lines.push(`| ${sc} | ${names.map((n) => max(sets[n].filter((r) => r.scenario === sc), null, layout)).join(' | ')} |`)
+  lines.push(`| **ALL** | ${names.map((n) => max(sets[n], null, layout)).join(' | ')} |`)
+}
+// failing endpoints (> 1.5 px) per set
+lines.push('\n#### Endpoints outside the 1.5 px tolerance / runs / runs with a failing endpoint\n')
+lines.push(`| set | endpoints failing | runs | runs failing |`)
+lines.push(`|---|---|---|---|`)
+for (const n of names) {
+  const rs = sets[n]
+  const f = rs.reduce((a, r) => a + r.steps.reduce((b, s) => b + (s.fails || 0), 0), 0)
+  const rf = rs.filter((r) => r.steps.some((s) => s.fails > 0)).length
+  lines.push(`| ${n} | ${f} | ${rs.length} | ${rf} |`)
+}
+// max edge-vs-handle (stale)
+lines.push('\n#### Max distance between the path end and the handle element actually drawn in the DOM (stale handle bounds), px\n')
+lines.push(`| set | LR | TB |`)
+lines.push(`|---|---|---|`)
+for (const n of names) {
+  const g = (l) => Math.max(0, ...sets[n].filter((r) => r.layout === l).flatMap((r) => r.steps.map((s) => s.maxVsHandle ?? 0))).toFixed(2)
+  lines.push(`| ${n} | ${g('LR')} | ${g('TB')} |`)
+}
+// max zoom
+lines.push('\n#### Max zoom (1.8) scenario, step max-zoom, max |dxBorder| / |dCross|\n')
+lines.push(`| set | LR | TB |`)
+lines.push(`|---|---|---|`)
+for (const n of names) {
+  const g = (l) => {
+    const ss = sets[n].filter((r) => r.scenario === 'zoom' && r.layout === l).flatMap((r) => r.steps.filter((s) => s.step === 'max-zoom'))
+    return ss.length ? `${Math.max(...ss.map((s) => s.maxAlong)).toFixed(2)} / ${Math.max(...ss.map((s) => s.maxCross)).toFixed(2)}` : 'n/a'
+  }
+  lines.push(`| ${n} | ${g('LR')} | ${g('TB')} |`)
+}
+// blink
+lines.push('\n#### Staying edges that disappeared for >= 1 frame during a toggle (blink scenario: 5 toggles x 2 fixtures x 2 sizes x 2 layouts)\n')
+lines.push(`| set | edges that blinked | frames missing |`)
+lines.push(`|---|---|---|`)
+for (const n of names) {
+  const ss = sets[n].filter((r) => r.scenario === 'blink').flatMap((r) => r.steps.filter((s) => s.step.startsWith('blink:')))
+  lines.push(`| ${n} | ${ss.length ? ss.reduce((a, s) => a + s.blinkEdges, 0) : 'n/a'} | ${ss.length ? ss.reduce((a, s) => a + s.blinkFrames, 0) : 'n/a'} |`)
+}
+// first-mount class correlation
+console.log(lines.join('\n'))

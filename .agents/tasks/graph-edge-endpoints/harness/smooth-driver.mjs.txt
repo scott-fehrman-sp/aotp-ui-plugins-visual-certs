@@ -1,0 +1,232 @@
+// TEMPORARY (never committed): smoothness timeline + screenshots against the built harness in .edge-harness-dist
+//   node smooth-driver.mjs --label before|after --out /path/dir [--build 1] [--port 5197]
+import fs from 'node:fs'
+import path from 'node:path'
+import puppeteer from 'puppeteer-core'
+const args = Object.fromEntries(
+  process.argv.slice(2).reduce((acc, a, i, all) => (a.startsWith('--') ? [...acc, [a.slice(2), all[i + 1]]] : acc), []),
+)
+const LABEL = args.label ?? 'run'
+const OUT = args.out ?? '/tmp/edge'
+const PORT = Number(args.port ?? 5197)
+const ROOT = process.cwd()
+const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
+const vite = await import(path.join(ROOT, 'node_modules/vite/dist/node/index.js'))
+const cfg = path.join(ROOT, 'vite.edge-harness.config.ts')
+if (args.build) await vite.build({ root: ROOT, configFile: cfg, logLevel: 'error' })
+const server = await vite.preview({ root: ROOT, configFile: cfg, logLevel: 'error', preview: { port: PORT, strictPort: true, host: 'localhost' } })
+const URL0 = `http://localhost:${PORT}`
+const INJECT = () => {
+  const BUSY = '.react-flow__node.entering,.react-flow__node.exiting,.react-flow__edge.entering,.react-flow__edge.exiting,.vc-graph-edge-settling,.vc-graph-edge-arriving'
+  window.__settle = async (timeout = 8000) => {
+    const vp = document.querySelector('.react-flow__viewport')
+    let last = '', same = 0
+    const t0 = performance.now()
+    while (performance.now() - t0 < timeout) {
+      await new Promise((r) => requestAnimationFrame(r))
+      const busy = !!document.querySelector(BUSY)
+      const anims = document.getAnimations().filter((a) => a.playState === 'running' && a.effect && a.effect.getComputedTiming().iterations !== Infinity).length
+      const tr = vp ? getComputedStyle(vp).transform : ''
+      if (!busy && anims === 0 && tr === last && vp) same++
+      else same = 0
+      last = tr
+      if (same >= 10) return true
+    }
+    return false
+  }
+  const snap = (rankdir) => {
+    const vp = document.querySelector('.react-flow__viewport')
+    const nodes = {}
+    const centers = {}
+    document.querySelectorAll('.react-flow__node').forEach((el) => {
+      const id = el.getAttribute('data-id')
+      const r = el.getBoundingClientRect()
+      const hs = {}
+      el.querySelectorAll('.react-flow__handle').forEach((h) => { const b = h.getBoundingClientRect(); hs[h.getAttribute('data-handleid')] = [(b.left + b.right) / 2, (b.top + b.bottom) / 2] })
+      nodes[id] = { cx: r.left + r.width / 2, cy: r.top + r.height / 2, l: r.left, t: r.top, w: r.width, h: r.height, op: +getComputedStyle(el).opacity, cls: el.className }
+      centers[id] = hs
+    })
+    const ids = Object.keys(nodes)
+    const edges = {}
+    document.querySelectorAll('.react-flow__edge').forEach((g) => {
+      const eid = g.getAttribute('data-id') || ''
+      const p = g.querySelector('.react-flow__edge-path')
+      if (!p) return
+      let from = null, to = null
+      for (const a of ids) if (eid.startsWith('e:' + a + ':')) { const rest = eid.slice(('e:' + a + ':').length); if (nodes[rest]) { from = a; to = rest; break } }
+      const op = +getComputedStyle(g).opacity * +getComputedStyle(p).opacity
+      let det = null
+      if (from) {
+        const ctm = p.getScreenCTM(), L = p.getTotalLength()
+        const a = p.getPointAtLength(0), b = p.getPointAtLength(L)
+        const s = new DOMPoint(a.x, a.y).matrixTransform(ctm), e = new DOMPoint(b.x, b.y).matrixTransform(ctm)
+        const hs = centers[from][rankdir === 'TB' ? 'bottom-out' : 'right-out'], ht = centers[to][rankdir === 'TB' ? 'top-in' : 'left-in']
+        if (hs && ht) det = Math.max(Math.hypot(s.x - hs[0], s.y - hs[1]), Math.hypot(e.x - ht[0], e.y - ht[1]))
+      }
+      edges[eid] = { op, det, cls: g.getAttribute('class') }
+    })
+    return { vp: getComputedStyle(vp).transform, nodes, edges }
+  }
+  window.__snap = snap
+  window.__rec = {
+    on: false, frames: [],
+    start(rankdir) { this.on = true; this.frames = []; const t0 = performance.now(); const loop = () => { if (!this.on) return; const f = snap(rankdir); f.t = performance.now() - t0; this.frames.push(f); requestAnimationFrame(loop) }; loop() },
+    stop() { this.on = false; return this.frames },
+  }
+}
+const FIX_USER = 'Amos Cunningham'
+async function open(fixture, w, h, motion = true) {
+  const ctx = await browser.createBrowserContext()
+  const page = await ctx.newPage()
+  const errors = []
+  page.on('pageerror', (e) => errors.push(String(e)))
+  page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') errors.push(m.text().slice(0, 200)) })
+  await page.setViewport({ width: w, height: h })
+  if (!motion) await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }])
+  await page.evaluateOnNewDocument(INJECT)
+  await page.goto(`${URL0}/edge-harness.html?fixture=${fixture}`, { waitUntil: 'load' })
+  await page.waitForSelector('.react-flow__node')
+  await page.evaluate(() => window.__settle())
+  return { ctx, page, errors }
+}
+function analyze(frames, track) {
+  const first = frames[0], last = frames[frames.length - 1]
+  const res = { frames: frames.length, durationMs: Math.round(last.t) }
+  // viewport: frames in which it changes
+  let vpChanges = 0
+  for (let i = 1; i < frames.length; i++) if (frames[i].vp !== frames[i - 1].vp) vpChanges++
+  res.vpChangeFrames = vpChanges
+  res.finalViewport = last.vp
+  if (track) {
+    // Flow-space x (undo the camera), so the camera tween does not count as card motion.
+    const xs = frames.filter((f) => f.nodes[track]).map((f) => { const v = f.vp.match(/-?[\d.e-]+/g).map(Number); const m = { a: v[0], e: v[4] }; return (f.nodes[track].cx - m.e) / m.a })
+    const travel = Math.abs(xs[xs.length - 1] - xs[0])
+    let maxStep = 0, back = 0
+    for (let i = 1; i < xs.length; i++) { maxStep = Math.max(maxStep, Math.abs(xs[i] - xs[i - 1])); if ((xs[i] - xs[0]) * Math.sign(xs[xs.length - 1] - xs[0]) < (xs[i - 1] - xs[0]) * Math.sign(xs[xs.length - 1] - xs[0]) - 0.5) back++ }
+    res.tracked = { travelPx: +travel.toFixed(1), maxOneFramePx: +maxStep.toFixed(1), maxOneFramePct: travel ? +((maxStep / travel) * 100).toFixed(1) : null, backwardsFrames: back }
+  }
+  // detachment: edges with opacity > 0.5
+  let maxDet = 0, detFrames = 0
+  for (const f of frames) {
+    let frameMax = 0
+    for (const e of Object.values(f.edges)) if (e.det !== null && e.op > 0.5) frameMax = Math.max(frameMax, e.det)
+    maxDet = Math.max(maxDet, frameMax)
+    if (frameMax > 2) detFrames++
+  }
+  res.detach = { maxPx: +maxDet.toFixed(1), framesOver2px: detFrames }
+  // edge arrival: new edges (not in first frame, present in last)
+  const newIds = Object.keys(last.edges).filter((id) => !first.edges[id])
+  let maxOpStep = 0, popFrames = 0
+  for (const id of newIds) {
+    let prev = null
+    for (const f of frames) {
+      const e = f.edges[id]
+      if (!e) continue
+      if (prev !== null) { const d = Math.abs(e.op - prev); maxOpStep = Math.max(maxOpStep, d) }
+      prev = e.op
+    }
+  }
+  res.newEdges = { count: newIds.length, maxOneFrameOpacityStep: +maxOpStep.toFixed(2), popFrames }
+  // staying edges that blink out
+  const staying = Object.keys(first.edges).filter((id) => last.edges[id])
+  res.blinkingStayingEdges = staying.filter((id) => frames.some((f) => !f.edges[id])).length
+  // leftovers
+  const left = []
+  for (const [id, n] of Object.entries(last.nodes)) if (/entering|exiting|reveal/.test(n.cls)) left.push(id)
+  for (const [id, e] of Object.entries(last.edges)) if (/entering|exiting|settling|arriving/.test(e.cls || '')) left.push(id)
+  res.leftoverTransitionClasses = left.length
+  // opacity: removed nodes fade (not snap)
+  const gone = Object.keys(first.nodes).filter((id) => !last.nodes[id])
+  res.removedNodes = gone.length
+  res.finalNodes = Object.fromEntries(Object.entries(last.nodes).map(([id, n]) => [id, [+n.l.toFixed(1), +n.t.toFixed(1), +n.w.toFixed(1), +n.h.toFixed(1)]]))
+  return res
+}
+const browser = await puppeteer.launch({ executablePath: CHROME, headless: true, args: ['--no-sandbox', '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows'] })
+const results = {}
+async function timeline(name, fixture, w, h, rankdir, setup, action, track) {
+  const { ctx, page, errors } = await open(fixture, w, h)
+  try {
+    if (setup) await setup(page)
+    await page.evaluate(() => window.__settle())
+    const trackId = track ? await page.evaluate((lab) => document.querySelector(`article[aria-label="${lab}"]`)?.closest('.react-flow__node')?.getAttribute('data-id'), track) : null
+    await page.evaluate((r) => window.__rec.start(r), rankdir)
+    await action(page)
+    await sleep(1500)
+    const frames = await page.evaluate(() => window.__rec.stop())
+    results[name] = { ...analyze(frames, trackId), errors: errors.filter((e) => !/favicon|getNodesBounds|Failed to load/.test(e)).slice(0, 3) }
+  } catch (e) { results[name] = { error: String(e).slice(0, 300) } }
+  await ctx.close()
+}
+const drill = async (page) => { await page.click(`article[aria-label="Show access for ${FIX_USER}"]`); await page.mouse.move(2, 2) }
+const tb = async (page) => { await page.evaluate(() => window.__settle()); await page.click('button[aria-label^="Layout"]'); await page.mouse.move(2, 2); await page.evaluate(() => window.__settle()) }
+const click = (sel) => async (page) => { await page.click(sel); await page.mouse.move(2, 2) }
+const prep = async (page) => { await drill(page); await page.evaluate(() => window.__settle()) }
+for (const fx of ['mixed', 'dense']) {
+  await timeline(`grid->drill ${fx}`, fx, 1700, 1000, 'LR', null, drill, `Show access for ${FIX_USER}`)
+  await timeline(`hide-completed ${fx}`, fx, 1700, 1000, 'LR', prep, click('button[aria-label^="Hide completed"]'))
+  await timeline(`hide-reference ${fx}`, fx, 1700, 1000, 'LR', prep, click('button[aria-label^="Hide reference"]'))
+  await timeline(`layout LR->TB ${fx}`, fx, 1700, 1000, 'TB', prep, click('button[aria-label^="Layout"]'))
+  await timeline(`layout TB->LR ${fx}`, fx, 1700, 1000, 'LR', async (p) => { await prep(p); await tb(p) }, click('button[aria-label^="Layout"]'))
+}
+await timeline('lane wrap 11->10', 'lane11', 1700, 1000, 'LR', prep, click('button[aria-label^="Hide completed"]'))
+fs.writeFileSync(path.join(OUT, `smooth-${LABEL}.json`), JSON.stringify(results, null, 1))
+for (const [k, v] of Object.entries(results)) {
+  const { finalNodes, ...rest } = v
+  console.log(k, JSON.stringify(rest))
+}
+/* -------------------------------------------------------------- screenshots */
+async function shots(name, fn) {
+  const { ctx, page, errors } = await open('shot1', 1700, 1000)
+  await prep(page)
+  await fn(page)
+  await ctx.close()
+}
+async function crop(page, file, cx, cy, hw = 34, hh = 22, scale = 6) {
+  const cdp = await page.createCDPSession()
+  await page.screenshot({ path: file, clip: { x: Math.max(0, cx - hw), y: Math.max(0, cy - hh), width: hw * 2, height: hh * 2, scale } })
+  await cdp.detach()
+}
+async function borderPoints(page, sels) {
+  return page.evaluate((labels) => {
+    const out = {}
+    for (const lab of labels) {
+      const el = document.querySelector(`article[aria-label="${lab}"]`)?.closest('.react-flow__node')
+      if (!el) continue
+      const r = el.getBoundingClientRect()
+      out[lab] = { l: [r.left, (r.top + r.bottom) / 2], r: [r.right, (r.top + r.bottom) / 2] }
+    }
+    return out
+  }, sels)
+}
+const dirs = path.join(OUT)
+await shots('s1', async (page) => {
+  await page.click('article[aria-label="Access profile: ERP Employee Access"]'); await page.mouse.move(2, 2)
+  await page.evaluate(() => window.__settle()); await sleep(300)
+  await page.screenshot({ path: path.join(dirs, `${LABEL}-shot1-ap-selected.png`) })
+  const pts = await borderPoints(page, ['Access profile: ERP Employee Access', 'Entitlement: View_Reports', 'Entitlement: Internal_Employee', 'Entitlement: User', 'Entitlement: Export_Data', 'Source: PRISM'])
+  fs.writeFileSync(path.join(dirs, `${LABEL}-shot1-points.json`), JSON.stringify(pts))
+  let i = 0
+  for (const [lab, p] of Object.entries(pts)) {
+    i++
+    await crop(page, path.join(dirs, `${LABEL}-shot1-crop-${i}-${lab.replace(/[^A-Za-z]+/g, '_')}-left.png`), p.l[0], p.l[1])
+    await crop(page, path.join(dirs, `${LABEL}-shot1-crop-${i}-${lab.replace(/[^A-Za-z]+/g, '_')}-right.png`), p.r[0], p.r[1])
+  }
+})
+await shots('s2', async (page) => {
+  await page.click('article[aria-label="Entitlement: All_Employee_Entra"]')
+  await page.hover('article[aria-label="Entitlement: All_Employee_Entra"]')
+  await page.evaluate(() => window.__settle()); await sleep(500)
+  await page.screenshot({ path: path.join(dirs, `${LABEL}-shot2-ent-selected-hover.png`) })
+  const pts = await borderPoints(page, ['Entitlement: All_Employee_Entra', 'Source: Entra ID - tessailpoint'])
+  fs.writeFileSync(path.join(dirs, `${LABEL}-shot2-points.json`), JSON.stringify(pts))
+  let i = 0
+  for (const [lab, p] of Object.entries(pts)) {
+    i++
+    await crop(page, path.join(dirs, `${LABEL}-shot2-crop-${i}-${lab.replace(/[^A-Za-z]+/g, '_')}-left.png`), p.l[0], p.l[1])
+    await crop(page, path.join(dirs, `${LABEL}-shot2-crop-${i}-${lab.replace(/[^A-Za-z]+/g, '_')}-right.png`), p.r[0], p.r[1])
+  }
+})
+await browser.close()
+await new Promise((r) => server.httpServer.close(r))
+process.exit(0)

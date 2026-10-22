@@ -1,0 +1,3628 @@
+{
+ "results": [
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "drill-mixed",
+   "pass": true,
+   "detail": "final positions maxErr=0px missing=0 extra=0 edgeIdsEqual=true flaggedAfterEnd=0 nodes=28 edges=40"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T2",
+   "scenario": "drill-mixed final viewport == base",
+   "pass": true,
+   "detail": "final=158.193,326.283,0.772 base=158.193,326.283,0.772"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T2",
+   "scenario": "drill-mixed camera interpolates",
+   "pass": true,
+   "detail": "changedFrames=27 start=113ms visible(>=2px)=146ms end=546ms total(x,y,z)=-661.81,-102.72,-0.34 maxStepFrac(x,y,z)=10%,10%,12% regress(x,y,z)=0,0,0.001"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T3",
+   "scenario": "drill-mixed no stray cards",
+   "pass": true,
+   "detail": "atCanvasCorner=0 atFlowOrigin=0 offCanvas(opaque,non-exiting,fit-mode)=0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T1",
+   "scenario": "drill-mixed clicked card glides",
+   "pass": true,
+   "detail": "travel=718.47px worstRegress=0px maxFrameStep=8% firstFrameStep=0% | baseline jumpFrac=0/100%"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T1",
+   "scenario": "drill-mixed other users fade out",
+   "pass": true,
+   "detail": "others=7 increases=0 firstFrameMinOpacity=1 removedBy=463ms"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T1",
+   "scenario": "drill-mixed lineage enters from the user card",
+   "pass": true,
+   "detail": "lineage=27 violations=0 maxFirstFrameDistToUser=0px"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "drill-mixed staying cards glide monotonically",
+   "pass": true,
+   "detail": "staying=1 worstRegress=0px maxFrameStep=8% of travel"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "drill-mixed removed cards fade out and unmount",
+   "pass": true,
+   "detail": "removed=7 opacityIncreases=0 unmountedBy=463ms (limit 600)"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "drill-mixed entering cards fade in from a related card",
+   "pass": true,
+   "detail": "entering=27 violations=0 maxFirstFrameDistToRelatedCard=0px"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "drill-mixed new edges fade in (no pop)",
+   "pass": true,
+   "detail": "newEdges=40 violations=0 maxOneFrameOpacityStep=0.18"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "drill-mixed staying edges never blink off",
+   "pass": true,
+   "detail": "edgesThatVanishedForAFrame=0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "drill-mixed no leftover flags / duplicates",
+   "pass": true,
+   "detail": "duplicateIds=false"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T4",
+   "scenario": "drill-mixed edge/card detachment",
+   "pass": true,
+   "detail": "maxDist=252.9px violatingFrames=9 (edge-samples>0.5 opacity: 473)"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "drill-mixed canvas reaches window bottom",
+   "pass": true,
+   "detail": "canvasBottom=987 expected=988"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "drill-mixed no page scroll",
+   "pass": true,
+   "detail": "scrollHeight=1000 innerHeight=1000"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "drill-mixed nothing under overlays",
+   "pass": true,
+   "detail": "cardsUnderOverlays=0 (userCardHit=0) zoom=0.772"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "drill-mixed lanes ordered",
+   "pass": true,
+   "detail": "user:1/1x<=1 role:2/1x<=2 accessProfile:6/1x<=6 entitlement:16/2x<=8 source:3/1x<=3"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "drill-mixed <=10 per lane or wrapped",
+   "pass": true,
+   "detail": "user:1/1x<=1 role:2/1x<=2 accessProfile:6/1x<=6 entitlement:16/2x<=8 source:3/1x<=3"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "back-mixed",
+   "pass": true,
+   "detail": "final positions maxErr=0px missing=0 extra=0 edgeIdsEqual=true flaggedAfterEnd=0 nodes=8 edges=0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T2",
+   "scenario": "back-mixed final viewport == base",
+   "pass": true,
+   "detail": "final=820,429,1.109 base=820,429,1.109"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T2",
+   "scenario": "back-mixed camera interpolates",
+   "pass": true,
+   "detail": "changedFrames=27 start=43ms visible(>=2px)=76ms end=476ms total(x,y,z)=661.81,102.72,0.34 maxStepFrac(x,y,z)=10%,10%,12% regress(x,y,z)=0,0,0.001"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T3",
+   "scenario": "back-mixed no stray cards",
+   "pass": true,
+   "detail": "atCanvasCorner=0 atFlowOrigin=0 offCanvas(opaque,non-exiting,fit-mode)=0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "back-mixed staying cards glide monotonically",
+   "pass": true,
+   "detail": "staying=1 worstRegress=0px maxFrameStep=8% of travel"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "back-mixed removed cards fade out and unmount",
+   "pass": true,
+   "detail": "removed=27 opacityIncreases=0 unmountedBy=443ms (limit 600)"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "back-mixed entering cards fade in from a related card",
+   "pass": true,
+   "detail": "entering=7 violations=0 maxFirstFrameDistToRelatedCard=0px"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "back-mixed new edges fade in (no pop)",
+   "pass": true,
+   "detail": "newEdges=0 violations=0 maxOneFrameOpacityStep=0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "back-mixed staying edges never blink off",
+   "pass": true,
+   "detail": "edgesThatVanishedForAFrame=0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "back-mixed no leftover flags / duplicates",
+   "pass": true,
+   "detail": "duplicateIds=false"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T4",
+   "scenario": "back-mixed edge/card detachment",
+   "pass": true,
+   "detail": "maxDist=555.3px violatingFrames=8 (edge-samples>0.5 opacity: 88)"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "back-mixed canvas reaches window bottom",
+   "pass": true,
+   "detail": "canvasBottom=987 expected=988"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "back-mixed no page scroll",
+   "pass": true,
+   "detail": "scrollHeight=1000 innerHeight=1000"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "back-mixed nothing under overlays",
+   "pass": true,
+   "detail": "cardsUnderOverlays=0 (userCardHit=0) zoom=1.109"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "done-dense",
+   "pass": true,
+   "detail": "final positions maxErr=0px missing=0 extra=0 edgeIdsEqual=true flaggedAfterEnd=0 nodes=31 edges=50"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T2",
+   "scenario": "done-dense final viewport == base",
+   "pass": true,
+   "detail": "final=159.247,350.996,0.719 base=159.247,350.996,0.719"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T2",
+   "scenario": "done-dense camera interpolates",
+   "pass": true,
+   "detail": "changedFrames=23 start=106ms visible(>=2px)=140ms end=473ms total(x,y,z)=-2.98,19.55,0.11 maxStepFrac(x,y,z)=25%,11%,11% regress(x,y,z)=0.357,0,0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T3",
+   "scenario": "done-dense no stray cards",
+   "pass": true,
+   "detail": "atCanvasCorner=0 atFlowOrigin=0 offCanvas(opaque,non-exiting,fit-mode)=0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "done-dense staying cards glide monotonically",
+   "pass": true,
+   "detail": "staying=31 worstRegress=0px maxFrameStep=8% of travel"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "done-dense removed cards fade out and unmount",
+   "pass": true,
+   "detail": "removed=17 opacityIncreases=0 unmountedBy=456ms (limit 600)"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "done-dense entering cards fade in from a related card",
+   "pass": true,
+   "detail": "entering=0 violations=0 maxFirstFrameDistToRelatedCard=0px"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "done-dense new edges fade in (no pop)",
+   "pass": true,
+   "detail": "newEdges=0 violations=0 maxOneFrameOpacityStep=0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "done-dense staying edges never blink off",
+   "pass": true,
+   "detail": "edgesThatVanishedForAFrame=0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "done-dense no leftover flags / duplicates",
+   "pass": true,
+   "detail": "duplicateIds=false"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T4",
+   "scenario": "done-dense edge/card detachment",
+   "pass": true,
+   "detail": "maxDist=89.5px violatingFrames=6 (edge-samples>0.5 opacity: 981)"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "done-dense canvas reaches window bottom",
+   "pass": true,
+   "detail": "canvasBottom=987 expected=988"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "done-dense no page scroll",
+   "pass": true,
+   "detail": "scrollHeight=1000 innerHeight=1000"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "done-dense nothing under overlays",
+   "pass": true,
+   "detail": "cardsUnderOverlays=0 (userCardHit=0) zoom=0.719"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "done-dense lanes ordered",
+   "pass": true,
+   "detail": "user:1/1x<=1 role:1/1x<=1 accessProfile:3/1x<=3 entitlement:23/3x<=8 source:3/1x<=3"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "done-dense <=10 per lane or wrapped",
+   "pass": true,
+   "detail": "user:1/1x<=1 role:1/1x<=1 accessProfile:3/1x<=3 entitlement:23/3x<=8 source:3/1x<=3"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "undone-dense",
+   "pass": true,
+   "detail": "final positions maxErr=0px missing=0 extra=0 edgeIdsEqual=true flaggedAfterEnd=0 nodes=48 edges=81"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T2",
+   "scenario": "undone-dense final viewport == base",
+   "pass": true,
+   "detail": "final=162.228,331.448,0.611 base=162.228,331.448,0.611"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T2",
+   "scenario": "undone-dense camera interpolates",
+   "pass": true,
+   "detail": "changedFrames=23 start=145ms visible(>=2px)=179ms end=512ms total(x,y,z)=2.98,-19.55,-0.11 maxStepFrac(x,y,z)=26%,11%,11% regress(x,y,z)=0.396,0,0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T3",
+   "scenario": "undone-dense no stray cards",
+   "pass": true,
+   "detail": "atCanvasCorner=0 atFlowOrigin=0 offCanvas(opaque,non-exiting,fit-mode)=0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "undone-dense staying cards glide monotonically",
+   "pass": true,
+   "detail": "staying=31 worstRegress=0px maxFrameStep=8% of travel"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "undone-dense removed cards fade out and unmount",
+   "pass": true,
+   "detail": "removed=0 opacityIncreases=0 unmountedBy=0ms (limit 600)"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "undone-dense entering cards fade in from a related card",
+   "pass": true,
+   "detail": "entering=17 violations=0 maxFirstFrameDistToRelatedCard=0px"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "undone-dense new edges fade in (no pop)",
+   "pass": true,
+   "detail": "newEdges=31 violations=0 maxOneFrameOpacityStep=0.18"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "undone-dense staying edges never blink off",
+   "pass": true,
+   "detail": "edgesThatVanishedForAFrame=0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "undone-dense no leftover flags / duplicates",
+   "pass": true,
+   "detail": "duplicateIds=false"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T4",
+   "scenario": "undone-dense edge/card detachment",
+   "pass": true,
+   "detail": "maxDist=177.6px violatingFrames=10 (edge-samples>0.5 opacity: 1362)"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "undone-dense canvas reaches window bottom",
+   "pass": true,
+   "detail": "canvasBottom=987 expected=988"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "undone-dense no page scroll",
+   "pass": true,
+   "detail": "scrollHeight=1000 innerHeight=1000"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "undone-dense nothing under overlays",
+   "pass": true,
+   "detail": "cardsUnderOverlays=0 (userCardHit=0) zoom=0.611"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "undone-dense lanes ordered",
+   "pass": true,
+   "detail": "user:1/1x<=1 role:1/1x<=1 accessProfile:6/1x<=6 entitlement:37/4x<=10 source:3/1x<=3"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "undone-dense <=10 per lane or wrapped",
+   "pass": true,
+   "detail": "user:1/1x<=1 role:1/1x<=1 accessProfile:6/1x<=6 entitlement:37/4x<=10 source:3/1x<=3"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "ref-mixed",
+   "pass": true,
+   "detail": "final positions maxErr=0px missing=0 extra=0 edgeIdsEqual=true flaggedAfterEnd=0 nodes=12 edges=11"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T2",
+   "scenario": "ref-mixed final viewport == base",
+   "pass": true,
+   "detail": "final=194.994,317.41,1.05 base=194.994,317.41,1.05"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T2",
+   "scenario": "ref-mixed camera interpolates",
+   "pass": true,
+   "detail": "changedFrames=25 start=84ms visible(>=2px)=117ms end=484ms total(x,y,z)=36.8,-8.87,0.28 maxStepFrac(x,y,z)=13%,12%,11% regress(x,y,z)=0.343,0.001,0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T3",
+   "scenario": "ref-mixed no stray cards",
+   "pass": true,
+   "detail": "atCanvasCorner=0 atFlowOrigin=0 offCanvas(opaque,non-exiting,fit-mode)=0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "ref-mixed staying cards glide monotonically",
+   "pass": true,
+   "detail": "staying=12 worstRegress=0px maxFrameStep=8% of travel"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "ref-mixed removed cards fade out and unmount",
+   "pass": true,
+   "detail": "removed=16 opacityIncreases=0 unmountedBy=451ms (limit 600)"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "ref-mixed entering cards fade in from a related card",
+   "pass": true,
+   "detail": "entering=0 violations=0 maxFirstFrameDistToRelatedCard=0px"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "ref-mixed new edges fade in (no pop)",
+   "pass": true,
+   "detail": "newEdges=0 violations=0 maxOneFrameOpacityStep=0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "ref-mixed staying edges never blink off",
+   "pass": true,
+   "detail": "edgesThatVanishedForAFrame=0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "ref-mixed no leftover flags / duplicates",
+   "pass": true,
+   "detail": "duplicateIds=false"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T4",
+   "scenario": "ref-mixed edge/card detachment",
+   "pass": true,
+   "detail": "maxDist=76.1px violatingFrames=6 (edge-samples>0.5 opacity: 536)"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "ref-mixed canvas reaches window bottom",
+   "pass": true,
+   "detail": "canvasBottom=987 expected=988"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "ref-mixed no page scroll",
+   "pass": true,
+   "detail": "scrollHeight=1000 innerHeight=1000"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "ref-mixed nothing under overlays",
+   "pass": true,
+   "detail": "cardsUnderOverlays=0 (userCardHit=0) zoom=1.05"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "ref-mixed lanes ordered",
+   "pass": true,
+   "detail": "user:1/1x<=1 role:2/1x<=2 accessProfile:3/1x<=3 entitlement:6/1x<=6"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "ref-mixed <=10 per lane or wrapped",
+   "pass": true,
+   "detail": "user:1/1x<=1 role:2/1x<=2 accessProfile:3/1x<=3 entitlement:6/1x<=6"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "unref-mixed",
+   "pass": true,
+   "detail": "final positions maxErr=0px missing=0 extra=0 edgeIdsEqual=true flaggedAfterEnd=0 nodes=28 edges=40"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T2",
+   "scenario": "unref-mixed final viewport == base",
+   "pass": true,
+   "detail": "final=158.193,326.283,0.772 base=158.193,326.283,0.772"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T2",
+   "scenario": "unref-mixed camera interpolates",
+   "pass": true,
+   "detail": "changedFrames=25 start=119ms visible(>=2px)=153ms end=519ms total(x,y,z)=-36.8,8.87,-0.28 maxStepFrac(x,y,z)=13%,11%,11% regress(x,y,z)=0.327,0.001,0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T3",
+   "scenario": "unref-mixed no stray cards",
+   "pass": true,
+   "detail": "atCanvasCorner=0 atFlowOrigin=0 offCanvas(opaque,non-exiting,fit-mode)=0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "unref-mixed staying cards glide monotonically",
+   "pass": true,
+   "detail": "staying=12 worstRegress=0px maxFrameStep=8% of travel"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "unref-mixed removed cards fade out and unmount",
+   "pass": true,
+   "detail": "removed=0 opacityIncreases=0 unmountedBy=0ms (limit 600)"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "unref-mixed entering cards fade in from a related card",
+   "pass": true,
+   "detail": "entering=16 violations=0 maxFirstFrameDistToRelatedCard=0px"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "unref-mixed new edges fade in (no pop)",
+   "pass": true,
+   "detail": "newEdges=29 violations=0 maxOneFrameOpacityStep=0.08"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "unref-mixed staying edges never blink off",
+   "pass": true,
+   "detail": "edgesThatVanishedForAFrame=0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "unref-mixed no leftover flags / duplicates",
+   "pass": true,
+   "detail": "duplicateIds=false"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T4",
+   "scenario": "unref-mixed edge/card detachment",
+   "pass": true,
+   "detail": "maxDist=90.2px violatingFrames=6 (edge-samples>0.5 opacity: 536)"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "unref-mixed canvas reaches window bottom",
+   "pass": true,
+   "detail": "canvasBottom=987 expected=988"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "unref-mixed no page scroll",
+   "pass": true,
+   "detail": "scrollHeight=1000 innerHeight=1000"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "unref-mixed nothing under overlays",
+   "pass": true,
+   "detail": "cardsUnderOverlays=0 (userCardHit=0) zoom=0.772"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "unref-mixed lanes ordered",
+   "pass": true,
+   "detail": "user:1/1x<=1 role:2/1x<=2 accessProfile:6/1x<=6 entitlement:16/2x<=8 source:3/1x<=3"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "unref-mixed <=10 per lane or wrapped",
+   "pass": true,
+   "detail": "user:1/1x<=1 role:2/1x<=2 accessProfile:6/1x<=6 entitlement:16/2x<=8 source:3/1x<=3"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "layout-mixed",
+   "pass": true,
+   "detail": "final positions maxErr=0px missing=0 extra=0 edgeIdsEqual=true flaggedAfterEnd=0 nodes=28 edges=40"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T2",
+   "scenario": "layout-mixed final viewport == base",
+   "pass": true,
+   "detail": "final=805.544,6.111,0.725 base=805.544,6.111,0.725"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T2",
+   "scenario": "layout-mixed camera interpolates",
+   "pass": true,
+   "detail": "changedFrames=27 start=68ms visible(>=2px)=102ms end=502ms total(x,y,z)=647.35,-320.17,-0.05 maxStepFrac(x,y,z)=11%,11%,25% regress(x,y,z)=0,0,0.006"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T3",
+   "scenario": "layout-mixed no stray cards",
+   "pass": true,
+   "detail": "atCanvasCorner=0 atFlowOrigin=0 offCanvas(opaque,non-exiting,fit-mode)=0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "layout-mixed staying cards glide monotonically",
+   "pass": true,
+   "detail": "staying=28 worstRegress=0px maxFrameStep=8% of travel"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "layout-mixed removed cards fade out and unmount",
+   "pass": true,
+   "detail": "removed=0 opacityIncreases=0 unmountedBy=0ms (limit 600)"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "layout-mixed entering cards fade in from a related card",
+   "pass": true,
+   "detail": "entering=0 violations=0 maxFirstFrameDistToRelatedCard=0px"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "layout-mixed new edges fade in (no pop)",
+   "pass": true,
+   "detail": "newEdges=0 violations=0 maxOneFrameOpacityStep=0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "layout-mixed staying edges never blink off",
+   "pass": true,
+   "detail": "edgesThatVanishedForAFrame=0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "layout-mixed no leftover flags / duplicates",
+   "pass": true,
+   "detail": "duplicateIds=false"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T4",
+   "scenario": "layout-mixed edge/card detachment",
+   "pass": true,
+   "detail": "maxDist=239.1px violatingFrames=9 (edge-samples>0.5 opacity: 506)"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "layout-mixed canvas reaches window bottom",
+   "pass": true,
+   "detail": "canvasBottom=987 expected=988"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "layout-mixed no page scroll",
+   "pass": true,
+   "detail": "scrollHeight=1000 innerHeight=1000"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "layout-mixed nothing under overlays",
+   "pass": true,
+   "detail": "cardsUnderOverlays=0 (userCardHit=0) zoom=0.725"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "layout-mixed lanes ordered",
+   "pass": true,
+   "detail": "user:1/1x<=1 role:2/1x<=2 accessProfile:6/1x<=6 entitlement:16/2x<=8 source:3/1x<=3"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "layout-mixed <=10 per lane or wrapped",
+   "pass": true,
+   "detail": "user:1/1x<=1 role:2/1x<=2 accessProfile:6/1x<=6 entitlement:16/2x<=8 source:3/1x<=3"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "layout-back-mixed",
+   "pass": true,
+   "detail": "final positions maxErr=0px missing=0 extra=0 edgeIdsEqual=true flaggedAfterEnd=0 nodes=28 edges=40"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T2",
+   "scenario": "layout-back-mixed final viewport == base",
+   "pass": true,
+   "detail": "final=158.193,326.283,0.772 base=158.193,326.283,0.772"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T2",
+   "scenario": "layout-back-mixed camera interpolates",
+   "pass": true,
+   "detail": "changedFrames=27 start=69ms visible(>=2px)=103ms end=503ms total(x,y,z)=-647.35,320.17,0.05 maxStepFrac(x,y,z)=10%,10%,24% regress(x,y,z)=0,0,0.006"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T3",
+   "scenario": "layout-back-mixed no stray cards",
+   "pass": true,
+   "detail": "atCanvasCorner=0 atFlowOrigin=0 offCanvas(opaque,non-exiting,fit-mode)=0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "layout-back-mixed staying cards glide monotonically",
+   "pass": true,
+   "detail": "staying=28 worstRegress=0px maxFrameStep=8% of travel"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "layout-back-mixed removed cards fade out and unmount",
+   "pass": true,
+   "detail": "removed=0 opacityIncreases=0 unmountedBy=0ms (limit 600)"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "layout-back-mixed entering cards fade in from a related card",
+   "pass": true,
+   "detail": "entering=0 violations=0 maxFirstFrameDistToRelatedCard=0px"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "layout-back-mixed new edges fade in (no pop)",
+   "pass": true,
+   "detail": "newEdges=0 violations=0 maxOneFrameOpacityStep=0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "layout-back-mixed staying edges never blink off",
+   "pass": true,
+   "detail": "edgesThatVanishedForAFrame=0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "layout-back-mixed no leftover flags / duplicates",
+   "pass": true,
+   "detail": "duplicateIds=false"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T4",
+   "scenario": "layout-back-mixed edge/card detachment",
+   "pass": true,
+   "detail": "maxDist=240.4px violatingFrames=10 (edge-samples>0.5 opacity: 506)"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "layout-back-mixed canvas reaches window bottom",
+   "pass": true,
+   "detail": "canvasBottom=987 expected=988"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "layout-back-mixed no page scroll",
+   "pass": true,
+   "detail": "scrollHeight=1000 innerHeight=1000"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "layout-back-mixed nothing under overlays",
+   "pass": true,
+   "detail": "cardsUnderOverlays=0 (userCardHit=0) zoom=0.772"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "layout-back-mixed lanes ordered",
+   "pass": true,
+   "detail": "user:1/1x<=1 role:2/1x<=2 accessProfile:6/1x<=6 entitlement:16/2x<=8 source:3/1x<=3"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "layout-back-mixed <=10 per lane or wrapped",
+   "pass": true,
+   "detail": "user:1/1x<=1 role:2/1x<=2 accessProfile:6/1x<=6 entitlement:16/2x<=8 source:3/1x<=3"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "layout-dense",
+   "pass": true,
+   "detail": "final positions maxErr=0px missing=0 extra=0 edgeIdsEqual=true flaggedAfterEnd=0 nodes=48 edges=81"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T2",
+   "scenario": "layout-dense final viewport == base",
+   "pass": true,
+   "detail": "final=823.064,19.972,0.579 base=823.064,19.972,0.579"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T2",
+   "scenario": "layout-dense camera interpolates",
+   "pass": true,
+   "detail": "changedFrames=27 start=83ms visible(>=2px)=116ms end=516ms total(x,y,z)=660.84,-311.48,-0.03 maxStepFrac(x,y,z)=11%,10%,30% regress(x,y,z)=0,0,0.005"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T3",
+   "scenario": "layout-dense no stray cards",
+   "pass": true,
+   "detail": "atCanvasCorner=0 atFlowOrigin=0 offCanvas(opaque,non-exiting,fit-mode)=0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "layout-dense staying cards glide monotonically",
+   "pass": true,
+   "detail": "staying=48 worstRegress=0px maxFrameStep=8% of travel"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "layout-dense removed cards fade out and unmount",
+   "pass": true,
+   "detail": "removed=0 opacityIncreases=0 unmountedBy=0ms (limit 600)"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "layout-dense entering cards fade in from a related card",
+   "pass": true,
+   "detail": "entering=0 violations=0 maxFirstFrameDistToRelatedCard=0px"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "layout-dense new edges fade in (no pop)",
+   "pass": true,
+   "detail": "newEdges=0 violations=0 maxOneFrameOpacityStep=0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "layout-dense staying edges never blink off",
+   "pass": true,
+   "detail": "edgesThatVanishedForAFrame=0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "layout-dense no leftover flags / duplicates",
+   "pass": true,
+   "detail": "duplicateIds=false"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T4",
+   "scenario": "layout-dense edge/card detachment",
+   "pass": true,
+   "detail": "maxDist=241.6px violatingFrames=9 (edge-samples>0.5 opacity: 1320)"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "layout-dense canvas reaches window bottom",
+   "pass": true,
+   "detail": "canvasBottom=987 expected=988"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "layout-dense no page scroll",
+   "pass": true,
+   "detail": "scrollHeight=1000 innerHeight=1000"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "layout-dense nothing under overlays",
+   "pass": true,
+   "detail": "cardsUnderOverlays=0 (userCardHit=0) zoom=0.579"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "layout-dense lanes ordered",
+   "pass": true,
+   "detail": "user:1/1x<=1 role:1/1x<=1 accessProfile:6/1x<=6 entitlement:37/4x<=10 source:3/1x<=3"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "layout-dense <=10 per lane or wrapped",
+   "pass": true,
+   "detail": "user:1/1x<=1 role:1/1x<=1 accessProfile:6/1x<=6 entitlement:37/4x<=10 source:3/1x<=3"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "lane11-done",
+   "pass": true,
+   "detail": "final positions maxErr=0px missing=0 extra=0 edgeIdsEqual=true flaggedAfterEnd=0 nodes=14 edges=20"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T2",
+   "scenario": "lane11-done final viewport == base",
+   "pass": true,
+   "detail": "final=362.19,331.448,0.611 base=362.19,331.448,0.611"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T2",
+   "scenario": "lane11-done camera interpolates",
+   "pass": true,
+   "detail": "changedFrames=25 start=88ms visible(>=2px)=121ms end=488ms total(x,y,z)=205.35,-65.34,-0.21 maxStepFrac(x,y,z)=11%,11%,11% regress(x,y,z)=0,0,0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T3",
+   "scenario": "lane11-done no stray cards",
+   "pass": true,
+   "detail": "atCanvasCorner=0 atFlowOrigin=0 offCanvas(opaque,non-exiting,fit-mode)=0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "lane11-done staying cards glide monotonically",
+   "pass": true,
+   "detail": "staying=14 worstRegress=0px maxFrameStep=8% of travel"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "lane11-done removed cards fade out and unmount",
+   "pass": true,
+   "detail": "removed=1 opacityIncreases=0 unmountedBy=454ms (limit 600)"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "lane11-done entering cards fade in from a related card",
+   "pass": true,
+   "detail": "entering=0 violations=0 maxFirstFrameDistToRelatedCard=0px"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "lane11-done new edges fade in (no pop)",
+   "pass": true,
+   "detail": "newEdges=0 violations=0 maxOneFrameOpacityStep=0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "lane11-done staying edges never blink off",
+   "pass": true,
+   "detail": "edgesThatVanishedForAFrame=0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "lane11-done no leftover flags / duplicates",
+   "pass": true,
+   "detail": "duplicateIds=false"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T4",
+   "scenario": "lane11-done edge/card detachment",
+   "pass": true,
+   "detail": "maxDist=45.7px violatingFrames=3 (edge-samples>0.5 opacity: 469)"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "lane11-done canvas reaches window bottom",
+   "pass": true,
+   "detail": "canvasBottom=987 expected=988"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "lane11-done no page scroll",
+   "pass": true,
+   "detail": "scrollHeight=1000 innerHeight=1000"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "lane11-done nothing under overlays",
+   "pass": true,
+   "detail": "cardsUnderOverlays=0 (userCardHit=0) zoom=0.611"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "lane11-done lanes ordered",
+   "pass": true,
+   "detail": "user:1/1x<=1 entitlement:10/1x<=10 source:3/1x<=3"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "lane11-done <=10 per lane or wrapped",
+   "pass": true,
+   "detail": "user:1/1x<=1 entitlement:10/1x<=10 source:3/1x<=3"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "drill-dense",
+   "pass": true,
+   "detail": "final positions maxErr=0px missing=0 extra=0 edgeIdsEqual=true flaggedAfterEnd=0 nodes=48 edges=81"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T2",
+   "scenario": "drill-dense final viewport == base",
+   "pass": true,
+   "detail": "final=162.228,331.448,0.611 base=162.228,331.448,0.611"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T2",
+   "scenario": "drill-dense camera interpolates",
+   "pass": true,
+   "detail": "changedFrames=27 start=123ms visible(>=2px)=140ms end=557ms total(x,y,z)=-657.77,-97.55,-0.73 maxStepFrac(x,y,z)=10%,10%,11% regress(x,y,z)=0,0,0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T3",
+   "scenario": "drill-dense no stray cards",
+   "pass": true,
+   "detail": "atCanvasCorner=0 atFlowOrigin=0 offCanvas(opaque,non-exiting,fit-mode)=0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T1",
+   "scenario": "drill-dense clicked card glides",
+   "pass": true,
+   "detail": "travel=596.86px worstRegress=0px maxFrameStep=8% firstFrameStep=0% | baseline jumpFrac=0/100%"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T1",
+   "scenario": "drill-dense other users fade out",
+   "pass": true,
+   "detail": "others=4 increases=0 firstFrameMinOpacity=1 removedBy=473ms"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T1",
+   "scenario": "drill-dense lineage enters from the user card",
+   "pass": true,
+   "detail": "lineage=47 violations=0 maxFirstFrameDistToUser=0px"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "drill-dense staying cards glide monotonically",
+   "pass": true,
+   "detail": "staying=1 worstRegress=0px maxFrameStep=8% of travel"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "drill-dense removed cards fade out and unmount",
+   "pass": true,
+   "detail": "removed=4 opacityIncreases=0 unmountedBy=473ms (limit 600)"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "drill-dense entering cards fade in from a related card",
+   "pass": true,
+   "detail": "entering=47 violations=0 maxFirstFrameDistToRelatedCard=0px"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "drill-dense new edges fade in (no pop)",
+   "pass": true,
+   "detail": "newEdges=81 violations=0 maxOneFrameOpacityStep=0.18"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "drill-dense staying edges never blink off",
+   "pass": true,
+   "detail": "edgesThatVanishedForAFrame=0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "drill-dense no leftover flags / duplicates",
+   "pass": true,
+   "detail": "duplicateIds=false"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T4",
+   "scenario": "drill-dense edge/card detachment",
+   "pass": true,
+   "detail": "maxDist=266.5px violatingFrames=8 (edge-samples>0.5 opacity: 1260)"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "drill-dense canvas reaches window bottom",
+   "pass": true,
+   "detail": "canvasBottom=987 expected=988"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "drill-dense no page scroll",
+   "pass": true,
+   "detail": "scrollHeight=1000 innerHeight=1000"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "drill-dense nothing under overlays",
+   "pass": true,
+   "detail": "cardsUnderOverlays=0 (userCardHit=0) zoom=0.611"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "drill-dense lanes ordered",
+   "pass": true,
+   "detail": "user:1/1x<=1 role:1/1x<=1 accessProfile:6/1x<=6 entitlement:37/4x<=10 source:3/1x<=3"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "drill-dense <=10 per lane or wrapped",
+   "pass": true,
+   "detail": "user:1/1x<=1 role:1/1x<=1 accessProfile:6/1x<=6 entitlement:37/4x<=10 source:3/1x<=3"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T10",
+   "scenario": "big size guard instant",
+   "pass": true,
+   "detail": "nodesBefore=41 firstChangedFrameNodes=451 (at 166ms) finalNodes=451 exitingMax=0 enteringMax=0 frames=33"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T2",
+   "scenario": "big final viewport == base",
+   "pass": true,
+   "detail": "final=160.4,404.505,0.65 base=160.4,404.505,0.65"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "back-dense",
+   "pass": true,
+   "detail": "final positions maxErr=0px missing=0 extra=0 edgeIdsEqual=true flaggedAfterEnd=0 nodes=5 edges=0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T2",
+   "scenario": "back-dense final viewport == base",
+   "pass": true,
+   "detail": "final=820,429,1.337 base=820,429,1.337"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T2",
+   "scenario": "back-dense camera interpolates",
+   "pass": true,
+   "detail": "changedFrames=26 start=58ms visible(>=2px)=75ms end=475ms total(x,y,z)=657.77,97.55,0.73 maxStepFrac(x,y,z)=11%,11%,11% regress(x,y,z)=0,0,0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T3",
+   "scenario": "back-dense no stray cards",
+   "pass": true,
+   "detail": "atCanvasCorner=0 atFlowOrigin=0 offCanvas(opaque,non-exiting,fit-mode)=0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "back-dense staying cards glide monotonically",
+   "pass": true,
+   "detail": "staying=1 worstRegress=0px maxFrameStep=8% of travel"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "back-dense removed cards fade out and unmount",
+   "pass": true,
+   "detail": "removed=47 opacityIncreases=0 unmountedBy=441ms (limit 600)"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "back-dense entering cards fade in from a related card",
+   "pass": true,
+   "detail": "entering=4 violations=0 maxFirstFrameDistToRelatedCard=0px"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "back-dense new edges fade in (no pop)",
+   "pass": true,
+   "detail": "newEdges=0 violations=0 maxOneFrameOpacityStep=0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "back-dense staying edges never blink off",
+   "pass": true,
+   "detail": "edgesThatVanishedForAFrame=0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T5",
+   "scenario": "back-dense no leftover flags / duplicates",
+   "pass": true,
+   "detail": "duplicateIds=false"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T4",
+   "scenario": "back-dense edge/card detachment",
+   "pass": true,
+   "detail": "maxDist=365px violatingFrames=9 (edge-samples>0.5 opacity: 270)"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "back-dense canvas reaches window bottom",
+   "pass": true,
+   "detail": "canvasBottom=987 expected=988"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "back-dense no page scroll",
+   "pass": true,
+   "detail": "scrollHeight=1000 innerHeight=1000"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T12",
+   "scenario": "back-dense nothing under overlays",
+   "pass": true,
+   "detail": "cardsUnderOverlays=0 (userCardHit=0) zoom=1.337"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T4",
+   "scenario": "done-dense WITHOUT refinement vs with",
+   "pass": true,
+   "detail": "without: max=535.9px violatingFrames=21 | with: max=89.5px violatingFrames=6"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T4",
+   "scenario": "layout-mixed WITHOUT refinement vs with",
+   "pass": true,
+   "detail": "without: max=1814.8px violatingFrames=24 | with: max=239.1px violatingFrames=9"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T4",
+   "scenario": "layout-dense WITHOUT refinement vs with",
+   "pass": true,
+   "detail": "without: max=1837.8px violatingFrames=25 | with: max=241.6px violatingFrames=9"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T4",
+   "scenario": "ref-mixed WITHOUT refinement vs with",
+   "pass": true,
+   "detail": "without: max=467.8px violatingFrames=21 | with: max=76.1px violatingFrames=6"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T4",
+   "scenario": "lane11-done WITHOUT refinement vs with",
+   "pass": true,
+   "detail": "without: max=372.6px violatingFrames=18 | with: max=45.7px violatingFrames=3"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T6",
+   "scenario": "(a) 5 rapid toggles end correct [plain]",
+   "pass": true,
+   "detail": "maxErr=0 missing=0 extra=0 dups=false flagged=0 allOpaque=true viewportEqualsSingleToggle=true"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T6",
+   "scenario": "(b) drill then Back@120ms ends in grid cleanly [plain]",
+   "pass": true,
+   "detail": "ids=8/8 sameSet=true flagged/edges=0 allOpaque=true viewportEqualsGridFit=true"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T6",
+   "scenario": "(c) drill then Escape@100ms ends in grid cleanly [plain]",
+   "pass": true,
+   "detail": "ids=8/8 sameSet=true flagged/edges=0 allOpaque=true viewportEqualsGridFit=true"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T6",
+   "scenario": "(d) resize mid-transition",
+   "pass": true,
+   "detail": "resized=161.696,297.261,0.617 fresh=161.696,297.261,0.617 flagged=0"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T6",
+   "scenario": "(a) 5 rapid toggles end correct [strict]",
+   "pass": true,
+   "detail": "maxErr=0 missing=0 extra=0 dups=false flagged=0 allOpaque=true viewportEqualsSingleToggle=true"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T6",
+   "scenario": "(b) drill then Back@120ms ends in grid cleanly [strict]",
+   "pass": true,
+   "detail": "ids=8/8 sameSet=true flagged/edges=0 allOpaque=true viewportEqualsGridFit=true"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T7",
+   "scenario": "hover/selection mid-transition do not restart it",
+   "pass": true,
+   "detail": "newlyFlaggedNodes=0 flaggedAtEnd=0 selectedEdges=1 stayingRegress=0px"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T7",
+   "scenario": "hover emphasis completes within ~200ms",
+   "pass": true,
+   "detail": "emphasisMs=144"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T7",
+   "scenario": "other edges dimmed after selection",
+   "pass": true,
+   "detail": "allOthersDimmed=true"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T7",
+   "scenario": "entering edges with selection fade in smoothly (opacity multiplies, no pop)",
+   "pass": true,
+   "detail": "enteringEdges=29 nonMonotonicSteps=0 stepsOver0.35=0 selectedEdgesAtEnd=1"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T8",
+   "scenario": "reduced motion: --motion-ms is 0 and grid immediately opaque",
+   "pass": true,
+   "detail": "--motion-ms=0s allOpaque=true"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T8",
+   "scenario": "drill-dense reduced motion: first sample is final",
+   "pass": true,
+   "detail": "maxErr=0 missing=0 extra=0 anyTransitionFlag=false finalViewportEqualsBase=true frameChangesOfViewport=1"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T8",
+   "scenario": "done-dense reduced motion: first sample is final",
+   "pass": true,
+   "detail": "maxErr=0 missing=0 extra=0 anyTransitionFlag=false finalViewportEqualsBase=true frameChangesOfViewport=1"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T9",
+   "scenario": "initial grid reveal",
+   "pass": true,
+   "detail": "noFlashOnFirstFrame=true firstVsLastOpacityMaxDiff=1 allOpaqueAtEnd=true cascadeComplete=1700ms (limit 2330) distinctViewportsWhileVisible=1 finalViewportEqualsBase=true nodes=40"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T10",
+   "scenario": "drill-dense frame pacing",
+   "pass": true,
+   "detail": "median=16.7ms p95=16.8ms frames=62"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T10",
+   "scenario": "done-dense frame pacing",
+   "pass": true,
+   "detail": "median=16.7ms p95=16.8ms frames=61"
+  },
+  {
+   "vp": "1700x1000",
+   "test": "T10",
+   "scenario": "layout-dense frame pacing",
+   "pass": true,
+   "detail": "median=16.7ms p95=16.8ms frames=61"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "drill-mixed",
+   "pass": true,
+   "detail": "final positions maxErr=0px missing=0 extra=0 edgeIdsEqual=true flaggedAfterEnd=0 nodes=28 edges=40"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T2",
+   "scenario": "drill-mixed final viewport == base",
+   "pass": true,
+   "detail": "final=166.929,187.604,0.419 base=166.929,187.604,0.419"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T2",
+   "scenario": "drill-mixed camera interpolates",
+   "pass": true,
+   "detail": "changedFrames=26 start=125ms visible(>=2px)=142ms end=542ms total(x,y,z)=-353.07,-91.4,-0.61 maxStepFrac(x,y,z)=11%,11%,11% regress(x,y,z)=0,0,0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T3",
+   "scenario": "drill-mixed no stray cards",
+   "pass": true,
+   "detail": "atCanvasCorner=0 atFlowOrigin=0 offCanvas(opaque,non-exiting,fit-mode)=18"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T1",
+   "scenario": "drill-mixed clicked card glides",
+   "pass": true,
+   "detail": "travel=484.65px worstRegress=0px maxFrameStep=8% firstFrameStep=0% | baseline jumpFrac=0/100%"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T1",
+   "scenario": "drill-mixed other users fade out",
+   "pass": true,
+   "detail": "others=7 increases=0 firstFrameMinOpacity=1 removedBy=475ms"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T1",
+   "scenario": "drill-mixed lineage enters from the user card",
+   "pass": true,
+   "detail": "lineage=27 violations=0 maxFirstFrameDistToUser=0px"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "drill-mixed staying cards glide monotonically",
+   "pass": true,
+   "detail": "staying=1 worstRegress=0px maxFrameStep=8% of travel"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "drill-mixed removed cards fade out and unmount",
+   "pass": true,
+   "detail": "removed=7 opacityIncreases=0 unmountedBy=475ms (limit 600)"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "drill-mixed entering cards fade in from a related card",
+   "pass": true,
+   "detail": "entering=27 violations=0 maxFirstFrameDistToRelatedCard=0px"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "drill-mixed new edges fade in (no pop)",
+   "pass": true,
+   "detail": "newEdges=40 violations=0 maxOneFrameOpacityStep=0.18"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "drill-mixed staying edges never blink off",
+   "pass": true,
+   "detail": "edgesThatVanishedForAFrame=0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "drill-mixed no leftover flags / duplicates",
+   "pass": true,
+   "detail": "duplicateIds=false"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T4",
+   "scenario": "drill-mixed edge/card detachment",
+   "pass": true,
+   "detail": "maxDist=146.7px violatingFrames=7 (edge-samples>0.5 opacity: 462)"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "drill-mixed canvas reaches window bottom",
+   "pass": true,
+   "detail": "canvasBottom=687 expected=688"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "drill-mixed no page scroll",
+   "pass": true,
+   "detail": "scrollHeight=700 innerHeight=700"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "drill-mixed nothing under overlays",
+   "pass": true,
+   "detail": "cardsUnderOverlays=0 (userCardHit=0) zoom=0.419"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "drill-mixed lanes ordered",
+   "pass": true,
+   "detail": "user:1/1x<=1 role:2/1x<=2 accessProfile:6/1x<=6 entitlement:16/2x<=8 source:3/1x<=3"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "drill-mixed <=10 per lane or wrapped",
+   "pass": true,
+   "detail": "user:1/1x<=1 role:2/1x<=2 accessProfile:6/1x<=6 entitlement:16/2x<=8 source:3/1x<=3"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "back-mixed",
+   "pass": true,
+   "detail": "final positions maxErr=0px missing=0 extra=0 edgeIdsEqual=true flaggedAfterEnd=0 nodes=8 edges=0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T2",
+   "scenario": "back-mixed final viewport == base",
+   "pass": true,
+   "detail": "final=520,279,1.024 base=520,279,1.024"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T2",
+   "scenario": "back-mixed camera interpolates",
+   "pass": true,
+   "detail": "changedFrames=26 start=52ms visible(>=2px)=86ms end=469ms total(x,y,z)=353.07,91.4,0.61 maxStepFrac(x,y,z)=10%,10%,11% regress(x,y,z)=0,0,0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T3",
+   "scenario": "back-mixed no stray cards",
+   "pass": true,
+   "detail": "atCanvasCorner=0 atFlowOrigin=0 offCanvas(opaque,non-exiting,fit-mode)=0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "back-mixed staying cards glide monotonically",
+   "pass": true,
+   "detail": "staying=1 worstRegress=0px maxFrameStep=9% of travel"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "back-mixed removed cards fade out and unmount",
+   "pass": true,
+   "detail": "removed=27 opacityIncreases=0 unmountedBy=452ms (limit 600)"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "back-mixed entering cards fade in from a related card",
+   "pass": true,
+   "detail": "entering=7 violations=0 maxFirstFrameDistToRelatedCard=0px"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "back-mixed new edges fade in (no pop)",
+   "pass": true,
+   "detail": "newEdges=0 violations=0 maxOneFrameOpacityStep=0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "back-mixed staying edges never blink off",
+   "pass": true,
+   "detail": "edgesThatVanishedForAFrame=0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "back-mixed no leftover flags / duplicates",
+   "pass": true,
+   "detail": "duplicateIds=false"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T4",
+   "scenario": "back-mixed edge/card detachment",
+   "pass": true,
+   "detail": "maxDist=203.1px violatingFrames=9 (edge-samples>0.5 opacity: 99)"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "back-mixed canvas reaches window bottom",
+   "pass": true,
+   "detail": "canvasBottom=687 expected=688"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "back-mixed no page scroll",
+   "pass": true,
+   "detail": "scrollHeight=700 innerHeight=700"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "back-mixed nothing under overlays",
+   "pass": true,
+   "detail": "cardsUnderOverlays=0 (userCardHit=0) zoom=1.024"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "done-dense",
+   "pass": true,
+   "detail": "final positions maxErr=0px missing=0 extra=0 edgeIdsEqual=true flaggedAfterEnd=0 nodes=31 edges=50"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T2",
+   "scenario": "done-dense final viewport == base",
+   "pass": true,
+   "detail": "final=166.594,189.792,0.413 base=166.594,189.792,0.413"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T2",
+   "scenario": "done-dense camera interpolates",
+   "pass": true,
+   "detail": "changedFrames=23 start=111ms visible(>=2px)=161ms end=478ms total(x,y,z)=-2.19,-0.61,0.08 maxStepFrac(x,y,z)=27%,25%,11% regress(x,y,z)=0.336,0.078,0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T3",
+   "scenario": "done-dense no stray cards",
+   "pass": true,
+   "detail": "atCanvasCorner=0 atFlowOrigin=0 offCanvas(opaque,non-exiting,fit-mode)=0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "done-dense staying cards glide monotonically",
+   "pass": true,
+   "detail": "staying=31 worstRegress=0px maxFrameStep=9% of travel"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "done-dense removed cards fade out and unmount",
+   "pass": true,
+   "detail": "removed=17 opacityIncreases=0 unmountedBy=461ms (limit 600)"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "done-dense entering cards fade in from a related card",
+   "pass": true,
+   "detail": "entering=0 violations=0 maxFirstFrameDistToRelatedCard=0px"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "done-dense new edges fade in (no pop)",
+   "pass": true,
+   "detail": "newEdges=0 violations=0 maxOneFrameOpacityStep=0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "done-dense staying edges never blink off",
+   "pass": true,
+   "detail": "edgesThatVanishedForAFrame=0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "done-dense no leftover flags / duplicates",
+   "pass": true,
+   "detail": "duplicateIds=false"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T4",
+   "scenario": "done-dense edge/card detachment",
+   "pass": true,
+   "detail": "maxDist=50.1px violatingFrames=4 (edge-samples>0.5 opacity: 981)"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "done-dense canvas reaches window bottom",
+   "pass": true,
+   "detail": "canvasBottom=687 expected=688"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "done-dense no page scroll",
+   "pass": true,
+   "detail": "scrollHeight=700 innerHeight=700"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "done-dense nothing under overlays",
+   "pass": true,
+   "detail": "cardsUnderOverlays=0 (userCardHit=0) zoom=0.413"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "done-dense lanes ordered",
+   "pass": true,
+   "detail": "user:1/1x<=1 role:1/1x<=1 accessProfile:3/1x<=3 entitlement:23/3x<=8 source:3/1x<=3"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "done-dense <=10 per lane or wrapped",
+   "pass": true,
+   "detail": "user:1/1x<=1 role:1/1x<=1 accessProfile:3/1x<=3 entitlement:23/3x<=8 source:3/1x<=3"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "undone-dense",
+   "pass": true,
+   "detail": "final positions maxErr=0px missing=0 extra=0 edgeIdsEqual=true flaggedAfterEnd=0 nodes=48 edges=81"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T2",
+   "scenario": "undone-dense final viewport == base",
+   "pass": true,
+   "detail": "final=168.78,190.403,0.331 base=168.78,190.403,0.331"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T2",
+   "scenario": "undone-dense camera interpolates",
+   "pass": true,
+   "detail": "changedFrames=23 start=144ms visible(>=2px)=178ms end=511ms total(x,y,z)=2.19,0.61,-0.08 maxStepFrac(x,y,z)=27%,25%,11% regress(x,y,z)=0.331,0.077,0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T3",
+   "scenario": "undone-dense no stray cards",
+   "pass": true,
+   "detail": "atCanvasCorner=0 atFlowOrigin=0 offCanvas(opaque,non-exiting,fit-mode)=0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "undone-dense staying cards glide monotonically",
+   "pass": true,
+   "detail": "staying=31 worstRegress=0px maxFrameStep=8% of travel"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "undone-dense removed cards fade out and unmount",
+   "pass": true,
+   "detail": "removed=0 opacityIncreases=0 unmountedBy=0ms (limit 600)"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "undone-dense entering cards fade in from a related card",
+   "pass": true,
+   "detail": "entering=17 violations=0 maxFirstFrameDistToRelatedCard=0px"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "undone-dense new edges fade in (no pop)",
+   "pass": true,
+   "detail": "newEdges=31 violations=0 maxOneFrameOpacityStep=0.18"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "undone-dense staying edges never blink off",
+   "pass": true,
+   "detail": "edgesThatVanishedForAFrame=0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "undone-dense no leftover flags / duplicates",
+   "pass": true,
+   "detail": "duplicateIds=false"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T4",
+   "scenario": "undone-dense edge/card detachment",
+   "pass": true,
+   "detail": "maxDist=99.2px violatingFrames=8 (edge-samples>0.5 opacity: 1362)"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "undone-dense canvas reaches window bottom",
+   "pass": true,
+   "detail": "canvasBottom=687 expected=688"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "undone-dense no page scroll",
+   "pass": true,
+   "detail": "scrollHeight=700 innerHeight=700"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "undone-dense nothing under overlays",
+   "pass": true,
+   "detail": "cardsUnderOverlays=0 (userCardHit=0) zoom=0.331"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "undone-dense lanes ordered",
+   "pass": true,
+   "detail": "user:1/1x<=1 role:1/1x<=1 accessProfile:6/1x<=6 entitlement:37/4x<=10 source:3/1x<=3"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "undone-dense <=10 per lane or wrapped",
+   "pass": true,
+   "detail": "user:1/1x<=1 role:1/1x<=1 accessProfile:6/1x<=6 entitlement:37/4x<=10 source:3/1x<=3"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "ref-mixed",
+   "pass": true,
+   "detail": "final positions maxErr=0px missing=0 extra=0 edgeIdsEqual=true flaggedAfterEnd=0 nodes=12 edges=11"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T2",
+   "scenario": "ref-mixed final viewport == base",
+   "pass": true,
+   "detail": "final=185.378,182.795,0.569 base=185.378,182.795,0.569"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T2",
+   "scenario": "ref-mixed camera interpolates",
+   "pass": true,
+   "detail": "changedFrames=25 start=87ms visible(>=2px)=137ms end=487ms total(x,y,z)=18.45,-4.81,0.15 maxStepFrac(x,y,z)=13%,13%,10% regress(x,y,z)=0.129,0.036,0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T3",
+   "scenario": "ref-mixed no stray cards",
+   "pass": true,
+   "detail": "atCanvasCorner=0 atFlowOrigin=0 offCanvas(opaque,non-exiting,fit-mode)=0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "ref-mixed staying cards glide monotonically",
+   "pass": true,
+   "detail": "staying=12 worstRegress=0px maxFrameStep=8% of travel"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "ref-mixed removed cards fade out and unmount",
+   "pass": true,
+   "detail": "removed=16 opacityIncreases=0 unmountedBy=453ms (limit 600)"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "ref-mixed entering cards fade in from a related card",
+   "pass": true,
+   "detail": "entering=0 violations=0 maxFirstFrameDistToRelatedCard=0px"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "ref-mixed new edges fade in (no pop)",
+   "pass": true,
+   "detail": "newEdges=0 violations=0 maxOneFrameOpacityStep=0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "ref-mixed staying edges never blink off",
+   "pass": true,
+   "detail": "edgesThatVanishedForAFrame=0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "ref-mixed no leftover flags / duplicates",
+   "pass": true,
+   "detail": "duplicateIds=false"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T4",
+   "scenario": "ref-mixed edge/card detachment",
+   "pass": true,
+   "detail": "maxDist=41.3px violatingFrames=3 (edge-samples>0.5 opacity: 536)"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "ref-mixed canvas reaches window bottom",
+   "pass": true,
+   "detail": "canvasBottom=687 expected=688"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "ref-mixed no page scroll",
+   "pass": true,
+   "detail": "scrollHeight=700 innerHeight=700"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "ref-mixed nothing under overlays",
+   "pass": true,
+   "detail": "cardsUnderOverlays=0 (userCardHit=0) zoom=0.569"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "ref-mixed lanes ordered",
+   "pass": true,
+   "detail": "user:1/1x<=1 role:2/1x<=2 accessProfile:3/1x<=3 entitlement:6/1x<=6"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "ref-mixed <=10 per lane or wrapped",
+   "pass": true,
+   "detail": "user:1/1x<=1 role:2/1x<=2 accessProfile:3/1x<=3 entitlement:6/1x<=6"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "unref-mixed",
+   "pass": true,
+   "detail": "final positions maxErr=0px missing=0 extra=0 edgeIdsEqual=true flaggedAfterEnd=0 nodes=28 edges=40"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T2",
+   "scenario": "unref-mixed final viewport == base",
+   "pass": true,
+   "detail": "final=166.929,187.604,0.419 base=166.929,187.604,0.419"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T2",
+   "scenario": "unref-mixed camera interpolates",
+   "pass": true,
+   "detail": "changedFrames=25 start=125ms visible(>=2px)=158ms end=525ms total(x,y,z)=-18.45,4.81,-0.15 maxStepFrac(x,y,z)=12%,12%,11% regress(x,y,z)=0.13,0.037,0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T3",
+   "scenario": "unref-mixed no stray cards",
+   "pass": true,
+   "detail": "atCanvasCorner=0 atFlowOrigin=0 offCanvas(opaque,non-exiting,fit-mode)=0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "unref-mixed staying cards glide monotonically",
+   "pass": true,
+   "detail": "staying=12 worstRegress=0px maxFrameStep=8% of travel"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "unref-mixed removed cards fade out and unmount",
+   "pass": true,
+   "detail": "removed=0 opacityIncreases=0 unmountedBy=0ms (limit 600)"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "unref-mixed entering cards fade in from a related card",
+   "pass": true,
+   "detail": "entering=16 violations=0 maxFirstFrameDistToRelatedCard=0px"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "unref-mixed new edges fade in (no pop)",
+   "pass": true,
+   "detail": "newEdges=29 violations=0 maxOneFrameOpacityStep=0.08"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "unref-mixed staying edges never blink off",
+   "pass": true,
+   "detail": "edgesThatVanishedForAFrame=0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "unref-mixed no leftover flags / duplicates",
+   "pass": true,
+   "detail": "duplicateIds=false"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T4",
+   "scenario": "unref-mixed edge/card detachment",
+   "pass": true,
+   "detail": "maxDist=49px violatingFrames=3 (edge-samples>0.5 opacity: 536)"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "unref-mixed canvas reaches window bottom",
+   "pass": true,
+   "detail": "canvasBottom=687 expected=688"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "unref-mixed no page scroll",
+   "pass": true,
+   "detail": "scrollHeight=700 innerHeight=700"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "unref-mixed nothing under overlays",
+   "pass": true,
+   "detail": "cardsUnderOverlays=0 (userCardHit=0) zoom=0.419"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "unref-mixed lanes ordered",
+   "pass": true,
+   "detail": "user:1/1x<=1 role:2/1x<=2 accessProfile:6/1x<=6 entitlement:16/2x<=8 source:3/1x<=3"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "unref-mixed <=10 per lane or wrapped",
+   "pass": true,
+   "detail": "user:1/1x<=1 role:2/1x<=2 accessProfile:6/1x<=6 entitlement:16/2x<=8 source:3/1x<=3"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "layout-mixed",
+   "pass": true,
+   "detail": "final positions maxErr=0px missing=0 extra=0 edgeIdsEqual=true flaggedAfterEnd=0 nodes=28 edges=40"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T2",
+   "scenario": "layout-mixed final viewport == base",
+   "pass": true,
+   "detail": "final=517.73,14.075,0.393 base=517.73,14.075,0.393"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T2",
+   "scenario": "layout-mixed camera interpolates",
+   "pass": true,
+   "detail": "changedFrames=27 start=67ms visible(>=2px)=100ms end=500ms total(x,y,z)=350.8,-173.53,-0.03 maxStepFrac(x,y,z)=11%,11%,22% regress(x,y,z)=0,0,0.002"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T3",
+   "scenario": "layout-mixed no stray cards",
+   "pass": true,
+   "detail": "atCanvasCorner=0 atFlowOrigin=0 offCanvas(opaque,non-exiting,fit-mode)=0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "layout-mixed staying cards glide monotonically",
+   "pass": true,
+   "detail": "staying=28 worstRegress=0px maxFrameStep=8% of travel"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "layout-mixed removed cards fade out and unmount",
+   "pass": true,
+   "detail": "removed=0 opacityIncreases=0 unmountedBy=0ms (limit 600)"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "layout-mixed entering cards fade in from a related card",
+   "pass": true,
+   "detail": "entering=0 violations=0 maxFirstFrameDistToRelatedCard=0px"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "layout-mixed new edges fade in (no pop)",
+   "pass": true,
+   "detail": "newEdges=0 violations=0 maxOneFrameOpacityStep=0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "layout-mixed staying edges never blink off",
+   "pass": true,
+   "detail": "edgesThatVanishedForAFrame=0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "layout-mixed no leftover flags / duplicates",
+   "pass": true,
+   "detail": "duplicateIds=false"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T4",
+   "scenario": "layout-mixed edge/card detachment",
+   "pass": true,
+   "detail": "maxDist=131.5px violatingFrames=8 (edge-samples>0.5 opacity: 495)"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "layout-mixed canvas reaches window bottom",
+   "pass": true,
+   "detail": "canvasBottom=687 expected=688"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "layout-mixed no page scroll",
+   "pass": true,
+   "detail": "scrollHeight=700 innerHeight=700"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "layout-mixed nothing under overlays",
+   "pass": true,
+   "detail": "cardsUnderOverlays=0 (userCardHit=0) zoom=0.393"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "layout-mixed lanes ordered",
+   "pass": true,
+   "detail": "user:1/1x<=1 role:2/1x<=2 accessProfile:6/1x<=6 entitlement:16/2x<=8 source:3/1x<=3"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "layout-mixed <=10 per lane or wrapped",
+   "pass": true,
+   "detail": "user:1/1x<=1 role:2/1x<=2 accessProfile:6/1x<=6 entitlement:16/2x<=8 source:3/1x<=3"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "layout-back-mixed",
+   "pass": true,
+   "detail": "final positions maxErr=0px missing=0 extra=0 edgeIdsEqual=true flaggedAfterEnd=0 nodes=28 edges=40"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T2",
+   "scenario": "layout-back-mixed final viewport == base",
+   "pass": true,
+   "detail": "final=166.929,187.604,0.419 base=166.929,187.604,0.419"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T2",
+   "scenario": "layout-back-mixed camera interpolates",
+   "pass": true,
+   "detail": "changedFrames=27 start=73ms visible(>=2px)=123ms end=506ms total(x,y,z)=-350.8,173.53,0.03 maxStepFrac(x,y,z)=10%,11%,20% regress(x,y,z)=0,0,0.002"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T3",
+   "scenario": "layout-back-mixed no stray cards",
+   "pass": true,
+   "detail": "atCanvasCorner=0 atFlowOrigin=0 offCanvas(opaque,non-exiting,fit-mode)=0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "layout-back-mixed staying cards glide monotonically",
+   "pass": true,
+   "detail": "staying=28 worstRegress=0px maxFrameStep=8% of travel"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "layout-back-mixed removed cards fade out and unmount",
+   "pass": true,
+   "detail": "removed=0 opacityIncreases=0 unmountedBy=0ms (limit 600)"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "layout-back-mixed entering cards fade in from a related card",
+   "pass": true,
+   "detail": "entering=0 violations=0 maxFirstFrameDistToRelatedCard=0px"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "layout-back-mixed new edges fade in (no pop)",
+   "pass": true,
+   "detail": "newEdges=0 violations=0 maxOneFrameOpacityStep=0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "layout-back-mixed staying edges never blink off",
+   "pass": true,
+   "detail": "edgesThatVanishedForAFrame=0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "layout-back-mixed no leftover flags / duplicates",
+   "pass": true,
+   "detail": "duplicateIds=false"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T4",
+   "scenario": "layout-back-mixed edge/card detachment",
+   "pass": true,
+   "detail": "maxDist=133px violatingFrames=8 (edge-samples>0.5 opacity: 506)"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "layout-back-mixed canvas reaches window bottom",
+   "pass": true,
+   "detail": "canvasBottom=687 expected=688"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "layout-back-mixed no page scroll",
+   "pass": true,
+   "detail": "scrollHeight=700 innerHeight=700"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "layout-back-mixed nothing under overlays",
+   "pass": true,
+   "detail": "cardsUnderOverlays=0 (userCardHit=0) zoom=0.419"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "layout-back-mixed lanes ordered",
+   "pass": true,
+   "detail": "user:1/1x<=1 role:2/1x<=2 accessProfile:6/1x<=6 entitlement:16/2x<=8 source:3/1x<=3"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "layout-back-mixed <=10 per lane or wrapped",
+   "pass": true,
+   "detail": "user:1/1x<=1 role:2/1x<=2 accessProfile:6/1x<=6 entitlement:16/2x<=8 source:3/1x<=3"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "layout-dense",
+   "pass": true,
+   "detail": "final positions maxErr=0px missing=0 extra=0 edgeIdsEqual=true flaggedAfterEnd=0 nodes=48 edges=81"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T2",
+   "scenario": "layout-dense final viewport == base",
+   "pass": true,
+   "detail": "final=533.076,15.838,0.319 base=533.076,15.838,0.319"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T2",
+   "scenario": "layout-dense camera interpolates",
+   "pass": true,
+   "detail": "changedFrames=26 start=93ms visible(>=2px)=126ms end=510ms total(x,y,z)=364.3,-174.56,-0.01 maxStepFrac(x,y,z)=10%,10%,33% regress(x,y,z)=0,0,0.002"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T3",
+   "scenario": "layout-dense no stray cards",
+   "pass": true,
+   "detail": "atCanvasCorner=0 atFlowOrigin=0 offCanvas(opaque,non-exiting,fit-mode)=0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "layout-dense staying cards glide monotonically",
+   "pass": true,
+   "detail": "staying=48 worstRegress=0px maxFrameStep=8% of travel"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "layout-dense removed cards fade out and unmount",
+   "pass": true,
+   "detail": "removed=0 opacityIncreases=0 unmountedBy=0ms (limit 600)"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "layout-dense entering cards fade in from a related card",
+   "pass": true,
+   "detail": "entering=0 violations=0 maxFirstFrameDistToRelatedCard=0px"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "layout-dense new edges fade in (no pop)",
+   "pass": true,
+   "detail": "newEdges=0 violations=0 maxOneFrameOpacityStep=0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "layout-dense staying edges never blink off",
+   "pass": true,
+   "detail": "edgesThatVanishedForAFrame=0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "layout-dense no leftover flags / duplicates",
+   "pass": true,
+   "detail": "duplicateIds=false"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T4",
+   "scenario": "layout-dense edge/card detachment",
+   "pass": true,
+   "detail": "maxDist=134.8px violatingFrames=8 (edge-samples>0.5 opacity: 1350)"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "layout-dense canvas reaches window bottom",
+   "pass": true,
+   "detail": "canvasBottom=687 expected=688"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "layout-dense no page scroll",
+   "pass": true,
+   "detail": "scrollHeight=700 innerHeight=700"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "layout-dense nothing under overlays",
+   "pass": true,
+   "detail": "cardsUnderOverlays=0 (userCardHit=0) zoom=0.319"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "layout-dense lanes ordered",
+   "pass": true,
+   "detail": "user:1/1x<=1 role:1/1x<=1 accessProfile:6/1x<=6 entitlement:37/4x<=10 source:3/1x<=3"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "layout-dense <=10 per lane or wrapped",
+   "pass": true,
+   "detail": "user:1/1x<=1 role:1/1x<=1 accessProfile:6/1x<=6 entitlement:37/4x<=10 source:3/1x<=3"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "lane11-done",
+   "pass": true,
+   "detail": "final positions maxErr=0px missing=0 extra=0 edgeIdsEqual=true flaggedAfterEnd=0 nodes=14 edges=20"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T2",
+   "scenario": "lane11-done final viewport == base",
+   "pass": true,
+   "detail": "final=275.996,190.403,0.331 base=275.996,190.403,0.331"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T2",
+   "scenario": "lane11-done camera interpolates",
+   "pass": true,
+   "detail": "changedFrames=25 start=78ms visible(>=2px)=111ms end=478ms total(x,y,z)=110.78,-26.55,-0.14 maxStepFrac(x,y,z)=10%,10%,10% regress(x,y,z)=0,0,0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T3",
+   "scenario": "lane11-done no stray cards",
+   "pass": true,
+   "detail": "atCanvasCorner=0 atFlowOrigin=0 offCanvas(opaque,non-exiting,fit-mode)=0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "lane11-done staying cards glide monotonically",
+   "pass": true,
+   "detail": "staying=14 worstRegress=0px maxFrameStep=9% of travel"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "lane11-done removed cards fade out and unmount",
+   "pass": true,
+   "detail": "removed=1 opacityIncreases=0 unmountedBy=444ms (limit 600)"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "lane11-done entering cards fade in from a related card",
+   "pass": true,
+   "detail": "entering=0 violations=0 maxFirstFrameDistToRelatedCard=0px"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "lane11-done new edges fade in (no pop)",
+   "pass": true,
+   "detail": "newEdges=0 violations=0 maxOneFrameOpacityStep=0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "lane11-done staying edges never blink off",
+   "pass": true,
+   "detail": "edgesThatVanishedForAFrame=0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "lane11-done no leftover flags / duplicates",
+   "pass": true,
+   "detail": "duplicateIds=false"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T4",
+   "scenario": "lane11-done edge/card detachment",
+   "pass": true,
+   "detail": "maxDist=25.5px violatingFrames=1 (edge-samples>0.5 opacity: 458)"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "lane11-done canvas reaches window bottom",
+   "pass": true,
+   "detail": "canvasBottom=687 expected=688"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "lane11-done no page scroll",
+   "pass": true,
+   "detail": "scrollHeight=700 innerHeight=700"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "lane11-done nothing under overlays",
+   "pass": true,
+   "detail": "cardsUnderOverlays=0 (userCardHit=0) zoom=0.331"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "lane11-done lanes ordered",
+   "pass": true,
+   "detail": "user:1/1x<=1 entitlement:10/1x<=10 source:3/1x<=3"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "lane11-done <=10 per lane or wrapped",
+   "pass": true,
+   "detail": "user:1/1x<=1 entitlement:10/1x<=10 source:3/1x<=3"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "drill-dense",
+   "pass": true,
+   "detail": "final positions maxErr=0px missing=0 extra=0 edgeIdsEqual=true flaggedAfterEnd=0 nodes=48 edges=81"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T2",
+   "scenario": "drill-dense final viewport == base",
+   "pass": true,
+   "detail": "final=168.78,190.403,0.331 base=168.78,190.403,0.331"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T2",
+   "scenario": "drill-dense camera interpolates",
+   "pass": true,
+   "detail": "changedFrames=27 start=126ms visible(>=2px)=143ms end=559ms total(x,y,z)=-351.22,-88.6,-0.69 maxStepFrac(x,y,z)=10%,10%,10% regress(x,y,z)=0,0,0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T3",
+   "scenario": "drill-dense no stray cards",
+   "pass": true,
+   "detail": "atCanvasCorner=0 atFlowOrigin=0 offCanvas(opaque,non-exiting,fit-mode)=0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T1",
+   "scenario": "drill-dense clicked card glides",
+   "pass": true,
+   "detail": "travel=484.65px worstRegress=0px maxFrameStep=8% firstFrameStep=0% | baseline jumpFrac=0/100%"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T1",
+   "scenario": "drill-dense other users fade out",
+   "pass": true,
+   "detail": "others=4 increases=0 firstFrameMinOpacity=1 removedBy=476ms"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T1",
+   "scenario": "drill-dense lineage enters from the user card",
+   "pass": true,
+   "detail": "lineage=47 violations=0 maxFirstFrameDistToUser=0px"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "drill-dense staying cards glide monotonically",
+   "pass": true,
+   "detail": "staying=1 worstRegress=0px maxFrameStep=8% of travel"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "drill-dense removed cards fade out and unmount",
+   "pass": true,
+   "detail": "removed=4 opacityIncreases=0 unmountedBy=476ms (limit 600)"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "drill-dense entering cards fade in from a related card",
+   "pass": true,
+   "detail": "entering=47 violations=0 maxFirstFrameDistToRelatedCard=0px"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "drill-dense new edges fade in (no pop)",
+   "pass": true,
+   "detail": "newEdges=81 violations=0 maxOneFrameOpacityStep=0.18"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "drill-dense staying edges never blink off",
+   "pass": true,
+   "detail": "edgesThatVanishedForAFrame=0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "drill-dense no leftover flags / duplicates",
+   "pass": true,
+   "detail": "duplicateIds=false"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T4",
+   "scenario": "drill-dense edge/card detachment",
+   "pass": true,
+   "detail": "maxDist=161.5px violatingFrames=7 (edge-samples>0.5 opacity: 1230)"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "drill-dense canvas reaches window bottom",
+   "pass": true,
+   "detail": "canvasBottom=687 expected=688"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "drill-dense no page scroll",
+   "pass": true,
+   "detail": "scrollHeight=700 innerHeight=700"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "drill-dense nothing under overlays",
+   "pass": true,
+   "detail": "cardsUnderOverlays=0 (userCardHit=0) zoom=0.331"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "drill-dense lanes ordered",
+   "pass": true,
+   "detail": "user:1/1x<=1 role:1/1x<=1 accessProfile:6/1x<=6 entitlement:37/4x<=10 source:3/1x<=3"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "drill-dense <=10 per lane or wrapped",
+   "pass": true,
+   "detail": "user:1/1x<=1 role:1/1x<=1 accessProfile:6/1x<=6 entitlement:37/4x<=10 source:3/1x<=3"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T10",
+   "scenario": "big size guard instant",
+   "pass": true,
+   "detail": "nodesBefore=41 firstChangedFrameNodes=451 (at 168ms) finalNodes=451 exitingMax=0 enteringMax=0 frames=37"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T2",
+   "scenario": "big final viewport == base",
+   "pass": true,
+   "detail": "final=160.4,351.6,0.65 base=160.4,351.6,0.65"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "back-dense",
+   "pass": true,
+   "detail": "final positions maxErr=0px missing=0 extra=0 edgeIdsEqual=true flaggedAfterEnd=0 nodes=5 edges=0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T2",
+   "scenario": "back-dense final viewport == base",
+   "pass": true,
+   "detail": "final=520,279,1.024 base=520,279,1.024"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T2",
+   "scenario": "back-dense camera interpolates",
+   "pass": true,
+   "detail": "changedFrames=26 start=58ms visible(>=2px)=74ms end=474ms total(x,y,z)=351.22,88.6,0.69 maxStepFrac(x,y,z)=10%,10%,10% regress(x,y,z)=0,0,0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T3",
+   "scenario": "back-dense no stray cards",
+   "pass": true,
+   "detail": "atCanvasCorner=0 atFlowOrigin=0 offCanvas(opaque,non-exiting,fit-mode)=0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "back-dense staying cards glide monotonically",
+   "pass": true,
+   "detail": "staying=1 worstRegress=0px maxFrameStep=8% of travel"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "back-dense removed cards fade out and unmount",
+   "pass": true,
+   "detail": "removed=47 opacityIncreases=0 unmountedBy=441ms (limit 600)"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "back-dense entering cards fade in from a related card",
+   "pass": true,
+   "detail": "entering=4 violations=0 maxFirstFrameDistToRelatedCard=0px"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "back-dense new edges fade in (no pop)",
+   "pass": true,
+   "detail": "newEdges=0 violations=0 maxOneFrameOpacityStep=0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "back-dense staying edges never blink off",
+   "pass": true,
+   "detail": "edgesThatVanishedForAFrame=0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T5",
+   "scenario": "back-dense no leftover flags / duplicates",
+   "pass": true,
+   "detail": "duplicateIds=false"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T4",
+   "scenario": "back-dense edge/card detachment",
+   "pass": true,
+   "detail": "maxDist=160.7px violatingFrames=9 (edge-samples>0.5 opacity: 270)"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "back-dense canvas reaches window bottom",
+   "pass": true,
+   "detail": "canvasBottom=687 expected=688"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "back-dense no page scroll",
+   "pass": true,
+   "detail": "scrollHeight=700 innerHeight=700"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T12",
+   "scenario": "back-dense nothing under overlays",
+   "pass": true,
+   "detail": "cardsUnderOverlays=0 (userCardHit=0) zoom=1.024"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T4",
+   "scenario": "done-dense WITHOUT refinement vs with",
+   "pass": true,
+   "detail": "without: max=290.5px violatingFrames=19 | with: max=50.1px violatingFrames=4"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T4",
+   "scenario": "layout-mixed WITHOUT refinement vs with",
+   "pass": true,
+   "detail": "without: max=983.6px violatingFrames=22 | with: max=131.5px violatingFrames=8"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T4",
+   "scenario": "layout-dense WITHOUT refinement vs with",
+   "pass": true,
+   "detail": "without: max=996px violatingFrames=24 | with: max=134.8px violatingFrames=8"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T4",
+   "scenario": "ref-mixed WITHOUT refinement vs with",
+   "pass": true,
+   "detail": "without: max=253.6px violatingFrames=18 | with: max=41.3px violatingFrames=3"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T4",
+   "scenario": "lane11-done WITHOUT refinement vs with",
+   "pass": true,
+   "detail": "without: max=214px violatingFrames=16 | with: max=25.5px violatingFrames=1"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T6",
+   "scenario": "(a) 5 rapid toggles end correct [plain]",
+   "pass": true,
+   "detail": "maxErr=0 missing=0 extra=0 dups=false flagged=0 allOpaque=true viewportEqualsSingleToggle=true"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T6",
+   "scenario": "(b) drill then Back@120ms ends in grid cleanly [plain]",
+   "pass": true,
+   "detail": "ids=8/8 sameSet=true flagged/edges=0 allOpaque=true viewportEqualsGridFit=true"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T6",
+   "scenario": "(c) drill then Escape@100ms ends in grid cleanly [plain]",
+   "pass": true,
+   "detail": "ids=8/8 sameSet=true flagged/edges=0 allOpaque=true viewportEqualsGridFit=true"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T6",
+   "scenario": "(d) resize mid-transition",
+   "pass": true,
+   "detail": "resized=161.696,297.261,0.617 fresh=161.696,297.261,0.617 flagged=0"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T6",
+   "scenario": "(a) 5 rapid toggles end correct [strict]",
+   "pass": true,
+   "detail": "maxErr=0 missing=0 extra=0 dups=false flagged=0 allOpaque=true viewportEqualsSingleToggle=true"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T6",
+   "scenario": "(b) drill then Back@120ms ends in grid cleanly [strict]",
+   "pass": true,
+   "detail": "ids=8/8 sameSet=true flagged/edges=0 allOpaque=true viewportEqualsGridFit=true"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T7",
+   "scenario": "hover/selection mid-transition do not restart it",
+   "pass": true,
+   "detail": "newlyFlaggedNodes=0 flaggedAtEnd=0 selectedEdges=1 stayingRegress=0px"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T7",
+   "scenario": "hover emphasis completes within ~200ms",
+   "pass": true,
+   "detail": "emphasisMs=148"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T7",
+   "scenario": "other edges dimmed after selection",
+   "pass": true,
+   "detail": "allOthersDimmed=true"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T7",
+   "scenario": "entering edges with selection fade in smoothly (opacity multiplies, no pop)",
+   "pass": true,
+   "detail": "enteringEdges=29 nonMonotonicSteps=0 stepsOver0.35=0 selectedEdgesAtEnd=1"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T8",
+   "scenario": "reduced motion: --motion-ms is 0 and grid immediately opaque",
+   "pass": true,
+   "detail": "--motion-ms=0s allOpaque=true"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T8",
+   "scenario": "drill-dense reduced motion: first sample is final",
+   "pass": true,
+   "detail": "maxErr=0 missing=0 extra=0 anyTransitionFlag=false finalViewportEqualsBase=true frameChangesOfViewport=1"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T8",
+   "scenario": "done-dense reduced motion: first sample is final",
+   "pass": true,
+   "detail": "maxErr=0 missing=0 extra=0 anyTransitionFlag=false finalViewportEqualsBase=true frameChangesOfViewport=1"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T9",
+   "scenario": "initial grid reveal",
+   "pass": true,
+   "detail": "noFlashOnFirstFrame=true firstVsLastOpacityMaxDiff=1 allOpaqueAtEnd=true cascadeComplete=1700ms (limit 2330) distinctViewportsWhileVisible=1 finalViewportEqualsBase=true nodes=40"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T10",
+   "scenario": "drill-dense frame pacing",
+   "pass": true,
+   "detail": "median=16.7ms p95=16.7ms frames=62"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T10",
+   "scenario": "done-dense frame pacing",
+   "pass": true,
+   "detail": "median=16.7ms p95=16.7ms frames=61"
+  },
+  {
+   "vp": "1100x700",
+   "test": "T10",
+   "scenario": "layout-dense frame pacing",
+   "pass": true,
+   "detail": "median=16.7ms p95=16.8ms frames=61"
+  },
+  {
+   "vp": "all",
+   "test": "T11",
+   "scenario": "no console/page errors",
+   "pass": true,
+   "detail": "none"
+  }
+ ],
+ "extra": {
+  "sheets": [
+   {
+    "file": "motion-1-grid-to-drilldown-mixed.png",
+    "picks": [
+     {
+      "target": 0,
+      "actual": -1
+     },
+     {
+      "target": 100,
+      "actual": 99.87262500000361
+     },
+     {
+      "target": 200,
+      "actual": 193.73362499999348
+     },
+     {
+      "target": 300,
+      "actual": 295.83220799999253
+     },
+     {
+      "target": 450,
+      "actual": 447.52041699999245
+     },
+     {
+      "target": 700,
+      "actual": 553.3334579999937
+     }
+    ]
+   },
+   {
+    "file": "motion-2-drilldown-to-grid-mixed.png",
+    "picks": [
+     {
+      "target": 0,
+      "actual": -1
+     },
+     {
+      "target": 100,
+      "actual": 103.46499999999651
+     },
+     {
+      "target": 200,
+      "actual": 203.59312499999942
+     },
+     {
+      "target": 300,
+      "actual": 301.8058749999909
+     },
+     {
+      "target": 450,
+      "actual": 449.7346249999973
+     },
+     {
+      "target": 700,
+      "actual": 694.1892089999892
+     }
+    ]
+   },
+   {
+    "file": "motion-3-hide-completed-dense.png",
+    "picks": [
+     {
+      "target": 0,
+      "actual": -1
+     },
+     {
+      "target": 100,
+      "actual": 100.9414170000091
+     },
+     {
+      "target": 200,
+      "actual": 199.8865000000078
+     },
+     {
+      "target": 300,
+      "actual": 265.2160830000066
+     },
+     {
+      "target": 450,
+      "actual": 553.1704580000078
+     },
+     {
+      "target": 700,
+      "actual": 575.8678749999963
+     }
+    ]
+   },
+   {
+    "file": "motion-4-layout-lr-to-tb-mixed.png",
+    "picks": [
+     {
+      "target": 0,
+      "actual": -1
+     },
+     {
+      "target": 100,
+      "actual": 97.79162499999802
+     },
+     {
+      "target": 200,
+      "actual": 198.8507499999978
+     },
+     {
+      "target": 300,
+      "actual": 303.8257500000036
+     },
+     {
+      "target": 450,
+      "actual": 450.2872090000019
+     },
+     {
+      "target": 700,
+      "actual": 516.0086250000022
+     }
+    ]
+   },
+   {
+    "file": "motion-5-initial-grid-reveal.png",
+    "picks": [
+     {
+      "target": 0,
+      "actual": 29.77820800000336
+     },
+     {
+      "target": 600,
+      "actual": 595.8971660000097
+     },
+     {
+      "target": 1000,
+      "actual": 997.3933330000145
+     },
+     {
+      "target": 1500,
+      "actual": 1498.393041000003
+     },
+     {
+      "target": 2200,
+      "actual": 1799.665875000006
+     }
+    ]
+   }
+  ],
+  "t4": {
+   "drill-mixed@1700x1000": {
+    "max": 252.9,
+    "violatingFrames": 9,
+    "edgeSamples": 473
+   },
+   "back-mixed@1700x1000": {
+    "max": 555.3,
+    "violatingFrames": 8,
+    "edgeSamples": 88
+   },
+   "done-dense@1700x1000": {
+    "max": 89.5,
+    "violatingFrames": 6,
+    "edgeSamples": 981
+   },
+   "undone-dense@1700x1000": {
+    "max": 177.6,
+    "violatingFrames": 10,
+    "edgeSamples": 1362
+   },
+   "ref-mixed@1700x1000": {
+    "max": 76.1,
+    "violatingFrames": 6,
+    "edgeSamples": 536
+   },
+   "unref-mixed@1700x1000": {
+    "max": 90.2,
+    "violatingFrames": 6,
+    "edgeSamples": 536
+   },
+   "layout-mixed@1700x1000": {
+    "max": 239.1,
+    "violatingFrames": 9,
+    "edgeSamples": 506
+   },
+   "layout-back-mixed@1700x1000": {
+    "max": 240.4,
+    "violatingFrames": 10,
+    "edgeSamples": 506
+   },
+   "layout-dense@1700x1000": {
+    "max": 241.6,
+    "violatingFrames": 9,
+    "edgeSamples": 1320
+   },
+   "lane11-done@1700x1000": {
+    "max": 45.7,
+    "violatingFrames": 3,
+    "edgeSamples": 469
+   },
+   "drill-dense@1700x1000": {
+    "max": 266.5,
+    "violatingFrames": 8,
+    "edgeSamples": 1260
+   },
+   "back-dense@1700x1000": {
+    "max": 365,
+    "violatingFrames": 9,
+    "edgeSamples": 270
+   },
+   "done-dense@1700x1000|norefine": {
+    "max": 535.9,
+    "violatingFrames": 21,
+    "edgeSamples": 1258
+   },
+   "layout-mixed@1700x1000|norefine": {
+    "max": 1814.8,
+    "violatingFrames": 24,
+    "edgeSamples": 671
+   },
+   "layout-dense@1700x1000|norefine": {
+    "max": 1837.8,
+    "violatingFrames": 25,
+    "edgeSamples": 1830
+   },
+   "ref-mixed@1700x1000|norefine": {
+    "max": 467.8,
+    "violatingFrames": 21,
+    "edgeSamples": 660
+   },
+   "lane11-done@1700x1000|norefine": {
+    "max": 372.6,
+    "violatingFrames": 18,
+    "edgeSamples": 618
+   },
+   "drill-mixed@1100x700": {
+    "max": 146.7,
+    "violatingFrames": 7,
+    "edgeSamples": 462
+   },
+   "back-mixed@1100x700": {
+    "max": 203.1,
+    "violatingFrames": 9,
+    "edgeSamples": 99
+   },
+   "done-dense@1100x700": {
+    "max": 50.1,
+    "violatingFrames": 4,
+    "edgeSamples": 981
+   },
+   "undone-dense@1100x700": {
+    "max": 99.2,
+    "violatingFrames": 8,
+    "edgeSamples": 1362
+   },
+   "ref-mixed@1100x700": {
+    "max": 41.3,
+    "violatingFrames": 3,
+    "edgeSamples": 536
+   },
+   "unref-mixed@1100x700": {
+    "max": 49,
+    "violatingFrames": 3,
+    "edgeSamples": 536
+   },
+   "layout-mixed@1100x700": {
+    "max": 131.5,
+    "violatingFrames": 8,
+    "edgeSamples": 495
+   },
+   "layout-back-mixed@1100x700": {
+    "max": 133,
+    "violatingFrames": 8,
+    "edgeSamples": 506
+   },
+   "layout-dense@1100x700": {
+    "max": 134.8,
+    "violatingFrames": 8,
+    "edgeSamples": 1350
+   },
+   "lane11-done@1100x700": {
+    "max": 25.5,
+    "violatingFrames": 1,
+    "edgeSamples": 458
+   },
+   "drill-dense@1100x700": {
+    "max": 161.5,
+    "violatingFrames": 7,
+    "edgeSamples": 1230
+   },
+   "back-dense@1100x700": {
+    "max": 160.7,
+    "violatingFrames": 9,
+    "edgeSamples": 270
+   },
+   "done-dense@1100x700|norefine": {
+    "max": 290.5,
+    "violatingFrames": 19,
+    "edgeSamples": 1258
+   },
+   "layout-mixed@1100x700|norefine": {
+    "max": 983.6,
+    "violatingFrames": 22,
+    "edgeSamples": 660
+   },
+   "layout-dense@1100x700|norefine": {
+    "max": 996,
+    "violatingFrames": 24,
+    "edgeSamples": 1830
+   },
+   "ref-mixed@1100x700|norefine": {
+    "max": 253.6,
+    "violatingFrames": 18,
+    "edgeSamples": 660
+   },
+   "lane11-done@1100x700|norefine": {
+    "max": 214,
+    "violatingFrames": 16,
+    "edgeSamples": 608
+   }
+  },
+  "pacing": {
+   "drill-dense@1700x1000": {
+    "median": 16.699999999999818,
+    "p95": 16.799999999999727,
+    "frames": 62
+   },
+   "done-dense@1700x1000": {
+    "median": 16.699999999999818,
+    "p95": 16.800000000000182,
+    "frames": 61
+   },
+   "layout-dense@1700x1000": {
+    "median": 16.699999999999818,
+    "p95": 16.800000000000182,
+    "frames": 61
+   },
+   "drill-dense@1100x700": {
+    "median": 16.699999999999818,
+    "p95": 16.700000000000273,
+    "frames": 62
+   },
+   "done-dense@1100x700": {
+    "median": 16.699999999999818,
+    "p95": 16.700000000000273,
+    "frames": 61
+   },
+   "layout-dense@1100x700": {
+    "median": 16.699999999999818,
+    "p95": 16.800000000000182,
+    "frames": 61
+   }
+  },
+  "abrupt": {
+   "drill-mixed@1700x1000": {
+    "feature": {
+     "total": 718.4655827191223,
+     "maxStepFrac": 0.08455416668953485,
+     "firstStepFrac": 0,
+     "worstBack": 0.0009205637484898569,
+     "frames": 61
+    },
+    "baseline": {
+     "total": 718.4655827191223,
+     "maxStepFrac": 8.0814078648547e-7,
+     "firstStepFrac": 0.999999193668378,
+     "worstBack": 0,
+     "frames": 62
+    },
+    "viewport": {
+     "changedFrames": 27,
+     "startT": 112.90000002384204,
+     "endT": 546.3000000238417
+    },
+    "baselineViewportFrames": 1
+   },
+   "drill-dense@1700x1000": {
+    "feature": {
+     "total": 596.8589289309436,
+     "maxStepFrac": 0.08456291405819871,
+     "firstStepFrac": 0,
+     "worstBack": 0.0010815448960536096,
+     "frames": 62
+    },
+    "baseline": {
+     "total": 596.8589289309436,
+     "maxStepFrac": 0.000001277684246066413,
+     "firstStepFrac": 1.0000011195639544,
+     "worstBack": 0,
+     "frames": 60
+    },
+    "viewport": {
+     "changedFrames": 27,
+     "startT": 123.30000002384168,
+     "endT": 556.7000000238418
+    },
+    "baselineViewportFrames": 1
+   },
+   "drill-mixed@1100x700": {
+    "feature": {
+     "total": 484.64838462880914,
+     "maxStepFrac": 0.08456475361910054,
+     "firstStepFrac": 0,
+     "worstBack": 0.0011223222758808054,
+     "frames": 61
+    },
+    "baseline": {
+     "total": 484.64838462880914,
+     "maxStepFrac": 0.0000017356348832614744,
+     "firstStepFrac": 0.9999989438372722,
+     "worstBack": 0,
+     "frames": 61
+    },
+    "viewport": {
+     "changedFrames": 26,
+     "startT": 124.90000000000009,
+     "endT": 541.5
+    },
+    "baselineViewportFrames": 1
+   },
+   "drill-dense@1100x700": {
+    "feature": {
+     "total": 484.6474016883992,
+     "maxStepFrac": 0.08456672158205386,
+     "firstStepFrac": 0,
+     "worstBack": 0.00033527543228678114,
+     "frames": 61
+    },
+    "baseline": {
+     "total": 484.6474016883992,
+     "maxStepFrac": 9.741959256014619e-7,
+     "firstStepFrac": 1.0000009719908707,
+     "worstBack": 0,
+     "frames": 61
+    },
+    "viewport": {
+     "changedFrames": 27,
+     "startT": 126.00000001192075,
+     "endT": 559.4000000119208
+    },
+    "baselineViewportFrames": 1
+   }
+  },
+  "viewports": {
+   "drill-mixed@1700x1000": {
+    "changedFrames": 27,
+    "startT": 112.90000002384204,
+    "endT": 546.3000000238417
+   },
+   "back-mixed@1700x1000": {
+    "changedFrames": 27,
+    "startT": 42.60000002384186,
+    "endT": 475.90000002384204
+   },
+   "done-dense@1700x1000": {
+    "changedFrames": 23,
+    "startT": 106.09999999999991,
+    "endT": 472.9000000000001
+   },
+   "undone-dense@1700x1000": {
+    "changedFrames": 23,
+    "startT": 145.10000000000036,
+    "endT": 511.6999999999998
+   },
+   "ref-mixed@1700x1000": {
+    "changedFrames": 25,
+    "startT": 83.89999998807889,
+    "endT": 483.8999999880789
+   },
+   "unref-mixed@1700x1000": {
+    "changedFrames": 25,
+    "startT": 119.19999999999982,
+    "endT": 519.1999999999998
+   },
+   "layout-mixed@1700x1000": {
+    "changedFrames": 27,
+    "startT": 68.30000001192093,
+    "endT": 501.700000011921
+   },
+   "layout-back-mixed@1700x1000": {
+    "changedFrames": 27,
+    "startT": 69.39999997615814,
+    "endT": 502.7999999761578
+   },
+   "layout-dense@1700x1000": {
+    "changedFrames": 27,
+    "startT": 82.80000002384168,
+    "endT": 516.2000000238422
+   },
+   "lane11-done@1700x1000": {
+    "changedFrames": 25,
+    "startT": 87.70000004768372,
+    "endT": 487.6000000476838
+   },
+   "drill-dense@1700x1000": {
+    "changedFrames": 27,
+    "startT": 123.30000002384168,
+    "endT": 556.7000000238418
+   },
+   "back-dense@1700x1000": {
+    "changedFrames": 26,
+    "startT": 58.10000002384186,
+    "endT": 474.8000000238417
+   },
+   "drill-mixed@1100x700": {
+    "changedFrames": 26,
+    "startT": 124.90000000000009,
+    "endT": 541.5
+   },
+   "back-mixed@1100x700": {
+    "changedFrames": 26,
+    "startT": 52.40000000000009,
+    "endT": 469
+   },
+   "done-dense@1100x700": {
+    "changedFrames": 23,
+    "startT": 110.80000001192093,
+    "endT": 477.50000001192075
+   },
+   "undone-dense@1100x700": {
+    "changedFrames": 23,
+    "startT": 144.30000004768408,
+    "endT": 510.90000004768353
+   },
+   "ref-mixed@1100x700": {
+    "changedFrames": 25,
+    "startT": 86.69999999999982,
+    "endT": 486.8000000000002
+   },
+   "unref-mixed@1100x700": {
+    "changedFrames": 25,
+    "startT": 124.80000001192093,
+    "endT": 524.8000000119209
+   },
+   "layout-mixed@1100x700": {
+    "changedFrames": 27,
+    "startT": 66.69999999999982,
+    "endT": 500
+   },
+   "layout-back-mixed@1100x700": {
+    "changedFrames": 27,
+    "startT": 72.50000003576315,
+    "endT": 505.8000000357624
+   },
+   "layout-dense@1100x700": {
+    "changedFrames": 26,
+    "startT": 92.90000001192084,
+    "endT": 509.50000001192075
+   },
+   "lane11-done@1100x700": {
+    "changedFrames": 25,
+    "startT": 77.69999997615832,
+    "endT": 477.59999997615796
+   },
+   "drill-dense@1100x700": {
+    "changedFrames": 27,
+    "startT": 126.00000001192075,
+    "endT": 559.4000000119208
+   },
+   "back-dense@1100x700": {
+    "changedFrames": 26,
+    "startT": 57.50000001192075,
+    "endT": 474.200000011921
+   }
+  },
+  "reveal": {
+   "cardsFirstFrame": 40,
+   "doneT": 1700
+  }
+ }
+}

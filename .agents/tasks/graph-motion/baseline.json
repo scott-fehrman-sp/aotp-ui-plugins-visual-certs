@@ -1,0 +1,3946 @@
+{
+ "drill-mixed@1700x1000": {
+  "viewport": [
+   158.193,
+   326.283,
+   0.772406
+  ],
+  "nodes": {
+   "user:u1": [
+    24,
+    0
+   ],
+   "role:role-1": [
+    344,
+    56
+   ],
+   "accessProfile:ap-r1a": [
+    664,
+    280
+   ],
+   "entitlement:e101": [
+    1224,
+    392
+   ],
+   "source:s1": [
+    1544,
+    112
+   ],
+   "entitlement:e102": [
+    1224,
+    280
+   ],
+   "accessProfile:ap-r1b": [
+    664,
+    168
+   ],
+   "entitlement:e103": [
+    1224,
+    168
+   ],
+   "role:role-2": [
+    344,
+    -56
+   ],
+   "accessProfile:ap-r2a": [
+    664,
+    -168
+   ],
+   "entitlement:e104": [
+    984,
+    168
+   ],
+   "source:s2": [
+    1544,
+    -112
+   ],
+   "entitlement:e105": [
+    984,
+    56
+   ],
+   "accessProfile:ap-d1": [
+    664,
+    56
+   ],
+   "entitlement:e111": [
+    1224,
+    56
+   ],
+   "entitlement:e112": [
+    1224,
+    -56
+   ],
+   "accessProfile:ap-d2": [
+    664,
+    -56
+   ],
+   "entitlement:e113": [
+    984,
+    392
+   ],
+   "source:s3": [
+    1544,
+    0
+   ],
+   "accessProfile:ap-d3": [
+    664,
+    -280
+   ],
+   "entitlement:e114": [
+    984,
+    -56
+   ],
+   "entitlement:e115": [
+    984,
+    -168
+   ],
+   "entitlement:u1-e1": [
+    984,
+    -280
+   ],
+   "entitlement:u1-e2": [
+    1224,
+    -392
+   ],
+   "entitlement:u1-e3": [
+    1224,
+    -168
+   ],
+   "entitlement:u1-e4": [
+    984,
+    -392
+   ],
+   "entitlement:u1-e5": [
+    1224,
+    -280
+   ],
+   "entitlement:u1-e6": [
+    984,
+    280
+   ]
+  },
+  "edges": [
+   "e:accessProfile:ap-d1:entitlement:e111",
+   "e:accessProfile:ap-d1:entitlement:e112",
+   "e:accessProfile:ap-d2:entitlement:e113",
+   "e:accessProfile:ap-d3:entitlement:e114",
+   "e:accessProfile:ap-d3:entitlement:e115",
+   "e:accessProfile:ap-r1a:entitlement:e101",
+   "e:accessProfile:ap-r1a:entitlement:e102",
+   "e:accessProfile:ap-r1b:entitlement:e103",
+   "e:accessProfile:ap-r2a:entitlement:e104",
+   "e:accessProfile:ap-r2a:entitlement:e105",
+   "e:entitlement:e101:source:s1",
+   "e:entitlement:e102:source:s1",
+   "e:entitlement:e103:source:s1",
+   "e:entitlement:e104:source:s2",
+   "e:entitlement:e105:source:s2",
+   "e:entitlement:e111:source:s1",
+   "e:entitlement:e112:source:s1",
+   "e:entitlement:e113:source:s3",
+   "e:entitlement:e114:source:s2",
+   "e:entitlement:e115:source:s2",
+   "e:entitlement:u1-e1:source:s2",
+   "e:entitlement:u1-e2:source:s3",
+   "e:entitlement:u1-e3:source:s1",
+   "e:entitlement:u1-e4:source:s2",
+   "e:entitlement:u1-e5:source:s3",
+   "e:entitlement:u1-e6:source:s1",
+   "e:role:role-1:accessProfile:ap-r1a",
+   "e:role:role-1:accessProfile:ap-r1b",
+   "e:role:role-2:accessProfile:ap-r2a",
+   "e:user:u1:accessProfile:ap-d1",
+   "e:user:u1:accessProfile:ap-d2",
+   "e:user:u1:accessProfile:ap-d3",
+   "e:user:u1:entitlement:u1-e1",
+   "e:user:u1:entitlement:u1-e2",
+   "e:user:u1:entitlement:u1-e3",
+   "e:user:u1:entitlement:u1-e4",
+   "e:user:u1:entitlement:u1-e5",
+   "e:user:u1:entitlement:u1-e6",
+   "e:user:u1:role:role-1",
+   "e:user:u1:role:role-2"
+  ],
+  "viewportChangedFrames": 1,
+  "clickedCard": {
+   "total": 718.4655827191223,
+   "maxStepFrac": 8.0814078648547e-7,
+   "firstStepFrac": 0.999999193668378,
+   "worstBack": 0,
+   "frames": 62
+  }
+ },
+ "back-mixed@1700x1000": {
+  "viewport": [
+   820,
+   429,
+   1.1087
+  ],
+  "nodes": {
+   "user:u1": [
+    -690,
+    -80
+   ],
+   "user:u2": [
+    -454,
+    -80
+   ],
+   "user:u3": [
+    -218,
+    -80
+   ],
+   "user:u4": [
+    18,
+    -80
+   ],
+   "user:u5": [
+    254,
+    -80
+   ],
+   "user:u6": [
+    490,
+    -80
+   ],
+   "user:u7": [
+    -690,
+    16
+   ],
+   "user:u8": [
+    -454,
+    16
+   ]
+  },
+  "edges": [],
+  "viewportChangedFrames": 1,
+  "clickedCard": {
+   "total": 718.4655827191223,
+   "maxStepFrac": 0.0000026543236481253227,
+   "firstStepFrac": 1.0000026537265667,
+   "worstBack": 0,
+   "frames": 158
+  }
+ },
+ "done-dense@1700x1000": {
+  "viewport": [
+   159.247,
+   350.996,
+   0.718878
+  ],
+  "nodes": {
+   "user:u1": [
+    24,
+    0
+   ],
+   "role:role-1": [
+    344,
+    0
+   ],
+   "accessProfile:ap-r1a": [
+    664,
+    0
+   ],
+   "entitlement:e101": [
+    984,
+    392
+   ],
+   "source:s1": [
+    1784,
+    -112
+   ],
+   "entitlement:e102": [
+    984,
+    -168
+   ],
+   "accessProfile:ap-r1b": [
+    664,
+    -112
+   ],
+   "entitlement:e103": [
+    984,
+    -280
+   ],
+   "entitlement:e104": [
+    984,
+    -392
+   ],
+   "source:s2": [
+    1784,
+    112
+   ],
+   "source:s3": [
+    1784,
+    0
+   ],
+   "accessProfile:ap-d4": [
+    664,
+    112
+   ],
+   "entitlement:e118": [
+    1464,
+    336
+   ],
+   "entitlement:e119": [
+    1464,
+    224
+   ],
+   "entitlement:u1-e1": [
+    1464,
+    112
+   ],
+   "entitlement:u1-e2": [
+    984,
+    -56
+   ],
+   "entitlement:u1-e4": [
+    1464,
+    0
+   ],
+   "entitlement:u1-e5": [
+    984,
+    56
+   ],
+   "entitlement:u1-e7": [
+    1464,
+    -112
+   ],
+   "entitlement:u1-e8": [
+    984,
+    168
+   ],
+   "entitlement:u1-e10": [
+    1464,
+    -224
+   ],
+   "entitlement:u1-e11": [
+    984,
+    280
+   ],
+   "entitlement:u1-e13": [
+    1464,
+    -336
+   ],
+   "entitlement:u1-e14": [
+    1224,
+    -392
+   ],
+   "entitlement:u1-e16": [
+    1224,
+    392
+   ],
+   "entitlement:u1-e17": [
+    1224,
+    -280
+   ],
+   "entitlement:u1-e19": [
+    1224,
+    280
+   ],
+   "entitlement:u1-e20": [
+    1224,
+    -168
+   ],
+   "entitlement:u1-e22": [
+    1224,
+    168
+   ],
+   "entitlement:u1-e23": [
+    1224,
+    -56
+   ],
+   "entitlement:u1-e25": [
+    1224,
+    56
+   ]
+  },
+  "edges": [
+   "e:accessProfile:ap-d4:entitlement:e118",
+   "e:accessProfile:ap-d4:entitlement:e119",
+   "e:accessProfile:ap-r1a:entitlement:e101",
+   "e:accessProfile:ap-r1a:entitlement:e102",
+   "e:accessProfile:ap-r1b:entitlement:e103",
+   "e:accessProfile:ap-r1b:entitlement:e104",
+   "e:entitlement:e101:source:s1",
+   "e:entitlement:e102:source:s1",
+   "e:entitlement:e103:source:s1",
+   "e:entitlement:e104:source:s1",
+   "e:entitlement:e118:source:s2",
+   "e:entitlement:e119:source:s2",
+   "e:entitlement:u1-e10:source:s2",
+   "e:entitlement:u1-e11:source:s3",
+   "e:entitlement:u1-e13:source:s2",
+   "e:entitlement:u1-e14:source:s3",
+   "e:entitlement:u1-e16:source:s2",
+   "e:entitlement:u1-e17:source:s3",
+   "e:entitlement:u1-e19:source:s2",
+   "e:entitlement:u1-e1:source:s2",
+   "e:entitlement:u1-e20:source:s3",
+   "e:entitlement:u1-e22:source:s2",
+   "e:entitlement:u1-e23:source:s3",
+   "e:entitlement:u1-e25:source:s2",
+   "e:entitlement:u1-e2:source:s3",
+   "e:entitlement:u1-e4:source:s2",
+   "e:entitlement:u1-e5:source:s3",
+   "e:entitlement:u1-e7:source:s2",
+   "e:entitlement:u1-e8:source:s3",
+   "e:role:role-1:accessProfile:ap-r1a",
+   "e:role:role-1:accessProfile:ap-r1b",
+   "e:user:u1:accessProfile:ap-d4",
+   "e:user:u1:entitlement:u1-e1",
+   "e:user:u1:entitlement:u1-e10",
+   "e:user:u1:entitlement:u1-e11",
+   "e:user:u1:entitlement:u1-e13",
+   "e:user:u1:entitlement:u1-e14",
+   "e:user:u1:entitlement:u1-e16",
+   "e:user:u1:entitlement:u1-e17",
+   "e:user:u1:entitlement:u1-e19",
+   "e:user:u1:entitlement:u1-e2",
+   "e:user:u1:entitlement:u1-e20",
+   "e:user:u1:entitlement:u1-e22",
+   "e:user:u1:entitlement:u1-e23",
+   "e:user:u1:entitlement:u1-e25",
+   "e:user:u1:entitlement:u1-e4",
+   "e:user:u1:entitlement:u1-e5",
+   "e:user:u1:entitlement:u1-e7",
+   "e:user:u1:entitlement:u1-e8",
+   "e:user:u1:role:role-1"
+  ],
+  "viewportChangedFrames": 1
+ },
+ "undone-dense@1700x1000": {
+  "viewport": [
+   162.228,
+   331.448,
+   0.611007
+  ],
+  "nodes": {
+   "user:u1": [
+    24,
+    0
+   ],
+   "role:role-1": [
+    344,
+    0
+   ],
+   "accessProfile:ap-r1a": [
+    664,
+    280
+   ],
+   "entitlement:e101": [
+    1704,
+    448
+   ],
+   "source:s1": [
+    2024,
+    112
+   ],
+   "entitlement:e102": [
+    1704,
+    336
+   ],
+   "accessProfile:ap-r1b": [
+    664,
+    168
+   ],
+   "entitlement:e103": [
+    1704,
+    224
+   ],
+   "entitlement:e104": [
+    1704,
+    112
+   ],
+   "accessProfile:ap-d1": [
+    664,
+    -168
+   ],
+   "entitlement:e112": [
+    1224,
+    224
+   ],
+   "source:s2": [
+    2024,
+    -112
+   ],
+   "entitlement:e113": [
+    1224,
+    112
+   ],
+   "accessProfile:ap-d2": [
+    664,
+    -56
+   ],
+   "entitlement:e114": [
+    1464,
+    336
+   ],
+   "source:s3": [
+    2024,
+    0
+   ],
+   "entitlement:e115": [
+    1464,
+    224
+   ],
+   "accessProfile:ap-d3": [
+    664,
+    56
+   ],
+   "entitlement:e116": [
+    1704,
+    0
+   ],
+   "entitlement:e117": [
+    1704,
+    -112
+   ],
+   "accessProfile:ap-d4": [
+    664,
+    -280
+   ],
+   "entitlement:e118": [
+    1224,
+    0
+   ],
+   "entitlement:e119": [
+    1224,
+    -112
+   ],
+   "entitlement:u1-e1": [
+    1224,
+    -224
+   ],
+   "entitlement:u1-e2": [
+    1464,
+    112
+   ],
+   "entitlement:u1-e3": [
+    1704,
+    -224
+   ],
+   "entitlement:u1-e4": [
+    1224,
+    -336
+   ],
+   "entitlement:u1-e5": [
+    1464,
+    0
+   ],
+   "entitlement:u1-e6": [
+    1704,
+    -336
+   ],
+   "entitlement:u1-e7": [
+    1224,
+    -448
+   ],
+   "entitlement:u1-e8": [
+    1464,
+    -112
+   ],
+   "entitlement:u1-e9": [
+    1704,
+    -448
+   ],
+   "entitlement:u1-e10": [
+    984,
+    504
+   ],
+   "entitlement:u1-e11": [
+    1464,
+    -224
+   ],
+   "entitlement:u1-e12": [
+    1464,
+    448
+   ],
+   "entitlement:u1-e13": [
+    984,
+    392
+   ],
+   "entitlement:u1-e14": [
+    1464,
+    -336
+   ],
+   "entitlement:u1-e15": [
+    984,
+    -168
+   ],
+   "entitlement:u1-e16": [
+    984,
+    280
+   ],
+   "entitlement:u1-e17": [
+    1464,
+    -448
+   ],
+   "entitlement:u1-e18": [
+    984,
+    -280
+   ],
+   "entitlement:u1-e19": [
+    984,
+    168
+   ],
+   "entitlement:u1-e20": [
+    1224,
+    448
+   ],
+   "entitlement:u1-e21": [
+    984,
+    -392
+   ],
+   "entitlement:u1-e22": [
+    984,
+    56
+   ],
+   "entitlement:u1-e23": [
+    1224,
+    336
+   ],
+   "entitlement:u1-e24": [
+    984,
+    -504
+   ],
+   "entitlement:u1-e25": [
+    984,
+    -56
+   ]
+  },
+  "edges": [
+   "e:accessProfile:ap-d1:entitlement:e112",
+   "e:accessProfile:ap-d1:entitlement:e113",
+   "e:accessProfile:ap-d2:entitlement:e114",
+   "e:accessProfile:ap-d2:entitlement:e115",
+   "e:accessProfile:ap-d3:entitlement:e116",
+   "e:accessProfile:ap-d3:entitlement:e117",
+   "e:accessProfile:ap-d4:entitlement:e118",
+   "e:accessProfile:ap-d4:entitlement:e119",
+   "e:accessProfile:ap-r1a:entitlement:e101",
+   "e:accessProfile:ap-r1a:entitlement:e102",
+   "e:accessProfile:ap-r1b:entitlement:e103",
+   "e:accessProfile:ap-r1b:entitlement:e104",
+   "e:entitlement:e101:source:s1",
+   "e:entitlement:e102:source:s1",
+   "e:entitlement:e103:source:s1",
+   "e:entitlement:e104:source:s1",
+   "e:entitlement:e112:source:s2",
+   "e:entitlement:e113:source:s2",
+   "e:entitlement:e114:source:s3",
+   "e:entitlement:e115:source:s3",
+   "e:entitlement:e116:source:s1",
+   "e:entitlement:e117:source:s1",
+   "e:entitlement:e118:source:s2",
+   "e:entitlement:e119:source:s2",
+   "e:entitlement:u1-e10:source:s2",
+   "e:entitlement:u1-e11:source:s3",
+   "e:entitlement:u1-e12:source:s1",
+   "e:entitlement:u1-e13:source:s2",
+   "e:entitlement:u1-e14:source:s3",
+   "e:entitlement:u1-e15:source:s1",
+   "e:entitlement:u1-e16:source:s2",
+   "e:entitlement:u1-e17:source:s3",
+   "e:entitlement:u1-e18:source:s1",
+   "e:entitlement:u1-e19:source:s2",
+   "e:entitlement:u1-e1:source:s2",
+   "e:entitlement:u1-e20:source:s3",
+   "e:entitlement:u1-e21:source:s1",
+   "e:entitlement:u1-e22:source:s2",
+   "e:entitlement:u1-e23:source:s3",
+   "e:entitlement:u1-e24:source:s1",
+   "e:entitlement:u1-e25:source:s2",
+   "e:entitlement:u1-e2:source:s3",
+   "e:entitlement:u1-e3:source:s1",
+   "e:entitlement:u1-e4:source:s2",
+   "e:entitlement:u1-e5:source:s3",
+   "e:entitlement:u1-e6:source:s1",
+   "e:entitlement:u1-e7:source:s2",
+   "e:entitlement:u1-e8:source:s3",
+   "e:entitlement:u1-e9:source:s1",
+   "e:role:role-1:accessProfile:ap-r1a",
+   "e:role:role-1:accessProfile:ap-r1b",
+   "e:user:u1:accessProfile:ap-d1",
+   "e:user:u1:accessProfile:ap-d2",
+   "e:user:u1:accessProfile:ap-d3",
+   "e:user:u1:accessProfile:ap-d4",
+   "e:user:u1:entitlement:u1-e1",
+   "e:user:u1:entitlement:u1-e10",
+   "e:user:u1:entitlement:u1-e11",
+   "e:user:u1:entitlement:u1-e12",
+   "e:user:u1:entitlement:u1-e13",
+   "e:user:u1:entitlement:u1-e14",
+   "e:user:u1:entitlement:u1-e15",
+   "e:user:u1:entitlement:u1-e16",
+   "e:user:u1:entitlement:u1-e17",
+   "e:user:u1:entitlement:u1-e18",
+   "e:user:u1:entitlement:u1-e19",
+   "e:user:u1:entitlement:u1-e2",
+   "e:user:u1:entitlement:u1-e20",
+   "e:user:u1:entitlement:u1-e21",
+   "e:user:u1:entitlement:u1-e22",
+   "e:user:u1:entitlement:u1-e23",
+   "e:user:u1:entitlement:u1-e24",
+   "e:user:u1:entitlement:u1-e25",
+   "e:user:u1:entitlement:u1-e3",
+   "e:user:u1:entitlement:u1-e4",
+   "e:user:u1:entitlement:u1-e5",
+   "e:user:u1:entitlement:u1-e6",
+   "e:user:u1:entitlement:u1-e7",
+   "e:user:u1:entitlement:u1-e8",
+   "e:user:u1:entitlement:u1-e9",
+   "e:user:u1:role:role-1"
+  ],
+  "viewportChangedFrames": 1
+ },
+ "ref-mixed@1700x1000": {
+  "viewport": [
+   194.994,
+   317.41,
+   1.04968
+  ],
+  "nodes": {
+   "user:u1": [
+    24,
+    0
+   ],
+   "role:role-1": [
+    344,
+    56
+   ],
+   "role:role-2": [
+    344,
+    -56
+   ],
+   "accessProfile:ap-d1": [
+    664,
+    112
+   ],
+   "accessProfile:ap-d2": [
+    664,
+    0
+   ],
+   "accessProfile:ap-d3": [
+    664,
+    -112
+   ],
+   "entitlement:u1-e1": [
+    984,
+    280
+   ],
+   "entitlement:u1-e2": [
+    984,
+    168
+   ],
+   "entitlement:u1-e3": [
+    984,
+    56
+   ],
+   "entitlement:u1-e4": [
+    984,
+    -56
+   ],
+   "entitlement:u1-e5": [
+    984,
+    -168
+   ],
+   "entitlement:u1-e6": [
+    984,
+    -280
+   ]
+  },
+  "edges": [
+   "e:user:u1:accessProfile:ap-d1",
+   "e:user:u1:accessProfile:ap-d2",
+   "e:user:u1:accessProfile:ap-d3",
+   "e:user:u1:entitlement:u1-e1",
+   "e:user:u1:entitlement:u1-e2",
+   "e:user:u1:entitlement:u1-e3",
+   "e:user:u1:entitlement:u1-e4",
+   "e:user:u1:entitlement:u1-e5",
+   "e:user:u1:entitlement:u1-e6",
+   "e:user:u1:role:role-1",
+   "e:user:u1:role:role-2"
+  ],
+  "viewportChangedFrames": 1
+ },
+ "unref-mixed@1700x1000": {
+  "viewport": [
+   158.193,
+   326.283,
+   0.772406
+  ],
+  "nodes": {
+   "user:u1": [
+    24,
+    0
+   ],
+   "role:role-1": [
+    344,
+    56
+   ],
+   "accessProfile:ap-r1a": [
+    664,
+    280
+   ],
+   "entitlement:e101": [
+    1224,
+    392
+   ],
+   "source:s1": [
+    1544,
+    112
+   ],
+   "entitlement:e102": [
+    1224,
+    280
+   ],
+   "accessProfile:ap-r1b": [
+    664,
+    168
+   ],
+   "entitlement:e103": [
+    1224,
+    168
+   ],
+   "role:role-2": [
+    344,
+    -56
+   ],
+   "accessProfile:ap-r2a": [
+    664,
+    -168
+   ],
+   "entitlement:e104": [
+    984,
+    168
+   ],
+   "source:s2": [
+    1544,
+    -112
+   ],
+   "entitlement:e105": [
+    984,
+    56
+   ],
+   "accessProfile:ap-d1": [
+    664,
+    56
+   ],
+   "entitlement:e111": [
+    1224,
+    56
+   ],
+   "entitlement:e112": [
+    1224,
+    -56
+   ],
+   "accessProfile:ap-d2": [
+    664,
+    -56
+   ],
+   "entitlement:e113": [
+    984,
+    392
+   ],
+   "source:s3": [
+    1544,
+    0
+   ],
+   "accessProfile:ap-d3": [
+    664,
+    -280
+   ],
+   "entitlement:e114": [
+    984,
+    -56
+   ],
+   "entitlement:e115": [
+    984,
+    -168
+   ],
+   "entitlement:u1-e1": [
+    984,
+    -280
+   ],
+   "entitlement:u1-e2": [
+    1224,
+    -392
+   ],
+   "entitlement:u1-e3": [
+    1224,
+    -168
+   ],
+   "entitlement:u1-e4": [
+    984,
+    -392
+   ],
+   "entitlement:u1-e5": [
+    1224,
+    -280
+   ],
+   "entitlement:u1-e6": [
+    984,
+    280
+   ]
+  },
+  "edges": [
+   "e:accessProfile:ap-d1:entitlement:e111",
+   "e:accessProfile:ap-d1:entitlement:e112",
+   "e:accessProfile:ap-d2:entitlement:e113",
+   "e:accessProfile:ap-d3:entitlement:e114",
+   "e:accessProfile:ap-d3:entitlement:e115",
+   "e:accessProfile:ap-r1a:entitlement:e101",
+   "e:accessProfile:ap-r1a:entitlement:e102",
+   "e:accessProfile:ap-r1b:entitlement:e103",
+   "e:accessProfile:ap-r2a:entitlement:e104",
+   "e:accessProfile:ap-r2a:entitlement:e105",
+   "e:entitlement:e101:source:s1",
+   "e:entitlement:e102:source:s1",
+   "e:entitlement:e103:source:s1",
+   "e:entitlement:e104:source:s2",
+   "e:entitlement:e105:source:s2",
+   "e:entitlement:e111:source:s1",
+   "e:entitlement:e112:source:s1",
+   "e:entitlement:e113:source:s3",
+   "e:entitlement:e114:source:s2",
+   "e:entitlement:e115:source:s2",
+   "e:entitlement:u1-e1:source:s2",
+   "e:entitlement:u1-e2:source:s3",
+   "e:entitlement:u1-e3:source:s1",
+   "e:entitlement:u1-e4:source:s2",
+   "e:entitlement:u1-e5:source:s3",
+   "e:entitlement:u1-e6:source:s1",
+   "e:role:role-1:accessProfile:ap-r1a",
+   "e:role:role-1:accessProfile:ap-r1b",
+   "e:role:role-2:accessProfile:ap-r2a",
+   "e:user:u1:accessProfile:ap-d1",
+   "e:user:u1:accessProfile:ap-d2",
+   "e:user:u1:accessProfile:ap-d3",
+   "e:user:u1:entitlement:u1-e1",
+   "e:user:u1:entitlement:u1-e2",
+   "e:user:u1:entitlement:u1-e3",
+   "e:user:u1:entitlement:u1-e4",
+   "e:user:u1:entitlement:u1-e5",
+   "e:user:u1:entitlement:u1-e6",
+   "e:user:u1:role:role-1",
+   "e:user:u1:role:role-2"
+  ],
+  "viewportChangedFrames": 1
+ },
+ "layout-mixed@1700x1000": {
+  "viewport": [
+   805.544,
+   6.11062,
+   0.724558
+  ],
+  "nodes": {
+   "user:u1": [
+    0,
+    24
+   ],
+   "role:role-1": [
+    124,
+    208
+   ],
+   "accessProfile:ap-r1a": [
+    620,
+    392
+   ],
+   "entitlement:e101": [
+    868,
+    680
+   ],
+   "source:s1": [
+    248,
+    864
+   ],
+   "entitlement:e102": [
+    620,
+    680
+   ],
+   "accessProfile:ap-r1b": [
+    372,
+    392
+   ],
+   "entitlement:e103": [
+    372,
+    680
+   ],
+   "role:role-2": [
+    -124,
+    208
+   ],
+   "accessProfile:ap-r2a": [
+    -372,
+    392
+   ],
+   "entitlement:e104": [
+    372,
+    576
+   ],
+   "source:s2": [
+    -248,
+    864
+   ],
+   "entitlement:e105": [
+    124,
+    576
+   ],
+   "accessProfile:ap-d1": [
+    124,
+    392
+   ],
+   "entitlement:e111": [
+    124,
+    680
+   ],
+   "entitlement:e112": [
+    -124,
+    680
+   ],
+   "accessProfile:ap-d2": [
+    -124,
+    392
+   ],
+   "entitlement:e113": [
+    868,
+    576
+   ],
+   "source:s3": [
+    0,
+    864
+   ],
+   "accessProfile:ap-d3": [
+    -620,
+    392
+   ],
+   "entitlement:e114": [
+    -124,
+    576
+   ],
+   "entitlement:e115": [
+    -372,
+    576
+   ],
+   "entitlement:u1-e1": [
+    -620,
+    576
+   ],
+   "entitlement:u1-e2": [
+    -868,
+    680
+   ],
+   "entitlement:u1-e3": [
+    -372,
+    680
+   ],
+   "entitlement:u1-e4": [
+    -868,
+    576
+   ],
+   "entitlement:u1-e5": [
+    -620,
+    680
+   ],
+   "entitlement:u1-e6": [
+    620,
+    576
+   ]
+  },
+  "edges": [
+   "e:accessProfile:ap-d1:entitlement:e111",
+   "e:accessProfile:ap-d1:entitlement:e112",
+   "e:accessProfile:ap-d2:entitlement:e113",
+   "e:accessProfile:ap-d3:entitlement:e114",
+   "e:accessProfile:ap-d3:entitlement:e115",
+   "e:accessProfile:ap-r1a:entitlement:e101",
+   "e:accessProfile:ap-r1a:entitlement:e102",
+   "e:accessProfile:ap-r1b:entitlement:e103",
+   "e:accessProfile:ap-r2a:entitlement:e104",
+   "e:accessProfile:ap-r2a:entitlement:e105",
+   "e:entitlement:e101:source:s1",
+   "e:entitlement:e102:source:s1",
+   "e:entitlement:e103:source:s1",
+   "e:entitlement:e104:source:s2",
+   "e:entitlement:e105:source:s2",
+   "e:entitlement:e111:source:s1",
+   "e:entitlement:e112:source:s1",
+   "e:entitlement:e113:source:s3",
+   "e:entitlement:e114:source:s2",
+   "e:entitlement:e115:source:s2",
+   "e:entitlement:u1-e1:source:s2",
+   "e:entitlement:u1-e2:source:s3",
+   "e:entitlement:u1-e3:source:s1",
+   "e:entitlement:u1-e4:source:s2",
+   "e:entitlement:u1-e5:source:s3",
+   "e:entitlement:u1-e6:source:s1",
+   "e:role:role-1:accessProfile:ap-r1a",
+   "e:role:role-1:accessProfile:ap-r1b",
+   "e:role:role-2:accessProfile:ap-r2a",
+   "e:user:u1:accessProfile:ap-d1",
+   "e:user:u1:accessProfile:ap-d2",
+   "e:user:u1:accessProfile:ap-d3",
+   "e:user:u1:entitlement:u1-e1",
+   "e:user:u1:entitlement:u1-e2",
+   "e:user:u1:entitlement:u1-e3",
+   "e:user:u1:entitlement:u1-e4",
+   "e:user:u1:entitlement:u1-e5",
+   "e:user:u1:entitlement:u1-e6",
+   "e:user:u1:role:role-1",
+   "e:user:u1:role:role-2"
+  ],
+  "viewportChangedFrames": 1
+ },
+ "layout-back-mixed@1700x1000": {
+  "viewport": [
+   158.193,
+   326.283,
+   0.772406
+  ],
+  "nodes": {
+   "user:u1": [
+    24,
+    0
+   ],
+   "role:role-1": [
+    344,
+    56
+   ],
+   "accessProfile:ap-r1a": [
+    664,
+    280
+   ],
+   "entitlement:e101": [
+    1224,
+    392
+   ],
+   "source:s1": [
+    1544,
+    112
+   ],
+   "entitlement:e102": [
+    1224,
+    280
+   ],
+   "accessProfile:ap-r1b": [
+    664,
+    168
+   ],
+   "entitlement:e103": [
+    1224,
+    168
+   ],
+   "role:role-2": [
+    344,
+    -56
+   ],
+   "accessProfile:ap-r2a": [
+    664,
+    -168
+   ],
+   "entitlement:e104": [
+    984,
+    168
+   ],
+   "source:s2": [
+    1544,
+    -112
+   ],
+   "entitlement:e105": [
+    984,
+    56
+   ],
+   "accessProfile:ap-d1": [
+    664,
+    56
+   ],
+   "entitlement:e111": [
+    1224,
+    56
+   ],
+   "entitlement:e112": [
+    1224,
+    -56
+   ],
+   "accessProfile:ap-d2": [
+    664,
+    -56
+   ],
+   "entitlement:e113": [
+    984,
+    392
+   ],
+   "source:s3": [
+    1544,
+    0
+   ],
+   "accessProfile:ap-d3": [
+    664,
+    -280
+   ],
+   "entitlement:e114": [
+    984,
+    -56
+   ],
+   "entitlement:e115": [
+    984,
+    -168
+   ],
+   "entitlement:u1-e1": [
+    984,
+    -280
+   ],
+   "entitlement:u1-e2": [
+    1224,
+    -392
+   ],
+   "entitlement:u1-e3": [
+    1224,
+    -168
+   ],
+   "entitlement:u1-e4": [
+    984,
+    -392
+   ],
+   "entitlement:u1-e5": [
+    1224,
+    -280
+   ],
+   "entitlement:u1-e6": [
+    984,
+    280
+   ]
+  },
+  "edges": [
+   "e:accessProfile:ap-d1:entitlement:e111",
+   "e:accessProfile:ap-d1:entitlement:e112",
+   "e:accessProfile:ap-d2:entitlement:e113",
+   "e:accessProfile:ap-d3:entitlement:e114",
+   "e:accessProfile:ap-d3:entitlement:e115",
+   "e:accessProfile:ap-r1a:entitlement:e101",
+   "e:accessProfile:ap-r1a:entitlement:e102",
+   "e:accessProfile:ap-r1b:entitlement:e103",
+   "e:accessProfile:ap-r2a:entitlement:e104",
+   "e:accessProfile:ap-r2a:entitlement:e105",
+   "e:entitlement:e101:source:s1",
+   "e:entitlement:e102:source:s1",
+   "e:entitlement:e103:source:s1",
+   "e:entitlement:e104:source:s2",
+   "e:entitlement:e105:source:s2",
+   "e:entitlement:e111:source:s1",
+   "e:entitlement:e112:source:s1",
+   "e:entitlement:e113:source:s3",
+   "e:entitlement:e114:source:s2",
+   "e:entitlement:e115:source:s2",
+   "e:entitlement:u1-e1:source:s2",
+   "e:entitlement:u1-e2:source:s3",
+   "e:entitlement:u1-e3:source:s1",
+   "e:entitlement:u1-e4:source:s2",
+   "e:entitlement:u1-e5:source:s3",
+   "e:entitlement:u1-e6:source:s1",
+   "e:role:role-1:accessProfile:ap-r1a",
+   "e:role:role-1:accessProfile:ap-r1b",
+   "e:role:role-2:accessProfile:ap-r2a",
+   "e:user:u1:accessProfile:ap-d1",
+   "e:user:u1:accessProfile:ap-d2",
+   "e:user:u1:accessProfile:ap-d3",
+   "e:user:u1:entitlement:u1-e1",
+   "e:user:u1:entitlement:u1-e2",
+   "e:user:u1:entitlement:u1-e3",
+   "e:user:u1:entitlement:u1-e4",
+   "e:user:u1:entitlement:u1-e5",
+   "e:user:u1:entitlement:u1-e6",
+   "e:user:u1:role:role-1",
+   "e:user:u1:role:role-2"
+  ],
+  "viewportChangedFrames": 1
+ },
+ "layout-dense@1700x1000": {
+  "viewport": [
+   823.064,
+   19.972,
+   0.579359
+  ],
+  "nodes": {
+   "user:u1": [
+    0,
+    24
+   ],
+   "role:role-1": [
+    0,
+    208
+   ],
+   "accessProfile:ap-r1a": [
+    620,
+    392
+   ],
+   "entitlement:e101": [
+    992,
+    888
+   ],
+   "source:s1": [
+    248,
+    1072
+   ],
+   "entitlement:e102": [
+    744,
+    888
+   ],
+   "accessProfile:ap-r1b": [
+    372,
+    392
+   ],
+   "entitlement:e103": [
+    496,
+    888
+   ],
+   "entitlement:e104": [
+    248,
+    888
+   ],
+   "accessProfile:ap-d1": [
+    -372,
+    392
+   ],
+   "entitlement:e112": [
+    496,
+    680
+   ],
+   "source:s2": [
+    -248,
+    1072
+   ],
+   "entitlement:e113": [
+    248,
+    680
+   ],
+   "accessProfile:ap-d2": [
+    -124,
+    392
+   ],
+   "entitlement:e114": [
+    744,
+    784
+   ],
+   "source:s3": [
+    0,
+    1072
+   ],
+   "entitlement:e115": [
+    496,
+    784
+   ],
+   "accessProfile:ap-d3": [
+    124,
+    392
+   ],
+   "entitlement:e116": [
+    0,
+    888
+   ],
+   "entitlement:e117": [
+    -248,
+    888
+   ],
+   "accessProfile:ap-d4": [
+    -620,
+    392
+   ],
+   "entitlement:e118": [
+    0,
+    680
+   ],
+   "entitlement:e119": [
+    -248,
+    680
+   ],
+   "entitlement:u1-e1": [
+    -496,
+    680
+   ],
+   "entitlement:u1-e2": [
+    248,
+    784
+   ],
+   "entitlement:u1-e3": [
+    -496,
+    888
+   ],
+   "entitlement:u1-e4": [
+    -744,
+    680
+   ],
+   "entitlement:u1-e5": [
+    0,
+    784
+   ],
+   "entitlement:u1-e6": [
+    -744,
+    888
+   ],
+   "entitlement:u1-e7": [
+    -992,
+    680
+   ],
+   "entitlement:u1-e8": [
+    -248,
+    784
+   ],
+   "entitlement:u1-e9": [
+    -992,
+    888
+   ],
+   "entitlement:u1-e10": [
+    1116,
+    576
+   ],
+   "entitlement:u1-e11": [
+    -496,
+    784
+   ],
+   "entitlement:u1-e12": [
+    992,
+    784
+   ],
+   "entitlement:u1-e13": [
+    868,
+    576
+   ],
+   "entitlement:u1-e14": [
+    -744,
+    784
+   ],
+   "entitlement:u1-e15": [
+    -372,
+    576
+   ],
+   "entitlement:u1-e16": [
+    620,
+    576
+   ],
+   "entitlement:u1-e17": [
+    -992,
+    784
+   ],
+   "entitlement:u1-e18": [
+    -620,
+    576
+   ],
+   "entitlement:u1-e19": [
+    372,
+    576
+   ],
+   "entitlement:u1-e20": [
+    992,
+    680
+   ],
+   "entitlement:u1-e21": [
+    -868,
+    576
+   ],
+   "entitlement:u1-e22": [
+    124,
+    576
+   ],
+   "entitlement:u1-e23": [
+    744,
+    680
+   ],
+   "entitlement:u1-e24": [
+    -1116,
+    576
+   ],
+   "entitlement:u1-e25": [
+    -124,
+    576
+   ]
+  },
+  "edges": [
+   "e:accessProfile:ap-d1:entitlement:e112",
+   "e:accessProfile:ap-d1:entitlement:e113",
+   "e:accessProfile:ap-d2:entitlement:e114",
+   "e:accessProfile:ap-d2:entitlement:e115",
+   "e:accessProfile:ap-d3:entitlement:e116",
+   "e:accessProfile:ap-d3:entitlement:e117",
+   "e:accessProfile:ap-d4:entitlement:e118",
+   "e:accessProfile:ap-d4:entitlement:e119",
+   "e:accessProfile:ap-r1a:entitlement:e101",
+   "e:accessProfile:ap-r1a:entitlement:e102",
+   "e:accessProfile:ap-r1b:entitlement:e103",
+   "e:accessProfile:ap-r1b:entitlement:e104",
+   "e:entitlement:e101:source:s1",
+   "e:entitlement:e102:source:s1",
+   "e:entitlement:e103:source:s1",
+   "e:entitlement:e104:source:s1",
+   "e:entitlement:e112:source:s2",
+   "e:entitlement:e113:source:s2",
+   "e:entitlement:e114:source:s3",
+   "e:entitlement:e115:source:s3",
+   "e:entitlement:e116:source:s1",
+   "e:entitlement:e117:source:s1",
+   "e:entitlement:e118:source:s2",
+   "e:entitlement:e119:source:s2",
+   "e:entitlement:u1-e10:source:s2",
+   "e:entitlement:u1-e11:source:s3",
+   "e:entitlement:u1-e12:source:s1",
+   "e:entitlement:u1-e13:source:s2",
+   "e:entitlement:u1-e14:source:s3",
+   "e:entitlement:u1-e15:source:s1",
+   "e:entitlement:u1-e16:source:s2",
+   "e:entitlement:u1-e17:source:s3",
+   "e:entitlement:u1-e18:source:s1",
+   "e:entitlement:u1-e19:source:s2",
+   "e:entitlement:u1-e1:source:s2",
+   "e:entitlement:u1-e20:source:s3",
+   "e:entitlement:u1-e21:source:s1",
+   "e:entitlement:u1-e22:source:s2",
+   "e:entitlement:u1-e23:source:s3",
+   "e:entitlement:u1-e24:source:s1",
+   "e:entitlement:u1-e25:source:s2",
+   "e:entitlement:u1-e2:source:s3",
+   "e:entitlement:u1-e3:source:s1",
+   "e:entitlement:u1-e4:source:s2",
+   "e:entitlement:u1-e5:source:s3",
+   "e:entitlement:u1-e6:source:s1",
+   "e:entitlement:u1-e7:source:s2",
+   "e:entitlement:u1-e8:source:s3",
+   "e:entitlement:u1-e9:source:s1",
+   "e:role:role-1:accessProfile:ap-r1a",
+   "e:role:role-1:accessProfile:ap-r1b",
+   "e:user:u1:accessProfile:ap-d1",
+   "e:user:u1:accessProfile:ap-d2",
+   "e:user:u1:accessProfile:ap-d3",
+   "e:user:u1:accessProfile:ap-d4",
+   "e:user:u1:entitlement:u1-e1",
+   "e:user:u1:entitlement:u1-e10",
+   "e:user:u1:entitlement:u1-e11",
+   "e:user:u1:entitlement:u1-e12",
+   "e:user:u1:entitlement:u1-e13",
+   "e:user:u1:entitlement:u1-e14",
+   "e:user:u1:entitlement:u1-e15",
+   "e:user:u1:entitlement:u1-e16",
+   "e:user:u1:entitlement:u1-e17",
+   "e:user:u1:entitlement:u1-e18",
+   "e:user:u1:entitlement:u1-e19",
+   "e:user:u1:entitlement:u1-e2",
+   "e:user:u1:entitlement:u1-e20",
+   "e:user:u1:entitlement:u1-e21",
+   "e:user:u1:entitlement:u1-e22",
+   "e:user:u1:entitlement:u1-e23",
+   "e:user:u1:entitlement:u1-e24",
+   "e:user:u1:entitlement:u1-e25",
+   "e:user:u1:entitlement:u1-e3",
+   "e:user:u1:entitlement:u1-e4",
+   "e:user:u1:entitlement:u1-e5",
+   "e:user:u1:entitlement:u1-e6",
+   "e:user:u1:entitlement:u1-e7",
+   "e:user:u1:entitlement:u1-e8",
+   "e:user:u1:entitlement:u1-e9",
+   "e:user:u1:role:role-1"
+  ],
+  "viewportChangedFrames": 1
+ },
+ "lane11-done@1700x1000": {
+  "viewport": [
+   362.19,
+   331.448,
+   0.611007
+  ],
+  "nodes": {
+   "user:u1": [
+    24,
+    0
+   ],
+   "entitlement:u1-e1": [
+    984,
+    504
+   ],
+   "source:s2": [
+    1304,
+    112
+   ],
+   "entitlement:u1-e2": [
+    984,
+    -168
+   ],
+   "source:s3": [
+    1304,
+    -112
+   ],
+   "entitlement:u1-e3": [
+    984,
+    168
+   ],
+   "source:s1": [
+    1304,
+    0
+   ],
+   "entitlement:u1-e5": [
+    984,
+    -280
+   ],
+   "entitlement:u1-e6": [
+    984,
+    56
+   ],
+   "entitlement:u1-e7": [
+    984,
+    392
+   ],
+   "entitlement:u1-e8": [
+    984,
+    -392
+   ],
+   "entitlement:u1-e9": [
+    984,
+    -56
+   ],
+   "entitlement:u1-e10": [
+    984,
+    280
+   ],
+   "entitlement:u1-e11": [
+    984,
+    -504
+   ]
+  },
+  "edges": [
+   "e:entitlement:u1-e10:source:s2",
+   "e:entitlement:u1-e11:source:s3",
+   "e:entitlement:u1-e1:source:s2",
+   "e:entitlement:u1-e2:source:s3",
+   "e:entitlement:u1-e3:source:s1",
+   "e:entitlement:u1-e5:source:s3",
+   "e:entitlement:u1-e6:source:s1",
+   "e:entitlement:u1-e7:source:s2",
+   "e:entitlement:u1-e8:source:s3",
+   "e:entitlement:u1-e9:source:s1",
+   "e:user:u1:entitlement:u1-e1",
+   "e:user:u1:entitlement:u1-e10",
+   "e:user:u1:entitlement:u1-e11",
+   "e:user:u1:entitlement:u1-e2",
+   "e:user:u1:entitlement:u1-e3",
+   "e:user:u1:entitlement:u1-e5",
+   "e:user:u1:entitlement:u1-e6",
+   "e:user:u1:entitlement:u1-e7",
+   "e:user:u1:entitlement:u1-e8",
+   "e:user:u1:entitlement:u1-e9"
+  ],
+  "viewportChangedFrames": 1
+ },
+ "drill-dense@1700x1000": {
+  "viewport": [
+   162.228,
+   331.448,
+   0.611007
+  ],
+  "nodes": {
+   "user:u1": [
+    24,
+    0
+   ],
+   "role:role-1": [
+    344,
+    0
+   ],
+   "accessProfile:ap-r1a": [
+    664,
+    280
+   ],
+   "entitlement:e101": [
+    1704,
+    448
+   ],
+   "source:s1": [
+    2024,
+    112
+   ],
+   "entitlement:e102": [
+    1704,
+    336
+   ],
+   "accessProfile:ap-r1b": [
+    664,
+    168
+   ],
+   "entitlement:e103": [
+    1704,
+    224
+   ],
+   "entitlement:e104": [
+    1704,
+    112
+   ],
+   "accessProfile:ap-d1": [
+    664,
+    -168
+   ],
+   "entitlement:e112": [
+    1224,
+    224
+   ],
+   "source:s2": [
+    2024,
+    -112
+   ],
+   "entitlement:e113": [
+    1224,
+    112
+   ],
+   "accessProfile:ap-d2": [
+    664,
+    -56
+   ],
+   "entitlement:e114": [
+    1464,
+    336
+   ],
+   "source:s3": [
+    2024,
+    0
+   ],
+   "entitlement:e115": [
+    1464,
+    224
+   ],
+   "accessProfile:ap-d3": [
+    664,
+    56
+   ],
+   "entitlement:e116": [
+    1704,
+    0
+   ],
+   "entitlement:e117": [
+    1704,
+    -112
+   ],
+   "accessProfile:ap-d4": [
+    664,
+    -280
+   ],
+   "entitlement:e118": [
+    1224,
+    0
+   ],
+   "entitlement:e119": [
+    1224,
+    -112
+   ],
+   "entitlement:u1-e1": [
+    1224,
+    -224
+   ],
+   "entitlement:u1-e2": [
+    1464,
+    112
+   ],
+   "entitlement:u1-e3": [
+    1704,
+    -224
+   ],
+   "entitlement:u1-e4": [
+    1224,
+    -336
+   ],
+   "entitlement:u1-e5": [
+    1464,
+    0
+   ],
+   "entitlement:u1-e6": [
+    1704,
+    -336
+   ],
+   "entitlement:u1-e7": [
+    1224,
+    -448
+   ],
+   "entitlement:u1-e8": [
+    1464,
+    -112
+   ],
+   "entitlement:u1-e9": [
+    1704,
+    -448
+   ],
+   "entitlement:u1-e10": [
+    984,
+    504
+   ],
+   "entitlement:u1-e11": [
+    1464,
+    -224
+   ],
+   "entitlement:u1-e12": [
+    1464,
+    448
+   ],
+   "entitlement:u1-e13": [
+    984,
+    392
+   ],
+   "entitlement:u1-e14": [
+    1464,
+    -336
+   ],
+   "entitlement:u1-e15": [
+    984,
+    -168
+   ],
+   "entitlement:u1-e16": [
+    984,
+    280
+   ],
+   "entitlement:u1-e17": [
+    1464,
+    -448
+   ],
+   "entitlement:u1-e18": [
+    984,
+    -280
+   ],
+   "entitlement:u1-e19": [
+    984,
+    168
+   ],
+   "entitlement:u1-e20": [
+    1224,
+    448
+   ],
+   "entitlement:u1-e21": [
+    984,
+    -392
+   ],
+   "entitlement:u1-e22": [
+    984,
+    56
+   ],
+   "entitlement:u1-e23": [
+    1224,
+    336
+   ],
+   "entitlement:u1-e24": [
+    984,
+    -504
+   ],
+   "entitlement:u1-e25": [
+    984,
+    -56
+   ]
+  },
+  "edges": [
+   "e:accessProfile:ap-d1:entitlement:e112",
+   "e:accessProfile:ap-d1:entitlement:e113",
+   "e:accessProfile:ap-d2:entitlement:e114",
+   "e:accessProfile:ap-d2:entitlement:e115",
+   "e:accessProfile:ap-d3:entitlement:e116",
+   "e:accessProfile:ap-d3:entitlement:e117",
+   "e:accessProfile:ap-d4:entitlement:e118",
+   "e:accessProfile:ap-d4:entitlement:e119",
+   "e:accessProfile:ap-r1a:entitlement:e101",
+   "e:accessProfile:ap-r1a:entitlement:e102",
+   "e:accessProfile:ap-r1b:entitlement:e103",
+   "e:accessProfile:ap-r1b:entitlement:e104",
+   "e:entitlement:e101:source:s1",
+   "e:entitlement:e102:source:s1",
+   "e:entitlement:e103:source:s1",
+   "e:entitlement:e104:source:s1",
+   "e:entitlement:e112:source:s2",
+   "e:entitlement:e113:source:s2",
+   "e:entitlement:e114:source:s3",
+   "e:entitlement:e115:source:s3",
+   "e:entitlement:e116:source:s1",
+   "e:entitlement:e117:source:s1",
+   "e:entitlement:e118:source:s2",
+   "e:entitlement:e119:source:s2",
+   "e:entitlement:u1-e10:source:s2",
+   "e:entitlement:u1-e11:source:s3",
+   "e:entitlement:u1-e12:source:s1",
+   "e:entitlement:u1-e13:source:s2",
+   "e:entitlement:u1-e14:source:s3",
+   "e:entitlement:u1-e15:source:s1",
+   "e:entitlement:u1-e16:source:s2",
+   "e:entitlement:u1-e17:source:s3",
+   "e:entitlement:u1-e18:source:s1",
+   "e:entitlement:u1-e19:source:s2",
+   "e:entitlement:u1-e1:source:s2",
+   "e:entitlement:u1-e20:source:s3",
+   "e:entitlement:u1-e21:source:s1",
+   "e:entitlement:u1-e22:source:s2",
+   "e:entitlement:u1-e23:source:s3",
+   "e:entitlement:u1-e24:source:s1",
+   "e:entitlement:u1-e25:source:s2",
+   "e:entitlement:u1-e2:source:s3",
+   "e:entitlement:u1-e3:source:s1",
+   "e:entitlement:u1-e4:source:s2",
+   "e:entitlement:u1-e5:source:s3",
+   "e:entitlement:u1-e6:source:s1",
+   "e:entitlement:u1-e7:source:s2",
+   "e:entitlement:u1-e8:source:s3",
+   "e:entitlement:u1-e9:source:s1",
+   "e:role:role-1:accessProfile:ap-r1a",
+   "e:role:role-1:accessProfile:ap-r1b",
+   "e:user:u1:accessProfile:ap-d1",
+   "e:user:u1:accessProfile:ap-d2",
+   "e:user:u1:accessProfile:ap-d3",
+   "e:user:u1:accessProfile:ap-d4",
+   "e:user:u1:entitlement:u1-e1",
+   "e:user:u1:entitlement:u1-e10",
+   "e:user:u1:entitlement:u1-e11",
+   "e:user:u1:entitlement:u1-e12",
+   "e:user:u1:entitlement:u1-e13",
+   "e:user:u1:entitlement:u1-e14",
+   "e:user:u1:entitlement:u1-e15",
+   "e:user:u1:entitlement:u1-e16",
+   "e:user:u1:entitlement:u1-e17",
+   "e:user:u1:entitlement:u1-e18",
+   "e:user:u1:entitlement:u1-e19",
+   "e:user:u1:entitlement:u1-e2",
+   "e:user:u1:entitlement:u1-e20",
+   "e:user:u1:entitlement:u1-e21",
+   "e:user:u1:entitlement:u1-e22",
+   "e:user:u1:entitlement:u1-e23",
+   "e:user:u1:entitlement:u1-e24",
+   "e:user:u1:entitlement:u1-e25",
+   "e:user:u1:entitlement:u1-e3",
+   "e:user:u1:entitlement:u1-e4",
+   "e:user:u1:entitlement:u1-e5",
+   "e:user:u1:entitlement:u1-e6",
+   "e:user:u1:entitlement:u1-e7",
+   "e:user:u1:entitlement:u1-e8",
+   "e:user:u1:entitlement:u1-e9",
+   "e:user:u1:role:role-1"
+  ],
+  "viewportChangedFrames": 1,
+  "clickedCard": {
+   "total": 596.8589289309436,
+   "maxStepFrac": 0.000001277684246066413,
+   "firstStepFrac": 1.0000011195639544,
+   "worstBack": 0,
+   "frames": 60
+  }
+ },
+ "drill-big@1700x1000": {
+  "viewport": [
+   160.4,
+   404.505,
+   0.65
+  ]
+ },
+ "back-dense@1700x1000": {
+  "viewport": [
+   820,
+   429,
+   1.33741
+  ],
+  "nodes": {
+   "user:u1": [
+    -572,
+    -32
+   ],
+   "user:u2": [
+    -336,
+    -32
+   ],
+   "user:u3": [
+    -100,
+    -32
+   ],
+   "user:u4": [
+    136,
+    -32
+   ],
+   "user:u5": [
+    372,
+    -32
+   ]
+  },
+  "edges": [],
+  "viewportChangedFrames": 1,
+  "clickedCard": {
+   "total": 596.8589289309436,
+   "maxStepFrac": 5.857851116156495e-7,
+   "firstStepFrac": 0.9999999802158698,
+   "worstBack": 0,
+   "frames": 158
+  }
+ },
+ "grid-initial@1700x1000": {
+  "viewport": [
+   829,
+   351,
+   1.02344
+  ]
+ },
+ "drill-mixed@1100x700": {
+  "viewport": [
+   166.929,
+   187.604,
+   0.418632
+  ],
+  "nodes": {
+   "user:u1": [
+    24,
+    0
+   ],
+   "role:role-1": [
+    344,
+    56
+   ],
+   "accessProfile:ap-r1a": [
+    664,
+    280
+   ],
+   "entitlement:e101": [
+    1224,
+    392
+   ],
+   "source:s1": [
+    1544,
+    112
+   ],
+   "entitlement:e102": [
+    1224,
+    280
+   ],
+   "accessProfile:ap-r1b": [
+    664,
+    168
+   ],
+   "entitlement:e103": [
+    1224,
+    168
+   ],
+   "role:role-2": [
+    344,
+    -56
+   ],
+   "accessProfile:ap-r2a": [
+    664,
+    -168
+   ],
+   "entitlement:e104": [
+    984,
+    168
+   ],
+   "source:s2": [
+    1544,
+    -112
+   ],
+   "entitlement:e105": [
+    984,
+    56
+   ],
+   "accessProfile:ap-d1": [
+    664,
+    56
+   ],
+   "entitlement:e111": [
+    1224,
+    56
+   ],
+   "entitlement:e112": [
+    1224,
+    -56
+   ],
+   "accessProfile:ap-d2": [
+    664,
+    -56
+   ],
+   "entitlement:e113": [
+    984,
+    392
+   ],
+   "source:s3": [
+    1544,
+    0
+   ],
+   "accessProfile:ap-d3": [
+    664,
+    -280
+   ],
+   "entitlement:e114": [
+    984,
+    -56
+   ],
+   "entitlement:e115": [
+    984,
+    -168
+   ],
+   "entitlement:u1-e1": [
+    984,
+    -280
+   ],
+   "entitlement:u1-e2": [
+    1224,
+    -392
+   ],
+   "entitlement:u1-e3": [
+    1224,
+    -168
+   ],
+   "entitlement:u1-e4": [
+    984,
+    -392
+   ],
+   "entitlement:u1-e5": [
+    1224,
+    -280
+   ],
+   "entitlement:u1-e6": [
+    984,
+    280
+   ]
+  },
+  "edges": [
+   "e:accessProfile:ap-d1:entitlement:e111",
+   "e:accessProfile:ap-d1:entitlement:e112",
+   "e:accessProfile:ap-d2:entitlement:e113",
+   "e:accessProfile:ap-d3:entitlement:e114",
+   "e:accessProfile:ap-d3:entitlement:e115",
+   "e:accessProfile:ap-r1a:entitlement:e101",
+   "e:accessProfile:ap-r1a:entitlement:e102",
+   "e:accessProfile:ap-r1b:entitlement:e103",
+   "e:accessProfile:ap-r2a:entitlement:e104",
+   "e:accessProfile:ap-r2a:entitlement:e105",
+   "e:entitlement:e101:source:s1",
+   "e:entitlement:e102:source:s1",
+   "e:entitlement:e103:source:s1",
+   "e:entitlement:e104:source:s2",
+   "e:entitlement:e105:source:s2",
+   "e:entitlement:e111:source:s1",
+   "e:entitlement:e112:source:s1",
+   "e:entitlement:e113:source:s3",
+   "e:entitlement:e114:source:s2",
+   "e:entitlement:e115:source:s2",
+   "e:entitlement:u1-e1:source:s2",
+   "e:entitlement:u1-e2:source:s3",
+   "e:entitlement:u1-e3:source:s1",
+   "e:entitlement:u1-e4:source:s2",
+   "e:entitlement:u1-e5:source:s3",
+   "e:entitlement:u1-e6:source:s1",
+   "e:role:role-1:accessProfile:ap-r1a",
+   "e:role:role-1:accessProfile:ap-r1b",
+   "e:role:role-2:accessProfile:ap-r2a",
+   "e:user:u1:accessProfile:ap-d1",
+   "e:user:u1:accessProfile:ap-d2",
+   "e:user:u1:accessProfile:ap-d3",
+   "e:user:u1:entitlement:u1-e1",
+   "e:user:u1:entitlement:u1-e2",
+   "e:user:u1:entitlement:u1-e3",
+   "e:user:u1:entitlement:u1-e4",
+   "e:user:u1:entitlement:u1-e5",
+   "e:user:u1:entitlement:u1-e6",
+   "e:user:u1:role:role-1",
+   "e:user:u1:role:role-2"
+  ],
+  "viewportChangedFrames": 1,
+  "clickedCard": {
+   "total": 484.64838462880914,
+   "maxStepFrac": 0.0000017356348832614744,
+   "firstStepFrac": 0.9999989438372722,
+   "worstBack": 0,
+   "frames": 61
+  }
+ },
+ "back-mixed@1100x700": {
+  "viewport": [
+   520,
+   279,
+   1.02423
+  ],
+  "nodes": {
+   "user:u1": [
+    -454,
+    -80
+   ],
+   "user:u2": [
+    -218,
+    -80
+   ],
+   "user:u3": [
+    18,
+    -80
+   ],
+   "user:u4": [
+    254,
+    -80
+   ],
+   "user:u5": [
+    -454,
+    16
+   ],
+   "user:u6": [
+    -218,
+    16
+   ],
+   "user:u7": [
+    18,
+    16
+   ],
+   "user:u8": [
+    254,
+    16
+   ]
+  },
+  "edges": [],
+  "viewportChangedFrames": 1,
+  "clickedCard": {
+   "total": 484.64838462880914,
+   "maxStepFrac": 0.000001243111135462693,
+   "firstStepFrac": 1.0000000771719793,
+   "worstBack": 0,
+   "frames": 159
+  }
+ },
+ "done-dense@1100x700": {
+  "viewport": [
+   166.594,
+   189.792,
+   0.412755
+  ],
+  "nodes": {
+   "user:u1": [
+    24,
+    0
+   ],
+   "role:role-1": [
+    344,
+    0
+   ],
+   "accessProfile:ap-r1a": [
+    664,
+    0
+   ],
+   "entitlement:e101": [
+    984,
+    392
+   ],
+   "source:s1": [
+    1784,
+    -112
+   ],
+   "entitlement:e102": [
+    984,
+    -168
+   ],
+   "accessProfile:ap-r1b": [
+    664,
+    -112
+   ],
+   "entitlement:e103": [
+    984,
+    -280
+   ],
+   "entitlement:e104": [
+    984,
+    -392
+   ],
+   "source:s2": [
+    1784,
+    112
+   ],
+   "source:s3": [
+    1784,
+    0
+   ],
+   "accessProfile:ap-d4": [
+    664,
+    112
+   ],
+   "entitlement:e118": [
+    1464,
+    336
+   ],
+   "entitlement:e119": [
+    1464,
+    224
+   ],
+   "entitlement:u1-e1": [
+    1464,
+    112
+   ],
+   "entitlement:u1-e2": [
+    984,
+    -56
+   ],
+   "entitlement:u1-e4": [
+    1464,
+    0
+   ],
+   "entitlement:u1-e5": [
+    984,
+    56
+   ],
+   "entitlement:u1-e7": [
+    1464,
+    -112
+   ],
+   "entitlement:u1-e8": [
+    984,
+    168
+   ],
+   "entitlement:u1-e10": [
+    1464,
+    -224
+   ],
+   "entitlement:u1-e11": [
+    984,
+    280
+   ],
+   "entitlement:u1-e13": [
+    1464,
+    -336
+   ],
+   "entitlement:u1-e14": [
+    1224,
+    -392
+   ],
+   "entitlement:u1-e16": [
+    1224,
+    392
+   ],
+   "entitlement:u1-e17": [
+    1224,
+    -280
+   ],
+   "entitlement:u1-e19": [
+    1224,
+    280
+   ],
+   "entitlement:u1-e20": [
+    1224,
+    -168
+   ],
+   "entitlement:u1-e22": [
+    1224,
+    168
+   ],
+   "entitlement:u1-e23": [
+    1224,
+    -56
+   ],
+   "entitlement:u1-e25": [
+    1224,
+    56
+   ]
+  },
+  "edges": [
+   "e:accessProfile:ap-d4:entitlement:e118",
+   "e:accessProfile:ap-d4:entitlement:e119",
+   "e:accessProfile:ap-r1a:entitlement:e101",
+   "e:accessProfile:ap-r1a:entitlement:e102",
+   "e:accessProfile:ap-r1b:entitlement:e103",
+   "e:accessProfile:ap-r1b:entitlement:e104",
+   "e:entitlement:e101:source:s1",
+   "e:entitlement:e102:source:s1",
+   "e:entitlement:e103:source:s1",
+   "e:entitlement:e104:source:s1",
+   "e:entitlement:e118:source:s2",
+   "e:entitlement:e119:source:s2",
+   "e:entitlement:u1-e10:source:s2",
+   "e:entitlement:u1-e11:source:s3",
+   "e:entitlement:u1-e13:source:s2",
+   "e:entitlement:u1-e14:source:s3",
+   "e:entitlement:u1-e16:source:s2",
+   "e:entitlement:u1-e17:source:s3",
+   "e:entitlement:u1-e19:source:s2",
+   "e:entitlement:u1-e1:source:s2",
+   "e:entitlement:u1-e20:source:s3",
+   "e:entitlement:u1-e22:source:s2",
+   "e:entitlement:u1-e23:source:s3",
+   "e:entitlement:u1-e25:source:s2",
+   "e:entitlement:u1-e2:source:s3",
+   "e:entitlement:u1-e4:source:s2",
+   "e:entitlement:u1-e5:source:s3",
+   "e:entitlement:u1-e7:source:s2",
+   "e:entitlement:u1-e8:source:s3",
+   "e:role:role-1:accessProfile:ap-r1a",
+   "e:role:role-1:accessProfile:ap-r1b",
+   "e:user:u1:accessProfile:ap-d4",
+   "e:user:u1:entitlement:u1-e1",
+   "e:user:u1:entitlement:u1-e10",
+   "e:user:u1:entitlement:u1-e11",
+   "e:user:u1:entitlement:u1-e13",
+   "e:user:u1:entitlement:u1-e14",
+   "e:user:u1:entitlement:u1-e16",
+   "e:user:u1:entitlement:u1-e17",
+   "e:user:u1:entitlement:u1-e19",
+   "e:user:u1:entitlement:u1-e2",
+   "e:user:u1:entitlement:u1-e20",
+   "e:user:u1:entitlement:u1-e22",
+   "e:user:u1:entitlement:u1-e23",
+   "e:user:u1:entitlement:u1-e25",
+   "e:user:u1:entitlement:u1-e4",
+   "e:user:u1:entitlement:u1-e5",
+   "e:user:u1:entitlement:u1-e7",
+   "e:user:u1:entitlement:u1-e8",
+   "e:user:u1:role:role-1"
+  ],
+  "viewportChangedFrames": 1
+ },
+ "undone-dense@1100x700": {
+  "viewport": [
+   168.78,
+   190.403,
+   0.331157
+  ],
+  "nodes": {
+   "user:u1": [
+    24,
+    0
+   ],
+   "role:role-1": [
+    344,
+    0
+   ],
+   "accessProfile:ap-r1a": [
+    664,
+    280
+   ],
+   "entitlement:e101": [
+    1704,
+    448
+   ],
+   "source:s1": [
+    2024,
+    112
+   ],
+   "entitlement:e102": [
+    1704,
+    336
+   ],
+   "accessProfile:ap-r1b": [
+    664,
+    168
+   ],
+   "entitlement:e103": [
+    1704,
+    224
+   ],
+   "entitlement:e104": [
+    1704,
+    112
+   ],
+   "accessProfile:ap-d1": [
+    664,
+    -168
+   ],
+   "entitlement:e112": [
+    1224,
+    224
+   ],
+   "source:s2": [
+    2024,
+    -112
+   ],
+   "entitlement:e113": [
+    1224,
+    112
+   ],
+   "accessProfile:ap-d2": [
+    664,
+    -56
+   ],
+   "entitlement:e114": [
+    1464,
+    336
+   ],
+   "source:s3": [
+    2024,
+    0
+   ],
+   "entitlement:e115": [
+    1464,
+    224
+   ],
+   "accessProfile:ap-d3": [
+    664,
+    56
+   ],
+   "entitlement:e116": [
+    1704,
+    0
+   ],
+   "entitlement:e117": [
+    1704,
+    -112
+   ],
+   "accessProfile:ap-d4": [
+    664,
+    -280
+   ],
+   "entitlement:e118": [
+    1224,
+    0
+   ],
+   "entitlement:e119": [
+    1224,
+    -112
+   ],
+   "entitlement:u1-e1": [
+    1224,
+    -224
+   ],
+   "entitlement:u1-e2": [
+    1464,
+    112
+   ],
+   "entitlement:u1-e3": [
+    1704,
+    -224
+   ],
+   "entitlement:u1-e4": [
+    1224,
+    -336
+   ],
+   "entitlement:u1-e5": [
+    1464,
+    0
+   ],
+   "entitlement:u1-e6": [
+    1704,
+    -336
+   ],
+   "entitlement:u1-e7": [
+    1224,
+    -448
+   ],
+   "entitlement:u1-e8": [
+    1464,
+    -112
+   ],
+   "entitlement:u1-e9": [
+    1704,
+    -448
+   ],
+   "entitlement:u1-e10": [
+    984,
+    504
+   ],
+   "entitlement:u1-e11": [
+    1464,
+    -224
+   ],
+   "entitlement:u1-e12": [
+    1464,
+    448
+   ],
+   "entitlement:u1-e13": [
+    984,
+    392
+   ],
+   "entitlement:u1-e14": [
+    1464,
+    -336
+   ],
+   "entitlement:u1-e15": [
+    984,
+    -168
+   ],
+   "entitlement:u1-e16": [
+    984,
+    280
+   ],
+   "entitlement:u1-e17": [
+    1464,
+    -448
+   ],
+   "entitlement:u1-e18": [
+    984,
+    -280
+   ],
+   "entitlement:u1-e19": [
+    984,
+    168
+   ],
+   "entitlement:u1-e20": [
+    1224,
+    448
+   ],
+   "entitlement:u1-e21": [
+    984,
+    -392
+   ],
+   "entitlement:u1-e22": [
+    984,
+    56
+   ],
+   "entitlement:u1-e23": [
+    1224,
+    336
+   ],
+   "entitlement:u1-e24": [
+    984,
+    -504
+   ],
+   "entitlement:u1-e25": [
+    984,
+    -56
+   ]
+  },
+  "edges": [
+   "e:accessProfile:ap-d1:entitlement:e112",
+   "e:accessProfile:ap-d1:entitlement:e113",
+   "e:accessProfile:ap-d2:entitlement:e114",
+   "e:accessProfile:ap-d2:entitlement:e115",
+   "e:accessProfile:ap-d3:entitlement:e116",
+   "e:accessProfile:ap-d3:entitlement:e117",
+   "e:accessProfile:ap-d4:entitlement:e118",
+   "e:accessProfile:ap-d4:entitlement:e119",
+   "e:accessProfile:ap-r1a:entitlement:e101",
+   "e:accessProfile:ap-r1a:entitlement:e102",
+   "e:accessProfile:ap-r1b:entitlement:e103",
+   "e:accessProfile:ap-r1b:entitlement:e104",
+   "e:entitlement:e101:source:s1",
+   "e:entitlement:e102:source:s1",
+   "e:entitlement:e103:source:s1",
+   "e:entitlement:e104:source:s1",
+   "e:entitlement:e112:source:s2",
+   "e:entitlement:e113:source:s2",
+   "e:entitlement:e114:source:s3",
+   "e:entitlement:e115:source:s3",
+   "e:entitlement:e116:source:s1",
+   "e:entitlement:e117:source:s1",
+   "e:entitlement:e118:source:s2",
+   "e:entitlement:e119:source:s2",
+   "e:entitlement:u1-e10:source:s2",
+   "e:entitlement:u1-e11:source:s3",
+   "e:entitlement:u1-e12:source:s1",
+   "e:entitlement:u1-e13:source:s2",
+   "e:entitlement:u1-e14:source:s3",
+   "e:entitlement:u1-e15:source:s1",
+   "e:entitlement:u1-e16:source:s2",
+   "e:entitlement:u1-e17:source:s3",
+   "e:entitlement:u1-e18:source:s1",
+   "e:entitlement:u1-e19:source:s2",
+   "e:entitlement:u1-e1:source:s2",
+   "e:entitlement:u1-e20:source:s3",
+   "e:entitlement:u1-e21:source:s1",
+   "e:entitlement:u1-e22:source:s2",
+   "e:entitlement:u1-e23:source:s3",
+   "e:entitlement:u1-e24:source:s1",
+   "e:entitlement:u1-e25:source:s2",
+   "e:entitlement:u1-e2:source:s3",
+   "e:entitlement:u1-e3:source:s1",
+   "e:entitlement:u1-e4:source:s2",
+   "e:entitlement:u1-e5:source:s3",
+   "e:entitlement:u1-e6:source:s1",
+   "e:entitlement:u1-e7:source:s2",
+   "e:entitlement:u1-e8:source:s3",
+   "e:entitlement:u1-e9:source:s1",
+   "e:role:role-1:accessProfile:ap-r1a",
+   "e:role:role-1:accessProfile:ap-r1b",
+   "e:user:u1:accessProfile:ap-d1",
+   "e:user:u1:accessProfile:ap-d2",
+   "e:user:u1:accessProfile:ap-d3",
+   "e:user:u1:accessProfile:ap-d4",
+   "e:user:u1:entitlement:u1-e1",
+   "e:user:u1:entitlement:u1-e10",
+   "e:user:u1:entitlement:u1-e11",
+   "e:user:u1:entitlement:u1-e12",
+   "e:user:u1:entitlement:u1-e13",
+   "e:user:u1:entitlement:u1-e14",
+   "e:user:u1:entitlement:u1-e15",
+   "e:user:u1:entitlement:u1-e16",
+   "e:user:u1:entitlement:u1-e17",
+   "e:user:u1:entitlement:u1-e18",
+   "e:user:u1:entitlement:u1-e19",
+   "e:user:u1:entitlement:u1-e2",
+   "e:user:u1:entitlement:u1-e20",
+   "e:user:u1:entitlement:u1-e21",
+   "e:user:u1:entitlement:u1-e22",
+   "e:user:u1:entitlement:u1-e23",
+   "e:user:u1:entitlement:u1-e24",
+   "e:user:u1:entitlement:u1-e25",
+   "e:user:u1:entitlement:u1-e3",
+   "e:user:u1:entitlement:u1-e4",
+   "e:user:u1:entitlement:u1-e5",
+   "e:user:u1:entitlement:u1-e6",
+   "e:user:u1:entitlement:u1-e7",
+   "e:user:u1:entitlement:u1-e8",
+   "e:user:u1:entitlement:u1-e9",
+   "e:user:u1:role:role-1"
+  ],
+  "viewportChangedFrames": 1
+ },
+ "ref-mixed@1100x700": {
+  "viewport": [
+   185.378,
+   182.795,
+   0.56891
+  ],
+  "nodes": {
+   "user:u1": [
+    24,
+    0
+   ],
+   "role:role-1": [
+    344,
+    56
+   ],
+   "role:role-2": [
+    344,
+    -56
+   ],
+   "accessProfile:ap-d1": [
+    664,
+    112
+   ],
+   "accessProfile:ap-d2": [
+    664,
+    0
+   ],
+   "accessProfile:ap-d3": [
+    664,
+    -112
+   ],
+   "entitlement:u1-e1": [
+    984,
+    280
+   ],
+   "entitlement:u1-e2": [
+    984,
+    168
+   ],
+   "entitlement:u1-e3": [
+    984,
+    56
+   ],
+   "entitlement:u1-e4": [
+    984,
+    -56
+   ],
+   "entitlement:u1-e5": [
+    984,
+    -168
+   ],
+   "entitlement:u1-e6": [
+    984,
+    -280
+   ]
+  },
+  "edges": [
+   "e:user:u1:accessProfile:ap-d1",
+   "e:user:u1:accessProfile:ap-d2",
+   "e:user:u1:accessProfile:ap-d3",
+   "e:user:u1:entitlement:u1-e1",
+   "e:user:u1:entitlement:u1-e2",
+   "e:user:u1:entitlement:u1-e3",
+   "e:user:u1:entitlement:u1-e4",
+   "e:user:u1:entitlement:u1-e5",
+   "e:user:u1:entitlement:u1-e6",
+   "e:user:u1:role:role-1",
+   "e:user:u1:role:role-2"
+  ],
+  "viewportChangedFrames": 1
+ },
+ "unref-mixed@1100x700": {
+  "viewport": [
+   166.929,
+   187.604,
+   0.418632
+  ],
+  "nodes": {
+   "user:u1": [
+    24,
+    0
+   ],
+   "role:role-1": [
+    344,
+    56
+   ],
+   "accessProfile:ap-r1a": [
+    664,
+    280
+   ],
+   "entitlement:e101": [
+    1224,
+    392
+   ],
+   "source:s1": [
+    1544,
+    112
+   ],
+   "entitlement:e102": [
+    1224,
+    280
+   ],
+   "accessProfile:ap-r1b": [
+    664,
+    168
+   ],
+   "entitlement:e103": [
+    1224,
+    168
+   ],
+   "role:role-2": [
+    344,
+    -56
+   ],
+   "accessProfile:ap-r2a": [
+    664,
+    -168
+   ],
+   "entitlement:e104": [
+    984,
+    168
+   ],
+   "source:s2": [
+    1544,
+    -112
+   ],
+   "entitlement:e105": [
+    984,
+    56
+   ],
+   "accessProfile:ap-d1": [
+    664,
+    56
+   ],
+   "entitlement:e111": [
+    1224,
+    56
+   ],
+   "entitlement:e112": [
+    1224,
+    -56
+   ],
+   "accessProfile:ap-d2": [
+    664,
+    -56
+   ],
+   "entitlement:e113": [
+    984,
+    392
+   ],
+   "source:s3": [
+    1544,
+    0
+   ],
+   "accessProfile:ap-d3": [
+    664,
+    -280
+   ],
+   "entitlement:e114": [
+    984,
+    -56
+   ],
+   "entitlement:e115": [
+    984,
+    -168
+   ],
+   "entitlement:u1-e1": [
+    984,
+    -280
+   ],
+   "entitlement:u1-e2": [
+    1224,
+    -392
+   ],
+   "entitlement:u1-e3": [
+    1224,
+    -168
+   ],
+   "entitlement:u1-e4": [
+    984,
+    -392
+   ],
+   "entitlement:u1-e5": [
+    1224,
+    -280
+   ],
+   "entitlement:u1-e6": [
+    984,
+    280
+   ]
+  },
+  "edges": [
+   "e:accessProfile:ap-d1:entitlement:e111",
+   "e:accessProfile:ap-d1:entitlement:e112",
+   "e:accessProfile:ap-d2:entitlement:e113",
+   "e:accessProfile:ap-d3:entitlement:e114",
+   "e:accessProfile:ap-d3:entitlement:e115",
+   "e:accessProfile:ap-r1a:entitlement:e101",
+   "e:accessProfile:ap-r1a:entitlement:e102",
+   "e:accessProfile:ap-r1b:entitlement:e103",
+   "e:accessProfile:ap-r2a:entitlement:e104",
+   "e:accessProfile:ap-r2a:entitlement:e105",
+   "e:entitlement:e101:source:s1",
+   "e:entitlement:e102:source:s1",
+   "e:entitlement:e103:source:s1",
+   "e:entitlement:e104:source:s2",
+   "e:entitlement:e105:source:s2",
+   "e:entitlement:e111:source:s1",
+   "e:entitlement:e112:source:s1",
+   "e:entitlement:e113:source:s3",
+   "e:entitlement:e114:source:s2",
+   "e:entitlement:e115:source:s2",
+   "e:entitlement:u1-e1:source:s2",
+   "e:entitlement:u1-e2:source:s3",
+   "e:entitlement:u1-e3:source:s1",
+   "e:entitlement:u1-e4:source:s2",
+   "e:entitlement:u1-e5:source:s3",
+   "e:entitlement:u1-e6:source:s1",
+   "e:role:role-1:accessProfile:ap-r1a",
+   "e:role:role-1:accessProfile:ap-r1b",
+   "e:role:role-2:accessProfile:ap-r2a",
+   "e:user:u1:accessProfile:ap-d1",
+   "e:user:u1:accessProfile:ap-d2",
+   "e:user:u1:accessProfile:ap-d3",
+   "e:user:u1:entitlement:u1-e1",
+   "e:user:u1:entitlement:u1-e2",
+   "e:user:u1:entitlement:u1-e3",
+   "e:user:u1:entitlement:u1-e4",
+   "e:user:u1:entitlement:u1-e5",
+   "e:user:u1:entitlement:u1-e6",
+   "e:user:u1:role:role-1",
+   "e:user:u1:role:role-2"
+  ],
+  "viewportChangedFrames": 1
+ },
+ "layout-mixed@1100x700": {
+  "viewport": [
+   517.73,
+   14.0752,
+   0.392699
+  ],
+  "nodes": {
+   "user:u1": [
+    0,
+    24
+   ],
+   "role:role-1": [
+    124,
+    208
+   ],
+   "accessProfile:ap-r1a": [
+    620,
+    392
+   ],
+   "entitlement:e101": [
+    868,
+    680
+   ],
+   "source:s1": [
+    248,
+    864
+   ],
+   "entitlement:e102": [
+    620,
+    680
+   ],
+   "accessProfile:ap-r1b": [
+    372,
+    392
+   ],
+   "entitlement:e103": [
+    372,
+    680
+   ],
+   "role:role-2": [
+    -124,
+    208
+   ],
+   "accessProfile:ap-r2a": [
+    -372,
+    392
+   ],
+   "entitlement:e104": [
+    372,
+    576
+   ],
+   "source:s2": [
+    -248,
+    864
+   ],
+   "entitlement:e105": [
+    124,
+    576
+   ],
+   "accessProfile:ap-d1": [
+    124,
+    392
+   ],
+   "entitlement:e111": [
+    124,
+    680
+   ],
+   "entitlement:e112": [
+    -124,
+    680
+   ],
+   "accessProfile:ap-d2": [
+    -124,
+    392
+   ],
+   "entitlement:e113": [
+    868,
+    576
+   ],
+   "source:s3": [
+    0,
+    864
+   ],
+   "accessProfile:ap-d3": [
+    -620,
+    392
+   ],
+   "entitlement:e114": [
+    -124,
+    576
+   ],
+   "entitlement:e115": [
+    -372,
+    576
+   ],
+   "entitlement:u1-e1": [
+    -620,
+    576
+   ],
+   "entitlement:u1-e2": [
+    -868,
+    680
+   ],
+   "entitlement:u1-e3": [
+    -372,
+    680
+   ],
+   "entitlement:u1-e4": [
+    -868,
+    576
+   ],
+   "entitlement:u1-e5": [
+    -620,
+    680
+   ],
+   "entitlement:u1-e6": [
+    620,
+    576
+   ]
+  },
+  "edges": [
+   "e:accessProfile:ap-d1:entitlement:e111",
+   "e:accessProfile:ap-d1:entitlement:e112",
+   "e:accessProfile:ap-d2:entitlement:e113",
+   "e:accessProfile:ap-d3:entitlement:e114",
+   "e:accessProfile:ap-d3:entitlement:e115",
+   "e:accessProfile:ap-r1a:entitlement:e101",
+   "e:accessProfile:ap-r1a:entitlement:e102",
+   "e:accessProfile:ap-r1b:entitlement:e103",
+   "e:accessProfile:ap-r2a:entitlement:e104",
+   "e:accessProfile:ap-r2a:entitlement:e105",
+   "e:entitlement:e101:source:s1",
+   "e:entitlement:e102:source:s1",
+   "e:entitlement:e103:source:s1",
+   "e:entitlement:e104:source:s2",
+   "e:entitlement:e105:source:s2",
+   "e:entitlement:e111:source:s1",
+   "e:entitlement:e112:source:s1",
+   "e:entitlement:e113:source:s3",
+   "e:entitlement:e114:source:s2",
+   "e:entitlement:e115:source:s2",
+   "e:entitlement:u1-e1:source:s2",
+   "e:entitlement:u1-e2:source:s3",
+   "e:entitlement:u1-e3:source:s1",
+   "e:entitlement:u1-e4:source:s2",
+   "e:entitlement:u1-e5:source:s3",
+   "e:entitlement:u1-e6:source:s1",
+   "e:role:role-1:accessProfile:ap-r1a",
+   "e:role:role-1:accessProfile:ap-r1b",
+   "e:role:role-2:accessProfile:ap-r2a",
+   "e:user:u1:accessProfile:ap-d1",
+   "e:user:u1:accessProfile:ap-d2",
+   "e:user:u1:accessProfile:ap-d3",
+   "e:user:u1:entitlement:u1-e1",
+   "e:user:u1:entitlement:u1-e2",
+   "e:user:u1:entitlement:u1-e3",
+   "e:user:u1:entitlement:u1-e4",
+   "e:user:u1:entitlement:u1-e5",
+   "e:user:u1:entitlement:u1-e6",
+   "e:user:u1:role:role-1",
+   "e:user:u1:role:role-2"
+  ],
+  "viewportChangedFrames": 1
+ },
+ "layout-back-mixed@1100x700": {
+  "viewport": [
+   166.929,
+   187.604,
+   0.418632
+  ],
+  "nodes": {
+   "user:u1": [
+    24,
+    0
+   ],
+   "role:role-1": [
+    344,
+    56
+   ],
+   "accessProfile:ap-r1a": [
+    664,
+    280
+   ],
+   "entitlement:e101": [
+    1224,
+    392
+   ],
+   "source:s1": [
+    1544,
+    112
+   ],
+   "entitlement:e102": [
+    1224,
+    280
+   ],
+   "accessProfile:ap-r1b": [
+    664,
+    168
+   ],
+   "entitlement:e103": [
+    1224,
+    168
+   ],
+   "role:role-2": [
+    344,
+    -56
+   ],
+   "accessProfile:ap-r2a": [
+    664,
+    -168
+   ],
+   "entitlement:e104": [
+    984,
+    168
+   ],
+   "source:s2": [
+    1544,
+    -112
+   ],
+   "entitlement:e105": [
+    984,
+    56
+   ],
+   "accessProfile:ap-d1": [
+    664,
+    56
+   ],
+   "entitlement:e111": [
+    1224,
+    56
+   ],
+   "entitlement:e112": [
+    1224,
+    -56
+   ],
+   "accessProfile:ap-d2": [
+    664,
+    -56
+   ],
+   "entitlement:e113": [
+    984,
+    392
+   ],
+   "source:s3": [
+    1544,
+    0
+   ],
+   "accessProfile:ap-d3": [
+    664,
+    -280
+   ],
+   "entitlement:e114": [
+    984,
+    -56
+   ],
+   "entitlement:e115": [
+    984,
+    -168
+   ],
+   "entitlement:u1-e1": [
+    984,
+    -280
+   ],
+   "entitlement:u1-e2": [
+    1224,
+    -392
+   ],
+   "entitlement:u1-e3": [
+    1224,
+    -168
+   ],
+   "entitlement:u1-e4": [
+    984,
+    -392
+   ],
+   "entitlement:u1-e5": [
+    1224,
+    -280
+   ],
+   "entitlement:u1-e6": [
+    984,
+    280
+   ]
+  },
+  "edges": [
+   "e:accessProfile:ap-d1:entitlement:e111",
+   "e:accessProfile:ap-d1:entitlement:e112",
+   "e:accessProfile:ap-d2:entitlement:e113",
+   "e:accessProfile:ap-d3:entitlement:e114",
+   "e:accessProfile:ap-d3:entitlement:e115",
+   "e:accessProfile:ap-r1a:entitlement:e101",
+   "e:accessProfile:ap-r1a:entitlement:e102",
+   "e:accessProfile:ap-r1b:entitlement:e103",
+   "e:accessProfile:ap-r2a:entitlement:e104",
+   "e:accessProfile:ap-r2a:entitlement:e105",
+   "e:entitlement:e101:source:s1",
+   "e:entitlement:e102:source:s1",
+   "e:entitlement:e103:source:s1",
+   "e:entitlement:e104:source:s2",
+   "e:entitlement:e105:source:s2",
+   "e:entitlement:e111:source:s1",
+   "e:entitlement:e112:source:s1",
+   "e:entitlement:e113:source:s3",
+   "e:entitlement:e114:source:s2",
+   "e:entitlement:e115:source:s2",
+   "e:entitlement:u1-e1:source:s2",
+   "e:entitlement:u1-e2:source:s3",
+   "e:entitlement:u1-e3:source:s1",
+   "e:entitlement:u1-e4:source:s2",
+   "e:entitlement:u1-e5:source:s3",
+   "e:entitlement:u1-e6:source:s1",
+   "e:role:role-1:accessProfile:ap-r1a",
+   "e:role:role-1:accessProfile:ap-r1b",
+   "e:role:role-2:accessProfile:ap-r2a",
+   "e:user:u1:accessProfile:ap-d1",
+   "e:user:u1:accessProfile:ap-d2",
+   "e:user:u1:accessProfile:ap-d3",
+   "e:user:u1:entitlement:u1-e1",
+   "e:user:u1:entitlement:u1-e2",
+   "e:user:u1:entitlement:u1-e3",
+   "e:user:u1:entitlement:u1-e4",
+   "e:user:u1:entitlement:u1-e5",
+   "e:user:u1:entitlement:u1-e6",
+   "e:user:u1:role:role-1",
+   "e:user:u1:role:role-2"
+  ],
+  "viewportChangedFrames": 1
+ },
+ "layout-dense@1100x700": {
+  "viewport": [
+   533.076,
+   15.8381,
+   0.319245
+  ],
+  "nodes": {
+   "user:u1": [
+    0,
+    24
+   ],
+   "role:role-1": [
+    0,
+    208
+   ],
+   "accessProfile:ap-r1a": [
+    620,
+    392
+   ],
+   "entitlement:e101": [
+    992,
+    888
+   ],
+   "source:s1": [
+    248,
+    1072
+   ],
+   "entitlement:e102": [
+    744,
+    888
+   ],
+   "accessProfile:ap-r1b": [
+    372,
+    392
+   ],
+   "entitlement:e103": [
+    496,
+    888
+   ],
+   "entitlement:e104": [
+    248,
+    888
+   ],
+   "accessProfile:ap-d1": [
+    -372,
+    392
+   ],
+   "entitlement:e112": [
+    496,
+    680
+   ],
+   "source:s2": [
+    -248,
+    1072
+   ],
+   "entitlement:e113": [
+    248,
+    680
+   ],
+   "accessProfile:ap-d2": [
+    -124,
+    392
+   ],
+   "entitlement:e114": [
+    744,
+    784
+   ],
+   "source:s3": [
+    0,
+    1072
+   ],
+   "entitlement:e115": [
+    496,
+    784
+   ],
+   "accessProfile:ap-d3": [
+    124,
+    392
+   ],
+   "entitlement:e116": [
+    0,
+    888
+   ],
+   "entitlement:e117": [
+    -248,
+    888
+   ],
+   "accessProfile:ap-d4": [
+    -620,
+    392
+   ],
+   "entitlement:e118": [
+    0,
+    680
+   ],
+   "entitlement:e119": [
+    -248,
+    680
+   ],
+   "entitlement:u1-e1": [
+    -496,
+    680
+   ],
+   "entitlement:u1-e2": [
+    248,
+    784
+   ],
+   "entitlement:u1-e3": [
+    -496,
+    888
+   ],
+   "entitlement:u1-e4": [
+    -744,
+    680
+   ],
+   "entitlement:u1-e5": [
+    0,
+    784
+   ],
+   "entitlement:u1-e6": [
+    -744,
+    888
+   ],
+   "entitlement:u1-e7": [
+    -992,
+    680
+   ],
+   "entitlement:u1-e8": [
+    -248,
+    784
+   ],
+   "entitlement:u1-e9": [
+    -992,
+    888
+   ],
+   "entitlement:u1-e10": [
+    1116,
+    576
+   ],
+   "entitlement:u1-e11": [
+    -496,
+    784
+   ],
+   "entitlement:u1-e12": [
+    992,
+    784
+   ],
+   "entitlement:u1-e13": [
+    868,
+    576
+   ],
+   "entitlement:u1-e14": [
+    -744,
+    784
+   ],
+   "entitlement:u1-e15": [
+    -372,
+    576
+   ],
+   "entitlement:u1-e16": [
+    620,
+    576
+   ],
+   "entitlement:u1-e17": [
+    -992,
+    784
+   ],
+   "entitlement:u1-e18": [
+    -620,
+    576
+   ],
+   "entitlement:u1-e19": [
+    372,
+    576
+   ],
+   "entitlement:u1-e20": [
+    992,
+    680
+   ],
+   "entitlement:u1-e21": [
+    -868,
+    576
+   ],
+   "entitlement:u1-e22": [
+    124,
+    576
+   ],
+   "entitlement:u1-e23": [
+    744,
+    680
+   ],
+   "entitlement:u1-e24": [
+    -1116,
+    576
+   ],
+   "entitlement:u1-e25": [
+    -124,
+    576
+   ]
+  },
+  "edges": [
+   "e:accessProfile:ap-d1:entitlement:e112",
+   "e:accessProfile:ap-d1:entitlement:e113",
+   "e:accessProfile:ap-d2:entitlement:e114",
+   "e:accessProfile:ap-d2:entitlement:e115",
+   "e:accessProfile:ap-d3:entitlement:e116",
+   "e:accessProfile:ap-d3:entitlement:e117",
+   "e:accessProfile:ap-d4:entitlement:e118",
+   "e:accessProfile:ap-d4:entitlement:e119",
+   "e:accessProfile:ap-r1a:entitlement:e101",
+   "e:accessProfile:ap-r1a:entitlement:e102",
+   "e:accessProfile:ap-r1b:entitlement:e103",
+   "e:accessProfile:ap-r1b:entitlement:e104",
+   "e:entitlement:e101:source:s1",
+   "e:entitlement:e102:source:s1",
+   "e:entitlement:e103:source:s1",
+   "e:entitlement:e104:source:s1",
+   "e:entitlement:e112:source:s2",
+   "e:entitlement:e113:source:s2",
+   "e:entitlement:e114:source:s3",
+   "e:entitlement:e115:source:s3",
+   "e:entitlement:e116:source:s1",
+   "e:entitlement:e117:source:s1",
+   "e:entitlement:e118:source:s2",
+   "e:entitlement:e119:source:s2",
+   "e:entitlement:u1-e10:source:s2",
+   "e:entitlement:u1-e11:source:s3",
+   "e:entitlement:u1-e12:source:s1",
+   "e:entitlement:u1-e13:source:s2",
+   "e:entitlement:u1-e14:source:s3",
+   "e:entitlement:u1-e15:source:s1",
+   "e:entitlement:u1-e16:source:s2",
+   "e:entitlement:u1-e17:source:s3",
+   "e:entitlement:u1-e18:source:s1",
+   "e:entitlement:u1-e19:source:s2",
+   "e:entitlement:u1-e1:source:s2",
+   "e:entitlement:u1-e20:source:s3",
+   "e:entitlement:u1-e21:source:s1",
+   "e:entitlement:u1-e22:source:s2",
+   "e:entitlement:u1-e23:source:s3",
+   "e:entitlement:u1-e24:source:s1",
+   "e:entitlement:u1-e25:source:s2",
+   "e:entitlement:u1-e2:source:s3",
+   "e:entitlement:u1-e3:source:s1",
+   "e:entitlement:u1-e4:source:s2",
+   "e:entitlement:u1-e5:source:s3",
+   "e:entitlement:u1-e6:source:s1",
+   "e:entitlement:u1-e7:source:s2",
+   "e:entitlement:u1-e8:source:s3",
+   "e:entitlement:u1-e9:source:s1",
+   "e:role:role-1:accessProfile:ap-r1a",
+   "e:role:role-1:accessProfile:ap-r1b",
+   "e:user:u1:accessProfile:ap-d1",
+   "e:user:u1:accessProfile:ap-d2",
+   "e:user:u1:accessProfile:ap-d3",
+   "e:user:u1:accessProfile:ap-d4",
+   "e:user:u1:entitlement:u1-e1",
+   "e:user:u1:entitlement:u1-e10",
+   "e:user:u1:entitlement:u1-e11",
+   "e:user:u1:entitlement:u1-e12",
+   "e:user:u1:entitlement:u1-e13",
+   "e:user:u1:entitlement:u1-e14",
+   "e:user:u1:entitlement:u1-e15",
+   "e:user:u1:entitlement:u1-e16",
+   "e:user:u1:entitlement:u1-e17",
+   "e:user:u1:entitlement:u1-e18",
+   "e:user:u1:entitlement:u1-e19",
+   "e:user:u1:entitlement:u1-e2",
+   "e:user:u1:entitlement:u1-e20",
+   "e:user:u1:entitlement:u1-e21",
+   "e:user:u1:entitlement:u1-e22",
+   "e:user:u1:entitlement:u1-e23",
+   "e:user:u1:entitlement:u1-e24",
+   "e:user:u1:entitlement:u1-e25",
+   "e:user:u1:entitlement:u1-e3",
+   "e:user:u1:entitlement:u1-e4",
+   "e:user:u1:entitlement:u1-e5",
+   "e:user:u1:entitlement:u1-e6",
+   "e:user:u1:entitlement:u1-e7",
+   "e:user:u1:entitlement:u1-e8",
+   "e:user:u1:entitlement:u1-e9",
+   "e:user:u1:role:role-1"
+  ],
+  "viewportChangedFrames": 1
+ },
+ "lane11-done@1100x700": {
+  "viewport": [
+   275.996,
+   190.403,
+   0.331157
+  ],
+  "nodes": {
+   "user:u1": [
+    24,
+    0
+   ],
+   "entitlement:u1-e1": [
+    984,
+    504
+   ],
+   "source:s2": [
+    1304,
+    112
+   ],
+   "entitlement:u1-e2": [
+    984,
+    -168
+   ],
+   "source:s3": [
+    1304,
+    -112
+   ],
+   "entitlement:u1-e3": [
+    984,
+    168
+   ],
+   "source:s1": [
+    1304,
+    0
+   ],
+   "entitlement:u1-e5": [
+    984,
+    -280
+   ],
+   "entitlement:u1-e6": [
+    984,
+    56
+   ],
+   "entitlement:u1-e7": [
+    984,
+    392
+   ],
+   "entitlement:u1-e8": [
+    984,
+    -392
+   ],
+   "entitlement:u1-e9": [
+    984,
+    -56
+   ],
+   "entitlement:u1-e10": [
+    984,
+    280
+   ],
+   "entitlement:u1-e11": [
+    984,
+    -504
+   ]
+  },
+  "edges": [
+   "e:entitlement:u1-e10:source:s2",
+   "e:entitlement:u1-e11:source:s3",
+   "e:entitlement:u1-e1:source:s2",
+   "e:entitlement:u1-e2:source:s3",
+   "e:entitlement:u1-e3:source:s1",
+   "e:entitlement:u1-e5:source:s3",
+   "e:entitlement:u1-e6:source:s1",
+   "e:entitlement:u1-e7:source:s2",
+   "e:entitlement:u1-e8:source:s3",
+   "e:entitlement:u1-e9:source:s1",
+   "e:user:u1:entitlement:u1-e1",
+   "e:user:u1:entitlement:u1-e10",
+   "e:user:u1:entitlement:u1-e11",
+   "e:user:u1:entitlement:u1-e2",
+   "e:user:u1:entitlement:u1-e3",
+   "e:user:u1:entitlement:u1-e5",
+   "e:user:u1:entitlement:u1-e6",
+   "e:user:u1:entitlement:u1-e7",
+   "e:user:u1:entitlement:u1-e8",
+   "e:user:u1:entitlement:u1-e9"
+  ],
+  "viewportChangedFrames": 1
+ },
+ "drill-dense@1100x700": {
+  "viewport": [
+   168.78,
+   190.403,
+   0.331157
+  ],
+  "nodes": {
+   "user:u1": [
+    24,
+    0
+   ],
+   "role:role-1": [
+    344,
+    0
+   ],
+   "accessProfile:ap-r1a": [
+    664,
+    280
+   ],
+   "entitlement:e101": [
+    1704,
+    448
+   ],
+   "source:s1": [
+    2024,
+    112
+   ],
+   "entitlement:e102": [
+    1704,
+    336
+   ],
+   "accessProfile:ap-r1b": [
+    664,
+    168
+   ],
+   "entitlement:e103": [
+    1704,
+    224
+   ],
+   "entitlement:e104": [
+    1704,
+    112
+   ],
+   "accessProfile:ap-d1": [
+    664,
+    -168
+   ],
+   "entitlement:e112": [
+    1224,
+    224
+   ],
+   "source:s2": [
+    2024,
+    -112
+   ],
+   "entitlement:e113": [
+    1224,
+    112
+   ],
+   "accessProfile:ap-d2": [
+    664,
+    -56
+   ],
+   "entitlement:e114": [
+    1464,
+    336
+   ],
+   "source:s3": [
+    2024,
+    0
+   ],
+   "entitlement:e115": [
+    1464,
+    224
+   ],
+   "accessProfile:ap-d3": [
+    664,
+    56
+   ],
+   "entitlement:e116": [
+    1704,
+    0
+   ],
+   "entitlement:e117": [
+    1704,
+    -112
+   ],
+   "accessProfile:ap-d4": [
+    664,
+    -280
+   ],
+   "entitlement:e118": [
+    1224,
+    0
+   ],
+   "entitlement:e119": [
+    1224,
+    -112
+   ],
+   "entitlement:u1-e1": [
+    1224,
+    -224
+   ],
+   "entitlement:u1-e2": [
+    1464,
+    112
+   ],
+   "entitlement:u1-e3": [
+    1704,
+    -224
+   ],
+   "entitlement:u1-e4": [
+    1224,
+    -336
+   ],
+   "entitlement:u1-e5": [
+    1464,
+    0
+   ],
+   "entitlement:u1-e6": [
+    1704,
+    -336
+   ],
+   "entitlement:u1-e7": [
+    1224,
+    -448
+   ],
+   "entitlement:u1-e8": [
+    1464,
+    -112
+   ],
+   "entitlement:u1-e9": [
+    1704,
+    -448
+   ],
+   "entitlement:u1-e10": [
+    984,
+    504
+   ],
+   "entitlement:u1-e11": [
+    1464,
+    -224
+   ],
+   "entitlement:u1-e12": [
+    1464,
+    448
+   ],
+   "entitlement:u1-e13": [
+    984,
+    392
+   ],
+   "entitlement:u1-e14": [
+    1464,
+    -336
+   ],
+   "entitlement:u1-e15": [
+    984,
+    -168
+   ],
+   "entitlement:u1-e16": [
+    984,
+    280
+   ],
+   "entitlement:u1-e17": [
+    1464,
+    -448
+   ],
+   "entitlement:u1-e18": [
+    984,
+    -280
+   ],
+   "entitlement:u1-e19": [
+    984,
+    168
+   ],
+   "entitlement:u1-e20": [
+    1224,
+    448
+   ],
+   "entitlement:u1-e21": [
+    984,
+    -392
+   ],
+   "entitlement:u1-e22": [
+    984,
+    56
+   ],
+   "entitlement:u1-e23": [
+    1224,
+    336
+   ],
+   "entitlement:u1-e24": [
+    984,
+    -504
+   ],
+   "entitlement:u1-e25": [
+    984,
+    -56
+   ]
+  },
+  "edges": [
+   "e:accessProfile:ap-d1:entitlement:e112",
+   "e:accessProfile:ap-d1:entitlement:e113",
+   "e:accessProfile:ap-d2:entitlement:e114",
+   "e:accessProfile:ap-d2:entitlement:e115",
+   "e:accessProfile:ap-d3:entitlement:e116",
+   "e:accessProfile:ap-d3:entitlement:e117",
+   "e:accessProfile:ap-d4:entitlement:e118",
+   "e:accessProfile:ap-d4:entitlement:e119",
+   "e:accessProfile:ap-r1a:entitlement:e101",
+   "e:accessProfile:ap-r1a:entitlement:e102",
+   "e:accessProfile:ap-r1b:entitlement:e103",
+   "e:accessProfile:ap-r1b:entitlement:e104",
+   "e:entitlement:e101:source:s1",
+   "e:entitlement:e102:source:s1",
+   "e:entitlement:e103:source:s1",
+   "e:entitlement:e104:source:s1",
+   "e:entitlement:e112:source:s2",
+   "e:entitlement:e113:source:s2",
+   "e:entitlement:e114:source:s3",
+   "e:entitlement:e115:source:s3",
+   "e:entitlement:e116:source:s1",
+   "e:entitlement:e117:source:s1",
+   "e:entitlement:e118:source:s2",
+   "e:entitlement:e119:source:s2",
+   "e:entitlement:u1-e10:source:s2",
+   "e:entitlement:u1-e11:source:s3",
+   "e:entitlement:u1-e12:source:s1",
+   "e:entitlement:u1-e13:source:s2",
+   "e:entitlement:u1-e14:source:s3",
+   "e:entitlement:u1-e15:source:s1",
+   "e:entitlement:u1-e16:source:s2",
+   "e:entitlement:u1-e17:source:s3",
+   "e:entitlement:u1-e18:source:s1",
+   "e:entitlement:u1-e19:source:s2",
+   "e:entitlement:u1-e1:source:s2",
+   "e:entitlement:u1-e20:source:s3",
+   "e:entitlement:u1-e21:source:s1",
+   "e:entitlement:u1-e22:source:s2",
+   "e:entitlement:u1-e23:source:s3",
+   "e:entitlement:u1-e24:source:s1",
+   "e:entitlement:u1-e25:source:s2",
+   "e:entitlement:u1-e2:source:s3",
+   "e:entitlement:u1-e3:source:s1",
+   "e:entitlement:u1-e4:source:s2",
+   "e:entitlement:u1-e5:source:s3",
+   "e:entitlement:u1-e6:source:s1",
+   "e:entitlement:u1-e7:source:s2",
+   "e:entitlement:u1-e8:source:s3",
+   "e:entitlement:u1-e9:source:s1",
+   "e:role:role-1:accessProfile:ap-r1a",
+   "e:role:role-1:accessProfile:ap-r1b",
+   "e:user:u1:accessProfile:ap-d1",
+   "e:user:u1:accessProfile:ap-d2",
+   "e:user:u1:accessProfile:ap-d3",
+   "e:user:u1:accessProfile:ap-d4",
+   "e:user:u1:entitlement:u1-e1",
+   "e:user:u1:entitlement:u1-e10",
+   "e:user:u1:entitlement:u1-e11",
+   "e:user:u1:entitlement:u1-e12",
+   "e:user:u1:entitlement:u1-e13",
+   "e:user:u1:entitlement:u1-e14",
+   "e:user:u1:entitlement:u1-e15",
+   "e:user:u1:entitlement:u1-e16",
+   "e:user:u1:entitlement:u1-e17",
+   "e:user:u1:entitlement:u1-e18",
+   "e:user:u1:entitlement:u1-e19",
+   "e:user:u1:entitlement:u1-e2",
+   "e:user:u1:entitlement:u1-e20",
+   "e:user:u1:entitlement:u1-e21",
+   "e:user:u1:entitlement:u1-e22",
+   "e:user:u1:entitlement:u1-e23",
+   "e:user:u1:entitlement:u1-e24",
+   "e:user:u1:entitlement:u1-e25",
+   "e:user:u1:entitlement:u1-e3",
+   "e:user:u1:entitlement:u1-e4",
+   "e:user:u1:entitlement:u1-e5",
+   "e:user:u1:entitlement:u1-e6",
+   "e:user:u1:entitlement:u1-e7",
+   "e:user:u1:entitlement:u1-e8",
+   "e:user:u1:entitlement:u1-e9",
+   "e:user:u1:role:role-1"
+  ],
+  "viewportChangedFrames": 1,
+  "clickedCard": {
+   "total": 484.6474016883992,
+   "maxStepFrac": 9.741959256014619e-7,
+   "firstStepFrac": 1.0000009719908707,
+   "worstBack": 0,
+   "frames": 61
+  }
+ },
+ "drill-big@1100x700": {
+  "viewport": [
+   160.4,
+   351.6,
+   0.65
+  ]
+ },
+ "back-dense@1100x700": {
+  "viewport": [
+   520,
+   279,
+   1.02423
+  ],
+  "nodes": {
+   "user:u1": [
+    -454,
+    -80
+   ],
+   "user:u2": [
+    -218,
+    -80
+   ],
+   "user:u3": [
+    18,
+    -80
+   ],
+   "user:u4": [
+    254,
+    -80
+   ],
+   "user:u5": [
+    -454,
+    16
+   ]
+  },
+  "edges": [],
+  "viewportChangedFrames": 1,
+  "clickedCard": {
+   "total": 484.6474016883992,
+   "maxStepFrac": 0.000001030832888411323,
+   "firstStepFrac": 1.0000010197520903,
+   "worstBack": 0,
+   "frames": 158
+  }
+ },
+ "grid-initial@1100x700": {
+  "viewport": [
+   529,
+   201,
+   0.382543
+  ]
+ }
+}

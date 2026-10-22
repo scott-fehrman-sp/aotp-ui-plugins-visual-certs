@@ -1,0 +1,3719 @@
+{
+ "label": "protoB1-zb",
+ "mode": "prod",
+ "tol": 1.5,
+ "results": [
+  {
+   "scenario": "zoom",
+   "fixture": "mixed",
+   "size": [
+    1700,
+    1000
+   ],
+   "layout": "LR",
+   "motion": "off",
+   "steps": [
+    {
+     "step": "drilled",
+     "zoom": 0.819,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.41,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.41,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 172
+     }
+    },
+    {
+     "step": "max-zoom",
+     "zoom": 1.8,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.9,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.9,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 173
+     }
+    },
+    {
+     "step": "min-zoom",
+     "zoom": 0.419,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.21,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.21,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 183
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "scenario": "zoom",
+   "fixture": "mixed",
+   "size": [
+    1700,
+    1000
+   ],
+   "layout": "TB",
+   "motion": "off",
+   "steps": [
+    {
+     "step": "drilled",
+     "zoom": 0.725,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.36,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.36,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 182
+     }
+    },
+    {
+     "step": "max-zoom",
+     "zoom": 1.8,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.9,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.9,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 174
+     }
+    },
+    {
+     "step": "min-zoom",
+     "zoom": 0.419,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.21,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.21,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 167
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "scenario": "zoom",
+   "fixture": "mixed",
+   "size": [
+    1700,
+    1000
+   ],
+   "layout": "LR",
+   "motion": "on",
+   "steps": [
+    {
+     "step": "drilled",
+     "zoom": 0.819,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.41,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.41,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 673
+     }
+    },
+    {
+     "step": "max-zoom",
+     "zoom": 1.8,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.9,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.9,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 183
+     }
+    },
+    {
+     "step": "min-zoom",
+     "zoom": 0.419,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.21,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.21,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 168
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "scenario": "zoom",
+   "fixture": "mixed",
+   "size": [
+    1700,
+    1000
+   ],
+   "layout": "TB",
+   "motion": "on",
+   "steps": [
+    {
+     "step": "drilled",
+     "zoom": 0.725,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.36,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.36,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 664
+     }
+    },
+    {
+     "step": "max-zoom",
+     "zoom": 1.8,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.9,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.9,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 176
+     }
+    },
+    {
+     "step": "min-zoom",
+     "zoom": 0.419,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.21,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.21,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 171
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "scenario": "zoom",
+   "fixture": "mixed",
+   "size": [
+    1100,
+    700
+   ],
+   "layout": "LR",
+   "motion": "off",
+   "steps": [
+    {
+     "step": "drilled",
+     "zoom": 0.47,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.24,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.24,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 173
+     }
+    },
+    {
+     "step": "max-zoom",
+     "zoom": 1.8,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.9,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.9,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 174
+     }
+    },
+    {
+     "step": "min-zoom",
+     "zoom": 0.419,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.21,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.21,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 176
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "scenario": "zoom",
+   "fixture": "mixed",
+   "size": [
+    1100,
+    700
+   ],
+   "layout": "LR",
+   "motion": "on",
+   "steps": [
+    {
+     "step": "drilled",
+     "zoom": 0.47,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.24,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.24,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 676
+     }
+    },
+    {
+     "step": "max-zoom",
+     "zoom": 1.8,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.9,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.9,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 174
+     }
+    },
+    {
+     "step": "min-zoom",
+     "zoom": 0.419,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.21,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.21,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 168
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "scenario": "zoom",
+   "fixture": "mixed",
+   "size": [
+    1100,
+    700
+   ],
+   "layout": "TB",
+   "motion": "off",
+   "steps": [
+    {
+     "step": "drilled",
+     "zoom": 0.393,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.2,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.2,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 182
+     }
+    },
+    {
+     "step": "max-zoom",
+     "zoom": 1.689,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.84,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.84,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 174
+     }
+    },
+    {
+     "step": "min-zoom",
+     "zoom": 0.393,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.2,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.2,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 183
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "scenario": "zoom",
+   "fixture": "mixed",
+   "size": [
+    1100,
+    700
+   ],
+   "layout": "TB",
+   "motion": "on",
+   "steps": [
+    {
+     "step": "drilled",
+     "zoom": 0.393,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.2,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.2,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 664
+     }
+    },
+    {
+     "step": "max-zoom",
+     "zoom": 1.689,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.84,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.84,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 179
+     }
+    },
+    {
+     "step": "min-zoom",
+     "zoom": 0.393,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.2,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.2,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 168
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "scenario": "zoom",
+   "fixture": "dense",
+   "size": [
+    1700,
+    1000
+   ],
+   "layout": "LR",
+   "motion": "off",
+   "steps": [
+    {
+     "step": "drilled",
+     "zoom": 0.64,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.32,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.32,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 176
+     }
+    },
+    {
+     "step": "max-zoom",
+     "zoom": 1.8,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.9,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.9,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 173
+     }
+    },
+    {
+     "step": "min-zoom",
+     "zoom": 0.419,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.21,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.21,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 179
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "scenario": "zoom",
+   "fixture": "dense",
+   "size": [
+    1700,
+    1000
+   ],
+   "layout": "LR",
+   "motion": "on",
+   "steps": [
+    {
+     "step": "drilled",
+     "zoom": 0.64,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.32,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.32,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 673
+     }
+    },
+    {
+     "step": "max-zoom",
+     "zoom": 1.8,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.9,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.9,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 169
+     }
+    },
+    {
+     "step": "min-zoom",
+     "zoom": 0.419,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.21,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.21,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 176
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "scenario": "zoom",
+   "fixture": "dense",
+   "size": [
+    1700,
+    1000
+   ],
+   "layout": "TB",
+   "motion": "off",
+   "steps": [
+    {
+     "step": "drilled",
+     "zoom": 0.589,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.29,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.29,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 174
+     }
+    },
+    {
+     "step": "max-zoom",
+     "zoom": 1.8,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.9,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.9,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 181
+     }
+    },
+    {
+     "step": "min-zoom",
+     "zoom": 0.419,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.21,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.21,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 169
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "scenario": "zoom",
+   "fixture": "dense",
+   "size": [
+    1700,
+    1000
+   ],
+   "layout": "TB",
+   "motion": "on",
+   "steps": [
+    {
+     "step": "drilled",
+     "zoom": 0.589,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.29,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.29,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 626
+     }
+    },
+    {
+     "step": "max-zoom",
+     "zoom": 1.8,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.9,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.9,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 169
+     }
+    },
+    {
+     "step": "min-zoom",
+     "zoom": 0.419,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.21,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.21,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 182
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "scenario": "zoom",
+   "fixture": "dense",
+   "size": [
+    1100,
+    700
+   ],
+   "layout": "LR",
+   "motion": "off",
+   "steps": [
+    {
+     "step": "drilled",
+     "zoom": 0.368,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.18,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.18,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 168
+     }
+    },
+    {
+     "step": "max-zoom",
+     "zoom": 1.581,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.79,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.79,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 175
+     }
+    },
+    {
+     "step": "min-zoom",
+     "zoom": 0.368,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.18,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.18,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 183
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "scenario": "zoom",
+   "fixture": "dense",
+   "size": [
+    1100,
+    700
+   ],
+   "layout": "LR",
+   "motion": "on",
+   "steps": [
+    {
+     "step": "drilled",
+     "zoom": 0.368,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.18,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.18,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 673
+     }
+    },
+    {
+     "step": "max-zoom",
+     "zoom": 1.581,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.79,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.79,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 173
+     }
+    },
+    {
+     "step": "min-zoom",
+     "zoom": 0.368,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.18,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.18,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 182
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "scenario": "zoom",
+   "fixture": "dense",
+   "size": [
+    1100,
+    700
+   ],
+   "layout": "TB",
+   "motion": "on",
+   "steps": [
+    {
+     "step": "drilled",
+     "zoom": 0.319,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.16,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.16,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 624
+     }
+    },
+    {
+     "step": "max-zoom",
+     "zoom": 1.373,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.69,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.69,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 179
+     }
+    },
+    {
+     "step": "min-zoom",
+     "zoom": 0.319,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.16,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.16,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 171
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "scenario": "zoom",
+   "fixture": "dense",
+   "size": [
+    1100,
+    700
+   ],
+   "layout": "TB",
+   "motion": "off",
+   "steps": [
+    {
+     "step": "drilled",
+     "zoom": 0.319,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.16,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.16,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 180
+     }
+    },
+    {
+     "step": "max-zoom",
+     "zoom": 1.373,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.69,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.69,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 178
+     }
+    },
+    {
+     "step": "min-zoom",
+     "zoom": 0.319,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.16,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.16,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 174
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "scenario": "blink",
+   "fixture": "mixed",
+   "size": [
+    1700,
+    1000
+   ],
+   "layout": "LR",
+   "motion": "off",
+   "steps": [
+    {
+     "step": "drilled",
+     "zoom": 0.819,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.41,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.41,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 172
+     }
+    },
+    {
+     "step": "blink:hide-completed",
+     "blinkEdges": 10,
+     "blinkFrames": 10,
+     "staying": 10,
+     "frames": 14
+    },
+    {
+     "step": "hide-completed",
+     "zoom": 0.952,
+     "nEdges": 10,
+     "nNodes": 9,
+     "maxAlong": 0.48,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.48,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 181
+     }
+    },
+    {
+     "step": "blink:show-completed",
+     "blinkEdges": 10,
+     "blinkFrames": 10,
+     "staying": 10,
+     "frames": 17
+    },
+    {
+     "step": "show-completed",
+     "zoom": 0.819,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.41,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.41,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 181
+     }
+    },
+    {
+     "step": "blink:hide-reference",
+     "blinkEdges": 11,
+     "blinkFrames": 11,
+     "staying": 11,
+     "frames": 14
+    },
+    {
+     "step": "hide-reference",
+     "zoom": 1.05,
+     "nEdges": 11,
+     "nNodes": 12,
+     "maxAlong": 0.52,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.52,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 181
+     }
+    },
+    {
+     "step": "blink:show-reference",
+     "blinkEdges": 11,
+     "blinkFrames": 11,
+     "staying": 11,
+     "frames": 14
+    },
+    {
+     "step": "show-reference",
+     "zoom": 0.819,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.41,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.41,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 181
+     }
+    },
+    {
+     "step": "blink:layout",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 32,
+     "frames": 14
+    },
+    {
+     "step": "layout",
+     "zoom": 0.725,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.36,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.36,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 181
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "scenario": "blink",
+   "fixture": "mixed",
+   "size": [
+    1700,
+    1000
+   ],
+   "layout": "TB",
+   "motion": "off",
+   "steps": [
+    {
+     "step": "drilled",
+     "zoom": 0.725,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.36,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.36,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 182
+     }
+    },
+    {
+     "step": "blink:hide-completed",
+     "blinkEdges": 10,
+     "blinkFrames": 10,
+     "staying": 10,
+     "frames": 14
+    },
+    {
+     "step": "hide-completed",
+     "zoom": 0.819,
+     "nEdges": 10,
+     "nNodes": 9,
+     "maxAlong": 0.41,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.41,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 181
+     }
+    },
+    {
+     "step": "blink:show-completed",
+     "blinkEdges": 10,
+     "blinkFrames": 10,
+     "staying": 10,
+     "frames": 14
+    },
+    {
+     "step": "show-completed",
+     "zoom": 0.725,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.36,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.36,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 182
+     }
+    },
+    {
+     "step": "blink:hide-reference",
+     "blinkEdges": 11,
+     "blinkFrames": 11,
+     "staying": 11,
+     "frames": 14
+    },
+    {
+     "step": "hide-reference",
+     "zoom": 0.989,
+     "nEdges": 11,
+     "nNodes": 12,
+     "maxAlong": 0.49,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.49,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 181
+     }
+    },
+    {
+     "step": "blink:show-reference",
+     "blinkEdges": 11,
+     "blinkFrames": 11,
+     "staying": 11,
+     "frames": 14
+    },
+    {
+     "step": "show-reference",
+     "zoom": 0.725,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.36,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.36,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 181
+     }
+    },
+    {
+     "step": "blink:layout",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 32,
+     "frames": 14
+    },
+    {
+     "step": "layout",
+     "zoom": 0.819,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.41,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.41,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 181
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "scenario": "blink",
+   "fixture": "mixed",
+   "size": [
+    1700,
+    1000
+   ],
+   "layout": "LR",
+   "motion": "on",
+   "steps": [
+    {
+     "step": "drilled",
+     "zoom": 0.819,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.41,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.41,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 674
+     }
+    },
+    {
+     "step": "blink:hide-completed",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 10,
+     "frames": 43
+    },
+    {
+     "step": "hide-completed",
+     "zoom": 0.952,
+     "nEdges": 10,
+     "nNodes": 9,
+     "maxAlong": 0.48,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.48,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 177
+     }
+    },
+    {
+     "step": "blink:show-completed",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 10,
+     "frames": 45
+    },
+    {
+     "step": "show-completed",
+     "zoom": 0.819,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.41,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.41,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 180
+     }
+    },
+    {
+     "step": "blink:hide-reference",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 11,
+     "frames": 43
+    },
+    {
+     "step": "hide-reference",
+     "zoom": 1.05,
+     "nEdges": 11,
+     "nNodes": 12,
+     "maxAlong": 0.52,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.52,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 180
+     }
+    },
+    {
+     "step": "blink:show-reference",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 11,
+     "frames": 45
+    },
+    {
+     "step": "show-reference",
+     "zoom": 0.819,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.41,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.41,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 180
+     }
+    },
+    {
+     "step": "blink:layout",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 32,
+     "frames": 44
+    },
+    {
+     "step": "layout",
+     "zoom": 0.725,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.36,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.36,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 180
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "scenario": "blink",
+   "fixture": "mixed",
+   "size": [
+    1700,
+    1000
+   ],
+   "layout": "TB",
+   "motion": "on",
+   "steps": [
+    {
+     "step": "drilled",
+     "zoom": 0.725,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.36,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.36,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 665
+     }
+    },
+    {
+     "step": "blink:hide-completed",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 10,
+     "frames": 43
+    },
+    {
+     "step": "hide-completed",
+     "zoom": 0.819,
+     "nEdges": 10,
+     "nNodes": 9,
+     "maxAlong": 0.41,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.41,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 181
+     }
+    },
+    {
+     "step": "blink:show-completed",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 10,
+     "frames": 45
+    },
+    {
+     "step": "show-completed",
+     "zoom": 0.725,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.36,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.36,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 181
+     }
+    },
+    {
+     "step": "blink:hide-reference",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 11,
+     "frames": 43
+    },
+    {
+     "step": "hide-reference",
+     "zoom": 0.989,
+     "nEdges": 11,
+     "nNodes": 12,
+     "maxAlong": 0.49,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.49,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 181
+     }
+    },
+    {
+     "step": "blink:show-reference",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 11,
+     "frames": 45
+    },
+    {
+     "step": "show-reference",
+     "zoom": 0.725,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.36,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.36,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 181
+     }
+    },
+    {
+     "step": "blink:layout",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 32,
+     "frames": 43
+    },
+    {
+     "step": "layout",
+     "zoom": 0.819,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.41,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.41,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 180
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "scenario": "blink",
+   "fixture": "mixed",
+   "size": [
+    1100,
+    700
+   ],
+   "layout": "LR",
+   "motion": "off",
+   "steps": [
+    {
+     "step": "drilled",
+     "zoom": 0.47,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.24,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.24,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 173
+     }
+    },
+    {
+     "step": "blink:hide-completed",
+     "blinkEdges": 10,
+     "blinkFrames": 10,
+     "staying": 10,
+     "frames": 14
+    },
+    {
+     "step": "hide-completed",
+     "zoom": 0.547,
+     "nEdges": 10,
+     "nNodes": 9,
+     "maxAlong": 0.27,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.27,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 182
+     }
+    },
+    {
+     "step": "blink:show-completed",
+     "blinkEdges": 10,
+     "blinkFrames": 10,
+     "staying": 10,
+     "frames": 14
+    },
+    {
+     "step": "show-completed",
+     "zoom": 0.47,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.24,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.24,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 182
+     }
+    },
+    {
+     "step": "blink:hide-reference",
+     "blinkEdges": 11,
+     "blinkFrames": 11,
+     "staying": 11,
+     "frames": 14
+    },
+    {
+     "step": "hide-reference",
+     "zoom": 0.569,
+     "nEdges": 11,
+     "nNodes": 12,
+     "maxAlong": 0.28,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.28,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 182
+     }
+    },
+    {
+     "step": "blink:show-reference",
+     "blinkEdges": 11,
+     "blinkFrames": 11,
+     "staying": 11,
+     "frames": 14
+    },
+    {
+     "step": "show-reference",
+     "zoom": 0.47,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.24,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.24,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 181
+     }
+    },
+    {
+     "step": "blink:layout",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 32,
+     "frames": 15
+    },
+    {
+     "step": "layout",
+     "zoom": 0.393,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.2,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.2,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 182
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "scenario": "blink",
+   "fixture": "mixed",
+   "size": [
+    1100,
+    700
+   ],
+   "layout": "LR",
+   "motion": "on",
+   "steps": [
+    {
+     "step": "drilled",
+     "zoom": 0.47,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.24,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.24,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 673
+     }
+    },
+    {
+     "step": "blink:hide-completed",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 10,
+     "frames": 43
+    },
+    {
+     "step": "hide-completed",
+     "zoom": 0.547,
+     "nEdges": 10,
+     "nNodes": 9,
+     "maxAlong": 0.27,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.27,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 181
+     }
+    },
+    {
+     "step": "blink:show-completed",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 10,
+     "frames": 45
+    },
+    {
+     "step": "show-completed",
+     "zoom": 0.47,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.24,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.24,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 181
+     }
+    },
+    {
+     "step": "blink:hide-reference",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 11,
+     "frames": 43
+    },
+    {
+     "step": "hide-reference",
+     "zoom": 0.569,
+     "nEdges": 11,
+     "nNodes": 12,
+     "maxAlong": 0.28,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.28,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 181
+     }
+    },
+    {
+     "step": "blink:show-reference",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 11,
+     "frames": 45
+    },
+    {
+     "step": "show-reference",
+     "zoom": 0.47,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.24,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.24,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 181
+     }
+    },
+    {
+     "step": "blink:layout",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 32,
+     "frames": 43
+    },
+    {
+     "step": "layout",
+     "zoom": 0.393,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.2,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.2,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 180
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "scenario": "blink",
+   "fixture": "mixed",
+   "size": [
+    1100,
+    700
+   ],
+   "layout": "TB",
+   "motion": "off",
+   "steps": [
+    {
+     "step": "drilled",
+     "zoom": 0.393,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.2,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.2,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 182
+     }
+    },
+    {
+     "step": "blink:hide-completed",
+     "blinkEdges": 10,
+     "blinkFrames": 10,
+     "staying": 10,
+     "frames": 14
+    },
+    {
+     "step": "hide-completed",
+     "zoom": 0.444,
+     "nEdges": 10,
+     "nNodes": 9,
+     "maxAlong": 0.22,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.22,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 181
+     }
+    },
+    {
+     "step": "blink:show-completed",
+     "blinkEdges": 10,
+     "blinkFrames": 10,
+     "staying": 10,
+     "frames": 16
+    },
+    {
+     "step": "show-completed",
+     "zoom": 0.393,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.2,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.2,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 180
+     }
+    },
+    {
+     "step": "blink:hide-reference",
+     "blinkEdges": 11,
+     "blinkFrames": 11,
+     "staying": 11,
+     "frames": 14
+    },
+    {
+     "step": "hide-reference",
+     "zoom": 0.572,
+     "nEdges": 11,
+     "nNodes": 12,
+     "maxAlong": 0.29,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.29,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 181
+     }
+    },
+    {
+     "step": "blink:show-reference",
+     "blinkEdges": 11,
+     "blinkFrames": 11,
+     "staying": 11,
+     "frames": 14
+    },
+    {
+     "step": "show-reference",
+     "zoom": 0.393,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.2,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.2,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 181
+     }
+    },
+    {
+     "step": "blink:layout",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 32,
+     "frames": 15
+    },
+    {
+     "step": "layout",
+     "zoom": 0.47,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.24,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.24,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 181
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "scenario": "blink",
+   "fixture": "mixed",
+   "size": [
+    1100,
+    700
+   ],
+   "layout": "TB",
+   "motion": "on",
+   "steps": [
+    {
+     "step": "drilled",
+     "zoom": 0.393,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.2,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.2,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 664
+     }
+    },
+    {
+     "step": "blink:hide-completed",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 10,
+     "frames": 43
+    },
+    {
+     "step": "hide-completed",
+     "zoom": 0.444,
+     "nEdges": 10,
+     "nNodes": 9,
+     "maxAlong": 0.22,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.22,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 181
+     }
+    },
+    {
+     "step": "blink:show-completed",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 10,
+     "frames": 45
+    },
+    {
+     "step": "show-completed",
+     "zoom": 0.393,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.2,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.2,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 180
+     }
+    },
+    {
+     "step": "blink:hide-reference",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 11,
+     "frames": 42
+    },
+    {
+     "step": "hide-reference",
+     "zoom": 0.572,
+     "nEdges": 11,
+     "nNodes": 12,
+     "maxAlong": 0.29,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.29,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 181
+     }
+    },
+    {
+     "step": "blink:show-reference",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 11,
+     "frames": 45
+    },
+    {
+     "step": "show-reference",
+     "zoom": 0.393,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.2,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.2,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 180
+     }
+    },
+    {
+     "step": "blink:layout",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 32,
+     "frames": 43
+    },
+    {
+     "step": "layout",
+     "zoom": 0.47,
+     "nEdges": 32,
+     "nNodes": 23,
+     "maxAlong": 0.24,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.24,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 181
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "scenario": "blink",
+   "fixture": "dense",
+   "size": [
+    1700,
+    1000
+   ],
+   "layout": "LR",
+   "motion": "off",
+   "steps": [
+    {
+     "step": "drilled",
+     "zoom": 0.64,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.32,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.32,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 173
+     }
+    },
+    {
+     "step": "blink:hide-completed",
+     "blinkEdges": 23,
+     "blinkFrames": 23,
+     "staying": 23,
+     "frames": 15
+    },
+    {
+     "step": "hide-completed",
+     "zoom": 0.611,
+     "nEdges": 23,
+     "nNodes": 17,
+     "maxAlong": 0.31,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.31,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 180
+     }
+    },
+    {
+     "step": "blink:show-completed",
+     "blinkEdges": 23,
+     "blinkFrames": 23,
+     "staying": 23,
+     "frames": 15
+    },
+    {
+     "step": "show-completed",
+     "zoom": 0.64,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.32,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.32,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 180
+     }
+    },
+    {
+     "step": "blink:hide-reference",
+     "blinkEdges": 30,
+     "blinkFrames": 30,
+     "staying": 30,
+     "frames": 14
+    },
+    {
+     "step": "hide-reference",
+     "zoom": 0.682,
+     "nEdges": 30,
+     "nNodes": 31,
+     "maxAlong": 0.34,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.34,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 177
+     }
+    },
+    {
+     "step": "blink:show-reference",
+     "blinkEdges": 30,
+     "blinkFrames": 30,
+     "staying": 30,
+     "frames": 15
+    },
+    {
+     "step": "show-reference",
+     "zoom": 0.64,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.32,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.32,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 180
+     }
+    },
+    {
+     "step": "blink:layout",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 76,
+     "frames": 16
+    },
+    {
+     "step": "layout",
+     "zoom": 0.589,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.29,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.29,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 180
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "scenario": "blink",
+   "fixture": "dense",
+   "size": [
+    1700,
+    1000
+   ],
+   "layout": "LR",
+   "motion": "on",
+   "steps": [
+    {
+     "step": "drilled",
+     "zoom": 0.64,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.32,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.32,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 682
+     }
+    },
+    {
+     "step": "blink:hide-completed",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 23,
+     "frames": 43
+    },
+    {
+     "step": "hide-completed",
+     "zoom": 0.611,
+     "nEdges": 23,
+     "nNodes": 17,
+     "maxAlong": 0.31,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.31,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 179
+     }
+    },
+    {
+     "step": "blink:show-completed",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 23,
+     "frames": 47
+    },
+    {
+     "step": "show-completed",
+     "zoom": 0.64,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.32,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.32,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 178
+     }
+    },
+    {
+     "step": "blink:hide-reference",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 30,
+     "frames": 43
+    },
+    {
+     "step": "hide-reference",
+     "zoom": 0.682,
+     "nEdges": 30,
+     "nNodes": 31,
+     "maxAlong": 0.34,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.34,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 179
+     }
+    },
+    {
+     "step": "blink:show-reference",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 30,
+     "frames": 45
+    },
+    {
+     "step": "show-reference",
+     "zoom": 0.64,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.32,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.32,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 178
+     }
+    },
+    {
+     "step": "blink:layout",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 76,
+     "frames": 42
+    },
+    {
+     "step": "layout",
+     "zoom": 0.589,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.29,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.29,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 178
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "scenario": "blink",
+   "fixture": "dense",
+   "size": [
+    1700,
+    1000
+   ],
+   "layout": "TB",
+   "motion": "off",
+   "steps": [
+    {
+     "step": "drilled",
+     "zoom": 0.589,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.29,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.29,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 176
+     }
+    },
+    {
+     "step": "blink:hide-completed",
+     "blinkEdges": 23,
+     "blinkFrames": 23,
+     "staying": 23,
+     "frames": 14
+    },
+    {
+     "step": "hide-completed",
+     "zoom": 0.579,
+     "nEdges": 23,
+     "nNodes": 17,
+     "maxAlong": 0.29,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.29,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 181
+     }
+    },
+    {
+     "step": "blink:show-completed",
+     "blinkEdges": 23,
+     "blinkFrames": 23,
+     "staying": 23,
+     "frames": 15
+    },
+    {
+     "step": "show-completed",
+     "zoom": 0.589,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.29,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.29,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 181
+     }
+    },
+    {
+     "step": "blink:hide-reference",
+     "blinkEdges": 30,
+     "blinkFrames": 30,
+     "staying": 30,
+     "frames": 14
+    },
+    {
+     "step": "hide-reference",
+     "zoom": 0.652,
+     "nEdges": 30,
+     "nNodes": 31,
+     "maxAlong": 0.33,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.33,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 176
+     }
+    },
+    {
+     "step": "blink:show-reference",
+     "blinkEdges": 30,
+     "blinkFrames": 30,
+     "staying": 30,
+     "frames": 15
+    },
+    {
+     "step": "show-reference",
+     "zoom": 0.589,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.29,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.29,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 180
+     }
+    },
+    {
+     "step": "blink:layout",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 76,
+     "frames": 16
+    },
+    {
+     "step": "layout",
+     "zoom": 0.64,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.32,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.32,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 179
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "scenario": "blink",
+   "fixture": "dense",
+   "size": [
+    1700,
+    1000
+   ],
+   "layout": "TB",
+   "motion": "on",
+   "steps": [
+    {
+     "step": "drilled",
+     "zoom": 0.589,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.29,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.29,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 623
+     }
+    },
+    {
+     "step": "blink:hide-completed",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 23,
+     "frames": 47
+    },
+    {
+     "step": "hide-completed",
+     "zoom": 0.579,
+     "nEdges": 23,
+     "nNodes": 17,
+     "maxAlong": 0.29,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.29,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 179
+     }
+    },
+    {
+     "step": "blink:show-completed",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 23,
+     "frames": 45
+    },
+    {
+     "step": "show-completed",
+     "zoom": 0.589,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.29,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.29,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 179
+     }
+    },
+    {
+     "step": "blink:hide-reference",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 30,
+     "frames": 43
+    },
+    {
+     "step": "hide-reference",
+     "zoom": 0.652,
+     "nEdges": 30,
+     "nNodes": 31,
+     "maxAlong": 0.33,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.33,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 179
+     }
+    },
+    {
+     "step": "blink:show-reference",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 30,
+     "frames": 46
+    },
+    {
+     "step": "show-reference",
+     "zoom": 0.589,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.29,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.29,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 178
+     }
+    },
+    {
+     "step": "blink:layout",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 76,
+     "frames": 42
+    },
+    {
+     "step": "layout",
+     "zoom": 0.64,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.32,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.32,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 179
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "scenario": "blink",
+   "fixture": "dense",
+   "size": [
+    1100,
+    700
+   ],
+   "layout": "LR",
+   "motion": "off",
+   "steps": [
+    {
+     "step": "drilled",
+     "zoom": 0.368,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.18,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.18,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 167
+     }
+    },
+    {
+     "step": "blink:hide-completed",
+     "blinkEdges": 23,
+     "blinkFrames": 23,
+     "staying": 23,
+     "frames": 15
+    },
+    {
+     "step": "hide-completed",
+     "zoom": 0.331,
+     "nEdges": 23,
+     "nNodes": 17,
+     "maxAlong": 0.17,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.17,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 182
+     }
+    },
+    {
+     "step": "blink:show-completed",
+     "blinkEdges": 23,
+     "blinkFrames": 23,
+     "staying": 23,
+     "frames": 16
+    },
+    {
+     "step": "show-completed",
+     "zoom": 0.368,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.18,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.18,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 178
+     }
+    },
+    {
+     "step": "blink:hide-reference",
+     "blinkEdges": 30,
+     "blinkFrames": 30,
+     "staying": 30,
+     "frames": 14
+    },
+    {
+     "step": "hide-reference",
+     "zoom": 0.37,
+     "nEdges": 30,
+     "nNodes": 31,
+     "maxAlong": 0.18,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.18,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 181
+     }
+    },
+    {
+     "step": "blink:show-reference",
+     "blinkEdges": 30,
+     "blinkFrames": 30,
+     "staying": 30,
+     "frames": 15
+    },
+    {
+     "step": "show-reference",
+     "zoom": 0.368,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.18,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.18,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 181
+     }
+    },
+    {
+     "step": "blink:layout",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 76,
+     "frames": 16
+    },
+    {
+     "step": "layout",
+     "zoom": 0.319,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.16,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.16,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 181
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "scenario": "blink",
+   "fixture": "dense",
+   "size": [
+    1100,
+    700
+   ],
+   "layout": "LR",
+   "motion": "on",
+   "steps": [
+    {
+     "step": "drilled",
+     "zoom": 0.368,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.18,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.18,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 668
+     }
+    },
+    {
+     "step": "blink:hide-completed",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 23,
+     "frames": 42
+    },
+    {
+     "step": "hide-completed",
+     "zoom": 0.331,
+     "nEdges": 23,
+     "nNodes": 17,
+     "maxAlong": 0.17,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.17,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 179
+     }
+    },
+    {
+     "step": "blink:show-completed",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 23,
+     "frames": 45
+    },
+    {
+     "step": "show-completed",
+     "zoom": 0.368,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.18,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.18,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 178
+     }
+    },
+    {
+     "step": "blink:hide-reference",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 30,
+     "frames": 43
+    },
+    {
+     "step": "hide-reference",
+     "zoom": 0.37,
+     "nEdges": 30,
+     "nNodes": 31,
+     "maxAlong": 0.18,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.18,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 180
+     }
+    },
+    {
+     "step": "blink:show-reference",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 30,
+     "frames": 45
+    },
+    {
+     "step": "show-reference",
+     "zoom": 0.368,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.18,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.18,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 179
+     }
+    },
+    {
+     "step": "blink:layout",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 76,
+     "frames": 42
+    },
+    {
+     "step": "layout",
+     "zoom": 0.319,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.16,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.16,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 179
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "scenario": "blink",
+   "fixture": "dense",
+   "size": [
+    1100,
+    700
+   ],
+   "layout": "TB",
+   "motion": "on",
+   "steps": [
+    {
+     "step": "drilled",
+     "zoom": 0.319,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.16,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.16,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 613
+     }
+    },
+    {
+     "step": "blink:hide-completed",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 23,
+     "frames": 45
+    },
+    {
+     "step": "hide-completed",
+     "zoom": 0.333,
+     "nEdges": 23,
+     "nNodes": 17,
+     "maxAlong": 0.17,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.17,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 182
+     }
+    },
+    {
+     "step": "blink:show-completed",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 23,
+     "frames": 46
+    },
+    {
+     "step": "show-completed",
+     "zoom": 0.319,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.16,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.16,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 178
+     }
+    },
+    {
+     "step": "blink:hide-reference",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 30,
+     "frames": 42
+    },
+    {
+     "step": "hide-reference",
+     "zoom": 0.377,
+     "nEdges": 30,
+     "nNodes": 31,
+     "maxAlong": 0.19,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.19,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 179
+     }
+    },
+    {
+     "step": "blink:show-reference",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 30,
+     "frames": 45
+    },
+    {
+     "step": "show-reference",
+     "zoom": 0.319,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.16,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.16,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 178
+     }
+    },
+    {
+     "step": "blink:layout",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 76,
+     "frames": 43
+    },
+    {
+     "step": "layout",
+     "zoom": 0.368,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.18,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.18,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 179
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "scenario": "blink",
+   "fixture": "dense",
+   "size": [
+    1100,
+    700
+   ],
+   "layout": "TB",
+   "motion": "off",
+   "steps": [
+    {
+     "step": "drilled",
+     "zoom": 0.319,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.16,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.16,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 173
+     }
+    },
+    {
+     "step": "blink:hide-completed",
+     "blinkEdges": 23,
+     "blinkFrames": 23,
+     "staying": 23,
+     "frames": 14
+    },
+    {
+     "step": "hide-completed",
+     "zoom": 0.333,
+     "nEdges": 23,
+     "nNodes": 17,
+     "maxAlong": 0.17,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.17,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 182
+     }
+    },
+    {
+     "step": "blink:show-completed",
+     "blinkEdges": 23,
+     "blinkFrames": 23,
+     "staying": 23,
+     "frames": 15
+    },
+    {
+     "step": "show-completed",
+     "zoom": 0.319,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.16,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.16,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 180
+     }
+    },
+    {
+     "step": "blink:hide-reference",
+     "blinkEdges": 30,
+     "blinkFrames": 30,
+     "staying": 30,
+     "frames": 14
+    },
+    {
+     "step": "hide-reference",
+     "zoom": 0.377,
+     "nEdges": 30,
+     "nNodes": 31,
+     "maxAlong": 0.19,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.19,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 181
+     }
+    },
+    {
+     "step": "blink:show-reference",
+     "blinkEdges": 30,
+     "blinkFrames": 30,
+     "staying": 30,
+     "frames": 15
+    },
+    {
+     "step": "show-reference",
+     "zoom": 0.319,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.16,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.16,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 181
+     }
+    },
+    {
+     "step": "blink:layout",
+     "blinkEdges": 0,
+     "blinkFrames": 0,
+     "staying": 76,
+     "frames": 16
+    },
+    {
+     "step": "layout",
+     "zoom": 0.368,
+     "nEdges": 76,
+     "nNodes": 45,
+     "maxAlong": 0.18,
+     "maxCross": 0,
+     "minAlong": 0,
+     "maxAlongOutside": 0.18,
+     "maxVsHandle": 0,
+     "drift": 0,
+     "fails": 0,
+     "unparsed": 0,
+     "worst": [],
+     "settle": {
+      "settled": true,
+      "ms": 180
+     }
+    }
+   ],
+   "errors": []
+  }
+ ]
+}

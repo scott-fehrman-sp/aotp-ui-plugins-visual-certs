@@ -1,0 +1,50 @@
+diff --git a/src/graph/AccessNode.tsx b/src/graph/AccessNode.tsx
+index 85f4f90..0326f55 100644
+--- a/src/graph/AccessNode.tsx
++++ b/src/graph/AccessNode.tsx
+@@ -138,6 +138,7 @@ export function AccessNode({ id, data }: NodeProps<AccessSceneNode>) {
+   if (data.interactive) {
+     const activate = () => data.onSelect?.()
+     return (
++      <>
+       <NodeTooltip
+         kindLabel={kindLabel}
+         kind={data.kind}
+@@ -160,12 +161,13 @@ export function AccessNode({ id, data }: NodeProps<AccessSceneNode>) {
+             }
+           }}
+         >
+-          <Handles />
+           <strong className="vc-graph-card-label">{data.label}</strong>
+           <span className="vc-graph-card-kind">{kindLabel}</span>
+           {status ? <StatusIcon status={status} /> : null}
+         </article>
+       </NodeTooltip>
++      <Handles />
++      </>
+     )
+   }
+ 
+@@ -214,6 +216,7 @@ export function AccessNode({ id, data }: NodeProps<AccessSceneNode>) {
+   // Drill-down mode: the original read-only card markup and a11y; first-level
+   // cards are also toggle buttons.
+   return (
++    <>
+     <NodeTooltip
+       kindLabel={kindLabel}
+       kind={data.kind}
+@@ -229,12 +232,13 @@ export function AccessNode({ id, data }: NodeProps<AccessSceneNode>) {
+         {...selectionProps}
+         {...emphasisHandlers}
+       >
+-        <Handles />
+         <strong className="vc-graph-card-label">{data.label}</strong>
+         <span className="vc-graph-card-kind">{kindLabel}</span>
+         {status ? <StatusIcon status={status} id={statusIconId} /> : null}
+       </article>
+     </NodeTooltip>
++    <Handles />
++    </>
+   )
+ }
+ 
