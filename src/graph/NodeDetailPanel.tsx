@@ -17,6 +17,7 @@
  * card using the graph tokens — mounted inside a React Flow `top-right` panel.
  */
 import type { AccessGraphNodeKind, AccessSceneNodeData } from '../sailpoint/types'
+import { StatusIcon } from './AccessNode'
 import { KindIcon } from './kindIcons'
 import './NodeDetailPanel.css'
 
@@ -60,6 +61,13 @@ export function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps) {
   const status = node?.reviewStatus
   const isUser = node?.kind === 'user'
   const isEntitlement = node?.kind === 'entitlement'
+  // "Access items" — the three reviewable kinds. Their review status moves up
+  // directly under the name (icon + status-colored text), with a rule below it
+  // separating the status from the attributes.
+  const isAccessItem =
+    node?.kind === 'role' ||
+    node?.kind === 'accessProfile' ||
+    node?.kind === 'entitlement'
   // The user field set, in a fixed order that mirrors the org-graph detail
   // panel. A field renders only when it has a value, so a sparse identity never
   // shows a wall of "not set" lines; Department / Location always render (they
@@ -87,15 +95,19 @@ export function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps) {
   // flags, ownership, tags, timestamps and id. A row renders only when it has a
   // value (every attribute is optional on NodeDetail), so a sparse entitlement
   // shows only what it actually carries.
+  // Primary entitlement fields, ordered to mirror the ISC entitlement detail
+  // panel (Source, Description, Value, Attribute, Cloud enabled, …). A row
+  // renders only when it has a value (every attribute is optional on
+  // NodeDetail), so a sparse entitlement shows only what it actually carries.
   const e = node?.detail ?? {}
   const entitlementRows: Array<[string, string]> = [
-    ['Description', e.description ?? ''],
     ['Source', e.source ?? ''],
-    ['Attribute', e.attribute ?? ''],
+    ['Description', e.description ?? ''],
     ['Value', e.value ?? ''],
+    ['Attribute', e.attribute ?? ''],
+    ['Cloud enabled', e.cloudGoverned ?? ''],
     ['Object type', e.objectType ?? ''],
     ['Privileged', e.privileged ?? ''],
-    ['Cloud governed', e.cloudGoverned ?? ''],
     ['Requestable', e.requestable ?? ''],
     ['Owner', e.owner ?? ''],
     ['Tags', e.tags ?? ''],
@@ -104,6 +116,9 @@ export function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps) {
     ['Entitlement ID', e.entitlementId ?? ''],
   ]
   const visibleEntitlementRows = entitlementRows.filter(([, value]) => value)
+  // The free-form source attributes shown under an "Additional attributes"
+  // heading, mirroring the ISC panel. Empty when the entitlement carried none.
+  const additionalAttributes = e.attributes ?? []
 
   return (
     <section
@@ -145,6 +160,23 @@ export function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps) {
           </div>
           <p className="vc-graph-detail-label">{node.label}</p>
 
+          {isAccessItem && status ? (
+            <>
+              <p
+                className={`vc-graph-detail-status vc-graph-detail-status-${status}`}
+              >
+                <StatusIcon status={status} decorative />
+                <span>
+                  {STATUS_LABEL[status]}
+                  {node.reviewMixed
+                    ? ' (mixed: some items still need review)'
+                    : ''}
+                </span>
+              </p>
+              <hr className="vc-graph-detail-sep" />
+            </>
+          ) : null}
+
           {isUser ? (
             <dl className="vc-graph-detail-fields">
               {visibleUserRows.map(([label, value]) => (
@@ -159,23 +191,42 @@ export function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps) {
               ))}
             </dl>
           ) : isEntitlement ? (
-            <dl className="vc-graph-detail-fields">
-              {visibleEntitlementRows.length > 0 ? (
-                visibleEntitlementRows.map(([label, value]) => (
-                  <div key={label} className="vc-graph-detail-row">
-                    <dt>{label}</dt>
-                    <dd>{value}</dd>
+            <>
+              <dl className="vc-graph-detail-fields">
+                {visibleEntitlementRows.length > 0 ? (
+                  visibleEntitlementRows.map(([label, value]) => (
+                    <div key={label} className="vc-graph-detail-row">
+                      <dt>{label}</dt>
+                      <dd>{value}</dd>
+                    </div>
+                  ))
+                ) : (
+                  <div className="vc-graph-detail-row">
+                    <dt>Description</dt>
+                    <dd>
+                      <span className="vc-graph-detail-unset">not set</span>
+                    </dd>
                   </div>
-                ))
-              ) : (
-                <div className="vc-graph-detail-row">
-                  <dt>Description</dt>
-                  <dd>
-                    <span className="vc-graph-detail-unset">not set</span>
-                  </dd>
-                </div>
-              )}
-            </dl>
+                )}
+              </dl>
+              {additionalAttributes.length > 0 ? (
+                <>
+                  <p className="vc-graph-detail-subhead">Additional attributes</p>
+                  <dl className="vc-graph-detail-fields">
+                    {additionalAttributes.map(([label, value]) => (
+                      <div key={label} className="vc-graph-detail-row">
+                        <dt>{label}</dt>
+                        <dd>
+                          {value || (
+                            <span className="vc-graph-detail-unset">not set</span>
+                          )}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                </>
+              ) : null}
+            </>
           ) : (
             <dl className="vc-graph-detail-fields">
               <div className="vc-graph-detail-row">
@@ -188,20 +239,6 @@ export function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps) {
               </div>
             </dl>
           )}
-
-          {status ? (
-            <dl className="vc-graph-detail-fields">
-              <div className="vc-graph-detail-row">
-                <dt>Review status</dt>
-                <dd>
-                  {STATUS_LABEL[status]}
-                  {node.reviewMixed
-                    ? ' (mixed: some items still need review)'
-                    : ''}
-                </dd>
-              </div>
-            </dl>
-          ) : null}
 
           {node.reference ? (
             <p className="vc-graph-detail-note">

@@ -112,6 +112,7 @@ function stubResolver(): AccessCompositionResolver {
     tags: '',
     created: '',
     modified: '',
+    attributes: [],
     ...e,
   })
   const ents: Record<string, ResolvedEntitlement> = {
@@ -413,6 +414,7 @@ describe('resolveMatrix', () => {
                 tags: '',
                 created: '',
                 modified: '',
+                attributes: [],
               }
             : null,
         ),
@@ -603,6 +605,13 @@ describe('createAccessCompositionResolver entitlementByName', () => {
           created: '2024-01-02T00:00:00Z',
           modified: '2024-03-04T00:00:00Z',
           source: { id: 'src-engr', type: 'SOURCE', name: 'engr db' },
+          attributes: {
+            // Intentionally out of alphabetical order to prove sorting, and a
+            // mix of value shapes (array, string, boolean) to prove flattening.
+            proxyAddresses: ['SMTP:eng@x.com', 'SPO:eng'],
+            displayName: 'Engineering',
+            teamsEnabled: false,
+          },
         },
       }
       const body = bodies[name]
@@ -645,6 +654,12 @@ describe('createAccessCompositionResolver entitlementByName', () => {
       tags: 'PII, SOX',
       created: '2024-01-02T00:00:00Z',
       modified: '2024-03-04T00:00:00Z',
+      // Sorted by key; array joined with ', ', boolean stringified.
+      attributes: [
+        ['displayName', 'Engineering'],
+        ['proxyAddresses', 'SMTP:eng@x.com, SPO:eng'],
+        ['teamsEnabled', 'false'],
+      ],
     })
   })
 

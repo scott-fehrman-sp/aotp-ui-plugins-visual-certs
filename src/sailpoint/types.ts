@@ -326,6 +326,11 @@ export interface AccessMatrixRowVM {
   entitlementCreated?: string
   /** The entitlement's last-modified timestamp (ISO). Leaf rows only. */
   entitlementModified?: string
+  /**
+   * The entitlement's free-form source attributes as ordered `[key, value]`
+   * pairs (the ISC "Additional Attributes" section). Leaf rows only.
+   */
+  entitlementAttributes?: Array<[string, string]>
   /** The source's description, same semantics as {@link roleDescription}. */
   sourceDescription?: string
   /**
@@ -390,6 +395,12 @@ export interface NodeDetail {
   modified?: string
   /** The entitlement's own id. */
   entitlementId?: string
+  /**
+   * The free-form source attributes as ordered `[key, value]` pairs, rendered
+   * under an "Additional attributes" heading (mirrors the ISC panel). Omitted
+   * when the entitlement carried none.
+   */
+  attributes?: Array<[string, string]>
   // --- user-node identity fields ---------------------------------------------
   department?: string
   location?: string

@@ -65,6 +65,11 @@ function detailFor(
     if (row.entitlementCreated) detail.created = row.entitlementCreated
     if (row.entitlementModified) detail.modified = row.entitlementModified
     if (row.entitlementId) detail.entitlementId = row.entitlementId
+    // The free-form source attributes ("Additional attributes"); only attach a
+    // non-empty list so a sparse entitlement keeps no empty section.
+    if (row.entitlementAttributes && row.entitlementAttributes.length > 0) {
+      detail.attributes = row.entitlementAttributes
+    }
   } else {
     const description =
       kind === 'role'

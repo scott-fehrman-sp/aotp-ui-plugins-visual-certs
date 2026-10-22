@@ -85,6 +85,14 @@ export interface ResolvedEntitlement {
   created: string
   /** ISO timestamp the entitlement was last modified ('' when absent). */
   modified: string
+  /**
+   * The free-form source attributes (the SDK's `attributes` map), as ordered
+   * `[key, value]` pairs with each value stringified for display (arrays joined
+   * with ', ', objects JSON-encoded). Mirrors the "Additional Attributes"
+   * section of the ISC entitlement detail panel. Empty when the source carried
+   * none.
+   */
+  attributes: Array<[string, string]>
 }
 
 /**
@@ -120,6 +128,42 @@ export interface AccessCompositionResolver {
    * concurrent-dedupe). Soft-degrades every field to '' and never throws.
    */
   identity(id: string): Promise<ResolvedIdentity>
+}
+
+/**
+ * Stringifies one free-form source-attribute value for display: an array joins
+ * with ', ' (mirrors `proxyAddresses` in the ISC panel), a boolean/number uses
+ * its literal, a nested object JSON-encodes, and null/undefined becomes ''. Any
+ * stringify failure degrades to '' rather than throwing.
+ */
+function stringifyAttributeValue(value: unknown): string {
+  if (value === null || value === undefined) return ''
+  if (Array.isArray(value)) {
+    return value.map((v) => stringifyAttributeValue(v)).join(', ')
+  }
+  if (typeof value === 'object') {
+    try {
+      return JSON.stringify(value)
+    } catch {
+      return ''
+    }
+  }
+  return String(value)
+}
+
+/**
+ * Flattens the SDK's free-form `attributes` map into ordered `[key, value]`
+ * string pairs for the detail panel's "Additional attributes" section. Keys are
+ * sorted for a stable, deterministic order (the SDK map order is unspecified).
+ * A missing map yields an empty list.
+ */
+function flattenSourceAttributes(
+  attributes: Record<string, unknown> | null | undefined,
+): Array<[string, string]> {
+  if (!attributes) return []
+  return Object.keys(attributes)
+    .sort((a, b) => a.localeCompare(b))
+    .map((key): [string, string] => [key, stringifyAttributeValue(attributes[key])])
 }
 
 /**
@@ -275,6 +319,7 @@ export function createAccessCompositionResolver(
       tags: (ent.tags ?? []).join(', '),
       created: ent.created ?? '',
       modified: ent.modified ?? '',
+      attributes: flattenSourceAttributes(ent.attributes),
     }
   }
 
@@ -373,6 +418,8 @@ interface RowTuple {
   entitlementCreated?: string
   /** Resolved entitlement modified timestamp, on a resolved leaf row. */
   entitlementModified?: string
+  /** Resolved free-form source attributes ([key, value] pairs), on a leaf row. */
+  entitlementAttributes?: Array<[string, string]>
   /** Resolved SOURCE description, on a resolved leaf row. */
   sourceDescription?: string
   /** Kind of the user's directly-held access item (first hop off the user). */
@@ -421,6 +468,7 @@ async function resolveLeaf(
   entitlementTags?: string
   entitlementCreated?: string
   entitlementModified?: string
+  entitlementAttributes?: Array<[string, string]>
 }> {
   // Prefer the id (exact, one round-trip). When the parent body referenced the
   // entitlement by NAME only (no id), fall back to a by-name lookup rather than
@@ -462,6 +510,7 @@ async function resolveLeaf(
     entitlementTags: resolved.tags,
     entitlementCreated: resolved.created,
     entitlementModified: resolved.modified,
+    entitlementAttributes: resolved.attributes,
   }
 }
 

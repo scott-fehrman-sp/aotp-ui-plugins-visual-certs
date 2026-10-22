@@ -292,6 +292,10 @@ describe('deriveAccessGraph', () => {
         entitlementTags: 'PII, SOX',
         entitlementCreated: '2024-01-02T00:00:00Z',
         entitlementModified: '2024-03-04T00:00:00Z',
+        entitlementAttributes: [
+          ['displayName', 'Engineering'],
+          ['proxyAddresses', 'SMTP:eng@x.com, SPO:eng'],
+        ],
         source: 'app',
         sourceId: 's0',
       }),
@@ -311,7 +315,27 @@ describe('deriveAccessGraph', () => {
       created: '2024-01-02T00:00:00Z',
       modified: '2024-03-04T00:00:00Z',
       entitlementId: 'e1',
+      attributes: [
+        ['displayName', 'Engineering'],
+        ['proxyAddresses', 'SMTP:eng@x.com, SPO:eng'],
+      ],
     })
+  })
+
+  it('omits the attributes list from detail when the entitlement has none', () => {
+    const { nodes } = deriveAccessGraph([
+      row({
+        id: '1',
+        entitlement: 'read',
+        entitlementId: 'e1',
+        entitlementDescription: 'Read access',
+        entitlementAttributes: [],
+        source: 'app',
+        sourceId: 's0',
+      }),
+    ])
+    const ent = nodes.find((n) => n.kind === 'entitlement')
+    expect(ent?.detail?.attributes).toBeUndefined()
   })
 
   it('marks only the user→access-item edge as first-level, with a review key and no status', () => {

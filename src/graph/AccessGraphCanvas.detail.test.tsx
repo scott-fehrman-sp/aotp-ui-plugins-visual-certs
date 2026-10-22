@@ -123,8 +123,14 @@ describe('AccessGraphCanvas node detail panel', () => {
     expect(within(details).getByText('Role')).toBeInTheDocument()
     expect(within(details).getByText('Role A')).toBeInTheDocument()
     expect(within(details).getByText('Description')).toBeInTheDocument()
-    expect(within(details).getByText('Review status')).toBeInTheDocument()
-    expect(details).toHaveTextContent('Needs review')
+    // The review status now sits directly under the name as an icon + caption,
+    // carrying its per-status class, rather than a "Review status" field.
+    const statusLine = details.querySelector('.vc-graph-detail-status')
+    expect(statusLine).not.toBeNull()
+    expect(statusLine).toHaveClass('vc-graph-detail-status-needsReview')
+    expect(statusLine).toHaveTextContent('Needs review')
+    // A horizontal rule separates the status from the attributes below it.
+    expect(details.querySelector('.vc-graph-detail-sep')).not.toBeNull()
   })
 
   it('shows details for a reference-only deeper node and flags it as reference', () => {
@@ -138,8 +144,9 @@ describe('AccessGraphCanvas node detail panel', () => {
     expect(within(details).getByText('Entitlement')).toBeInTheDocument()
     expect(within(details).getByText('read')).toBeInTheDocument()
     expect(details).toHaveTextContent(/reference only/i)
-    // A reference node is not reviewed, so no review-status field.
-    expect(within(details).queryByText('Review status')).not.toBeInTheDocument()
+    // A reference node is not reviewed, so no status line (and no separator).
+    expect(details.querySelector('.vc-graph-detail-status')).toBeNull()
+    expect(details.querySelector('.vc-graph-detail-sep')).toBeNull()
   })
 
   it('shows the source node as its own kind', () => {
