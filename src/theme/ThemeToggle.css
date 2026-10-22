@@ -1,0 +1,27 @@
+.vc-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 1px solid var(--vc-border);
+  border-radius: var(--vc-radius);
+  background: var(--vc-surface);
+  color: var(--vc-text);
+  box-shadow: var(--vc-shadow);
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
+}
+
+.vc-theme-toggle:hover {
+  border-color: var(--vc-accent);
+  color: var(--vc-accent);
+}
+
+.vc-theme-toggle:active {
+  background: var(--vc-surface-alt);
+}

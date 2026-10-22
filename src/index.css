@@ -42,26 +42,31 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --vc-bg: #14161c;
-    --vc-surface: #1b1e26;
-    --vc-surface-alt: #212530;
-    --vc-border: #2e333f;
-    --vc-text: #e8eaee;
-    --vc-text-muted: #9aa3b2;
+/*
+ * Dark theme. Driven by the `data-theme="dark"` attribute that `ThemeProvider`
+ * sets on <html>. The provider defaults that attribute to the OS
+ * `prefers-color-scheme`, so first paint still honors the system preference;
+ * the in-app toggle then overrides it. The matching graph tokens in
+ * `graph/tokens.css` key off the same attribute.
+ */
+:root[data-theme='dark'] {
+  --vc-bg: #14161c;
+  --vc-surface: #1b1e26;
+  --vc-surface-alt: #212530;
+  --vc-border: #2e333f;
+  --vc-text: #e8eaee;
+  --vc-text-muted: #9aa3b2;
 
-    --vc-allow: #3cb371;
-    --vc-allow-bg: rgba(60, 179, 113, 0.16);
-    --vc-deny: #e5695b;
-    --vc-deny-bg: rgba(229, 105, 91, 0.16);
-    --vc-accent: #6ea0ff;
-    --vc-accent-bg: rgba(110, 160, 255, 0.16);
-    --vc-warn: #e0a53a;
-    --vc-warn-bg: rgba(224, 165, 58, 0.16);
+  --vc-allow: #3cb371;
+  --vc-allow-bg: rgba(60, 179, 113, 0.16);
+  --vc-deny: #e5695b;
+  --vc-deny-bg: rgba(229, 105, 91, 0.16);
+  --vc-accent: #6ea0ff;
+  --vc-accent-bg: rgba(110, 160, 255, 0.16);
+  --vc-warn: #e0a53a;
+  --vc-warn-bg: rgba(224, 165, 58, 0.16);
 
-    --vc-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
-  }
+  --vc-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 * {

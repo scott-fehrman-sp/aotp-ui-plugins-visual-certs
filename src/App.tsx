@@ -5,6 +5,7 @@ import { ErrorState } from './components/ErrorState'
 import { LoadingState } from './components/LoadingState'
 import { initPlugin } from './sailpoint/sdkClient'
 import type { PluginRuntime } from './sailpoint/sdkClient'
+import { ThemeToggle } from './theme/ThemeToggle'
 
 type InitState =
   | { status: 'loading' }
@@ -44,10 +45,13 @@ function App() {
     <div className="vc-app">
       <header className="vc-header">
         <h1 className="vc-title">Access Review</h1>
-        {/* Right-aligned slot in the app header. Views deeper in the tree (e.g.
-            the access map's unresolved-paths notice) portal content here so it
-            sits inline with the title instead of stealing canvas space. */}
-        <div id="vc-header-slot" className="vc-header-slot" />
+        <div className="vc-header-actions">
+          {/* Right-aligned slot in the app header. Views deeper in the tree (e.g.
+              the access map's unresolved-paths notice) portal content here so it
+              sits inline with the title instead of stealing canvas space. */}
+          <div id="vc-header-slot" className="vc-header-slot" />
+          <ThemeToggle />
+        </div>
       </header>
       <main className="vc-main">
         {state.status === 'loading' && (

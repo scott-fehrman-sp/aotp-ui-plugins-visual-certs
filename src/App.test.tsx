@@ -2,6 +2,18 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 import type { PluginRuntime } from './sailpoint/sdkClient'
+import { ThemeProvider } from './theme/ThemeProvider'
+
+// The app header now hosts a theme toggle, which reads context from
+// ThemeProvider. Production wires that provider in main.tsx; the test renders
+// App on its own, so we supply the provider here.
+function renderApp() {
+  return render(
+    <ThemeProvider>
+      <App />
+    </ThemeProvider>,
+  )
+}
 
 // Mock the SDK bootstrap so the app's init flow is deterministic in tests
 // (no real iframe handshake happens under jsdom).
@@ -23,7 +35,7 @@ afterEach(() => {
 describe('App init boundary', () => {
   it('renders the plugin title', () => {
     initPlugin.mockReturnValue(new Promise(() => {})) // stay loading
-    render(<App />)
+    renderApp()
     expect(
       screen.getByRole('heading', { name: /access review/i }),
     ).toBeInTheDocument()
@@ -34,7 +46,7 @@ describe('App init boundary', () => {
       user: { id: 'u1', displayName: 'Dana Reviewer', email: '', isCertAdmin: false },
     } as unknown as PluginRuntime)
 
-    render(<App />)
+    renderApp()
 
     expect(await screen.findByText(/connected app for dana reviewer/i)).toBeInTheDocument()
   })
@@ -42,7 +54,7 @@ describe('App init boundary', () => {
   it('shows a friendly error when the connection fails', async () => {
     initPlugin.mockRejectedValue(new Error('handshake failed'))
 
-    render(<App />)
+    renderApp()
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(/couldn't connect/i)

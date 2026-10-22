@@ -7,11 +7,11 @@
  * `--vc-*` app tokens in `index.css` (which are left untouched) so the graph
  * styling never collides with the rest of the plugin.
  *
- * visual-certs has no theme switch, so light is the default and the dark
- * overrides live under `:root[data-theme='dark']` (shipped to match org-graph's
- * dark look). The React Flow `colorMode` is derived from `prefers-color-scheme`
- * at runtime; dark values are also surfaced for consumers that set the
- * attribute.
+ * Light is the default and the dark overrides live under
+ * `:root[data-theme='dark']` (matching org-graph's dark look). The theme is
+ * driven by the `data-theme` attribute that `ThemeProvider` sets on <html>
+ * (seeded from `prefers-color-scheme`, then overridden by the in-app toggle).
+ * The React Flow `colorMode` follows the same attribute via `useColorMode`.
  */
 :root {
   --motion-ms: 450ms;
