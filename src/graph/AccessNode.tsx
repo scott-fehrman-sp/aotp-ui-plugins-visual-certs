@@ -138,34 +138,37 @@ export function AccessNode({ id, data }: NodeProps<AccessSceneNode>) {
   if (data.interactive) {
     const activate = () => data.onSelect?.()
     return (
-      <NodeTooltip
-        kindLabel={kindLabel}
-        kind={data.kind}
-        label={data.label}
-        detail={data.detail}
-        {...tipProps}
-      >
-        <article
-          className={`vc-graph-card vc-graph-card-interactive kind-${data.kind}${statusClass}`}
-          role="button"
-          tabIndex={0}
-          aria-label={`Show access for ${data.label}`}
-          data-review-status={status}
-          onClick={activate}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter' || event.key === ' ') {
-              // Space would otherwise scroll the pane; Enter has no default here.
-              event.preventDefault()
-              activate()
-            }
-          }}
+      <>
+        <NodeTooltip
+          kindLabel={kindLabel}
+          kind={data.kind}
+          label={data.label}
+          detail={data.detail}
+          {...tipProps}
         >
-          <Handles />
-          <strong className="vc-graph-card-label">{data.label}</strong>
-          <span className="vc-graph-card-kind">{kindLabel}</span>
-          {status ? <StatusIcon status={status} /> : null}
-        </article>
-      </NodeTooltip>
+          <article
+            className={`vc-graph-card vc-graph-card-interactive kind-${data.kind}${statusClass}`}
+            role="button"
+            tabIndex={0}
+            aria-label={`Show access for ${data.label}`}
+            data-review-status={status}
+            onClick={activate}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                // Space would otherwise scroll the pane; Enter has no default here.
+                event.preventDefault()
+                activate()
+              }
+            }}
+          >
+            <strong className="vc-graph-card-label">{data.label}</strong>
+            <span className="vc-graph-card-kind">{kindLabel}</span>
+            {status ? <StatusIcon status={status} /> : null}
+          </article>
+        </NodeTooltip>
+        {/* Sibling of the card, not a child: see `Handles`. */}
+        <Handles />
+      </>
     )
   }
 
@@ -214,27 +217,30 @@ export function AccessNode({ id, data }: NodeProps<AccessSceneNode>) {
   // Drill-down mode: the original read-only card markup and a11y; first-level
   // cards are also toggle buttons.
   return (
-    <NodeTooltip
-      kindLabel={kindLabel}
-      kind={data.kind}
-      label={data.label}
-      detail={data.detail}
-      {...tipProps}
-    >
-      <article
-        className={`vc-graph-card kind-${data.kind}${statusClass}${selectionClass}`}
-        tabIndex={0}
-        aria-label={`${kindLabel}: ${data.label}`}
-        data-review-status={status}
-        {...selectionProps}
-        {...emphasisHandlers}
+    <>
+      <NodeTooltip
+        kindLabel={kindLabel}
+        kind={data.kind}
+        label={data.label}
+        detail={data.detail}
+        {...tipProps}
       >
-        <Handles />
-        <strong className="vc-graph-card-label">{data.label}</strong>
-        <span className="vc-graph-card-kind">{kindLabel}</span>
-        {status ? <StatusIcon status={status} id={statusIconId} /> : null}
-      </article>
-    </NodeTooltip>
+        <article
+          className={`vc-graph-card kind-${data.kind}${statusClass}${selectionClass}`}
+          tabIndex={0}
+          aria-label={`${kindLabel}: ${data.label}`}
+          data-review-status={status}
+          {...selectionProps}
+          {...emphasisHandlers}
+        >
+          <strong className="vc-graph-card-label">{data.label}</strong>
+          <span className="vc-graph-card-kind">{kindLabel}</span>
+          {status ? <StatusIcon status={status} id={statusIconId} /> : null}
+        </article>
+      </NodeTooltip>
+      {/* Sibling of the card, not a child: see `Handles`. */}
+      <Handles />
+    </>
   )
 }
 
@@ -242,6 +248,14 @@ export function AccessNode({ id, data }: NodeProps<AccessSceneNode>) {
  * The eight connection handles (top/bottom/left/right × in/out) the pure scene
  * builder references by id. They are non-interactive and visually hidden; only
  * the rank-facing pair carries an edge for a given direction.
+ *
+ * Render them OUTSIDE `.vc-graph-card`, as direct children of the React Flow
+ * node wrapper. The card is scaled to 94% while entering/exiting/revealing and
+ * has an uneven border (4px left stripe), and React Flow measures handle
+ * offsets once with `getBoundingClientRect` and caches them (`measured` keeps
+ * them across scene updates). Inside the card the cached offsets would be
+ * those of a shrunken, padded box; on the wrapper (never scaled, no border,
+ * exactly the node size) the edge endpoints sit on the outer border midpoints.
  */
 function Handles() {
   const spots = [

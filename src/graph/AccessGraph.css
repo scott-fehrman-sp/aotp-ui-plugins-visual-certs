@@ -207,7 +207,9 @@
   border-left-color: var(--vc-graph-source);
 }
 
-/* Handles exist only to anchor edges; keep them out of sight and inert. */
+/* Handles exist only to anchor edges; keep them out of sight and inert. They
+   are children of the node wrapper, never of the scaled, bordered
+   `.vc-graph-card`, so React Flow measures them against the true node box. */
 .vc-graph-handle {
   width: 1px;
   height: 1px;
