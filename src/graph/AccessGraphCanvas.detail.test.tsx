@@ -138,6 +138,8 @@ describe('AccessGraphCanvas node detail panel', () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
     openDetail()
+    // reference starts hidden by default; show it for this test
+    fireEvent.click(btn('Show reference nodes and links'))
     // `read` is a deeper entitlement nested under the role — reference only.
     fireEvent.click(card('read'))
 
@@ -154,6 +156,8 @@ describe('AccessGraphCanvas node detail panel', () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
     openDetail()
+    // reference starts hidden by default; show it for this test (source nodes are reference-only)
+    fireEvent.click(btn('Show reference nodes and links'))
     fireEvent.click(card('engr db'))
 
     const details = panel()!
@@ -191,6 +195,8 @@ describe('AccessGraphCanvas node detail panel', () => {
     const { container } = render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
     openDetail()
+    // completed items start hidden by default; show them so the approved `login` card appears
+    fireEvent.click(btn(/^Show completed items/))
     fireEvent.click(card('login'))
     expect(panel()).toHaveTextContent('login')
 
@@ -213,6 +219,8 @@ describe('AccessGraphCanvas node detail panel', () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
     openDetail()
+    // reference starts hidden by default; show it so a reference-only node is selectable
+    fireEvent.click(btn('Show reference nodes and links'))
     // Select a reference-only (deeper) node, then hide reference content.
     fireEvent.click(card('read'))
     expect(panel()).toHaveTextContent('read')

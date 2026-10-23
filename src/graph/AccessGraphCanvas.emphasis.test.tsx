@@ -83,6 +83,10 @@ describe('AccessGraphCanvas hover / focus edge emphasis', () => {
   it('raises and dims on hover, and restores the exact edges on leave', () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
+    // completed items and reference start hidden by default; show both so the
+    // completed `login` card and the reference edges exist to emphasize/dim
+    fireEvent.click(btn(/^Show completed items/))
+    fireEvent.click(btn('Show reference nodes and links'))
     const before = snapshot()
     const login = card('login')
     fireEvent.mouseEnter(login)
@@ -104,6 +108,8 @@ describe('AccessGraphCanvas hover / focus edge emphasis', () => {
   it('emphasizes on focus and restores on blur', () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
+    // completed items start hidden by default; show them so the revoked `admin` card appears
+    fireEvent.click(btn(/^Show completed items/))
     const before = snapshot()
     const admin = card('admin')
     fireEvent.focus(admin)
@@ -116,6 +122,8 @@ describe('AccessGraphCanvas hover / focus edge emphasis', () => {
   it('leaves the edges prop untouched when hovering a reference-only node', () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
+    // reference starts hidden by default; show it so the reference-only `foo` card appears
+    fireEvent.click(btn('Show reference nodes and links'))
     const edgesBefore = edges()
     const reference = card('foo')
     expect(reference.className).toContain('vc-graph-card-reference')
@@ -127,6 +135,8 @@ describe('AccessGraphCanvas hover / focus edge emphasis', () => {
   it('prefers the pointer over focus and falls back to focus after the pointer leaves', () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
+    // completed items start hidden by default; show them so login/admin cards appear
+    fireEvent.click(btn(/^Show completed items/))
     const login = card('login')
     const admin = card('admin')
     fireEvent.focus(admin)
@@ -141,6 +151,8 @@ describe('AccessGraphCanvas hover / focus edge emphasis', () => {
   it('a late leave of an older card does not clear a newer hover', () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
+    // completed items start hidden by default; show them so login/admin cards appear
+    fireEvent.click(btn(/^Show completed items/))
     const login = card('login')
     const admin = card('admin')
     fireEvent.mouseEnter(login)
@@ -152,7 +164,9 @@ describe('AccessGraphCanvas hover / focus edge emphasis', () => {
   it('works with reference hidden and in the vertical layout', () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
-    fireEvent.click(btn('Hide reference nodes and links'))
+    // reference starts hidden by default (the precondition here); completed
+    // items start hidden too, so show them to reveal the revoked `admin` card
+    fireEvent.click(btn(/^Show completed items/))
     expect(edges().every(isStatus)).toBe(true)
     fireEvent.mouseEnter(card('admin'))
     expect(emphasized().map((e) => e.target)).toEqual([nodeId('admin')])
@@ -160,7 +174,7 @@ describe('AccessGraphCanvas hover / focus edge emphasis', () => {
       edges().length - 1,
     )
     fireEvent.mouseLeave(card('admin'))
-    fireEvent.click(btn('Layout: vertical'))
+    // layout now starts in TB (vertical), so no click is needed to reach it
     const raisedTb = () => {
       fireEvent.mouseEnter(card('Role A'))
       return emphasized()
@@ -173,6 +187,10 @@ describe('AccessGraphCanvas hover / focus edge emphasis', () => {
   it('never refits, re-viewports or moves a node on hover or focus', async () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
+    // completed items and reference start hidden by default; show both so the
+    // login/admin (completed) and foo (reference) cards exist to hover/focus
+    fireEvent.click(btn(/^Show completed items/))
+    fireEvent.click(btn('Show reference nodes and links'))
     await waitFor(() => expect(spies.fitView).toHaveBeenCalled())
     // Let the post-drill-in refit settle before counting calls.
     await act(async () => {
@@ -199,6 +217,10 @@ describe('AccessGraphCanvas hover / focus edge emphasis', () => {
   it('clears a stale emphasis when the reference, layout, completed filter or user changes', () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
+    // completed items and reference start hidden by default; show both so the
+    // login/admin cards exist and the reference toggle can flip to "Hide"
+    fireEvent.click(btn(/^Show completed items/))
+    fireEvent.click(btn('Show reference nodes and links'))
     fireEvent.mouseEnter(card('login'))
     expect(emphasized()).toHaveLength(1)
     fireEvent.click(btn('Hide reference nodes and links'))
@@ -207,7 +229,8 @@ describe('AccessGraphCanvas hover / focus edge emphasis', () => {
 
     fireEvent.focus(card('admin'))
     expect(emphasized()).toHaveLength(1)
-    fireEvent.click(btn('Layout: vertical'))
+    // layout now starts in TB; clicking "Layout: horizontal" changes layout (to LR)
+    fireEvent.click(btn('Layout: horizontal'))
     expect(emphasized()).toHaveLength(0)
 
     fireEvent.mouseEnter(card('Role A'))
@@ -236,6 +259,8 @@ describe('AccessGraphCanvas hover / focus edge emphasis', () => {
   it('emphasizes on hover and on keyboard focus (no hover tooltip)', () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
+    // completed items start hidden by default; show them so login/admin cards appear
+    fireEvent.click(btn(/^Show completed items/))
     const login = card('login')
     fireEvent.mouseEnter(login)
     // The hover tooltip was removed; only the edge emphasis responds.

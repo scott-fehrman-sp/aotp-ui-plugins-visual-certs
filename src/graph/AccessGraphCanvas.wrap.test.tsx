@@ -103,7 +103,9 @@ describe('AccessGraphCanvas lane wrapping', () => {
   it('LR: 12 entitlements form two columns, earlier lanes are not moved', () => {
     render(<AccessGraphCanvas graph={statusGraph([...roleAndAp(), ...ents(12)])} />)
     drillIn()
-    fireEvent.click(btn('Hide reference nodes and links'))
+    // layout now starts in TB; switch to horizontal for this LR test
+    fireEvent.click(btn('Layout: horizontal'))
+    // reference starts hidden by default (the precondition for this wrap test)
     const pos = entPositions(12)
     const xs = distinct(pos.map((p) => p.x))
     expect(xs).toHaveLength(2)
@@ -128,8 +130,8 @@ describe('AccessGraphCanvas lane wrapping', () => {
   it('TB: 12 entitlements form two rows of six', () => {
     render(<AccessGraphCanvas graph={statusGraph([...roleAndAp(), ...ents(12)])} />)
     drillIn()
-    fireEvent.click(btn('Hide reference nodes and links'))
-    fireEvent.click(btn('Layout: vertical'))
+    // reference starts hidden by default (the precondition for this wrap test)
+    // layout now starts in TB (vertical), so no layout click is needed
     const pos = entPositions(12)
     const ys = distinct(pos.map((p) => p.y))
     expect(ys).toHaveLength(2)
@@ -144,6 +146,11 @@ describe('AccessGraphCanvas lane wrapping', () => {
   it('hide / show completed unwraps and re-wraps the lane, one fit per toggle', async () => {
     render(<AccessGraphCanvas graph={statusGraph(ents(12, 3))} />)
     drillIn()
+    // layout now starts in TB; switch to horizontal so the lane wraps into columns (x)
+    fireEvent.click(btn('Layout: horizontal'))
+    // completed items start hidden by default; show them so all 12 entitlements
+    // form the wrapped baseline this toggle test unwraps and re-wraps
+    fireEvent.click(btn(/^Show completed items/))
     await waitFor(() => expect(plans()).toBeGreaterThan(0))
     const xsOf = (from: number, to: number) =>
       distinct(Array.from({ length: to - from }, (_, i) => translate(`Ent ${pad(from + i)}`).x))
@@ -183,6 +190,11 @@ describe('AccessGraphCanvas lane wrapping', () => {
     )
     render(<AccessGraphCanvas graph={statusGraph([...ents(6), ...nested])} />)
     drillIn()
+    // layout now starts in TB; switch to horizontal so the lane wraps into columns (x)
+    fireEvent.click(btn('Layout: horizontal'))
+    // reference starts hidden by default; show it so the 6 nested entitlements
+    // join the 6 first-level ones and form the wrapped (two-column) baseline
+    fireEvent.click(btn('Show reference nodes and links'))
     await waitFor(() => expect(plans()).toBeGreaterThan(0))
     const entXs = () => {
       const labels = [
@@ -224,6 +236,11 @@ describe('AccessGraphCanvas lane wrapping', () => {
     function open() {
       render(<AccessGraphCanvas graph={statusGraph(ents(12))} />)
       drillIn()
+      // layout now starts in TB; switch to horizontal so the lane wraps into columns (x)
+      fireEvent.click(btn('Layout: horizontal'))
+      // reference starts hidden by default; show it so each entitlement's source
+      // lineage edge exists for the selection/hover assertions below
+      fireEvent.click(btn('Show reference nodes and links'))
       const xs = entPositions(12).map((p) => p.x)
       const index = xs.indexOf(Math.max(...xs))
       last = `Ent ${pad(index)}`
@@ -270,6 +287,10 @@ describe('AccessGraphCanvas lane wrapping', () => {
   it('keeps the status on every wrapped card and the legend entries', () => {
     render(<AccessGraphCanvas graph={statusGraph(ents(12, 2))} />)
     drillIn()
+    // completed items and the legend start hidden by default; show both so the
+    // two approved cards and the legend entries are present to assert on
+    fireEvent.click(btn(/^Show completed items/))
+    fireEvent.click(btn('Show legend'))
     for (let i = 0; i < 12; i++) {
       const c = card(`Ent ${pad(i)}`)
       expect(c.closest('.react-flow__node')).not.toBeNull()

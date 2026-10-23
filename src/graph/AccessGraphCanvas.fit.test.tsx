@@ -79,15 +79,18 @@ describe('AccessGraphCanvas overlay-aware fit', () => {
       expected += 1
       await waitFor(() => expect(fitViewSpy).toHaveBeenCalledTimes(expected))
     }
-    fireEvent.click(btn('Hide minimap'))
+    // Every control starts off, so each toggle fires a refit on the way on
+    // (and the completed toggle once more on the way back off).
+    fireEvent.click(btn('Show minimap'))
     await expectOneMore()
-    fireEvent.click(btn('Hide reference nodes and links'))
+    fireEvent.click(btn('Show reference nodes and links'))
     await expectOneMore()
-    fireEvent.click(btn('Layout: vertical'))
-    await expectOneMore()
-    fireEvent.click(btn('Hide completed items'))
+    // layout now starts in TB; the button reads "Layout: horizontal" after drill-in
+    fireEvent.click(btn('Layout: horizontal'))
     await expectOneMore()
     fireEvent.click(btn(/^Show completed items/))
+    await expectOneMore()
+    fireEvent.click(btn('Hide completed items'))
     await expectOneMore()
     fireEvent.click(screen.getByRole('button', { name: /back to all users/i }))
     await expectOneMore()
@@ -108,12 +111,14 @@ describe('AccessGraphCanvas overlay-aware fit', () => {
     const { container } = render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
     await waitFor(() => expect(fitViewSpy).toHaveBeenCalled())
+    // The legend overlay starts off; show it so the right stack has a size.
+    fireEvent.click(btn('Show legend'))
     // Scoped, per-instance rects (never Element.prototype).
     const root = container.querySelector<HTMLElement>('.react-flow')!
     root.getBoundingClientRect = () => rect(0, 0, 968, 490)
     const legend = container.querySelector<HTMLElement>('.vc-graph-right-stack')!
     legend.getBoundingClientRect = () => rect(15, 200, 236, 186) // right 251, bottom 386
-    fireEvent.click(btn('Hide minimap')) // triggers a refit
+    fireEvent.click(btn('Show minimap')) // triggers a refit
     await waitFor(() => expect(parseInt(lastPadding()!.left, 10)).toBeGreaterThanOrEqual(251 + 12))
   })
 
@@ -137,7 +142,11 @@ describe('AccessGraphCanvas overlay-aware fit', () => {
     it('hidden, horizontal: role, access profile, entitlement each get their own column, in that order', () => {
       const { container } = render(<AccessGraphCanvas graph={threeKinds()} />)
       drillIn()
-      fireEvent.click(btn('Hide reference nodes and links'))
+      // layout now starts in TB; switch to horizontal for this test
+      fireEvent.click(btn('Layout: horizontal'))
+      // Reference nodes/links are hidden by default; show completed so all four
+      // first-level items (three of them completed) render.
+      fireEvent.click(btn(/^Show completed items/))
 
       // Only the user and the four first-level items remain.
       expect(container.querySelectorAll('.react-flow__node')).toHaveLength(5)
@@ -156,8 +165,9 @@ describe('AccessGraphCanvas overlay-aware fit', () => {
     it('hidden, vertical: the same three types get their own rows, top to bottom', () => {
       render(<AccessGraphCanvas graph={threeKinds()} />)
       drillIn()
-      fireEvent.click(btn('Hide reference nodes and links'))
-      fireEvent.click(btn('Layout: vertical'))
+      // Reference hidden by default; show completed so all four items render.
+      fireEvent.click(btn(/^Show completed items/))
+      // layout now starts in TB (vertical), so no layout click is needed
 
       const [role, ap, login, admin] = items.map(translate)
       const user = translate('User One')
@@ -171,6 +181,12 @@ describe('AccessGraphCanvas overlay-aware fit', () => {
     it('hiding reference does not move an access type to a different lane', () => {
       render(<AccessGraphCanvas graph={threeKinds()} />)
       drillIn()
+      // layout now starts in TB; switch to horizontal for this test (lane = x)
+      fireEvent.click(btn('Layout: horizontal'))
+      // Show completed so all four items render, then compare reference shown
+      // vs hidden. Reference starts hidden; show it for the baseline first.
+      fireEvent.click(btn(/^Show completed items/))
+      fireEvent.click(btn('Show reference nodes and links'))
       const shown = items.map(translate)
       fireEvent.click(btn('Hide reference nodes and links'))
       const hidden = items.map(translate)
@@ -196,6 +212,10 @@ describe('AccessGraphCanvas overlay-aware fit', () => {
       it('keeps the lanes in order and packs the remaining cards evenly (horizontal)', () => {
         render(<AccessGraphCanvas graph={mixedKinds()} />)
         drillIn()
+        // layout now starts in TB; switch to horizontal for this test
+        fireEvent.click(btn('Layout: horizontal'))
+        // Completed items start hidden; show them for the baseline measurement.
+        fireEvent.click(btn(/^Show completed items/))
         // The lane stride is the gap between two adjacent cards; take it from the
         // two lowest shown entitlement positions (adjacency is independent of
         // which names those are, since cards sort A→Z by name).
@@ -222,7 +242,9 @@ describe('AccessGraphCanvas overlay-aware fit', () => {
       it('keeps the lanes in order and packs the remaining cards evenly (vertical)', () => {
         render(<AccessGraphCanvas graph={mixedKinds()} />)
         drillIn()
-        fireEvent.click(btn('Layout: vertical'))
+        // Completed items start hidden; show them for the baseline measurement.
+        fireEvent.click(btn(/^Show completed items/))
+        // layout now starts in TB (vertical), so no layout click is needed
         const shownXs = ['e-one', 'e-two', 'e-three']
           .map((n) => translate(n).x)
           .sort((a, b) => a - b)
@@ -250,7 +272,11 @@ describe('AccessGraphCanvas overlay-aware fit', () => {
         />,
       )
       drillIn()
-      fireEvent.click(btn('Hide reference nodes and links'))
+      // layout now starts in TB; switch to horizontal for this test (lane = x)
+      fireEvent.click(btn('Layout: horizontal'))
+      // Reference nodes/links are hidden by default; both items are completed,
+      // which is also hidden by default, so show completed to render the cards.
+      fireEvent.click(btn(/^Show completed items/))
       const user = translate('User One')
       const login = translate('login')
       const admin = translate('admin')

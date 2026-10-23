@@ -110,6 +110,10 @@ describe('AccessGraphCanvas item selection', () => {
   it('makes first-level cards toggle buttons that keep their names', () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
+    // completed items and reference start hidden by default; show both so the
+    // login/admin (completed) and reference cards are present to assert on
+    fireEvent.click(btn(/^Show completed items/))
+    fireEvent.click(btn('Show reference nodes and links'))
     for (const [kind, label] of [['Role', 'Role A'], ['Entitlement', 'login'], ['Entitlement', 'admin']]) {
       const button = btn(`${kind}: ${label}`)
       expect(button).toBe(screen.getByLabelText(`${kind}: ${label}`))
@@ -138,6 +142,10 @@ describe('AccessGraphCanvas item selection', () => {
   it('click selects and highlights the user edge and the whole lineage; click again clears', () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
+    // reference and completed items start hidden by default; show both so Role A's
+    // reference lineage exists and the completed status edges are present to dim
+    fireEvent.click(btn('Show reference nodes and links'))
+    fireEvent.click(btn(/^Show completed items/))
     const before = snapshot()
     const roleA = card('Role A')
     fireEvent.click(roleA)
@@ -186,6 +194,10 @@ describe('AccessGraphCanvas item selection', () => {
   it('selecting another item replaces the selection; a shared downstream edge follows the selection', () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
+    // completed items and reference start hidden by default; show both so the
+    // login/admin cards exist and share the phone app (s2) reference lineage
+    fireEvent.click(btn(/^Show completed items/))
+    fireEvent.click(btn('Show reference nodes and links'))
     fireEvent.click(card('login'))
     expect(lineageEdges().map((e) => e.id)).toEqual([eid('entitlement:e2', 'source:s2')])
     fireEvent.click(card('admin'))
@@ -200,6 +212,8 @@ describe('AccessGraphCanvas item selection', () => {
   it('Enter and Space toggle the focused card, and Space does not scroll the pane', () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
+    // completed items start hidden by default; show them so the revoked `admin` card appears
+    fireEvent.click(btn(/^Show completed items/))
     const admin = card('admin')
     admin.focus()
     expect(fireEvent.keyDown(admin, { key: 'Enter' })).toBe(false)
@@ -217,6 +231,8 @@ describe('AccessGraphCanvas item selection', () => {
   it('does nothing when a reference-only card or the user card is clicked or keyed', () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
+    // reference starts hidden by default; show it so the reference-only cards appear
+    fireEvent.click(btn('Show reference nodes and links'))
     const edgesBefore = edges()
     for (const label of ['foo', 'read', 'engr db', 'User One']) {
       fireEvent.click(card(label))
@@ -230,6 +246,10 @@ describe('AccessGraphCanvas item selection', () => {
   it('does not use React Flow element selection (no competing .selected visual)', () => {
     const { container } = render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
+    // completed items and reference start hidden by default; show both so the
+    // login (completed) and foo (reference) cards exist to click
+    fireEvent.click(btn(/^Show completed items/))
+    fireEvent.click(btn('Show reference nodes and links'))
     fireEvent.click(card('login'))
     fireEvent.click(card('foo'))
     expect(container.querySelector('.react-flow__node.selected')).toBeNull()
@@ -240,6 +260,8 @@ describe('AccessGraphCanvas item selection', () => {
   it('clears on a pane click and announces it', () => {
     const { container } = render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
+    // completed items start hidden by default; show them so the `login` card appears
+    fireEvent.click(btn(/^Show completed items/))
     fireEvent.click(card('login'))
     expect(pressed()).toHaveLength(1)
     fireEvent.click(container.querySelector('.react-flow__pane')!)
@@ -259,6 +281,8 @@ describe('AccessGraphCanvas item selection', () => {
   it('Escape clears the selection first and only the next Escape returns to the grid', () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
+    // completed items start hidden by default; show them so the `login` card appears
+    fireEvent.click(btn(/^Show completed items/))
     fireEvent.click(card('login'))
     fireEvent.keyDown(window, { key: 'Escape' })
     expect(pressed()).toHaveLength(0)
@@ -281,6 +305,8 @@ describe('AccessGraphCanvas item selection', () => {
   it('ignores Escape typed in an input', () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
+    // completed items start hidden by default; show them so the `login` card appears
+    fireEvent.click(btn(/^Show completed items/))
     fireEvent.click(card('login'))
     const input = document.createElement('input')
     document.body.appendChild(input)
@@ -292,6 +318,9 @@ describe('AccessGraphCanvas item selection', () => {
   it('clears the selection on Back to all users and when another user is opened', () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
+    // completed items start hidden by default; show them (the preference persists
+    // across user switches) so the `login` card is available to select
+    fireEvent.click(btn(/^Show completed items/))
     fireEvent.click(card('login'))
     fireEvent.click(screen.getByRole('button', { name: /back to all users/i }))
     drillIn()
@@ -309,6 +338,8 @@ describe('AccessGraphCanvas item selection', () => {
   it('clears the selection (and returns to the grid) when the node set changes', () => {
     const { rerender } = render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
+    // completed items start hidden by default; show them so the `login` card appears
+    fireEvent.click(btn(/^Show completed items/))
     fireEvent.click(card('login'))
     rerender(<AccessGraphCanvas graph={graph()} />)
     expect(btn('Show access for User One')).toBeInTheDocument()
@@ -320,6 +351,12 @@ describe('AccessGraphCanvas item selection', () => {
   it('keeps the selection across layout, minimap and reference toggles', () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
+    // reference and minimap start hidden by default; show both to capture the
+    // shown baseline this test toggles against (Role A keeps its full lineage)
+    fireEvent.click(btn('Show reference nodes and links'))
+    fireEvent.click(btn('Show minimap'))
+    // layout now starts in TB; switch to horizontal so `full` is the horizontal baseline
+    fireEvent.click(btn('Layout: horizontal'))
     fireEvent.click(card('Role A'))
     const full = snapshot()
 
@@ -354,6 +391,11 @@ describe('AccessGraphCanvas item selection', () => {
     const base = graph()
     const { rerender } = render(<AccessGraphCanvas graph={base} />)
     drillIn()
+    // reference starts hidden by default; show it so Role A's lineage edges exist.
+    // completed items start hidden too; show them so Role A stays visible after
+    // the refresh flips its status to approved (completed).
+    fireEvent.click(btn('Show reference nodes and links'))
+    fireEvent.click(btn(/^Show completed items/))
     fireEvent.click(card('Role A'))
     expect(lineageEdges()[0].style?.stroke).toBe('var(--vc-warn)')
     const refreshed: AccessGraphData = {
@@ -371,6 +413,10 @@ describe('AccessGraphCanvas item selection', () => {
   it('previews a different hovered or focused item while the selection stays highlighted', () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
+    // completed items and reference start hidden by default; show both so the
+    // admin/login (completed) and foo (reference) cards exist to preview
+    fireEvent.click(btn(/^Show completed items/))
+    fireEvent.click(btn('Show reference nodes and links'))
     fireEvent.click(card('Role A'))
     const plain = snapshot()
 
@@ -396,6 +442,10 @@ describe('AccessGraphCanvas item selection', () => {
   it('marks lineage reference cards and mutes the other reference cards, with no extra icons', () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
+    // reference and completed items start hidden by default; show both so Role A's
+    // lineage reference cards and the phone app source (under the completed items) appear
+    fireEvent.click(btn('Show reference nodes and links'))
+    fireEvent.click(btn(/^Show completed items/))
     fireEvent.click(card('Role A'))
     for (const label of ['foo', 'read', 'engr db']) {
       expect(card(label).className).toContain('vc-graph-card-lineage')
@@ -430,6 +480,8 @@ describe('AccessGraphCanvas item selection', () => {
   it('never refits, re-viewports or moves a node when selecting, deselecting or previewing', async () => {
     const { container } = render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
+    // completed items start hidden by default; show them so login/admin cards exist
+    fireEvent.click(btn(/^Show completed items/))
     await waitFor(() => expect(spies.fitView).toHaveBeenCalled())
     await settle()
     spies.fitView.mockClear()
@@ -464,6 +516,8 @@ describe('AccessGraphCanvas item selection', () => {
   it('selects a card and shows no hover tooltip (the panel carries that info)', () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
+    // completed items start hidden by default; show them so the `login` card appears
+    fireEvent.click(btn(/^Show completed items/))
     const login = card('login')
     fireEvent.click(login)
     fireEvent.mouseEnter(login)
@@ -476,6 +530,10 @@ describe('AccessGraphCanvas selection: an item both first-level and nested', () 
   it('Role A highlights the nested path to Read but not the user -> Read edge; Read only its source edge', async () => {
     render(<AccessGraphCanvas graph={await buildFixtureGraph()} />)
     fireEvent.click(btn('Show access for Alice Adams'))
+    // completed items and reference start hidden by default; show both so the
+    // completed Role A / Read items and their nested path are present to select
+    fireEvent.click(btn(/^Show completed items/))
+    fireEvent.click(btn('Show reference nodes and links'))
 
     fireEvent.click(card('Role A'))
     const ids = new Set(lineageEdges().map((e) => e.id))
@@ -505,6 +563,11 @@ describe('AccessGraphCanvas selection with the completed filter', () => {
   it('keeps a visible item selected across hide and show, recomputing the highlight from the filtered edges', () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
+    // reference and completed items start hidden by default; show both so the
+    // full scene (Role A lineage plus the completed items) is the baseline that
+    // hide/show completed round-trips back to
+    fireEvent.click(btn('Show reference nodes and links'))
+    fireEvent.click(btn(/^Show completed items/))
     fireEvent.click(card('Role A'))
     const full = snapshot()
 
@@ -524,6 +587,9 @@ describe('AccessGraphCanvas selection with the completed filter', () => {
   it('clears the selection of an item that gets hidden, and does not restore it on show', () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
+    // completed items start hidden by default; show them so `login` can be
+    // selected before being hidden again
+    fireEvent.click(btn(/^Show completed items/))
     fireEvent.click(card('login'))
     expect(pressed()).toEqual([card('login')])
 
@@ -544,6 +610,9 @@ describe('AccessGraphCanvas selection with the completed filter', () => {
   it('clears the selection of a first-level item that survives only as nested reference (fixture: Read)', async () => {
     render(<AccessGraphCanvas graph={await buildFixtureGraph()} />)
     fireEvent.click(btn('Show access for Alice Adams'))
+    // completed items start hidden by default; show them so the approved `Read`
+    // card is present to select before hiding completed again
+    fireEvent.click(btn(/^Show completed items/))
     fireEvent.click(card('Read'))
     expect(pressed()).toEqual([card('Read')])
     fireEvent.click(btn('Hide completed items'))
@@ -559,7 +628,8 @@ describe('AccessGraphCanvas selection with the completed filter', () => {
     const base = graph()
     const { rerender } = render(<AccessGraphCanvas graph={base} />)
     drillIn()
-    fireEvent.click(btn('Hide completed items'))
+    // completed items start hidden by default, which is the precondition here;
+    // Role A is needsReview so it stays visible and selectable
     fireEvent.click(card('Role A'))
     expect(pressed()).toEqual([card('Role A')])
     const refreshed: AccessGraphData = {

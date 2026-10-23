@@ -60,6 +60,8 @@ describe('AccessGraphCanvas', () => {
     render(<AccessGraphCanvas graph={graph} />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Show access for User One' }))
+    // reference starts hidden by default; show it so the status-less path nodes appear
+    fireEvent.click(screen.getByRole('button', { name: 'Show reference nodes and links' }))
 
     // User One's path labels appear.
     expect(screen.getByText('Role A')).toBeInTheDocument()
@@ -76,6 +78,8 @@ describe('AccessGraphCanvas', () => {
 
     const card = screen.getByRole('button', { name: 'Show access for User Two' })
     fireEvent.keyDown(card, { key: 'Enter' })
+    // reference starts hidden by default; show it so the status-less path nodes appear
+    fireEvent.click(screen.getByRole('button', { name: 'Show reference nodes and links' }))
 
     expect(screen.getByText('bar')).toBeInTheDocument()
     expect(screen.getByText('write')).toBeInTheDocument()
@@ -87,6 +91,8 @@ describe('AccessGraphCanvas', () => {
     render(<AccessGraphCanvas graph={graph} />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Show access for User One' }))
+    // reference starts hidden by default; show it so the status-less Role A appears
+    fireEvent.click(screen.getByRole('button', { name: 'Show reference nodes and links' }))
     expect(screen.getByText('Role A')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: /back to all users/i }))
@@ -143,6 +149,8 @@ describe('AccessGraphCanvas', () => {
         <AccessGraphCanvas graph={deriveAccessGraph(twoUsers())} backSlot={null} />,
       )
       fireEvent.click(screen.getByRole('button', { name: 'Show access for User One' }))
+      // reference starts hidden by default; show it so the status-less Role A appears
+      fireEvent.click(screen.getByRole('button', { name: 'Show reference nodes and links' }))
       expect(screen.getByText('Role A')).toBeInTheDocument()
       expect(screen.queryByRole('button', { name: /back to all users/i })).toBeNull()
       expect(container.querySelector('.vc-graph-nav-panel')).toBeNull()
@@ -227,6 +235,10 @@ describe('AccessGraphCanvas', () => {
 
     // Drill into the user.
     fireEvent.click(screen.getByRole('button', { name: 'Show access for User One' }))
+    // completed items and the legend start hidden by default; show them so the
+    // approved/revoked/reassigned cards and the legend are present for this test
+    fireEvent.click(screen.getByRole('button', { name: /^Show completed items/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Show legend' }))
 
     // Every access-item node renders its NAME (label).
     expect(screen.getByText('Role A')).toBeInTheDocument()
@@ -264,6 +276,8 @@ describe('AccessGraphCanvas', () => {
   it('places the legend in a panel that clears the zoom controls', () => {
     render(<AccessGraphCanvas graph={referenceGraph()} />)
     fireEvent.click(screen.getByRole('button', { name: /show access for/i }))
+    // legend starts hidden by default; show it for this test
+    fireEvent.click(screen.getByRole('button', { name: 'Show legend' }))
     const legend = screen.getByRole('group', { name: /review status legend/i })
     expect(legend.closest('.react-flow__panel')).toHaveClass('vc-graph-right-stack')
   })
@@ -273,6 +287,8 @@ describe('AccessGraphCanvas', () => {
     // Disabled in the grid, where there is no legend.
     expect(screen.getByRole('button', { name: /^Legend \(open a user/ })).toBeDisabled()
     fireEvent.click(screen.getByRole('button', { name: /show access for/i }))
+    // legend starts hidden by default; show it to capture the shown baseline
+    fireEvent.click(screen.getByRole('button', { name: 'Show legend' }))
 
     const legendGroup = () => screen.queryByRole('group', { name: /review status legend/i })
     expect(legendGroup()).toBeInTheDocument()
@@ -323,6 +339,10 @@ describe('AccessGraphCanvas', () => {
   it('legend lists a Reference Only entry distinct from the four statuses', () => {
     render(<AccessGraphCanvas graph={referenceGraph()} />)
     fireEvent.click(screen.getByRole('button', { name: 'Show access for User One' }))
+    // legend and reference start hidden by default; show both so the legend
+    // renders its Reference Only entry alongside the four status rows
+    fireEvent.click(screen.getByRole('button', { name: 'Show legend' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Show reference nodes and links' }))
     const legend = screen.getByRole('group', { name: /review status legend/i })
     expect(legend).toHaveTextContent('Reference Only')
     // The reference entry is a hairline swatch, not a status icon.
@@ -333,6 +353,8 @@ describe('AccessGraphCanvas', () => {
   it('every first-level card has exactly one icon equal to its card status and its incoming edge status', () => {
     render(<AccessGraphCanvas graph={referenceGraph()} />)
     fireEvent.click(screen.getByRole('button', { name: 'Show access for User One' }))
+    // completed items start hidden by default; show them so the approved `login` card appears
+    fireEvent.click(screen.getByRole('button', { name: /^Show completed items/ }))
     const expected: Record<string, string> = { 'Role A': 'needsReview', login: 'approved' }
     for (const [text, status] of Object.entries(expected)) {
       const card = cardFor(text)
@@ -347,6 +369,10 @@ describe('AccessGraphCanvas', () => {
   it('nested-only cards have no status icon and carry the reference class', () => {
     render(<AccessGraphCanvas graph={referenceGraph()} />)
     fireEvent.click(screen.getByRole('button', { name: 'Show access for User One' }))
+    // reference and completed items start hidden by default; show both so the
+    // nested lineage (including phone app under the approved `login`) renders
+    fireEvent.click(screen.getByRole('button', { name: 'Show reference nodes and links' }))
+    fireEvent.click(screen.getByRole('button', { name: /^Show completed items/ }))
     for (const text of ['foo', 'read', 'engr db', 'phone app']) {
       const card = cardFor(text)
       expect(card.className).toContain('vc-graph-card-reference')
@@ -361,6 +387,9 @@ describe('AccessGraphCanvas', () => {
     const graph = referenceGraph()
     const { rerender } = render(<AccessGraphCanvas graph={graph} />)
     fireEvent.click(screen.getByRole('button', { name: 'Show access for User One' }))
+    // completed items start hidden by default; show them so Role A stays visible
+    // after the overlay flips its status from needsReview to approved (completed)
+    fireEvent.click(screen.getByRole('button', { name: /^Show completed items/ }))
     expect(screen.getByText('Role A')).toBeInTheDocument()
 
     // Same nodes array, new edges (what a decision-only overlay rebuild yields).
@@ -399,6 +428,8 @@ describe('AccessGraphCanvas', () => {
     // Drill in; the long role card still never opens a tooltip, but its full
     // name is its accessible name (the card carries it via aria-label).
     fireEvent.click(userCard)
+    // reference starts hidden by default; show it so the status-less role card appears
+    fireEvent.click(screen.getByRole('button', { name: 'Show reference nodes and links' }))
     const roleCard = screen.getByLabelText(`Role: ${longRole}`)
     fireEvent.mouseEnter(roleCard)
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
@@ -432,21 +463,25 @@ describe('AccessGraphCanvas', () => {
         )
         return labels
       }
+      // All control-panel options start hidden by default, so the toggles read
+      // "Show ..." (the layout/reference/completed/legend toggles are disabled
+      // in the grid and keep their open-a-user labels).
       expect(check()).toEqual([
         'Layout (open a user to change)',
         'Reference nodes and links (open a user to change)',
         'Completed items (open a user to filter)',
         'Legend (open a user to change)',
-        'Hide minimap',
+        'Show minimap',
         'Show details panel',
       ])
       drillIn()
+      // layout now starts in TB, so the layout button reads "Layout: horizontal" and is unpressed
       expect(check()).toEqual([
-        'Layout: vertical',
-        'Hide reference nodes and links',
-        'Hide completed items',
-        'Hide legend',
-        'Hide minimap',
+        'Layout: horizontal',
+        'Show reference nodes and links',
+        'Show completed items (1 hidden)',
+        'Show legend',
+        'Show minimap',
         'Show details panel',
       ])
     })
@@ -465,17 +500,20 @@ describe('AccessGraphCanvas', () => {
       render(<AccessGraphCanvas graph={referenceGraph()} />)
       expect(btn(/^Layout/)).toBeDisabled()
       drillIn()
-      expect(btn('Layout: vertical')).toHaveAttribute('aria-pressed', 'true')
-      fireEvent.click(btn('Layout: vertical'))
+      // layout now starts in TB: the button is unpressed and reads "Layout: horizontal"
       expect(btn('Layout: horizontal')).toHaveAttribute('aria-pressed', 'false')
-      expect(announcement()).toHaveTextContent('Layout changed to horizontal.')
       fireEvent.click(btn('Layout: horizontal'))
-      expect(btn('Layout: vertical')).toBeInTheDocument()
+      expect(btn('Layout: vertical')).toHaveAttribute('aria-pressed', 'true')
       expect(announcement()).toHaveTextContent('Layout changed to vertical.')
+      fireEvent.click(btn('Layout: vertical'))
+      expect(btn('Layout: horizontal')).toBeInTheDocument()
+      expect(announcement()).toHaveTextContent('Layout changed to horizontal.')
     })
 
     it('minimap toggle hides/shows the minimap in grid and drill-down', () => {
       render(<AccessGraphCanvas graph={referenceGraph()} />)
+      // minimap starts hidden by default; show it to capture the shown baseline
+      fireEvent.click(btn('Show minimap'))
       expect(document.querySelector('.react-flow__minimap')).not.toBeNull()
       expect(btn('Hide minimap')).toHaveAttribute('aria-pressed', 'true')
 
@@ -497,6 +535,12 @@ describe('AccessGraphCanvas', () => {
       render(<AccessGraphCanvas graph={referenceGraph()} />)
       expect(btn(/^Reference nodes/)).toBeDisabled()
       drillIn()
+      // reference, completed items and the legend start hidden by default; show
+      // each so the nested lineage, the approved `login` card and the legend
+      // form the shown baseline this toggle test compares against
+      fireEvent.click(btn('Show reference nodes and links'))
+      fireEvent.click(btn(/^Show completed items/))
+      fireEvent.click(btn('Show legend'))
       const nestedLabels = ['foo', 'read', 'engr db', 'phone app']
       for (const t of nestedLabels) expect(screen.getByText(t)).toBeInTheDocument()
       expect(screen.getByRole('group', { name: /review status legend/i })).toHaveTextContent(
@@ -527,13 +571,16 @@ describe('AccessGraphCanvas', () => {
     it('hidden reference survives switching users and grid round trips', () => {
       render(<AccessGraphCanvas graph={twoStatusUsers()} />)
       drillIn('User One')
-      fireEvent.click(btn('Hide reference nodes and links'))
+      // reference starts hidden by default, so the nested `read` is already gone
       expect(screen.queryByText('read')).toBeNull()
 
       fireEvent.click(btn(/back to all users/i))
       // Layout/reference are disabled in the grid, but the preference is kept.
       expect(btn(/^Reference nodes/)).toBeDisabled()
       drillIn('User Two')
+      // User Two's Role B is approved (completed); completed items start hidden
+      // by default, so show them to assert Role B's reference behavior here
+      fireEvent.click(btn(/^Show completed items/))
       expect(screen.getByText('Role B')).toBeInTheDocument()
       expect(screen.queryByText('write')).toBeNull()
       expect(screen.queryByText('acct db')).toBeNull()
@@ -546,17 +593,21 @@ describe('AccessGraphCanvas', () => {
     it('layout preference survives switching users', () => {
       render(<AccessGraphCanvas graph={twoStatusUsers()} />)
       drillIn('User One')
-      fireEvent.click(btn('Layout: vertical'))
+      // layout now starts in TB; switch to horizontal (LR) to set a non-default preference
+      fireEvent.click(btn('Layout: horizontal'))
       fireEvent.click(btn(/back to all users/i))
       drillIn('User Two')
-      expect(btn('Layout: horizontal')).toBeInTheDocument()
+      // the LR preference survives: the button now reads "Layout: vertical"
+      expect(btn('Layout: vertical')).toBeInTheDocument()
     })
 
     it('still renders a node that is both first-level and nested when reference is hidden', async () => {
       const graph = await buildFixtureGraph()
       render(<AccessGraphCanvas graph={graph} />)
       drillIn('Alice Adams')
-      fireEvent.click(btn('Hide reference nodes and links'))
+      // reference starts hidden by default (the precondition this test wants);
+      // completed items start hidden too, so show them to reveal the approved `Read`
+      fireEvent.click(btn(/^Show completed items/))
       // e-read ("Read") is held directly by Alice and also nested under Role A.
       const card = screen.getByText('Read').closest<HTMLElement>('.vc-graph-card')!
       expect(card).toHaveAttribute('data-review-status', 'approved')
@@ -568,7 +619,7 @@ describe('AccessGraphCanvas', () => {
     it('does not show the no-expanded-access note when hiding reference for a user with lineage', () => {
       render(<AccessGraphCanvas graph={referenceGraph()} />)
       drillIn()
-      fireEvent.click(btn('Hide reference nodes and links'))
+      // reference starts hidden by default, which is the precondition here
       expect(screen.queryByText('No expanded access for this user.')).toBeNull()
     })
 
@@ -621,20 +672,37 @@ describe('AccessGraphCanvas', () => {
       const COMPLETED_ONLY = ['Role A', 'foo', 'Billing AP', 'pay', 'Payroll', 'Legacy']
       const KEPT = ['Role B', 'read', 'ERP', 'Login', 'Directory', 'Shared']
 
-      it('is enabled and pressed by default in drill-down, disabled in the grid', () => {
+      it('is enabled and unpressed by default in drill-down, disabled in the grid', () => {
         render(<AccessGraphCanvas graph={completedGraph()} />)
         expect(btn('Completed items (open a user to filter)')).toBeDisabled()
         drillIn()
-        const completed = btn('Hide completed items')
+        // reference starts hidden by default; show it so the needs-review lineage
+        // in KEPT (read, ERP, Directory, Shared) is present for the comparison
+        fireEvent.click(btn('Show reference nodes and links'))
+        // Completed items start hidden by default: the toggle is enabled but
+        // unpressed, and only the needs-review (KEPT) items are visible.
+        const completed = btn(/^Show completed items/)
         expect(completed).toBeEnabled()
-        expect(completed).toHaveAttribute('aria-pressed', 'true')
-        expect(completed).toHaveClass('vc-graph-control-active')
+        expect(completed).toHaveAttribute('aria-pressed', 'false')
+        expect(completed).not.toHaveClass('vc-graph-control-active')
+        for (const t of COMPLETED_ONLY) expect(label(t)).toBeNull()
+        for (const t of KEPT) expect(label(t)).toBeInTheDocument()
+        // Showing them reveals every item and flips the toggle to pressed.
+        fireEvent.click(completed)
         for (const t of [...COMPLETED_ONLY, ...KEPT]) expect(label(t)).toBeInTheDocument()
+        expect(btn('Hide completed items')).toHaveAttribute('aria-pressed', 'true')
       })
 
       it('hides completed cards, keeps needs-review ones and announces the count', () => {
         render(<AccessGraphCanvas graph={completedGraph()} />)
         drillIn()
+        // completed items start hidden by default; show them to capture the
+        // shown baseline, then hide them to exercise the hide path/announcement.
+        // reference and legend start hidden too; show them so the legend (with
+        // its Reference Only row) is present to assert on.
+        fireEvent.click(btn(/^Show completed items/))
+        fireEvent.click(btn('Show reference nodes and links'))
+        fireEvent.click(btn('Show legend'))
         fireEvent.click(btn('Hide completed items'))
 
         for (const t of COMPLETED_ONLY) expect(label(t)).toBeNull()
@@ -653,6 +721,12 @@ describe('AccessGraphCanvas', () => {
       it('keeps a directly-held completed entitlement that is nested under a visible item as muted reference', () => {
         render(<AccessGraphCanvas graph={completedGraph()} />)
         drillIn()
+        // completed items start hidden by default; show them so the revoked
+        // `Shared` card is present as the shown baseline before hiding.
+        // reference starts hidden too; show it so the demoted `Shared` survives
+        // as a muted reference card once completed items are hidden.
+        fireEvent.click(btn(/^Show completed items/))
+        fireEvent.click(btn('Show reference nodes and links'))
         expect(cardOf('Shared')).toHaveAttribute('data-review-status', 'revoked')
         fireEvent.click(btn('Hide completed items'))
         const shared = cardOf('Shared')
@@ -667,6 +741,9 @@ describe('AccessGraphCanvas', () => {
       it('shows the completed items again, restoring the original cards', () => {
         render(<AccessGraphCanvas graph={completedGraph()} />)
         drillIn()
+        // completed items start hidden by default; show them to capture the
+        // full shown baseline this round-trip restores to
+        fireEvent.click(btn(/^Show completed items/))
         const before = nodeLabels()
         fireEvent.click(btn('Hide completed items'))
         expect(nodeLabels()).not.toEqual(before)
@@ -680,8 +757,8 @@ describe('AccessGraphCanvas', () => {
       it('composes with the reference toggle in either order', () => {
         render(<AccessGraphCanvas graph={completedGraph()} />)
         drillIn()
-        fireEvent.click(btn('Hide completed items'))
-        fireEvent.click(btn('Hide reference nodes and links'))
+        // completed and reference both start hidden by default, which is exactly
+        // the both-filters-on state this test's baseline `a` captures.
         const a = nodeLabels().sort()
         // Only the user and the needs-review first-level items remain.
         expect(a).toEqual(['Login', 'Role B', 'User One'].map((t) => expect.stringContaining(t)))
@@ -699,7 +776,8 @@ describe('AccessGraphCanvas', () => {
       it('survives Back-to-all-users and switching users, using each user own count', () => {
         render(<AccessGraphCanvas graph={completedGraph()} />)
         drillIn()
-        fireEvent.click(btn('Hide completed items'))
+        // completed items start hidden by default, so the hidden preference is
+        // already in effect before navigating between users
         fireEvent.click(btn(/back to all users/i))
         // Grid: unfiltered, disabled, all users present.
         expect(btn('Completed items (open a user to filter)')).toBeDisabled()
@@ -718,6 +796,9 @@ describe('AccessGraphCanvas', () => {
       it('shows the all-complete note instead of the empty-user note when everything is hidden', () => {
         render(<AccessGraphCanvas graph={completedGraph()} />)
         drillIn('User Two')
+        // completed items start hidden by default; show them so the all-complete
+        // note is absent as the shown baseline, then hide to make it appear
+        fireEvent.click(btn(/^Show completed items/))
         expect(label('All access items are complete. Show completed items to see them.')).toBeNull()
         fireEvent.click(btn('Hide completed items'))
         const note = screen.getByText('All access items are complete. Show completed items to see them.')
@@ -735,6 +816,9 @@ describe('AccessGraphCanvas', () => {
         render(<AccessGraphCanvas graph={completedGraph()} />)
         drillIn('User Three')
         expect(label('No expanded access for this user.')).toBeInTheDocument()
+        // completed items start hidden by default; toggle them on then off to
+        // confirm a genuinely empty user keeps the old note either way
+        fireEvent.click(btn('Show completed items (0 hidden)'))
         fireEvent.click(btn('Hide completed items'))
         expect(btn('Show completed items (0 hidden)')).toBeInTheDocument()
         expect(label('No expanded access for this user.')).toBeInTheDocument()
@@ -751,7 +835,11 @@ describe('AccessGraphCanvas', () => {
         }
         const { unmount } = render(<AccessGraphCanvas graph={unstatused} />)
         drillIn()
-        fireEvent.click(btn('Hide completed items'))
+        // reference starts hidden by default and a status-less item is reference
+        // content; show reference so this asserts the COMPLETED filter alone.
+        fireEvent.click(btn('Show reference nodes and links'))
+        // completed items start hidden by default; the status-less item is never
+        // treated as completed, so it stays visible with a zero hidden count
         expect(label('Unreviewed')).toBeInTheDocument()
         expect(btn('Show completed items (0 hidden)')).toBeInTheDocument()
         unmount()
@@ -763,7 +851,8 @@ describe('AccessGraphCanvas', () => {
         ])
         render(<AccessGraphCanvas graph={mixed} />)
         drillIn()
-        fireEvent.click(btn('Hide completed items'))
+        // completed items start hidden by default; a mixed-status item aggregates
+        // to needsReview, so it is never hidden and the hidden count stays zero
         expect(label('Role M')).toBeInTheDocument()
         expect(btn('Show completed items (0 hidden)')).toBeInTheDocument()
       })
@@ -771,7 +860,8 @@ describe('AccessGraphCanvas', () => {
       it('shows the hidden count in the hover hint', () => {
         render(<AccessGraphCanvas graph={completedGraph()} />)
         drillIn()
-        fireEvent.click(btn('Hide completed items'))
+        // completed items start hidden by default, so the toggle already shows
+        // the hidden count in its label and hint
         const anchor = btn('Show completed items (4 hidden)').closest<HTMLElement>(
           '.vc-graph-hint-anchor',
         )!
@@ -784,11 +874,12 @@ describe('AccessGraphCanvas', () => {
     it('shows a tooltip on a panel button; Escape closes it first, then leaves the drill-down', () => {
       render(<AccessGraphCanvas graph={referenceGraph()} />)
       drillIn()
-      const minimap = btn('Hide minimap')
+      // minimap starts hidden by default, so the toggle reads "Show minimap"
+      const minimap = btn('Show minimap')
       const anchor = minimap.closest<HTMLElement>('.vc-graph-hint-anchor')!
       stubAnchorRect(anchor)
       fireEvent.mouseEnter(anchor)
-      expect(screen.getByRole('tooltip')).toHaveTextContent('Hide minimap')
+      expect(screen.getByRole('tooltip')).toHaveTextContent('Show minimap')
       fireEvent.mouseLeave(anchor)
       expect(screen.queryByRole('tooltip')).toBeNull()
 

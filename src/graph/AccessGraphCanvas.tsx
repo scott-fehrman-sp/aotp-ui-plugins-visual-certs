@@ -295,15 +295,14 @@ function CanvasSurface({ graph, backSlot, motionMs: motionMsProp }: AccessGraphC
     const id = requestAnimationFrame(() => setMotionOn(true))
     return () => cancelAnimationFrame(id)
   }, [motionMs])
-  const [rankdir, setRankdir] = useState<RankDir>('LR')
-  const [showReference, setShowReference] = useState(true)
-  // Completed (approved / revoked / reassigned) items are shown by default.
-  const [showCompleted, setShowCompleted] = useState(true)
-  const [showMinimap, setShowMinimap] = useState(true)
-  // The review-status legend (drill-down only) is shown by default.
-  const [showLegend, setShowLegend] = useState(true)
-  // The right-side node detail fly-out is hidden by default; the reviewer opens
-  // it from the control panel.
+  // All control-panel options start off; the reviewer enables each from the
+  // control panel. The layout button is "active" (pressed) only in LR, so it
+  // starts in TB to match the other options' off state.
+  const [rankdir, setRankdir] = useState<RankDir>('TB')
+  const [showReference, setShowReference] = useState(false)
+  const [showCompleted, setShowCompleted] = useState(false)
+  const [showMinimap, setShowMinimap] = useState(false)
+  const [showLegend, setShowLegend] = useState(false)
   const [showDetail, setShowDetail] = useState(false)
   const [announcement, setAnnouncement] = useState('')
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)

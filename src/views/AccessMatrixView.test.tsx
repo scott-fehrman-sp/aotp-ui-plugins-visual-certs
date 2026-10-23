@@ -100,6 +100,8 @@ describe('AccessMatrixView', () => {
     fireEvent.click(
       screen.getByRole('button', { name: 'Show access for User One' }),
     )
+    // reference starts hidden by default; show it so the status-less role/source nodes appear
+    fireEvent.click(screen.getByRole('button', { name: 'Show reference nodes and links' }))
     expect(screen.getByLabelText('Role: Role A')).toBeInTheDocument()
     expect(screen.getByLabelText('Source: engr db')).toBeInTheDocument()
   })
@@ -144,6 +146,8 @@ describe('AccessMatrixView', () => {
       />,
     )
     fireEvent.click(screen.getByRole('button', { name: 'Show access for User One' }))
+    // reference starts hidden by default; show it so the status-less Role A node appears
+    fireEvent.click(screen.getByRole('button', { name: 'Show reference nodes and links' }))
     expect(screen.getByLabelText('Role: Role A')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: /back to all users/i }))

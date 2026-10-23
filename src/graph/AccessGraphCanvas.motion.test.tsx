@@ -178,6 +178,10 @@ describe('drill-down transition', () => {
 describe('toggles', () => {
   it('hide completed keeps the staying cards, fades the hidden ones, and show completed brings them back entering', () => {
     const { container } = drill(mount())
+    // completed items start hidden by default; show them so the completed cards
+    // exist to fade out when hidden again
+    fireEvent.click(btn(/^Show completed items/))
+    advance(MOTION + 100)
     const staying = ['user:u1', 'role:role-a'].map((id) => wrapper(container, id)!)
     const completedIds = idsOf(container).filter((id) => /e2|e3/.test(id))
     expect(completedIds.length).toBeGreaterThan(0)
@@ -197,6 +201,10 @@ describe('toggles', () => {
 
   it('five rapid reference toggles end in the right state without leftovers', () => {
     const { container } = drill(mount())
+    // reference starts hidden by default; show it first so the five toggles end
+    // in the hidden (no source nodes) state this test asserts
+    fireEvent.click(screen.getByRole('button', { name: 'Show reference nodes and links' }))
+    advance(MOTION + 100)
     for (let i = 0; i < 5; i += 1) {
       fireEvent.click(screen.getByRole('button', { name: /reference nodes and links/ }))
       advance(40)
@@ -242,6 +250,10 @@ describe('hover and selection', () => {
 
   it('selecting mid-transition leaves leaving edges untouched and appends to the others', () => {
     const { container } = drill(mount())
+    // completed items start hidden by default; show them so hiding them again
+    // produces the leaving edges this test checks mid-transition
+    fireEvent.click(btn(/^Show completed items/))
+    advance(MOTION + 100)
     fireEvent.click(btn('Hide completed items'))
     const leaving = edges().filter((e) => e.className?.split(' ').includes('exiting'))
     expect(leaving.length).toBeGreaterThan(0)
@@ -287,7 +299,8 @@ describe('camera', () => {
   it('fits once for a toggle with only staying cards', () => {
     drill(mount())
     spies.fitView.mockClear()
-    fireEvent.click(btn('Layout: vertical'))
+    // layout now starts in TB; the button reads "Layout: horizontal" after drill-in
+    fireEvent.click(btn('Layout: horizontal'))
     advance(MOTION * 2)
     expect(spies.fitView.mock.calls.length + spies.setViewport.mock.calls.length).toBe(1)
   })
@@ -300,6 +313,10 @@ describe('no motion', () => {
     const record = () => seen.push(...wrappers(container).map((el) => el.className))
     record()
     drillIn()
+    record()
+    // completed items start hidden by default; show then hide them so the hide
+    // path is still exercised, and confirm every change is instant
+    fireEvent.click(btn(/^Show completed items/))
     record()
     fireEvent.click(btn('Hide completed items'))
     record()

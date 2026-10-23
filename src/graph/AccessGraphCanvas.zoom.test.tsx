@@ -125,6 +125,8 @@ describe('AccessGraphCanvas readable zoom for long graphs', () => {
   it('opens a long graph at the readable zoom (LR) and shows the count hint', async () => {
     const { container } = render(<AccessGraphCanvas graph={longGraph()} />)
     drillIn()
+    // layout now starts in TB; switch to horizontal for this LR test
+    fireEvent.click(btn('Layout: horizontal'))
     await sizeCanvas(container, 968, 490)
     expect(spies.setViewport).toHaveBeenCalledTimes(1)
     expect(spies.fitView).not.toHaveBeenCalled()
@@ -148,7 +150,7 @@ describe('AccessGraphCanvas readable zoom for long graphs', () => {
   it('opens a long graph at the readable zoom in TB too', async () => {
     const { container } = render(<AccessGraphCanvas graph={longGraph()} />)
     drillIn()
-    fireEvent.click(btn('Layout: vertical'))
+    // layout now starts in TB, so no layout click is needed to reach it
     await sizeCanvas(container, 968, 490)
     expect(lastZoom()).toBe(READABLE_MIN_ZOOM)
     expect(screen.getByRole('status')).toHaveTextContent('100 items')
@@ -161,10 +163,11 @@ describe('AccessGraphCanvas readable zoom for long graphs', () => {
     const plans = () => spies.fitView.mock.calls.length + spies.setViewport.mock.calls.length
     let expected = plans()
     for (const name of [
-      'Hide minimap',
-      'Hide reference nodes and links',
-      'Hide completed items',
-      'Layout: vertical',
+      'Show minimap',
+      'Show reference nodes and links',
+      /^Show completed items/,
+      // layout now starts in TB; the button reads "Layout: horizontal" after drill-in
+      'Layout: horizontal',
     ]) {
       fireEvent.click(btn(name))
       expected += 1
@@ -182,13 +185,21 @@ describe('AccessGraphCanvas readable zoom for long graphs', () => {
     it('counts and fits the visible items: a still-long list keeps the readable zoom and hint', async () => {
       const { container } = render(<AccessGraphCanvas graph={longWithCompleted(10)} />)
       drillIn()
+      // layout now starts in TB; switch to horizontal so the long-list readable
+      // zoom + hint behavior this test asserts (unchanged by the TB default) holds
+      fireEvent.click(btn('Layout: horizontal'))
       await sizeCanvas(container, 968, 490)
-      expect(screen.getByRole('status')).toHaveTextContent('100 items — scroll or drag to see all')
+      // Completed items start hidden; show them to reach the full-list baseline.
+      fireEvent.click(btn(/^Show completed items/))
+      await waitFor(() =>
+        expect(screen.getByRole('status')).toHaveTextContent('100 items — scroll or drag to see all'),
+      )
+      spies.setViewport.mockClear()
 
       const before = plans()
       fireEvent.click(btn('Hide completed items'))
       await waitFor(() => expect(plans()).toBe(before + 1))
-      expect(spies.setViewport).toHaveBeenCalledTimes(2)
+      expect(spies.setViewport).toHaveBeenCalledTimes(1)
       expect(lastZoom()).toBe(READABLE_MIN_ZOOM)
       expect(screen.getByRole('status')).toHaveTextContent('90 items — scroll or drag to see all')
 
@@ -202,7 +213,9 @@ describe('AccessGraphCanvas readable zoom for long graphs', () => {
       const { container } = render(<AccessGraphCanvas graph={longWithCompleted(94)} />)
       drillIn()
       await sizeCanvas(container, 968, 490)
-      expect(screen.getByRole('status')).toHaveTextContent('100 items')
+      // Completed items start hidden; show them to reach the full-list baseline.
+      fireEvent.click(btn(/^Show completed items/))
+      await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('100 items'))
       spies.fitView.mockClear()
       spies.setViewport.mockClear()
 
