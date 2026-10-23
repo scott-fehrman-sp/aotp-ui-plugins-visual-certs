@@ -131,3 +131,43 @@ describe('AccessNode user card', () => {
     expect(label(userCard())).not.toHaveClass('vc-graph-card-label-inactive')
   })
 })
+
+describe('AccessNode user card manager badge + kind icon placement', () => {
+  const managerMark = (el: HTMLElement) =>
+    el.querySelector('.vc-graph-manager-mark')
+  const userKindIcon = (el: HTMLElement) =>
+    el.querySelector('.vc-graph-card-kind-icon.kind-user')
+
+  it('renders the user kind icon on the user card (moved to the bottom-left corner)', () => {
+    render(<AccessGraphCanvas graph={activeUser()} />)
+    const card = userCard()
+    const icon = userKindIcon(card)
+    expect(icon).not.toBeNull()
+    // Anchored, not in normal flow (mirrors the status-icon corner convention).
+    expect(icon).toHaveAttribute('data-kind', 'user')
+  })
+
+  it('shows the manager badge when the user is a manager', () => {
+    render(<AccessGraphCanvas graph={activeUser({ userIsManager: 'Yes' })} />)
+    const badge = managerMark(userCard())
+    expect(badge).not.toBeNull()
+    expect(badge).toHaveAttribute('role', 'img')
+    expect(badge).toHaveAttribute('aria-label', 'Manager')
+  })
+
+  it('shows the manager badge on the user node in drill-down too', () => {
+    render(<AccessGraphCanvas graph={activeUser({ userIsManager: 'Yes' })} />)
+    drillIn()
+    expect(managerMark(userCard())).not.toBeNull()
+  })
+
+  it('omits the manager badge when the user is not a manager', () => {
+    render(<AccessGraphCanvas graph={activeUser({ userIsManager: 'No' })} />)
+    expect(managerMark(userCard())).toBeNull()
+  })
+
+  it('omits the manager badge when manager status is unknown', () => {
+    render(<AccessGraphCanvas graph={activeUser({ userIsManager: '' })} />)
+    expect(managerMark(userCard())).toBeNull()
+  })
+})

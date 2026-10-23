@@ -42,6 +42,12 @@
   --vc-graph-accessProfile: #0e7a43;
   --vc-graph-entitlement: #9c5836;
   --vc-graph-source: #3a4d5e;
+
+  /* Manager badge on a user card, mirroring org-graph's `--manager*` tokens
+     (same amber/brown in both themes — org-graph does not override them dark). */
+  --manager: #3f2c00;
+  --manager-mark: #ffd24a;
+  --manager-ring: rgba(63, 44, 0, 0.32);
 }
 
 :root[data-theme='dark'] {

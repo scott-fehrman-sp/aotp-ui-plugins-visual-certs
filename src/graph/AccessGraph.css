@@ -213,6 +213,16 @@
 
 .vc-graph-card-kind-icon.kind-user {
   color: var(--vc-graph-user);
+  /* Pin the USER glyph to the bottom-left corner (the card is position:
+     relative), mirroring the status icon's bottom-right anchor. The manager
+     badge, when present, takes the bottom-right corner. */
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  width: 18px;
+  height: 18px;
+  line-height: 0;
+  pointer-events: none;
 }
 
 .vc-graph-card-kind-icon.kind-role {
@@ -366,6 +376,35 @@
 
 .vc-graph-status-icon-reassigned {
   color: var(--vc-accent);
+}
+
+/*
+ * Manager badge on a USER card: an amber pill in the bottom-right corner holding
+ * the org-chart "reports" glyph, replicating org-graph's `.manager-mark` (same
+ * 22px circle, amber fill, dark glyph, subtle inner ring). The user's kind glyph
+ * sits in the opposite bottom-left corner, so the two never collide. Decorative
+ * ring/fill via the shared `--manager*` tokens.
+ */
+.vc-graph-manager-mark {
+  position: absolute;
+  z-index: 1;
+  bottom: 6px;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--manager-mark);
+  color: var(--manager);
+  box-shadow: inset 0 0 0 1px var(--manager-ring);
+  pointer-events: none;
+}
+
+.vc-graph-manager-icon {
+  display: block;
+  width: 14px;
+  height: 14px;
 }
 
 /*

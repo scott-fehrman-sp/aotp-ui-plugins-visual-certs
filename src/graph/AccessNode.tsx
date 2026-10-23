@@ -112,6 +112,36 @@ export function StatusIcon({
 }
 
 /**
+ * The manager badge shown in a USER card's bottom-right corner when the identity
+ * manages others. Replicates org-graph's `.manager-mark` (an amber pill holding
+ * the `reports` org-chart glyph) so the signal reads identically across the two
+ * apps. `role="img"` + `aria-label` name it for assistive tech.
+ */
+function ManagerIcon() {
+  return (
+    <span className="vc-graph-manager-mark" role="img" aria-label="Manager">
+      <svg
+        className="vc-graph-manager-icon"
+        viewBox="0 0 24 24"
+        width="14"
+        height="14"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="5" r="2" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="6" cy="18" r="2" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="18" cy="18" r="2" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M12 7v4M12 11 6.8 16M12 11l5.2 5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </span>
+  )
+}
+
+/** True when the node is a USER card whose identity manages others. */
+function isManagerUser(data: AccessSceneNode['data']): boolean {
+  return data.kind === 'user' && data.detail?.isManager === 'Yes'
+}
+
+/**
  * The custom React Flow node for the access graph: a small accessible card
  * showing the node's label and a per-kind caption, with a left-border accent
  * driven by the `kind-<kind>` class. Mirrors org-graph's `PersonNode` shape
@@ -198,6 +228,7 @@ export function AccessNode({ id, data }: NodeProps<AccessSceneNode>) {
           <CardBody data={data} />
           <KindIcon kind={data.kind} className="vc-graph-card-kind-icon" />
           {status ? <StatusIcon status={status} /> : null}
+          {isManagerUser(data) ? <ManagerIcon /> : null}
         </article>
         {/* Sibling of the card, not a child: see `Handles`. */}
         <Handles />
@@ -264,6 +295,7 @@ export function AccessNode({ id, data }: NodeProps<AccessSceneNode>) {
         <CardBody data={data} />
         <KindIcon kind={data.kind} className="vc-graph-card-kind-icon" />
         {status ? <StatusIcon status={status} id={statusIconId} /> : null}
+        {isManagerUser(data) ? <ManagerIcon /> : null}
       </article>
       {/* Sibling of the card, not a child: see `Handles`. */}
       <Handles />
