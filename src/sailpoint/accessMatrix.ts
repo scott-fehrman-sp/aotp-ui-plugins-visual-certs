@@ -123,6 +123,48 @@ export interface ResolvedEntitlement {
    * none.
    */
   attributes: Array<[string, string]>
+  /**
+   * The resolved SOURCE this entitlement lives on, with its full attribute set
+   * for the source node's detail panel. `null` when the source could not be
+   * fetched (soft-degrade); `sourceName`/`sourceDescription` above still carry
+   * what the entitlement body knew.
+   */
+  source: ResolvedSource | null
+}
+
+/**
+ * A source's full attribute set, for the source node's detail panel. Returned by
+ * the resolver's `source()` and cached per source id. Every field soft-degrades
+ * to '' (strings) / false (flags) when the SDK omits it; `name`/`description`
+ * keep their historical meaning (the entitlement's source lookup reads them).
+ */
+export interface ResolvedSource {
+  id: string
+  name: string
+  /** Human-readable description ('' when absent). */
+  description: string
+  /** Owner display name ('' when no owner). */
+  owner: string
+  /** The source type (e.g. "Active Directory"; '' when absent). */
+  type: string
+  /** The connector name ('' when absent). */
+  connector: string
+  /** The connection type ('' when absent). */
+  connectionType: string
+  /** The source category ('' when absent). */
+  category: string
+  /** The cluster display name ('' when absent). */
+  cluster: string
+  /** True when the source is authoritative. */
+  authoritative: boolean
+  /** True when the source is healthy. */
+  healthy: boolean
+  /** The source status (e.g. "SOURCE_STATE_HEALTHY"; '' when absent). */
+  status: string
+  /** ISO timestamp the source was created ('' when absent). */
+  created: string
+  /** ISO timestamp the source was last modified ('' when absent). */
+  modified: string
 }
 
 /**
@@ -146,11 +188,11 @@ export interface AccessCompositionResolver {
    */
   entitlementByName(name: string): Promise<ResolvedEntitlement | null>
   /**
-   * A source's name + description, for the source-node tooltip. Backed by a
-   * per-source-id cache so a source shared by many entitlements is fetched at
+   * A source's full attribute set, for the source node's detail panel. Backed by
+   * a per-source-id cache so a source shared by many entitlements is fetched at
    * most once. null = soft-degraded.
    */
-  source(id: string): Promise<{ id: string; name: string; description: string } | null>
+  source(id: string): Promise<ResolvedSource | null>
   /**
    * A user's full identity detail (department, location, email, title, phone,
    * manager, lifecycle / identity state, isManager, identity id) for the user
@@ -221,10 +263,7 @@ export function createAccessCompositionResolver(
   // Per-NAME cache for the id-less fallback lookup (keyed by entitlement name).
   const entByNameCache = new Map<string, Promise<ResolvedEntitlement | null>>()
   // Per-source-id cache: a source shared by many entitlements is fetched once.
-  const sourceCache = new Map<
-    string,
-    Promise<{ id: string; name: string; description: string } | null>
-  >()
+  const sourceCache = new Map<string, Promise<ResolvedSource | null>>()
   // Per-identity cache for the user detail lookup.
   const identityCache = new Map<string, Promise<ResolvedIdentity>>()
 
@@ -243,9 +282,7 @@ export function createAccessCompositionResolver(
     return promise
   }
 
-  const fetchSource = async (
-    id: string,
-  ): Promise<{ id: string; name: string; description: string } | null> => {
+  const fetchSource = async (id: string): Promise<ResolvedSource | null> => {
     try {
       const res = await sourcesApi.getSourceV1({ id })
       const src = res.data
@@ -253,9 +290,20 @@ export function createAccessCompositionResolver(
         id: src.id ?? id,
         name: src.name ?? '',
         description: src.description ?? '',
+        owner: src.owner?.name ?? '',
+        type: src.type ?? '',
+        connector: src.connectorName ?? src.connector ?? '',
+        connectionType: src.connectionType ?? '',
+        category: src.category ?? '',
+        cluster: src.cluster?.name ?? '',
+        authoritative: src.authoritative ?? false,
+        healthy: src.healthy ?? false,
+        status: src.status ?? '',
+        created: src.created ?? '',
+        modified: src.modified ?? '',
       }
     } catch {
-      // Soft-degrade: a failed source fetch yields no description, never throws.
+      // Soft-degrade: a failed source fetch yields nothing, never throws.
       return null
     }
   }
@@ -363,6 +411,7 @@ export function createAccessCompositionResolver(
       created: ent.created ?? '',
       modified: ent.modified ?? '',
       attributes: flattenSourceAttributes(ent.attributes),
+      source: resolvedSource,
     }
   }
 
@@ -491,6 +540,28 @@ interface RowTuple {
   entitlementAttributes?: Array<[string, string]>
   /** Resolved SOURCE description, on a resolved leaf row. */
   sourceDescription?: string
+  /** Resolved SOURCE owner display name, on a resolved leaf row. */
+  sourceOwner?: string
+  /** Resolved SOURCE type, on a resolved leaf row. */
+  sourceType?: string
+  /** Resolved SOURCE connector name, on a resolved leaf row. */
+  sourceConnector?: string
+  /** Resolved SOURCE connection type, on a resolved leaf row. */
+  sourceConnectionType?: string
+  /** Resolved SOURCE category, on a resolved leaf row. */
+  sourceCategory?: string
+  /** Resolved SOURCE cluster name, on a resolved leaf row. */
+  sourceCluster?: string
+  /** Resolved SOURCE authoritative flag, on a resolved leaf row. */
+  sourceAuthoritative?: boolean
+  /** Resolved SOURCE healthy flag, on a resolved leaf row. */
+  sourceHealthy?: boolean
+  /** Resolved SOURCE status, on a resolved leaf row. */
+  sourceStatus?: string
+  /** Resolved SOURCE created timestamp, on a resolved leaf row. */
+  sourceCreated?: string
+  /** Resolved SOURCE modified timestamp, on a resolved leaf row. */
+  sourceModified?: string
   /** Kind of the user's directly-held access item (first hop off the user). */
   accessItemKind?: AccessGraphNodeKind
   /** Id of the user's directly-held access item; null when the item had none. */
@@ -538,6 +609,17 @@ async function resolveLeaf(
   entitlementCreated?: string
   entitlementModified?: string
   entitlementAttributes?: Array<[string, string]>
+  sourceOwner?: string
+  sourceType?: string
+  sourceConnector?: string
+  sourceConnectionType?: string
+  sourceCategory?: string
+  sourceCluster?: string
+  sourceAuthoritative?: boolean
+  sourceHealthy?: boolean
+  sourceStatus?: string
+  sourceCreated?: string
+  sourceModified?: string
 }> {
   // Prefer the id (exact, one round-trip). When the parent body referenced the
   // entitlement by NAME only (no id), fall back to a by-name lookup rather than
@@ -580,6 +662,20 @@ async function resolveLeaf(
     entitlementCreated: resolved.created,
     entitlementModified: resolved.modified,
     entitlementAttributes: resolved.attributes,
+    // The full source attribute set for the source node's detail panel. Pulled
+    // from the resolved source (the cached per-source-id fetch); undefined when
+    // the source could not be fetched (sourceDescription above stays '').
+    sourceOwner: resolved.source?.owner,
+    sourceType: resolved.source?.type,
+    sourceConnector: resolved.source?.connector,
+    sourceConnectionType: resolved.source?.connectionType,
+    sourceCategory: resolved.source?.category,
+    sourceCluster: resolved.source?.cluster,
+    sourceAuthoritative: resolved.source?.authoritative,
+    sourceHealthy: resolved.source?.healthy,
+    sourceStatus: resolved.source?.status,
+    sourceCreated: resolved.source?.created,
+    sourceModified: resolved.source?.modified,
   }
 }
 

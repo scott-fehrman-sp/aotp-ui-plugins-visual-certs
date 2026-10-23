@@ -95,8 +95,21 @@ function detailFor(
     if (row.accessProfileModified) detail.modified = row.accessProfileModified
     if (row.accessProfileId) detail.accessProfileId = row.accessProfileId
   } else {
-    // Source node: just its description.
+    // Source node: its full attribute set. Boolean flags only land when true
+    // (shown as 'Yes'); everything else only when non-empty.
     if (row.sourceDescription) detail.description = row.sourceDescription
+    if (row.sourceType) detail.type = row.sourceType
+    if (row.sourceConnector) detail.connector = row.sourceConnector
+    if (row.sourceConnectionType) detail.connectionType = row.sourceConnectionType
+    if (row.sourceCategory) detail.category = row.sourceCategory
+    if (row.sourceOwner) detail.owner = row.sourceOwner
+    if (row.sourceCluster) detail.cluster = row.sourceCluster
+    if (row.sourceAuthoritative) detail.authoritative = 'Yes'
+    if (row.sourceHealthy) detail.healthy = 'Yes'
+    if (row.sourceStatus) detail.status = row.sourceStatus
+    if (row.sourceCreated) detail.created = row.sourceCreated
+    if (row.sourceModified) detail.modified = row.sourceModified
+    if (row.sourceId) detail.sourceId = row.sourceId
   }
   return Object.keys(detail).length > 0 ? detail : undefined
 }

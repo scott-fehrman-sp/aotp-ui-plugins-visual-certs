@@ -408,6 +408,46 @@ describe('deriveAccessGraph', () => {
     })
   })
 
+  it('surfaces the full attribute set on a source node', () => {
+    const { nodes } = deriveAccessGraph([
+      row({
+        id: '1',
+        entitlement: 'read',
+        entitlementId: 'e1',
+        source: 'Entra ID',
+        sourceId: 's0',
+        sourceDescription: 'The directory',
+        sourceType: 'Azure Active Directory',
+        sourceConnector: 'azure-ad',
+        sourceConnectionType: 'direct',
+        sourceCategory: 'Directory',
+        sourceOwner: 'Dana Owner',
+        sourceCluster: 'VA Cluster',
+        sourceAuthoritative: true,
+        sourceHealthy: true,
+        sourceStatus: 'SOURCE_STATE_HEALTHY',
+        sourceCreated: '2024-01-02T00:00:00Z',
+        sourceModified: '2024-03-04T00:00:00Z',
+      }),
+    ])
+    const sourceNode = nodes.find((n) => n.kind === 'source')
+    expect(sourceNode?.detail).toEqual({
+      description: 'The directory',
+      type: 'Azure Active Directory',
+      connector: 'azure-ad',
+      connectionType: 'direct',
+      category: 'Directory',
+      owner: 'Dana Owner',
+      cluster: 'VA Cluster',
+      authoritative: 'Yes',
+      healthy: 'Yes',
+      status: 'SOURCE_STATE_HEALTHY',
+      created: '2024-01-02T00:00:00Z',
+      modified: '2024-03-04T00:00:00Z',
+      sourceId: 's0',
+    })
+  })
+
   it('marks only the user→access-item edge as first-level, with a review key and no status', () => {
     // A role item: user→role is the review hop; every deeper edge is reference.
     const { nodes, edges } = deriveAccessGraph([

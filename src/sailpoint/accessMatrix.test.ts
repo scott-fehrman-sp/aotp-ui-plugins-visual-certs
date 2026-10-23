@@ -12,6 +12,7 @@ import type {
   ResolvedAccessProfile,
   ResolvedEntitlement,
   ResolvedRole,
+  ResolvedSource,
 } from './accessMatrix'
 import { emptyResolvedIdentity } from './identities'
 import type { ReviewItemVM } from './types'
@@ -141,7 +142,24 @@ function stubResolver(): AccessCompositionResolver {
     created: '',
     modified: '',
     attributes: [],
+    source: null,
     ...e,
+  })
+  const mkSrc = (
+    s: Pick<ResolvedSource, 'id' | 'name' | 'description'>,
+  ): ResolvedSource => ({
+    owner: '',
+    type: '',
+    connector: '',
+    connectionType: '',
+    category: '',
+    cluster: '',
+    authoritative: false,
+    healthy: false,
+    status: '',
+    created: '',
+    modified: '',
+    ...s,
   })
   const ents: Record<string, ResolvedEntitlement> = {
     'ent-read-engr': mkEnt({ id: 'ent-read-engr', name: 'read', description: 'read engr', sourceId: 'src-engr', sourceName: 'engr db', sourceDescription: 'Engineering database' }),
@@ -151,10 +169,10 @@ function stubResolver(): AccessCompositionResolver {
     'ent-search-acct': mkEnt({ id: 'ent-search-acct', name: 'search', description: 'search acct', sourceId: 'src-acct', sourceName: 'accounting db', sourceDescription: 'Accounting database' }),
     'ent-read-phone': mkEnt({ id: 'ent-read-phone', name: 'read', description: 'read phone', sourceId: 'src-phone', sourceName: 'phone app', sourceDescription: 'Phone application' }),
   }
-  const sources: Record<string, { id: string; name: string; description: string }> = {
-    'src-engr': { id: 'src-engr', name: 'engr db', description: 'Engineering database' },
-    'src-acct': { id: 'src-acct', name: 'accounting db', description: 'Accounting database' },
-    'src-phone': { id: 'src-phone', name: 'phone app', description: 'Phone application' },
+  const sources: Record<string, ResolvedSource> = {
+    'src-engr': mkSrc({ id: 'src-engr', name: 'engr db', description: 'Engineering database' }),
+    'src-acct': mkSrc({ id: 'src-acct', name: 'accounting db', description: 'Accounting database' }),
+    'src-phone': mkSrc({ id: 'src-phone', name: 'phone app', description: 'Phone application' }),
   }
   const entsByName: Record<string, ResolvedEntitlement> = {}
   for (const e of Object.values(ents)) entsByName[e.name] = e
@@ -468,6 +486,7 @@ describe('resolveMatrix', () => {
                 created: '',
                 modified: '',
                 attributes: [],
+                source: null,
               }
             : null,
         ),
@@ -562,13 +581,26 @@ describe('resolveMatrix', () => {
     // src-engr is shared by read/write/delete. A per-source-id cache in front of
     // a source spy must call it once for src-engr though three entitlements use it.
     const base = stubResolver()
-    const sourceFn = vi.fn((id: string) =>
-      Promise.resolve({ id, name: 'engr db', description: 'Engineering database' }),
+    const sourceFn = vi.fn(
+      (id: string): Promise<ResolvedSource> =>
+        Promise.resolve({
+          id,
+          name: 'engr db',
+          description: 'Engineering database',
+          owner: '',
+          type: '',
+          connector: '',
+          connectionType: '',
+          category: '',
+          cluster: '',
+          authoritative: false,
+          healthy: false,
+          status: '',
+          created: '',
+          modified: '',
+        }),
     )
-    const cache = new Map<
-      string,
-      Promise<{ id: string; name: string; description: string } | null>
-    >()
+    const cache = new Map<string, Promise<ResolvedSource | null>>()
     const resolver: AccessCompositionResolver = {
       ...base,
       source: (id) => {
@@ -671,7 +703,22 @@ describe('createAccessCompositionResolver entitlementByName', () => {
       return Promise.resolve({ data: body ? [body] : [] })
     })
     const getSourceV1 = vi.fn().mockResolvedValue({
-      data: { id: 'src-engr', name: 'engr db', description: 'Engineering database' },
+      data: {
+        id: 'src-engr',
+        name: 'engr db',
+        description: 'Engineering database',
+        owner: { id: 'o2', type: 'IDENTITY', name: 'Sam Source' },
+        type: 'Active Directory',
+        connectorName: 'active-directory',
+        connectionType: 'direct',
+        category: 'Directory',
+        cluster: { id: 'c1', type: 'CLUSTER', name: 'VA Cluster' },
+        authoritative: true,
+        healthy: true,
+        status: 'SOURCE_STATE_HEALTHY',
+        created: '2023-01-01T00:00:00Z',
+        modified: '2023-06-01T00:00:00Z',
+      },
     })
     const resolver = createAccessCompositionResolver(
       {} as unknown as RolesApi,
@@ -713,7 +760,52 @@ describe('createAccessCompositionResolver entitlementByName', () => {
         ['proxyAddresses', 'SMTP:eng@x.com, SPO:eng'],
         ['teamsEnabled', 'false'],
       ],
+      // The resolved source rides along for the source node's detail panel.
+      source: {
+        id: 'src-engr',
+        name: 'engr db',
+        description: 'Engineering database',
+        owner: 'Sam Source',
+        type: 'Active Directory',
+        connector: 'active-directory',
+        connectionType: 'direct',
+        category: 'Directory',
+        cluster: 'VA Cluster',
+        authoritative: true,
+        healthy: true,
+        status: 'SOURCE_STATE_HEALTHY',
+        created: '2023-01-01T00:00:00Z',
+        modified: '2023-06-01T00:00:00Z',
+      },
     })
+  })
+
+  it('resolves a source to its full attribute set', async () => {
+    const { resolver } = makeResolver()
+    const src = await resolver.source('src-engr')
+    expect(src).toEqual({
+      id: 'src-engr',
+      name: 'engr db',
+      description: 'Engineering database',
+      owner: 'Sam Source',
+      type: 'Active Directory',
+      connector: 'active-directory',
+      connectionType: 'direct',
+      category: 'Directory',
+      cluster: 'VA Cluster',
+      authoritative: true,
+      healthy: true,
+      status: 'SOURCE_STATE_HEALTHY',
+      created: '2023-01-01T00:00:00Z',
+      modified: '2023-06-01T00:00:00Z',
+    })
+  })
+
+  it('caches by source id: a repeated source lookup hits the API once', async () => {
+    const { resolver, getSourceV1 } = makeResolver()
+    await resolver.source('src-engr')
+    await resolver.source('src-engr')
+    expect(getSourceV1).toHaveBeenCalledTimes(1)
   })
 
   it('soft-degrades to null when no entitlement matches the name', async () => {

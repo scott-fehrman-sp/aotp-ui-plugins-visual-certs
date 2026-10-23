@@ -132,6 +132,21 @@ export function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps) {
     ['Modified', e.modified ?? ''],
     ['Access profile ID', e.accessProfileId ?? ''],
   ]
+  const sourceRows: Array<[string, string]> = [
+    ['Description', e.description ?? ''],
+    ['Type', e.type ?? ''],
+    ['Connector', e.connector ?? ''],
+    ['Connection type', e.connectionType ?? ''],
+    ['Category', e.category ?? ''],
+    ['Owner', e.owner ?? ''],
+    ['Cluster', e.cluster ?? ''],
+    ['Authoritative', e.authoritative ?? ''],
+    ['Healthy', e.healthy ?? ''],
+    ['Status', e.status ?? ''],
+    ['Created', e.created ?? ''],
+    ['Modified', e.modified ?? ''],
+    ['Source ID', e.sourceId ?? ''],
+  ]
   const primaryRows =
     node?.kind === 'entitlement'
       ? entitlementRows
@@ -139,7 +154,9 @@ export function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps) {
         ? roleRows
         : node?.kind === 'accessProfile'
           ? accessProfileRows
-          : []
+          : node?.kind === 'source'
+            ? sourceRows
+            : []
   const visiblePrimaryRows = primaryRows.filter(([, value]) => value)
   // The free-form source attributes shown under an "Additional attributes"
   // heading, mirroring the ISC panel. Empty when the entitlement carried none.
@@ -253,15 +270,26 @@ export function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps) {
               ) : null}
             </>
           ) : (
+            // Source node (the only remaining kind): its full attribute set,
+            // same visible-row pattern as the access items.
             <dl className="vc-graph-detail-fields">
-              <div className="vc-graph-detail-row">
-                <dt>Description</dt>
-                <dd>
-                  {description || (
-                    <span className="vc-graph-detail-unset">not set</span>
-                  )}
-                </dd>
-              </div>
+              {visiblePrimaryRows.length > 0 ? (
+                visiblePrimaryRows.map(([label, value]) => (
+                  <div key={label} className="vc-graph-detail-row">
+                    <dt>{label}</dt>
+                    <dd>{value}</dd>
+                  </div>
+                ))
+              ) : (
+                <div className="vc-graph-detail-row">
+                  <dt>Description</dt>
+                  <dd>
+                    {description || (
+                      <span className="vc-graph-detail-unset">not set</span>
+                    )}
+                  </dd>
+                </div>
+              )}
             </dl>
           )}
 

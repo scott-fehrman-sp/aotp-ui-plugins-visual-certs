@@ -23,6 +23,7 @@ import type {
   ResolvedAccessProfile,
   ResolvedEntitlement,
   ResolvedRole,
+  ResolvedSource,
 } from '../sailpoint/accessMatrix'
 import { emptyResolvedIdentity } from '../sailpoint/identities'
 import { userSubgraph } from '../graph/userSubgraph'
@@ -98,6 +99,27 @@ function ent(
     created: '',
     modified: '',
     attributes: [],
+    source: null,
+  }
+}
+
+// Fills a source's extra attribute fields with inert defaults.
+function mkSrc(
+  s: Pick<ResolvedSource, 'id' | 'name' | 'description'>,
+): ResolvedSource {
+  return {
+    owner: `${s.name || 'source'} owner`,
+    type: 'Delimited File',
+    connector: 'delimited-file',
+    connectionType: 'file',
+    category: '',
+    cluster: '',
+    authoritative: false,
+    healthy: true,
+    status: 'SOURCE_STATE_HEALTHY',
+    created: '',
+    modified: '',
+    ...s,
   }
 }
 
@@ -195,9 +217,9 @@ export function fixtureResolver(): AccessCompositionResolver {
     'e-login': ent('e-login', 'Login', 's-dir', 'Directory'),
     'e-admin': ent('e-admin', 'Admin', 's-dir', 'Directory'),
   }
-  const sources: Record<string, { id: string; name: string; description: string }> = {
-    's-erp': { id: 's-erp', name: 'ERP', description: 'ERP description' },
-    's-dir': { id: 's-dir', name: 'Directory', description: 'Directory description' },
+  const sources: Record<string, ResolvedSource> = {
+    's-erp': mkSrc({ id: 's-erp', name: 'ERP', description: 'ERP description' }),
+    's-dir': mkSrc({ id: 's-dir', name: 'Directory', description: 'Directory description' }),
   }
   // Name -> resolved entitlement, for the id-less fallback lookup.
   const entsByName: Record<string, ResolvedEntitlement> = {}

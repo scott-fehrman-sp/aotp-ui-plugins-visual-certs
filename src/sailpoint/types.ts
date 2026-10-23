@@ -359,6 +359,28 @@ export interface AccessMatrixRowVM {
   entitlementAttributes?: Array<[string, string]>
   /** The source's description, same semantics as {@link roleDescription}. */
   sourceDescription?: string
+  /** The source's owner display name. Leaf rows only. */
+  sourceOwner?: string
+  /** The source's type (e.g. "Active Directory"). Leaf rows only. */
+  sourceType?: string
+  /** The source's connector name. Leaf rows only. */
+  sourceConnector?: string
+  /** The source's connection type. Leaf rows only. */
+  sourceConnectionType?: string
+  /** The source's category. Leaf rows only. */
+  sourceCategory?: string
+  /** The source's cluster name. Leaf rows only. */
+  sourceCluster?: string
+  /** True when the source is authoritative. Leaf rows only. */
+  sourceAuthoritative?: boolean
+  /** True when the source is healthy. Leaf rows only. */
+  sourceHealthy?: boolean
+  /** The source's status. Leaf rows only. */
+  sourceStatus?: string
+  /** The source's created timestamp (ISO). Leaf rows only. */
+  sourceCreated?: string
+  /** The source's last-modified timestamp (ISO). Leaf rows only. */
+  sourceModified?: string
   /**
    * The KIND of the user's directly-held access item (the first hop off the
    * user node): the role, access profile, or entitlement under review. Lets the
@@ -441,6 +463,27 @@ export interface NodeDetail {
   roleId?: string
   /** The access profile's own id. Access-profile nodes only. */
   accessProfileId?: string
+  // --- source-node attribute fields ------------------------------------------
+  // Set only on a source node (several keys above — owner, created, modified,
+  // description — are reused). Each only when non-empty / non-default.
+  /** The source type (e.g. "Active Directory"). Source nodes only. */
+  type?: string
+  /** The connector name. Source nodes only. */
+  connector?: string
+  /** The connection type. Source nodes only. */
+  connectionType?: string
+  /** The source category. Source nodes only. */
+  category?: string
+  /** The cluster display name. Source nodes only. */
+  cluster?: string
+  /** 'Yes' when the source is authoritative (omitted otherwise). Source nodes only. */
+  authoritative?: string
+  /** 'Yes' when the source is healthy (omitted otherwise). Source nodes only. */
+  healthy?: string
+  /** The source status. Source nodes only. */
+  status?: string
+  /** The source's own id. Source nodes only. */
+  sourceId?: string
   // --- user-node identity fields ---------------------------------------------
   department?: string
   location?: string

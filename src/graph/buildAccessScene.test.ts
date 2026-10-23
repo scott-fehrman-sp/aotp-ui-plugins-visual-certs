@@ -147,6 +147,7 @@ describe('buildAccessScene', () => {
     })
     expect(byId.get('source:s1')?.data.detail).toEqual({
       description: 'Engineering database',
+      sourceId: 's1',
     })
   })
 
