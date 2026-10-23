@@ -196,7 +196,13 @@ describe('AccessGraphCanvas overlay-aware fit', () => {
       it('keeps the lanes in order and packs the remaining cards evenly (horizontal)', () => {
         render(<AccessGraphCanvas graph={mixedKinds()} />)
         drillIn()
-        const shownE = ['e-one', 'e-two', 'e-three'].map(translate)
+        // The lane stride is the gap between two adjacent cards; take it from the
+        // two lowest shown entitlement positions (adjacency is independent of
+        // which names those are, since cards sort A→Z by name).
+        const shownYs = ['e-one', 'e-two', 'e-three']
+          .map((n) => translate(n).y)
+          .sort((a, b) => a - b)
+        const stride = shownYs[1] - shownYs[0]
         fireEvent.click(btn('Hide completed items'))
         expect(screen.queryByText('AP One')).toBeNull()
         expect(screen.queryByText('Role B')).toBeNull()
@@ -210,15 +216,17 @@ describe('AccessGraphCanvas overlay-aware fit', () => {
         expect(ent1.x).toBe(ent3.x)
         // The two remaining entitlements are adjacent (one stride apart), not
         // separated by the hidden one's slot.
-        const stride = shownE[1].y - shownE[0].y
-        expect(ent3.y - ent1.y).toBe(stride)
+        expect(Math.abs(ent3.y - ent1.y)).toBe(stride)
       })
 
       it('keeps the lanes in order and packs the remaining cards evenly (vertical)', () => {
         render(<AccessGraphCanvas graph={mixedKinds()} />)
         drillIn()
         fireEvent.click(btn('Layout: vertical'))
-        const shownE = ['e-one', 'e-two', 'e-three'].map(translate)
+        const shownXs = ['e-one', 'e-two', 'e-three']
+          .map((n) => translate(n).x)
+          .sort((a, b) => a - b)
+        const stride = shownXs[1] - shownXs[0]
         fireEvent.click(btn('Hide completed items'))
         const role = translate('Role A')
         const ent1 = translate('e-one')
@@ -227,7 +235,7 @@ describe('AccessGraphCanvas overlay-aware fit', () => {
         expect(user.y).toBeLessThan(role.y)
         expect(role.y).toBeLessThan(ent1.y)
         expect(ent1.y).toBe(ent3.y)
-        expect(ent3.x - ent1.x).toBe(shownE[1].x - shownE[0].x)
+        expect(Math.abs(ent3.x - ent1.x)).toBe(stride)
       })
     })
 

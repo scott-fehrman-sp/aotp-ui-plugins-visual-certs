@@ -284,6 +284,18 @@ export interface AccessMatrixRowVM {
    * dedup key.
    */
   userEmail?: string
+  /**
+   * The user's given (first) name, same enrichment semantics as
+   * {@link userDepartment}. Combined with {@link userLastName} to form the
+   * user node's "FIRST LAST" label; '' / absent when the identity lookup
+   * soft-degraded or the attribute was unmapped. Never part of the dedup key.
+   */
+  userFirstName?: string
+  /**
+   * The user's family (last) name, same semantics as {@link userFirstName}.
+   * Also the key the user grid sorts on.
+   */
+  userLastName?: string
   userTitle?: string
   userPhone?: string
   /** 'Yes' / 'No' / '' — whether the identity manages others. */
@@ -485,6 +497,13 @@ export interface NodeDetail {
   /** The source's own id. Source nodes only. */
   sourceId?: string
   // --- user-node identity fields ---------------------------------------------
+  /**
+   * The user's given / family name. Carried on a user node so the grid can sort
+   * by real last name (the node `label` is the combined "First Last" display
+   * string). Not rendered by the detail panel's fixed field list.
+   */
+  firstName?: string
+  lastName?: string
   department?: string
   location?: string
   country?: string

@@ -98,6 +98,12 @@ function toIdentityOption(row: unknown): IdentityOption | null {
 const DEPARTMENT_KEYS = ['department', 'departmentName', 'dept']
 const LOCATION_KEYS = ['location', 'city', 'region', 'locality', 'workLocation']
 const COUNTRY_KEYS = ['country', 'countryName', 'countryCode']
+/**
+ * First / last name key names, probed both at the identity top level and under
+ * `attributes` (tenant-mapped), mirroring how department / location are read.
+ */
+const FIRST_NAME_KEYS = ['firstName', 'firstname', 'givenName', 'givenname']
+const LAST_NAME_KEYS = ['lastName', 'lastname', 'familyName', 'familyname', 'surname']
 
 /**
  * The richer per-identity detail the user node's detail panel shows. Mirrors
@@ -107,6 +113,10 @@ const COUNTRY_KEYS = ['country', 'countryName', 'countryCode']
  * renders it directly; '' means "unknown / not set".
  */
 export interface ResolvedIdentity {
+  /** Given (first) name, from `firstName` / `attributes.firstname`. '' when unknown. */
+  firstName: string
+  /** Family (last) name, from `lastName` / `attributes.lastname`. '' when unknown. */
+  lastName: string
   department: string
   location: string
   country: string
@@ -134,6 +144,8 @@ export function emptyResolvedIdentity(
   overrides: Partial<ResolvedIdentity> = {},
 ): ResolvedIdentity {
   return {
+    firstName: '',
+    lastName: '',
     department: '',
     location: '',
     country: '',
@@ -199,6 +211,10 @@ export async function fetchIdentityDetail(
     const email =
       firstString(identity, ['emailAddress', 'email']) ||
       firstString(attributes, ['email', 'emailAddress'])
+    const firstName =
+      firstString(identity, FIRST_NAME_KEYS) || firstString(attributes, FIRST_NAME_KEYS)
+    const lastName =
+      firstString(identity, LAST_NAME_KEYS) || firstString(attributes, LAST_NAME_KEYS)
     const department =
       firstString(attributes, DEPARTMENT_KEYS) || firstString(identity, DEPARTMENT_KEYS)
     const location =
@@ -213,6 +229,8 @@ export async function fetchIdentityDetail(
     const isManager =
       identity.isManager === true ? 'Yes' : identity.isManager === false ? 'No' : ''
     return {
+      firstName,
+      lastName,
       department,
       location,
       country,

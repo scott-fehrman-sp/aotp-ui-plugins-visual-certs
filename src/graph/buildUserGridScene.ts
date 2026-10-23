@@ -26,10 +26,28 @@ const GAP_X = 36
 const GAP_Y = 32
 
 /**
+ * The surname sort key for a user node. Uses the REAL resolved last name
+ * (`detail.lastName`, plumbed from the identity's `lastName` attribute). When
+ * the identity lookup soft-degraded and no last name was resolved, it falls
+ * back to the last whitespace-delimited token of the display label so the card
+ * still sorts somewhere sensible rather than collapsing to an empty key.
+ */
+function lastNameKey(node: AccessGraphData['nodes'][number]): string {
+  const resolved = (node.detail?.lastName ?? '').trim()
+  if (resolved) return resolved.toLowerCase()
+  const tokens = node.label.trim().split(/\s+/).filter(Boolean)
+  const key = tokens.length > 1 ? tokens[tokens.length - 1] : node.label
+  return key.toLowerCase()
+}
+
+/**
  * Builds the centered user grid scene. Zero `user` nodes → empty scene. Each
  * card is marked `interactive` so `AccessNode` renders a focusable button; the
  * caller attaches each card's `onSelect` via the optional `onSelect(nodeId)`
  * factory (the canvas uses it to set the selected user and enter drill-down).
+ *
+ * User cards are ordered alphabetically by last name (then by full label, then
+ * id, for a stable tie-break), so the grid reads A→Z by surname.
  *
  * PURE and deterministic: identical input (same graph + width) yields identical
  * positions. `onSelect` closures are the only non-serializable part and are
@@ -40,7 +58,14 @@ export function buildUserGridScene(
   viewportWidth: number,
   onSelect?: (nodeId: string) => void,
 ): AccessScene {
-  const users = graph.nodes.filter((node) => node.kind === 'user')
+  const users = graph.nodes
+    .filter((node) => node.kind === 'user')
+    .sort((a, b) => {
+      const byLast = lastNameKey(a).localeCompare(lastNameKey(b), 'en')
+      if (byLast !== 0) return byLast
+      const byLabel = a.label.toLowerCase().localeCompare(b.label.toLowerCase(), 'en')
+      return byLabel !== 0 ? byLabel : a.id.localeCompare(b.id)
+    })
   if (users.length === 0) {
     return { nodes: [], edges: [] }
   }

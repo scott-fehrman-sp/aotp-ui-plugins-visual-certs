@@ -90,6 +90,63 @@ describe('buildUserGridScene', () => {
     expect(distinctX.size).toBe(expectedColumns)
   })
 
+  it('orders user cards by the resolved last name, not insertion order', () => {
+    // Insertion order is Zuel, Adams, Brown; last-name order is Adams, Brown,
+    // Zuel. The grid fills row-major, so reading by (row y, then column x)
+    // recovers the card order.
+    const graph = deriveAccessGraph([
+      row({ id: '1', userId: 'u-z', userFirstName: 'Carol', userLastName: 'Zuel', entitlement: 'read', entitlementId: 'e1', source: 'app', sourceId: 's0' }),
+      row({ id: '2', userId: 'u-a', userFirstName: 'Bob', userLastName: 'Adams', entitlement: 'read', entitlementId: 'e2', source: 'app', sourceId: 's0' }),
+      row({ id: '3', userId: 'u-b', userFirstName: 'Alice', userLastName: 'Brown', entitlement: 'read', entitlementId: 'e3', source: 'app', sourceId: 's0' }),
+    ])
+    const scene = buildUserGridScene(graph, 1200)
+    const order = [...scene.nodes]
+      .sort((a, b) => a.position.y - b.position.y || a.position.x - b.position.x)
+      .map((n) => n.id)
+    expect(order).toEqual(['user:u-a', 'user:u-b', 'user:u-z'])
+  })
+
+  it('sorts on the real last name, not the last token of the display label', () => {
+    // Display label would mis-sort these ("First Vang" vs "First Oakes" by last
+    // token), but the resolved last names (Abe, Zent) are authoritative.
+    const graph = deriveAccessGraph([
+      row({ id: '1', userId: 'u-zent', user: 'Oakes, Lee', userFirstName: 'Lee', userLastName: 'Zent', entitlement: 'read', entitlementId: 'e1', source: 'app', sourceId: 's0' }),
+      row({ id: '2', userId: 'u-abe', user: 'Vang, Kim', userFirstName: 'Kim', userLastName: 'Abe', entitlement: 'read', entitlementId: 'e2', source: 'app', sourceId: 's0' }),
+    ])
+    const scene = buildUserGridScene(graph, 1200)
+    const order = [...scene.nodes]
+      .sort((a, b) => a.position.y - b.position.y || a.position.x - b.position.x)
+      .map((n) => n.id)
+    expect(order).toEqual(['user:u-abe', 'user:u-zent'])
+  })
+
+  it('tie-breaks equal last names by full label then id', () => {
+    // Two "Smith"s: "Ann Smith" sorts before "Zed Smith" on the full label.
+    const graph = deriveAccessGraph([
+      row({ id: '1', userId: 'u-zed', userFirstName: 'Zed', userLastName: 'Smith', entitlement: 'read', entitlementId: 'e1', source: 'app', sourceId: 's0' }),
+      row({ id: '2', userId: 'u-ann', userFirstName: 'Ann', userLastName: 'Smith', entitlement: 'read', entitlementId: 'e2', source: 'app', sourceId: 's0' }),
+    ])
+    const scene = buildUserGridScene(graph, 1200)
+    const order = [...scene.nodes]
+      .sort((a, b) => a.position.y - b.position.y || a.position.x - b.position.x)
+      .map((n) => n.id)
+    expect(order).toEqual(['user:u-ann', 'user:u-zed'])
+  })
+
+  it('falls back to the display label last token when no last name is resolved', () => {
+    // Soft-degraded identities: no first/last name, so the label (= display
+    // name) and its last token are all we have to sort on.
+    const graph = deriveAccessGraph([
+      row({ id: '1', userId: 'u-z', user: 'Carol Zuel', entitlement: 'read', entitlementId: 'e1', source: 'app', sourceId: 's0' }),
+      row({ id: '2', userId: 'u-a', user: 'Bob Adams', entitlement: 'read', entitlementId: 'e2', source: 'app', sourceId: 's0' }),
+    ])
+    const scene = buildUserGridScene(graph, 1200)
+    const order = [...scene.nodes]
+      .sort((a, b) => a.position.y - b.position.y || a.position.x - b.position.x)
+      .map((n) => n.id)
+    expect(order).toEqual(['user:u-a', 'user:u-z'])
+  })
+
   it('returns an empty scene when there are no user nodes', () => {
     const scene = buildUserGridScene({ nodes: [], edges: [] }, 1200)
     expect(scene.nodes).toEqual([])

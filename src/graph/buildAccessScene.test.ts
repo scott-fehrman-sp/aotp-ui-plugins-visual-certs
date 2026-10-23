@@ -486,19 +486,22 @@ describe('buildAccessScene', () => {
   }
 
   /**
-   * Golden node positions + edge ids captured from the lanes layout BEFORE the
-   * single-lane option existed. Shown-mode layout must never move.
+   * Golden node positions + edge ids for shown (lanes) mode. Rank-axis bands
+   * (columns in LR, rows in TB) and edge ids are fixed by the layer order; the
+   * cross-axis positions reflect the A→Z within-lane sort by display name
+   * (ties broken by id). Recapture these only when that ordering or the lane
+   * geometry intentionally changes.
    */
   const GOLDEN: Record<
     string,
     { nodes: Record<string, [number, number]>; edges: string[] }
   > = {
   'worked-LR': {
-    nodes: { 'user:u1': [24, -32], 'role:role-a': [344, 0], 'accessProfile:ap-foo': [664, 56], 'entitlement:e1': [984, 168], 'source:s1': [1304, 112], 'entitlement:e2': [984, 280], 'entitlement:e3': [984, 56], 'accessProfile:ap-bar': [664, -56], 'entitlement:e4': [984, -56], 'source:s2': [1304, 0], 'entitlement:e5': [984, -168], 'entitlement:e6': [984, -280], 'source:s3': [1304, -112] },
+    nodes: { 'user:u1': [24, -32], 'role:role-a': [344, 0], 'accessProfile:ap-foo': [664, 56], 'entitlement:e1': [984, -168], 'source:s1': [1304, 0], 'entitlement:e2': [984, 280], 'entitlement:e3': [984, -280], 'accessProfile:ap-bar': [664, -56], 'entitlement:e4': [984, -56], 'source:s2': [1304, -112], 'entitlement:e5': [984, 168], 'entitlement:e6': [984, 56], 'source:s3': [1304, 112] },
     edges: ['e:user:u1:role:role-a', 'e:role:role-a:accessProfile:ap-foo', 'e:accessProfile:ap-foo:entitlement:e1', 'e:entitlement:e1:source:s1', 'e:accessProfile:ap-foo:entitlement:e2', 'e:entitlement:e2:source:s1', 'e:role:role-a:entitlement:e3', 'e:entitlement:e3:source:s1', 'e:user:u1:accessProfile:ap-bar', 'e:accessProfile:ap-bar:entitlement:e4', 'e:entitlement:e4:source:s2', 'e:accessProfile:ap-bar:entitlement:e5', 'e:entitlement:e5:source:s2', 'e:user:u1:entitlement:e6', 'e:entitlement:e6:source:s3'],
   },
   'worked-TB': {
-    nodes: { 'user:u1': [0, 24], 'role:role-a': [0, 208], 'accessProfile:ap-foo': [124, 392], 'entitlement:e1': [372, 576], 'source:s1': [248, 760], 'entitlement:e2': [620, 576], 'entitlement:e3': [124, 576], 'accessProfile:ap-bar': [-124, 392], 'entitlement:e4': [-124, 576], 'source:s2': [0, 760], 'entitlement:e5': [-372, 576], 'entitlement:e6': [-620, 576], 'source:s3': [-248, 760] },
+    nodes: { 'user:u1': [0, 24], 'role:role-a': [0, 208], 'accessProfile:ap-foo': [124, 392], 'entitlement:e1': [-372, 576], 'source:s1': [0, 760], 'entitlement:e2': [620, 576], 'entitlement:e3': [-620, 576], 'accessProfile:ap-bar': [-124, 392], 'entitlement:e4': [-124, 576], 'source:s2': [-248, 760], 'entitlement:e5': [372, 576], 'entitlement:e6': [124, 576], 'source:s3': [248, 760] },
     edges: ['e:user:u1:role:role-a', 'e:role:role-a:accessProfile:ap-foo', 'e:accessProfile:ap-foo:entitlement:e1', 'e:entitlement:e1:source:s1', 'e:accessProfile:ap-foo:entitlement:e2', 'e:entitlement:e2:source:s1', 'e:role:role-a:entitlement:e3', 'e:entitlement:e3:source:s1', 'e:user:u1:accessProfile:ap-bar', 'e:accessProfile:ap-bar:entitlement:e4', 'e:entitlement:e4:source:s2', 'e:accessProfile:ap-bar:entitlement:e5', 'e:entitlement:e5:source:s2', 'e:user:u1:entitlement:e6', 'e:entitlement:e6:source:s3'],
   },
   'nested-LR': {
@@ -510,11 +513,11 @@ describe('buildAccessScene', () => {
     edges: ['e:user:u1:role:role-a', 'e:role:role-a:accessProfile:ap-foo', 'e:accessProfile:ap-foo:entitlement:e1', 'e:entitlement:e1:source:s1', 'e:user:u1:entitlement:e1'],
   },
   'mixed-LR': {
-    nodes: { 'user:u1': [24, -32], 'role:r': [344, 0], 'accessProfile:ap': [664, 0], 'entitlement:l1': [984, 224], 'source:s': [1304, 0], 'entitlement:l2': [984, 112], 'entitlement:d1': [984, 0], 'entitlement:d2': [984, -112], 'entitlement:d3': [984, -224] },
+    nodes: { 'user:u1': [24, -32], 'role:r': [344, 0], 'accessProfile:ap': [664, 0], 'entitlement:l1': [984, 112], 'source:s': [1304, 0], 'entitlement:l2': [984, 224], 'entitlement:d1': [984, -224], 'entitlement:d2': [984, -112], 'entitlement:d3': [984, 0] },
     edges: ['e:user:u1:role:r', 'e:role:r:accessProfile:ap', 'e:accessProfile:ap:entitlement:l1', 'e:entitlement:l1:source:s', 'e:accessProfile:ap:entitlement:l2', 'e:entitlement:l2:source:s', 'e:user:u1:entitlement:d1', 'e:entitlement:d1:source:s', 'e:user:u1:entitlement:d2', 'e:entitlement:d2:source:s', 'e:user:u1:entitlement:d3', 'e:entitlement:d3:source:s'],
   },
   'mixed-TB': {
-    nodes: { 'user:u1': [0, 24], 'role:r': [0, 208], 'accessProfile:ap': [0, 392], 'entitlement:l1': [496, 576], 'source:s': [0, 760], 'entitlement:l2': [248, 576], 'entitlement:d1': [0, 576], 'entitlement:d2': [-248, 576], 'entitlement:d3': [-496, 576] },
+    nodes: { 'user:u1': [0, 24], 'role:r': [0, 208], 'accessProfile:ap': [0, 392], 'entitlement:l1': [248, 576], 'source:s': [0, 760], 'entitlement:l2': [496, 576], 'entitlement:d1': [-496, 576], 'entitlement:d2': [-248, 576], 'entitlement:d3': [0, 576] },
     edges: ['e:user:u1:role:r', 'e:role:r:accessProfile:ap', 'e:accessProfile:ap:entitlement:l1', 'e:entitlement:l1:source:s', 'e:accessProfile:ap:entitlement:l2', 'e:entitlement:l2:source:s', 'e:user:u1:entitlement:d1', 'e:entitlement:d1:source:s', 'e:user:u1:entitlement:d2', 'e:entitlement:d2:source:s', 'e:user:u1:entitlement:d3', 'e:entitlement:d3:source:s'],
   },
   }

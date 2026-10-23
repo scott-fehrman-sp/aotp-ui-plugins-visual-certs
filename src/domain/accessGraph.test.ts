@@ -584,6 +584,39 @@ describe('deriveAccessGraph', () => {
     expect(nodes).toEqual([{ id: 'user:u1', kind: 'user', label: 'User One' }])
     expect(edges).toEqual([])
   })
+
+  it('labels the user node "FIRST LAST" and carries first/last name in detail', () => {
+    const { nodes } = deriveAccessGraph([
+      row({
+        id: 'blank',
+        userFirstName: 'Jane',
+        userLastName: 'Doe',
+        unresolved: true,
+      }),
+    ])
+    const user = nodes.find((n) => n.kind === 'user')!
+    expect(user.label).toBe('Jane Doe')
+    expect(user.detail?.firstName).toBe('Jane')
+    expect(user.detail?.lastName).toBe('Doe')
+  })
+
+  it('falls back to the display name when first and last name are both absent', () => {
+    const { nodes } = deriveAccessGraph([
+      row({ id: 'blank', user: 'Display Only', unresolved: true }),
+    ])
+    expect(nodes.find((n) => n.kind === 'user')!.label).toBe('Display Only')
+  })
+
+  it('builds the label from whichever name part is present', () => {
+    const onlyLast = deriveAccessGraph([
+      row({ id: 'b', userId: 'u1', user: 'Fallback', userLastName: 'Solo', unresolved: true }),
+    ]).nodes.find((n) => n.kind === 'user')!
+    expect(onlyLast.label).toBe('Solo')
+    const onlyFirst = deriveAccessGraph([
+      row({ id: 'b', userId: 'u2', user: 'Fallback', userFirstName: 'Cher', unresolved: true }),
+    ]).nodes.find((n) => n.kind === 'user')!
+    expect(onlyFirst.label).toBe('Cher')
+  })
 })
 
 describe('deriveAccessGraph first-level structure (shared fixture)', () => {

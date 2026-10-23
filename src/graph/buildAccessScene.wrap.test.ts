@@ -1,4 +1,3 @@
-import { Graph, layout } from '@dagrejs/dagre'
 import { Position } from '@xyflow/react'
 import { describe, expect, it } from 'vitest'
 import type {
@@ -223,30 +222,20 @@ describe('lane wrap past MAX_ITEMS_PER_LANE', () => {
         })
       })
 
-      it('reads the original single-lane order across sub-lanes (dagre oracle)', () => {
+      it('reads alphabetically by display name across sub-lanes', () => {
         for (const n of [11, 25, 31]) {
           const graph = graphOf(ents(n))
-          const oracle = new Graph()
-          oracle.setDefaultEdgeLabel(() => ({}))
-          oracle.setGraph({
-            rankdir: d,
-            nodesep: NODE_SEP,
-            ranksep: RANK_SEP,
-            ranker: 'network-simplex',
-            marginx: MARGIN,
-            marginy: MARGIN,
-          })
-          for (const node of graph.nodes) {
-            oracle.setNode(node.id, { width: NODE_WIDTH, height: NODE_HEIGHT })
-          }
-          for (const edge of graph.edges) oracle.setEdge(edge.from, edge.to)
-          layout(oracle)
-          const cross = (id: string) =>
-            d === 'TB' ? oracle.node(id).x : oracle.node(id).y
+          // Cards are ordered A→Z by label, tie-broken by id. The `ents(n)`
+          // fixture labels ('Ent 001', 'Ent 002', …) sort the same as their
+          // ids, so the expected order is ascending entitlement id.
           const expected = graph.nodes
             .filter((node) => node.kind === 'entitlement')
+            .sort(
+              (a, b) =>
+                a.label.toLowerCase().localeCompare(b.label.toLowerCase(), 'en') ||
+                a.id.localeCompare(b.id),
+            )
             .map((node) => node.id)
-            .sort((a, b) => cross(a) - cross(b) || a.localeCompare(b))
           const scene = buildAccessScene(graph, d)
           const actual = subLanes(scene, 'entitlement', d).flatMap((s) =>
             s.nodes.map((node) => node.id),
@@ -473,13 +462,17 @@ describe('lane wrap past MAX_ITEMS_PER_LANE', () => {
           edges: [...graph.edges].reverse(),
         }
         const b = buildAccessScene(shuffled, d)
-        // dagre's lane order follows insertion order, so compare the SHAPE only.
+        // Within-lane order is now a pure A→Z name sort (independent of input
+        // order), so every lane lands each card at exactly the same position
+        // regardless of how the nodes were shuffled.
         for (const kind of ['user', 'role', 'accessProfile', 'entitlement', 'source'] as const) {
           expect(sizes(b, kind, d)).toEqual(sizes(a, kind, d))
           expect(ranks(b, kind, d)).toEqual(ranks(a, kind, d))
-          const crossSets = (s: AccessScene) =>
-            subLanes(s, kind, d).map((sub) => sub.nodes.map((n) => crossOf(n, d)))
-          expect(crossSets(b)).toEqual(crossSets(a))
+          const placed = (s: AccessScene) =>
+            subLanes(s, kind, d).map((sub) =>
+              sub.nodes.map((n) => [n.id, crossOf(n, d)] as const),
+            )
+          expect(placed(b)).toEqual(placed(a))
         }
       })
     }

@@ -745,6 +745,8 @@ async function expandItem(
   const base = {
     userId: item.identityId,
     user: item.personName,
+    userFirstName: identity.firstName,
+    userLastName: identity.lastName,
     userDepartment: identity.department,
     userLocation: identity.location,
     userCountry: identity.country,

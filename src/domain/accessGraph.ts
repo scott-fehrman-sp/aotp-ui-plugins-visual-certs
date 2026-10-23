@@ -15,6 +15,19 @@ import type {
 } from '../sailpoint/types'
 import { reviewKey } from './reviewOverlay'
 
+/**
+ * The user node's display label: "FIRST LAST" built from the resolved
+ * first / last name. Falls back to whichever name part is present, and finally
+ * to the API display name (`row.user`) when neither was resolved, so a user
+ * node always has a non-empty label even if the identity lookup soft-degraded.
+ */
+function userLabel(row: AccessMatrixRowVM): string {
+  const first = (row.userFirstName ?? '').trim()
+  const last = (row.userLastName ?? '').trim()
+  const combined = [first, last].filter(Boolean).join(' ')
+  return combined || row.user
+}
+
 /** One present level on a row's path: a graph node to add + edge to continue. */
 interface Level {
   id: string
@@ -37,6 +50,10 @@ function detailFor(
 ): Level['detail'] {
   const detail: NodeDetail = {}
   if (kind === 'user') {
+    // First / last name are carried for the grid's last-name sort (not shown by
+    // the detail panel's fixed field list).
+    if (row.userFirstName) detail.firstName = row.userFirstName
+    if (row.userLastName) detail.lastName = row.userLastName
     if (row.userDepartment) detail.department = row.userDepartment
     if (row.userLocation) detail.location = row.userLocation
     if (row.userCountry) detail.country = row.userCountry
@@ -209,7 +226,7 @@ export function deriveAccessGraph(
     levels.push({
       id: `user:${row.userId}`,
       kind: 'user',
-      label: row.user,
+      label: userLabel(row),
       detail: detailFor('user', row),
     })
 

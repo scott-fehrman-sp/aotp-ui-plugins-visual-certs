@@ -32,7 +32,6 @@
  * runner means this module (and its unit test) exercise all the graph logic
  * without mounting the canvas or needing jsdom measurement.
  */
-import { Graph, layout } from '@dagrejs/dagre'
 import { Position, type Edge, type Node } from '@xyflow/react'
 import type {
   AccessGraphData,
@@ -239,64 +238,31 @@ function singleLanePlacements(
 }
 
 /**
- * Lanes placement: one dagre pass for the cross-axis ORDER, then every kind is
- * pinned to its fixed band (a column in LR, a row in TB) and each lane is
- * de-overlapped at a fixed stride. A role / access profile / entitlement lane
- * with more than `MAX_ITEMS_PER_LANE` cards is split (column-major, in its
- * existing order) into balanced sub-columns / sub-rows `subStep` apart on the
- * rank axis, each centered on cross 0. Lanes are visited in layer order and
- * every lane after a wrapped one shifts by the extra width, accumulated; an
- * absent kind keeps its fixed slot (lanes are not compacted).
+ * Lanes placement: every kind is pinned to its fixed band (a column in LR, a
+ * row in TB) and each lane is laid out independently — its cards ordered
+ * alphabetically by display name and de-overlapped at a fixed stride. A role /
+ * access profile / entitlement lane with more than `MAX_ITEMS_PER_LANE` cards
+ * is split (column-major, in that same name order) into balanced sub-columns /
+ * sub-rows `subStep` apart on the rank axis, each centered on cross 0. Lanes
+ * are visited in layer order and every lane after a wrapped one shifts by the
+ * extra width, accumulated; an absent kind keeps its fixed slot (lanes are not
+ * compacted).
  */
 function lanePlacements(
   graph: AccessGraphData,
-  rankdir: RankDir,
   bandStep: number,
   crossStride: number,
   subStep: number,
 ): Map<string, Placement> {
-  const dagreGraph = new Graph()
-  dagreGraph.setDefaultEdgeLabel(() => ({}))
-  dagreGraph.setGraph({
-    rankdir,
-    nodesep: NODE_SEP,
-    ranksep: RANK_SEP,
-    ranker: 'network-simplex',
-    marginx: MARGIN,
-    marginy: MARGIN,
-  })
-
-  for (const node of graph.nodes) {
-    dagreGraph.setNode(node.id, {
-      width: NODE_WIDTH,
-      height: nodeHeightFor(node.kind),
-    })
-  }
-  for (const edge of graph.edges) {
-    dagreGraph.setEdge(edge.from, edge.to)
-  }
-
-  layout(dagreGraph)
-
-  const vertical = rankdir === 'TB'
   // Pin the rank axis to the kind's fixed band so every kind forms its own
   // column (LR) or row (TB).
   const rankCoordFor = (kind: AccessGraphNodeKind): number =>
     MARGIN + kindRank(kind) * bandStep
 
-  // Collapsing every rank-distance of one kind into a single lane means dagre's
-  // cross-axis coordinates — assigned when those nodes sat on DIFFERENT dagre
-  // ranks — can coincide, so two cards in the same lane would overlap (the bug
-  // from pinning alone). De-overlap each lane: keep dagre's cross-axis ORDER
-  // (preserves a sensible top-to-bottom / left-to-right arrangement and keeps
-  // edges from tangling) but re-space the cards at a fixed stride so no two in a
-  // lane can touch.
-  // dagre's centered cross-axis coordinate per node (x for LR, y for TB).
-  const dagreCross = (id: string): number => {
-    const placed = dagreGraph.node(id)
-    return vertical ? placed.x : placed.y
-  }
-
+  // Each lane is laid out independently: cards are ordered alphabetically by
+  // display name (see below) and re-spaced at a fixed cross-axis stride so no
+  // two in a lane can touch. No dagre pass is needed — the rank axis is pinned
+  // to the kind's band and the cross-axis order is purely the name sort.
   const placements = new Map<string, Placement>()
   const byKind = new Map<AccessGraphNodeKind, AccessGraphData['nodes']>()
   for (const node of graph.nodes) {
@@ -309,11 +275,13 @@ function lanePlacements(
   let shift = 0
   for (const kind of kinds) {
     const lane = byKind.get(kind) ?? []
-    // Order within the lane by dagre's cross-axis position, tie-broken by id so
-    // the layout stays deterministic.
+    // Order within the lane alphabetically by the card's display name so every
+    // access-item lane (role / access profile / entitlement) and the source
+    // lane read A→Z. Tie-broken by id so the layout stays deterministic. (The
+    // user lane holds a single card, so the key is moot there.)
     const ordered = [...lane].sort((a, b) => {
-      const delta = dagreCross(a.id) - dagreCross(b.id)
-      return delta !== 0 ? delta : a.id.localeCompare(b.id)
+      const byLabel = compareLabels(a.label, b.label)
+      return byLabel !== 0 ? byLabel : a.id.localeCompare(b.id)
     })
     const chunks = WRAPPING_KINDS.has(kind) ? splitLane(ordered) : [ordered]
     const baseRank = rankCoordFor(kind) + shift
@@ -362,7 +330,7 @@ export function buildAccessScene(
   // Per-node coordinates from whichever layout was requested.
   const placements = options.singleLane
     ? singleLanePlacements(graph, bandStep, crossStride)
-    : lanePlacements(graph, rankdir, bandStep, crossStride, subStep)
+    : lanePlacements(graph, bandStep, crossStride, subStep)
 
   const nodes: AccessSceneNode[] = graph.nodes.map((node) => {
     const { rank: rankCoord, cross } = placements.get(node.id) ?? { rank: MARGIN, cross: 0 }
