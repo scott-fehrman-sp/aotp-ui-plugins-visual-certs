@@ -4,8 +4,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { statusGraph } from '../test/reviewStatusFixture'
 import type { StatusRow } from '../test/reviewStatusFixture'
 import { AccessGraphCanvas } from './AccessGraphCanvas'
-import { CARD_Z_INDEX } from './buildAccessScene'
-import { DIM_REFERENCE_OPACITY, DIM_STATUS_OPACITY, EMPHASIS_EDGE_Z_INDEX } from './emphasizeEdges'
 
 // A separate file so wrapping ReactFlow (to record the nodes/edges it is given)
 // and mocking fitView / setViewport leaves the other canvas tests untouched.
@@ -67,12 +65,9 @@ const edges = () => spies.edges as Edge[]
 const nodes = () => spies.nodes as Node[]
 const card = (label: string) => screen.getByText(label).closest<HTMLElement>('.vc-graph-card')!
 const drillIn = () => fireEvent.click(btn('Show access for User One'))
-const nodeId = (label: string) =>
-  nodes().find((n) => (n.data as { label: string }).label === label)!.id
 const emphasized = () => edges().filter((e) => e.className?.includes('vc-graph-edge-emphasized'))
 const snapshot = () => structuredClone(edges())
 const positions = () => nodes().map((n) => ({ id: n.id, ...n.position }))
-const isStatus = (e: Edge) => Boolean((e.data as { reviewStatus?: string } | undefined)?.reviewStatus)
 
 describe('AccessGraphCanvas hover / focus edge emphasis', () => {
   beforeEach(() => {
@@ -80,32 +75,24 @@ describe('AccessGraphCanvas hover / focus edge emphasis', () => {
     spies.setViewport.mockClear()
   })
 
-  it('raises and dims on hover, and restores the exact edges on leave', () => {
+  it('does not draw a user link on hover, and leaves the other links as they are', () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
     // completed items and reference start hidden by default; show both so the
-    // completed `login` card and the reference edges exist to emphasize/dim
+    // completed `login` card and the reference edges exist
     fireEvent.click(btn(/^Show completed items/))
     fireEvent.click(btn('Show reference nodes and links'))
     const before = snapshot()
     const login = card('login')
     fireEvent.mouseEnter(login)
-    const raised = emphasized()
-    expect(raised).toHaveLength(1)
-    expect(raised[0].target).toBe(nodeId('login'))
-    expect(raised[0].zIndex).toBe(EMPHASIS_EDGE_Z_INDEX)
-    expect(raised[0].zIndex).toBeGreaterThan(CARD_Z_INDEX)
-    const others = edges().filter((e) => e !== raised[0])
-    expect(others.length).toBeGreaterThan(0)
-    for (const e of others) {
-      expect(e.style?.opacity).toBe(isStatus(e) ? DIM_STATUS_OPACITY : DIM_REFERENCE_OPACITY)
-    }
-    fireEvent.mouseLeave(login)
     expect(emphasized()).toHaveLength(0)
+    expect(edges().some((e) => e.source === 'user:u1')).toBe(false)
+    expect(edges()).toEqual(before)
+    fireEvent.mouseLeave(login)
     expect(edges()).toEqual(before)
   })
 
-  it('emphasizes on focus and restores on blur', () => {
+  it('does not draw a user link on focus', () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
     // completed items start hidden by default; show them so the revoked `admin` card appears
@@ -113,9 +100,9 @@ describe('AccessGraphCanvas hover / focus edge emphasis', () => {
     const before = snapshot()
     const admin = card('admin')
     fireEvent.focus(admin)
-    expect(emphasized().map((e) => e.target)).toEqual([nodeId('admin')])
-    fireEvent.blur(admin)
     expect(emphasized()).toHaveLength(0)
+    expect(edges()).toEqual(before)
+    fireEvent.blur(admin)
     expect(edges()).toEqual(before)
   })
 
@@ -132,56 +119,36 @@ describe('AccessGraphCanvas hover / focus edge emphasis', () => {
     expect(edges()).toBe(edgesBefore)
   })
 
-  it('prefers the pointer over focus and falls back to focus after the pointer leaves', () => {
+  it('hover and focus do not draw user links', () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
     // completed items start hidden by default; show them so login/admin cards appear
     fireEvent.click(btn(/^Show completed items/))
+    const before = snapshot()
     const login = card('login')
     const admin = card('admin')
     fireEvent.focus(admin)
     fireEvent.mouseEnter(login)
-    expect(emphasized().map((e) => e.target)).toEqual([nodeId('login')])
     fireEvent.mouseLeave(login)
-    expect(emphasized().map((e) => e.target)).toEqual([nodeId('admin')])
-    fireEvent.blur(admin)
-    expect(emphasized()).toHaveLength(0)
-  })
-
-  it('a late leave of an older card does not clear a newer hover', () => {
-    render(<AccessGraphCanvas graph={graph()} />)
-    drillIn()
-    // completed items start hidden by default; show them so login/admin cards appear
-    fireEvent.click(btn(/^Show completed items/))
-    const login = card('login')
-    const admin = card('admin')
-    fireEvent.mouseEnter(login)
     fireEvent.mouseEnter(admin)
     fireEvent.mouseLeave(login)
-    expect(emphasized().map((e) => e.target)).toEqual([nodeId('admin')])
+    fireEvent.blur(admin)
+    expect(emphasized()).toHaveLength(0)
+    expect(edges()).toEqual(before)
   })
 
-  it('works with reference hidden and in the vertical layout', () => {
+  it('draws no links when reference is hidden, in either layout', () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
-    // reference starts hidden by default (the precondition here); completed
-    // items start hidden too, so show them to reveal the revoked `admin` card
+    // reference starts hidden by default; completed items start hidden too, so
+    // show them to reveal the revoked `admin` card
     fireEvent.click(btn(/^Show completed items/))
-    expect(edges().every(isStatus)).toBe(true)
+    expect(edges()).toHaveLength(0)
     fireEvent.mouseEnter(card('admin'))
-    expect(emphasized().map((e) => e.target)).toEqual([nodeId('admin')])
-    expect(edges().filter((e) => e.style?.opacity === DIM_STATUS_OPACITY)).toHaveLength(
-      edges().length - 1,
-    )
+    expect(edges()).toHaveLength(0)
     fireEvent.mouseLeave(card('admin'))
-    // layout now starts in TB (vertical), so no click is needed to reach it
-    const raisedTb = () => {
-      fireEvent.mouseEnter(card('Role A'))
-      return emphasized()
-    }
-    const out = raisedTb()
-    expect(out.map((e) => e.target)).toEqual([nodeId('Role A')])
-    expect(out[0].targetHandle).toBe('top-in')
+    fireEvent.mouseEnter(card('Role A'))
+    expect(edges()).toHaveLength(0)
   })
 
   it('never refits, re-viewports or moves a node on hover or focus', async () => {
@@ -222,30 +189,26 @@ describe('AccessGraphCanvas hover / focus edge emphasis', () => {
     fireEvent.click(btn(/^Show completed items/))
     fireEvent.click(btn('Show reference nodes and links'))
     fireEvent.mouseEnter(card('login'))
-    expect(emphasized()).toHaveLength(1)
-    fireEvent.click(btn('Hide reference nodes and links'))
     expect(emphasized()).toHaveLength(0)
-    expect(edges().some((e) => e.style?.opacity !== undefined)).toBe(false)
+    expect(edges().some((e) => e.source === 'user:u1')).toBe(false)
+    fireEvent.click(btn('Hide reference nodes and links'))
+    expect(edges()).toHaveLength(0)
 
     fireEvent.focus(card('admin'))
-    expect(emphasized()).toHaveLength(1)
     // layout now starts in TB; clicking "Layout: horizontal" changes layout (to LR)
     fireEvent.click(btn('Layout: horizontal'))
-    expect(emphasized()).toHaveLength(0)
+    expect(edges().some((e) => e.source === 'user:u1')).toBe(false)
 
     fireEvent.mouseEnter(card('Role A'))
-    expect(emphasized().length).toBeGreaterThan(0)
     fireEvent.click(btn('Hide completed items'))
-    expect(emphasized()).toHaveLength(0)
-    expect(edges().some((e) => e.style?.opacity !== undefined)).toBe(false)
+    expect(edges().some((e) => e.source === 'user:u1')).toBe(false)
     fireEvent.click(btn(/^Show completed items/))
 
     fireEvent.mouseEnter(card('admin'))
-    expect(emphasized()).toHaveLength(1)
     fireEvent.click(screen.getByRole('button', { name: /back to all users/i }))
     fireEvent.click(btn('Show access for User One'))
     expect(emphasized()).toHaveLength(0)
-    expect(edges().some((e) => e.style?.opacity !== undefined)).toBe(false)
+    expect(edges().some((e) => e.source === 'user:u1')).toBe(false)
   })
 
   it('does not emphasize anything in the user grid', () => {
@@ -263,15 +226,15 @@ describe('AccessGraphCanvas hover / focus edge emphasis', () => {
     fireEvent.click(btn(/^Show completed items/))
     const login = card('login')
     fireEvent.mouseEnter(login)
-    // The hover tooltip was removed; only the edge emphasis responds.
+    // The hover tooltip was removed, and the user link is not drawn.
     expect(screen.queryByRole('tooltip')).toBeNull()
-    expect(emphasized()).toHaveLength(1)
-    fireEvent.mouseLeave(login)
     expect(emphasized()).toHaveLength(0)
+    expect(edges().some((e) => e.source === 'user:u1')).toBe(false)
+    fireEvent.mouseLeave(login)
 
     const admin = card('admin')
     fireEvent.focus(admin)
     expect(screen.queryByRole('tooltip')).toBeNull()
-    expect(emphasized()).toHaveLength(1)
+    expect(emphasized()).toHaveLength(0)
   })
 })

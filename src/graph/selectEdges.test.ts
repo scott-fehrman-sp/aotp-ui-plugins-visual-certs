@@ -325,6 +325,23 @@ describe('highlightEdges', () => {
     })
   })
 
+  it('highlights downstream lineage from the item status when the user link is absent', () => {
+    const drawn = scene.edges.filter((edge) => !isStatus(edge))
+    const out = highlightEdges(drawn, 'role:role-a', null, { reviewStatus: 'needsReview' })
+    const lineage = out.filter((edge) => edge.className?.includes(LINEAGE_EDGE_CLASS))
+    expect(lineage.map((edge) => edge.id).sort()).toEqual(
+      sorted([
+        eid('role:role-a', 'accessProfile:ap-foo'),
+        eid('accessProfile:ap-foo', 'entitlement:e1'),
+        eid('entitlement:e1', 'source:s1'),
+      ]),
+    )
+    expect(out.some((edge) => edge.className?.includes(SELECTED_EDGE_CLASS))).toBe(false)
+    expect(lineage.every((edge) => edge.style?.stroke === STATUS_STROKE.needsReview)).toBe(true)
+    const other = out.find((edge) => edge.id === eid('entitlement:e3', 'source:s2'))!
+    expect(other.style?.opacity).toBe(DIM_REFERENCE_OPACITY)
+  })
+
   it('returns to the baseline once the selection is cleared', () => {
     highlightEdges(scene.edges, 'role:role-a', null)
     expect(highlightEdges(scene.edges, null, null)).toEqual(clone(scene.edges))

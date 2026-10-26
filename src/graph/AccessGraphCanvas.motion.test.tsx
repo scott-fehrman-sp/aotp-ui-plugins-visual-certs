@@ -5,7 +5,7 @@ import { statusGraph } from '../test/reviewStatusFixture'
 import type { StatusRow } from '../test/reviewStatusFixture'
 import type { AccessGraphData } from '../sailpoint/types'
 import { AccessGraphCanvas } from './AccessGraphCanvas'
-import { SELECTED_EDGE_CLASS } from './selectEdges'
+import { LINEAGE_EDGE_CLASS } from './selectEdges'
 
 // Transition behavior of the canvas under jsdom: it cannot paint, so this checks
 // the DOM classes / attributes React Flow is handed over time (with fake timers
@@ -233,6 +233,8 @@ describe('toggles', () => {
 describe('hover and selection', () => {
   it('never start a transition or touch the nodes handed to React Flow', () => {
     const { container } = drill(mount())
+    fireEvent.click(btn('Show reference nodes and links'))
+    advance(MOTION + 100)
     const before = idsOf(container)
     const classes = wrappers(container).map((el) => el.className)
     const nodesBefore = nodes()
@@ -245,13 +247,15 @@ describe('hover and selection', () => {
     expect(wrappers(container).map((el) => el.className)).toEqual(classes)
     expect(nodes()).toBe(nodesBefore)
     expect(spies.fitView).not.toHaveBeenCalled()
-    expect(edges().some((e) => e.className?.includes(SELECTED_EDGE_CLASS))).toBe(true)
+    expect(edges().some((e) => e.source === 'user:u1')).toBe(false)
+    expect(edges().some((e) => e.className?.includes(LINEAGE_EDGE_CLASS))).toBe(true)
   })
 
   it('selecting mid-transition leaves leaving edges untouched and appends to the others', () => {
     const { container } = drill(mount())
     // completed items start hidden by default; show them so hiding them again
     // produces the leaving edges this test checks mid-transition
+    fireEvent.click(btn('Show reference nodes and links'))
     fireEvent.click(btn(/^Show completed items/))
     advance(MOTION + 100)
     fireEvent.click(btn('Hide completed items'))
@@ -264,12 +268,12 @@ describe('hover and selection', () => {
       expect(now).toBe(edge)
       expect(now.style?.opacity).toBe(edge.style?.opacity)
     }
-    const selected = edges().find((e) => e.className?.includes(SELECTED_EDGE_CLASS))!
-    expect(selected.className).toContain('vc-graph-edge-needsReview')
+    const selected = edges().find((e) => e.className?.includes(LINEAGE_EDGE_CLASS))!
+    expect(selected.className).not.toContain('vc-graph-edge-needsReview')
     expect(transitioning(container).length).toBeGreaterThan(0)
     advance(MOTION + 100)
     expect(transitioning(container)).toEqual([])
-    expect(edges().find((e) => e.id === selected.id)!.className).toContain(SELECTED_EDGE_CLASS)
+    expect(edges().find((e) => e.id === selected.id)!.className).toContain(LINEAGE_EDGE_CLASS)
   })
 })
 

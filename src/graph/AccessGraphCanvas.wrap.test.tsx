@@ -5,7 +5,6 @@ import { statusGraph } from '../test/reviewStatusFixture'
 import type { StatusRow } from '../test/reviewStatusFixture'
 import { AccessGraphCanvas } from './AccessGraphCanvas'
 import { NODE_HEIGHT, NODE_WIDTH, WRAP_GAP } from './buildAccessScene'
-import { EMPHASIS_EDGE_Z_INDEX } from './emphasizeEdges'
 import { LINEAGE_EDGE_CLASS, SELECTED_EDGE_CLASS } from './selectEdges'
 
 // Separate file: spies on fitView / setViewport (to count refit plans) and
@@ -253,7 +252,7 @@ describe('AccessGraphCanvas lane wrapping', () => {
       const target = card(last)
       fireEvent.click(target)
       expect(target).toHaveAttribute('aria-pressed', 'true')
-      expect(withClass(SELECTED_EDGE_CLASS).map((e) => e.target)).toEqual([`entitlement:${lastId}`])
+      expect(withClass(SELECTED_EDGE_CLASS)).toHaveLength(0)
       expect(withClass(LINEAGE_EDGE_CLASS).map((e) => e.id)).toEqual([
         `e:entitlement:${lastId}:source:s1`,
       ])
@@ -265,15 +264,15 @@ describe('AccessGraphCanvas lane wrapping', () => {
       expect(target).toHaveAttribute('aria-pressed', 'false')
     })
 
-    it('raises the hovered edge above the cards and restores it on leave', () => {
+    it('does not draw a user link when the card is hovered', () => {
       open()
       const target = card(last)
+      const before = edges().map((e) => e.id)
       fireEvent.mouseEnter(target)
-      const hovered = withClass('vc-graph-edge-emphasized')
-      expect(hovered.map((e) => e.target)).toEqual([`entitlement:${lastId}`])
-      expect(hovered[0].zIndex).toBe(EMPHASIS_EDGE_Z_INDEX)
-      fireEvent.mouseLeave(target)
       expect(withClass('vc-graph-edge-emphasized')).toHaveLength(0)
+      expect(edges().some((e) => e.source.startsWith('user:'))).toBe(false)
+      expect(edges().map((e) => e.id)).toEqual(before)
+      fireEvent.mouseLeave(target)
     })
 
     it('opens no hover tooltip (the detail panel carries that info)', () => {

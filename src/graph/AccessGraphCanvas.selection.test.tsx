@@ -5,13 +5,11 @@ import { buildFixtureGraph, statusGraph } from '../test/reviewStatusFixture'
 import type { StatusRow } from '../test/reviewStatusFixture'
 import type { AccessGraphData } from '../sailpoint/types'
 import { AccessGraphCanvas } from './AccessGraphCanvas'
-import { CARD_Z_INDEX } from './buildAccessScene'
-import { DIM_REFERENCE_OPACITY, DIM_STATUS_OPACITY, EMPHASIS_EDGE_Z_INDEX } from './emphasizeEdges'
+import { DIM_REFERENCE_OPACITY, DIM_STATUS_OPACITY } from './emphasizeEdges'
 import {
   LINEAGE_EDGE_CLASS,
   LINEAGE_STROKE_WIDTH,
   SELECTED_EDGE_CLASS,
-  SELECTION_STROKE_WIDTH,
   STATUS_STROKE,
 } from './selectEdges'
 
@@ -80,8 +78,6 @@ const edges = () => spies.edges as Edge[]
 const nodes = () => spies.nodes as Node[]
 const card = (label: string) => screen.getByText(label).closest<HTMLElement>('.vc-graph-card')!
 const drillIn = (user = 'User One') => fireEvent.click(btn(`Show access for ${user}`))
-const nodeId = (label: string) =>
-  nodes().find((n) => (n.data as { label: string }).label === label)!.id
 const eid = (from: string, to: string) => `e:${from}:${to}`
 const withClass = (name: string) => edges().filter((e) => e.className?.includes(name))
 const selectedEdges = () => withClass(SELECTED_EDGE_CLASS)
@@ -148,11 +144,11 @@ describe('AccessGraphCanvas item selection', () => {
     expect(card('Role A')).toBeInTheDocument()
   })
 
-  it('click selects and highlights the user edge and the whole lineage; click again clears', () => {
+  it('click selects and highlights the lineage, without a link from the user; click again clears', () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
     // reference and completed items start hidden by default; show both so Role A's
-    // reference lineage exists and the completed status edges are present to dim
+    // reference lineage exists and the completed items' links are present to dim
     fireEvent.click(btn('Show reference nodes and links'))
     fireEvent.click(btn(/^Show completed items/))
     const before = snapshot()
@@ -162,15 +158,8 @@ describe('AccessGraphCanvas item selection', () => {
     expect(roleA).toHaveAttribute('aria-pressed', 'true')
     expect(roleA.className).toContain('vc-graph-card-selected')
     expect(pressed()).toEqual([roleA])
-
-    const [selected] = selectedEdges()
-    expect(selectedEdges()).toHaveLength(1)
-    expect(selected.id).toBe(eid('user:u1', 'role:role-a'))
-    expect(selected.zIndex).toBe(EMPHASIS_EDGE_Z_INDEX)
-    expect(selected.zIndex).toBeGreaterThan(CARD_Z_INDEX)
-    expect(selected.style?.strokeWidth).toBe(SELECTION_STROKE_WIDTH)
-    expect(selected.style?.strokeDasharray).toBe('6 4')
-    expect(selected.interactionWidth).toBe(0)
+    expect(selectedEdges()).toHaveLength(0)
+    expect(edges().some((e) => e.source === 'user:u1')).toBe(false)
 
     expect(lineageEdges().map((e) => e.id).sort()).toEqual(
       [
@@ -187,7 +176,7 @@ describe('AccessGraphCanvas item selection', () => {
         opacity: 1,
       })
     }
-    const highlighted = new Set([...selectedEdges(), ...lineageEdges()].map((e) => e.id))
+    const highlighted = new Set(lineageEdges().map((e) => e.id))
     const others = edges().filter((e) => !highlighted.has(e.id))
     expect(others.length).toBeGreaterThan(0)
     for (const e of others) {
@@ -211,7 +200,7 @@ describe('AccessGraphCanvas item selection', () => {
     expect(lineageEdges().map((e) => e.id)).toEqual([eid('entitlement:e2', 'source:s2')])
     fireEvent.click(card('admin'))
     expect(pressed()).toEqual([card('admin')])
-    expect(selectedEdges().map((e) => e.target)).toEqual([nodeId('admin')])
+    expect(selectedEdges()).toHaveLength(0)
     expect(lineageEdges().map((e) => e.id)).toEqual([eid('entitlement:e3', 'source:s2')])
     expect(
       edges().find((e) => e.id === eid('entitlement:e2', 'source:s2'))!.style?.opacity,
@@ -254,7 +243,6 @@ describe('AccessGraphCanvas item selection', () => {
     expect(pressed()).toEqual([card('engr db')])
     expect(lineageEdges().map((e) => e.id).sort()).toEqual(
       [
-        eid('user:u1', 'role:role-a'),
         eid('role:role-a', 'accessProfile:ap-foo'),
         eid('accessProfile:ap-foo', 'entitlement:e1'),
         eid('entitlement:e1', 'source:s1'),
@@ -398,8 +386,8 @@ describe('AccessGraphCanvas item selection', () => {
 
     fireEvent.click(btn('Layout: vertical'))
     expect(pressed()).toEqual([card('Role A')])
-    expect(selectedEdges()[0].targetHandle).toBe('top-in')
     expect(lineageEdges()).toHaveLength(3)
+    expect(lineageEdges().every((e) => e.targetHandle === 'top-in')).toBe(true)
 
     fireEvent.click(btn('Hide minimap'))
     expect(pressed()).toEqual([card('Role A')])
@@ -407,15 +395,12 @@ describe('AccessGraphCanvas item selection', () => {
     fireEvent.click(btn('Layout: horizontal'))
     expect(edges()).toEqual(full)
 
-    // Reference hidden: only the user -> item edge remains highlighted.
+    // Reference hidden: the user links stay hidden, so nothing is drawn.
     fireEvent.click(btn('Hide reference nodes and links'))
     expect(pressed()).toEqual([card('Role A')])
-    expect(selectedEdges()).toHaveLength(1)
+    expect(selectedEdges()).toHaveLength(0)
     expect(lineageEdges()).toHaveLength(0)
-    expect(edges().every(isStatus)).toBe(true)
-    expect(edges().filter((e) => e.style?.opacity === DIM_STATUS_OPACITY)).toHaveLength(
-      edges().length - 1,
-    )
+    expect(edges()).toHaveLength(0)
 
     // Reference shown again: the whole path is back, selection kept.
     fireEvent.click(btn('Show reference nodes and links'))
@@ -457,15 +442,13 @@ describe('AccessGraphCanvas item selection', () => {
     const plain = snapshot()
 
     fireEvent.mouseEnter(card('admin'))
-    expect(emphasized().map((e) => e.target)).toEqual([nodeId('admin')])
-    expect(emphasized()[0].style?.opacity).toBeUndefined()
-    expect(selectedEdges().map((e) => e.target)).toEqual([nodeId('Role A')])
+    expect(emphasized()).toHaveLength(0)
     expect(lineageEdges()).toHaveLength(3)
     fireEvent.mouseLeave(card('admin'))
     expect(edges()).toEqual(plain)
 
     fireEvent.focus(card('login'))
-    expect(emphasized().map((e) => e.target)).toEqual([nodeId('login')])
+    expect(emphasized()).toHaveLength(0)
     fireEvent.blur(card('login'))
     expect(edges()).toEqual(plain)
 
@@ -576,20 +559,18 @@ describe('AccessGraphCanvas selection: an item both first-level and nested', () 
     expect(ids.has(eid('accessProfile:ap-foo', 'entitlement:e-read'))).toBe(true)
     expect(ids.has(eid('entitlement:e-read', 'attribute:s-erp:memberOf'))).toBe(true)
     expect(ids.has(eid('attribute:s-erp:memberOf', 'source:s-erp'))).toBe(true)
-    expect(ids.has(eid('user:u-a', 'entitlement:e-read'))).toBe(false)
-    const userRead = edges().find((e) => e.id === eid('user:u-a', 'entitlement:e-read'))!
-    expect(userRead.style?.opacity).toBe(DIM_STATUS_OPACITY)
+    expect(edges().some((e) => e.id === eid('user:u-a', 'entitlement:e-read'))).toBe(false)
 
     fireEvent.click(card('Read'))
     expect(pressed()).toEqual([card('Read')])
-    expect(selectedEdges().map((e) => e.id)).toEqual([eid('user:u-a', 'entitlement:e-read')])
+    expect(selectedEdges()).toHaveLength(0)
     expect(lineageEdges().map((e) => e.id).sort()).toEqual(
       [
         eid('entitlement:e-read', 'attribute:s-erp:memberOf'),
         eid('attribute:s-erp:memberOf', 'source:s-erp'),
       ].sort(),
     )
-    expect(selectedEdges()[0].style?.stroke).toBe(STATUS_STROKE.approved)
+    expect(lineageEdges()[0].style?.stroke).toBe(STATUS_STROKE.approved)
     const upstream = edges().find((e) => e.id === eid('accessProfile:ap-foo', 'entitlement:e-read'))!
     expect(upstream.style?.opacity).toBe(DIM_REFERENCE_OPACITY)
   })
@@ -615,10 +596,10 @@ describe('AccessGraphCanvas selection with the completed filter', () => {
 
     fireEvent.click(btn('Hide completed items'))
     expect(pressed()).toEqual([card('Role A')])
-    expect(selectedEdges().map((e) => e.id)).toEqual([eid('user:u1', 'role:role-a')])
+    expect(edges().some((e) => e.source === 'user:u1')).toBe(false)
     expect(lineageEdges()).toHaveLength(3)
     // Only the visible lineage is left: nothing is dimmed.
-    expect(edges()).toHaveLength(4)
+    expect(edges()).toHaveLength(3)
     expect(anyDimmed()).toBe(false)
 
     fireEvent.click(btn(/^Show completed items/))

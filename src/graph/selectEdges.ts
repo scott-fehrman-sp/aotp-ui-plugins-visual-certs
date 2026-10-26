@@ -11,9 +11,11 @@
  *
  * Both groups are raised above the cards and drawn in the selected item's
  * review-status color (the aggregated status when the item's rows disagree);
- * every other edge is dimmed. Because the lineage is derived from the edges
- * that are actually in the scene, hiding reference content leaves only the
- * user -> item edge, and showing it again restores the whole path.
+ * every other edge is dimmed. The drill-down does not draw the user -> item
+ * edge (one user makes that hop noise). When it is absent, the downstream
+ * lineage is still highlighted from `options.reviewStatus`. Because the
+ * lineage is derived from the edges that are actually in the scene, hiding
+ * reference content leaves no edge, and showing it again restores the path.
  *
  * A reference-only node (a nested item, an attribute, or a source) has no
  * status edge. Selecting it highlights every visible edge on a directed path
@@ -214,6 +216,11 @@ export interface HighlightOptions {
    * directions instead of the first-level status-edge treatment.
    */
   reference?: boolean
+  /**
+   * Review status of a selected first-level item. Colors its downstream lineage
+   * when the user -> item edge is not in `edges`.
+   */
+  reviewStatus?: AccessReviewStatus
 }
 
 /**
@@ -221,8 +228,9 @@ export interface HighlightOptions {
  *
  * - Nothing selected, or a non-reference node with no incoming status edge:
  *   exactly `emphasizeEdges(edges, emphasisId)`, including the same-array identity.
- * - A first-level item: its user -> item edge and its downstream lineage are
- *   highlighted in the item's status color and every other edge is dimmed.
+ * - A first-level item: its downstream lineage is highlighted in the item's
+ *   status color and every other edge is dimmed. A user -> item edge, when one
+ *   is still in the list, is raised too.
  * - A reference node (`options.reference`): every edge on a path through it is
  *   raised, keeping its own stroke, and every other edge is dimmed.
  * Hovering or focusing a DIFFERENT first-level item additionally raises that
@@ -237,18 +245,22 @@ export function highlightEdges(
   if (selectedId === null) return emphasizeEdges(edges, emphasisId)
   if (options?.reference) return highlightReferenceEdges(edges, selectedId, emphasisId)
   const selectedEdge = incomingStatusEdge(edges, selectedId)
-  if (!selectedEdge) return emphasizeEdges(edges, emphasisId)
+  const status =
+    (selectedEdge?.data as { reviewStatus?: AccessReviewStatus } | undefined)?.reviewStatus ??
+    options?.reviewStatus
+  if (!status) return emphasizeEdges(edges, emphasisId)
 
-  const status = (selectedEdge.data as { reviewStatus: AccessReviewStatus }).reviewStatus
   const lineage = lineageEdgeIds(edges, selectedId)
-  lineage.delete(selectedEdge.id)
+  if (selectedEdge) lineage.delete(selectedEdge.id)
   const preview =
     emphasisId !== null && emphasisId !== selectedId
       ? incomingStatusEdge(edges, emphasisId)
       : undefined
 
   return edges.map((edge) => {
-    if (edge === selectedEdge) return raiseEdge(edge, { className: SELECTED_EDGE_CLASS })
+    if (selectedEdge && edge === selectedEdge) {
+      return raiseEdge(edge, { className: SELECTED_EDGE_CLASS })
+    }
     if (lineage.has(edge.id)) return lineageEdge(edge, status)
     if (edge === preview) return raiseEdge(edge)
     return dimEdge(edge)

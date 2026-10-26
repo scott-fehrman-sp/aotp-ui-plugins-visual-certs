@@ -20,6 +20,7 @@ import { userCompletion, withoutCompleted } from './completedFilter'
 import { computeFitPadding, measureOverlays, planFit, toFitViewPadding } from './fitPadding'
 import { EmphasisContext } from './EmphasisContext'
 import { SelectionContext, type SelectionState } from './SelectionContext'
+import { hasReviewStatus } from './emphasizeEdges'
 import { connectedNodeIds, isSelectableNodeData, lineageNodeIds } from './selectEdges'
 import { highlightFrameEdges, isFramePlaced } from './graphTransition'
 import { useGraphTransition } from './useGraphTransition'
@@ -389,6 +390,14 @@ function CanvasSurface({ graph, backSlot, motionMs: motionMsProp }: AccessGraphC
     })
   }, [graph, selectedUserId, visibleGraph, subgraph, rankdir, width])
 
+  // The drill-down shows one user, so the hop from that user to each access
+  // item adds no path information. Review status stays on the access-item
+  // card. Drop those edges before layout transitions and drawing.
+  const drawnEdges = useMemo(
+    () => scene.edges.filter((edge) => !hasReviewStatus(edge)),
+    [scene.edges],
+  )
+
   const inDrilldown = selectedUserId !== null
 
   // Hover / keyboard-focus emphasis. A card whose scene is replaced (user,
@@ -410,7 +419,7 @@ function CanvasSurface({ graph, backSlot, motionMs: motionMsProp }: AccessGraphC
   // Hover / selection are NOT inputs (they restyle `frame.edges` below).
   const frame = useGraphTransition(
     scene.nodes,
-    scene.edges,
+    drawnEdges,
     sceneKey,
     motionMs,
     inDrilldown ? 'instant' : 'stagger',
@@ -459,9 +468,13 @@ function CanvasSurface({ graph, backSlot, motionMs: motionMsProp }: AccessGraphC
         frame.edges,
         inDrilldown ? activeItemId : null,
         inDrilldown ? emphasisId : null,
-        referenceSelection ? { reference: true } : undefined,
+        referenceSelection
+          ? { reference: true }
+          : activeNode?.data.reviewStatus
+            ? { reviewStatus: activeNode.data.reviewStatus }
+            : undefined,
       ),
-    [frame.edges, activeItemId, emphasisId, inDrilldown, referenceSelection],
+    [frame.edges, activeItemId, emphasisId, inDrilldown, referenceSelection, activeNode],
   )
   const lineage = useMemo(
     () =>
