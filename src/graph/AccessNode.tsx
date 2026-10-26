@@ -142,6 +142,40 @@ function isManagerUser(data: AccessSceneNode['data']): boolean {
 }
 
 /**
+ * The person glyph plus the percentage of this user's access items that are
+ * completed, anchored together in the card's lower-left corner. The visible
+ * text is the bare percentage; a screen-reader-only phrase names what it
+ * measures. The card points `aria-describedby` at `id`.
+ */
+function UserProgress({ percent, id }: { percent: number; id: string }) {
+  return (
+    <span className="vc-graph-card-user-progress">
+      <KindIcon kind="user" className="vc-graph-card-kind-icon" />
+      <span className="vc-graph-card-complete" aria-hidden="true">
+        {percent}%
+      </span>
+      <span id={id} className="sr-only">
+        {percent}% of access items completed
+      </span>
+    </span>
+  )
+}
+
+/** The lower-left kind glyph. User cards pair it with their completion percentage. */
+function CardKindMark({
+  data,
+  progressId,
+}: {
+  data: AccessSceneNode['data']
+  progressId: string
+}) {
+  if (data.kind === 'user' && data.completedPercent !== undefined) {
+    return <UserProgress percent={data.completedPercent} id={progressId} />
+  }
+  return <KindIcon kind={data.kind} className="vc-graph-card-kind-icon" />
+}
+
+/**
  * The custom React Flow node for the access graph: a small accessible card
  * showing the node's label and a per-kind caption, with a left-border accent
  * driven by the `kind-<kind>` class. Mirrors org-graph's `PersonNode` shape
@@ -195,7 +229,10 @@ export function AccessNode({ id, data }: NodeProps<AccessSceneNode>) {
   const { setHover, setFocus } = useContext(EmphasisContext)
   const { selectedId, lineageNodeIds, toggle } = useContext(SelectionContext)
   const statusIconId = useId()
+  const progressId = useId()
   const kindLabel = KIND_LABEL[data.kind]
+  const completionDescribedBy =
+    data.kind === 'user' && data.completedPercent !== undefined ? progressId : undefined
   const status = data.reviewStatus
   // Review status marks only the user's directly-held access item (drill-down).
   const statusClass =
@@ -215,6 +252,7 @@ export function AccessNode({ id, data }: NodeProps<AccessSceneNode>) {
           role="button"
           tabIndex={0}
           aria-label={`Show access for ${data.label}`}
+          aria-describedby={completionDescribedBy}
           data-review-status={status}
           onClick={activate}
           onKeyDown={(event) => {
@@ -226,7 +264,7 @@ export function AccessNode({ id, data }: NodeProps<AccessSceneNode>) {
           }}
         >
           <CardBody data={data} />
-          <KindIcon kind={data.kind} className="vc-graph-card-kind-icon" />
+          <CardKindMark data={data} progressId={progressId} />
           {status ? <StatusIcon status={status} /> : null}
           {isManagerUser(data) ? <ManagerIcon /> : null}
         </article>
@@ -291,9 +329,10 @@ export function AccessNode({ id, data }: NodeProps<AccessSceneNode>) {
         data-review-status={status}
         {...selectionProps}
         {...emphasisHandlers}
+        {...(completionDescribedBy ? { 'aria-describedby': completionDescribedBy } : {})}
       >
         <CardBody data={data} />
-        <KindIcon kind={data.kind} className="vc-graph-card-kind-icon" />
+        <CardKindMark data={data} progressId={progressId} />
         {status ? <StatusIcon status={status} id={statusIconId} /> : null}
         {isManagerUser(data) ? <ManagerIcon /> : null}
       </article>

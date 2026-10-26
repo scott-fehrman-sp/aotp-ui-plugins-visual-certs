@@ -20,6 +20,7 @@ import {
   type AccessScene,
   type AccessSceneNode,
 } from './buildAccessScene'
+import { completionPercent } from './completedFilter'
 
 /** Grid gaps, matched to org-graph's `layoutGrid`. */
 const GAP_X = 36
@@ -101,6 +102,10 @@ export function buildUserGridScene(
         detail: node.detail,
         interactive: true,
         onSelect: onSelect ? () => onSelect(node.id) : undefined,
+        // Each grid card is a user under review. Count that user's own
+        // first-level edges on the full graph (the grid drops edges, so the
+        // number has to be captured here).
+        completedPercent: completionPercent(graph.edges, node.id),
       },
       width: NODE_WIDTH,
       height: NODE_USER_HEIGHT,

@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { deriveAccessGraph } from '../domain/accessGraph'
 import type { AccessMatrixRowVM } from '../sailpoint/types'
+import { statusGraph } from '../test/reviewStatusFixture'
+import type { StatusRow } from '../test/reviewStatusFixture'
 import { NODE_WIDTH } from './buildAccessScene'
 import { buildUserGridScene } from './buildUserGridScene'
 
-function row(overrides: Partial<AccessMatrixRowVM>): AccessMatrixRowVM {
+function row(overrides: Partial<StatusRow>): StatusRow {
   return {
     id: 'r',
     userId: 'u1',
@@ -170,5 +172,17 @@ describe('buildUserGridScene', () => {
       department: 'Engineering',
       location: 'Austin',
     })
+  })
+
+  it('stamps each user card with that user\'s completed-access percentage', () => {
+    const graph = statusGraph([
+      row({ id: '1', userId: 'u1', user: 'Ann Smith', entitlement: 'a', entitlementId: 'e1', source: 'app', sourceId: 's0', reviewStatus: 'approved', accessItemKind: 'entitlement', accessItemId: 'e1', accessItemName: 'a' }),
+      row({ id: '2', userId: 'u1', user: 'Ann Smith', entitlement: 'b', entitlementId: 'e2', source: 'app', sourceId: 's0', reviewStatus: 'needsReview', accessItemKind: 'entitlement', accessItemId: 'e2', accessItemName: 'b' }),
+      row({ id: '3', userId: 'u2', user: 'Bea Jones', entitlement: 'c', entitlementId: 'e3', source: 'app', sourceId: 's0', reviewStatus: 'revoked', accessItemKind: 'entitlement', accessItemId: 'e3', accessItemName: 'c' }),
+    ])
+    const scene = buildUserGridScene(graph, 1200)
+    const byId = new Map(scene.nodes.map((n) => [n.id, n.data.completedPercent]))
+    expect(byId.get('user:u1')).toBe(50)
+    expect(byId.get('user:u2')).toBe(100)
   })
 })

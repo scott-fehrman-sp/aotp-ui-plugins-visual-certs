@@ -186,6 +186,14 @@ export interface AccessSceneOptions {
    * `withoutReference`); the builder does not filter. Default `false` (lanes).
    */
   singleLane?: boolean
+  /**
+   * Rounded 0–100 percentage of the drilled-in user's first-level access items
+   * that are completed. Stamped onto the user node only. The canvas computes
+   * this from the UNFILTERED subgraph, because the graph passed here may
+   * already have completed items removed. Omitted leaves the user card without
+   * a percentage.
+   */
+  completedPercent?: number
 }
 
 /**
@@ -357,6 +365,12 @@ export function buildAccessScene(
         // A non-user node without a status is reference-only: it is shown to
         // explain how access derives, but is not itself reviewed.
         reference: isReferenceNode(node),
+        // Only the drilled-in user card shows completion. The figure is an
+        // option (not read off this graph) so a filtered scene still reports
+        // the user's full set of access items.
+        ...(node.kind === 'user' && options.completedPercent !== undefined
+          ? { completedPercent: options.completedPercent }
+          : {}),
       },
       width: NODE_WIDTH,
       height,

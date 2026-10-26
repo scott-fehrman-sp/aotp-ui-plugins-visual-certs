@@ -171,3 +171,92 @@ describe('AccessNode user card manager badge + kind icon placement', () => {
     expect(managerMark(userCard())).toBeNull()
   })
 })
+
+describe('AccessNode user card completion percentage', () => {
+  const complete = (el: HTMLElement) => el.querySelector('.vc-graph-card-complete')
+  const progress = (el: HTMLElement) => el.querySelector('.vc-graph-card-user-progress')
+
+  /** One user holding several directly-held entitlements, one per status. */
+  function userWith(statuses: Array<'needsReview' | 'approved' | 'revoked' | 'reassigned'>) {
+    return statusGraph(
+      statuses.map((reviewStatus, index) =>
+        row({
+          id: String(index),
+          entitlement: `item-${index}`,
+          entitlementId: `e${index}`,
+          source: 'app',
+          sourceId: 's0',
+          reviewStatus,
+          accessItemKind: 'entitlement',
+          accessItemId: `e${index}`,
+          accessItemName: `item-${index}`,
+        }),
+      ),
+    )
+  }
+
+  const cardFor = (name: string) =>
+    screen.getByRole('button', { name: `Show access for ${name}` })
+
+  it('shows the percentage next to the person icon on the grid card', () => {
+    // approved + revoked + reassigned are completed; needsReview is not. 3 of 4.
+    render(<AccessGraphCanvas graph={userWith(['approved', 'revoked', 'reassigned', 'needsReview'])} />)
+    const card = userCard()
+    const mark = progress(card)
+    expect(mark).not.toBeNull()
+    expect(mark!.querySelector('.vc-graph-card-kind-icon')).toHaveAttribute('data-kind', 'user')
+    expect(complete(card)).toHaveTextContent('75%')
+    expect(cardFor('User One')).toHaveAccessibleDescription('75% of access items completed')
+  })
+
+  it('shows each user their own percentage', () => {
+    render(
+      <AccessGraphCanvas
+        graph={statusGraph([
+          row({ id: '1', userId: 'u1', user: 'User One', entitlement: 'a', entitlementId: 'e1', source: 'app', sourceId: 's0', reviewStatus: 'approved', accessItemKind: 'entitlement', accessItemId: 'e1', accessItemName: 'a' }),
+          row({ id: '2', userId: 'u1', user: 'User One', entitlement: 'b', entitlementId: 'e2', source: 'app', sourceId: 's0', reviewStatus: 'needsReview', accessItemKind: 'entitlement', accessItemId: 'e2', accessItemName: 'b' }),
+          row({ id: '3', userId: 'u2', user: 'User Two', entitlement: 'c', entitlementId: 'e3', source: 'app', sourceId: 's0', reviewStatus: 'revoked', accessItemKind: 'entitlement', accessItemId: 'e3', accessItemName: 'c' }),
+        ])}
+      />,
+    )
+    expect(complete(cardFor('User One'))).toHaveTextContent('50%')
+    expect(complete(cardFor('User Two'))).toHaveTextContent('100%')
+  })
+
+  it('keeps the same percentage in drill-down while completed items are hidden', () => {
+    render(<AccessGraphCanvas graph={userWith(['approved', 'needsReview'])} />)
+    drillIn()
+    // The approved item is hidden by default; the percentage still counts it.
+    const card = userCard()
+    expect(complete(card)).toHaveTextContent('50%')
+    expect(screen.getByRole('article', { name: 'User: User One' })).toHaveAccessibleDescription(
+      '50% of access items completed',
+    )
+  })
+
+  it('keeps the same percentage when completed items are shown', () => {
+    render(<AccessGraphCanvas graph={userWith(['approved', 'needsReview'])} />)
+    drillIn()
+    fireEvent.click(screen.getByRole('button', { name: /^Show completed items/ }))
+    expect(complete(userCard())).toHaveTextContent('50%')
+  })
+
+  it('shows 0% when none of the access items are completed', () => {
+    render(<AccessGraphCanvas graph={userWith(['needsReview', 'needsReview'])} />)
+    expect(complete(userCard())).toHaveTextContent('0%')
+  })
+
+  it('shows 100% when every access item is completed', () => {
+    render(<AccessGraphCanvas graph={activeUser()} />)
+    expect(complete(userCard())).toHaveTextContent('100%')
+  })
+
+  it('does not show a percentage on an access-item card', () => {
+    render(<AccessGraphCanvas graph={userWith(['needsReview'])} />)
+    drillIn()
+    const item = document.querySelector<HTMLElement>('.vc-graph-card.kind-entitlement')
+    expect(item).not.toBeNull()
+    expect(complete(item!)).toBeNull()
+    expect(progress(item!)).toBeNull()
+  })
+})

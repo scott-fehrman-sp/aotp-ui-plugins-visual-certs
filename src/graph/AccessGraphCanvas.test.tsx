@@ -666,7 +666,7 @@ describe('AccessGraphCanvas', () => {
       const label = (text: string) => screen.queryByText(text)
       const cardOf = (text: string) => screen.getByText(text).closest<HTMLElement>('.vc-graph-card')!
       const nodeLabels = () =>
-        Array.from(document.querySelectorAll('.react-flow__node .vc-graph-card')).map(
+        Array.from(document.querySelectorAll('.react-flow__node .vc-graph-card-label')).map(
           (c) => c.textContent,
         )
       const COMPLETED_ONLY = ['Role A', 'foo', 'Billing AP', 'pay', 'Payroll', 'Legacy']

@@ -48,6 +48,31 @@ export function isCompletedEdge(
 }
 
 /**
+ * Rounded percentage (0–100) of one user's first-level access items that are
+ * completed. An access item is a first-level edge that carries a review status
+ * — the same set {@link withoutCompleted} hides. `approved`, `revoked` and
+ * `reassigned` count as completed; `needsReview` does not. Nested lineage and
+ * edges with no review status are not access items and are ignored.
+ *
+ * Pass the user's UNFILTERED edges. Hiding completed items removes those
+ * edges, so counting the visible graph would report the wrong percentage.
+ * A user with no reviewable items is 0.
+ */
+export function completionPercent(
+  edges: readonly Pick<AccessGraphEdge, 'from' | 'firstLevel' | 'reviewStatus'>[],
+  userNodeId: string,
+): number {
+  let total = 0
+  let completed = 0
+  for (const edge of edges) {
+    if (edge.from !== userNodeId || !edge.firstLevel || !edge.reviewStatus) continue
+    total += 1
+    if (isCompletedStatus(edge.reviewStatus)) completed += 1
+  }
+  return total > 0 ? Math.round((completed / total) * 100) : 0
+}
+
+/**
  * Returns the graph without its completed first-level items and any lineage
  * that is no longer reachable from the user, plus how many items were hidden.
  * When nothing is completed the SAME graph object is returned (stable memo

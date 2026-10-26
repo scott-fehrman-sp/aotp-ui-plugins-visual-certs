@@ -211,18 +211,33 @@
   color: var(--muted);
 }
 
-.vc-graph-card-kind-icon.kind-user {
-  color: var(--vc-graph-user);
-  /* Pin the USER glyph to the bottom-left corner (the card is position:
-     relative), mirroring the status icon's bottom-right anchor. The manager
-     badge, when present, takes the bottom-right corner. */
+/* Person glyph and completion percentage, pinned together to the user card's
+   bottom-left corner. The manager badge, when present, takes the bottom-right. */
+.vc-graph-card-user-progress {
   position: absolute;
   left: 6px;
   bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--vc-graph-user);
+  pointer-events: none;
+}
+
+.vc-graph-card-kind-icon.kind-user {
+  color: var(--vc-graph-user);
   width: 18px;
   height: 18px;
+  flex: none;
   line-height: 0;
-  pointer-events: none;
+}
+
+.vc-graph-card-complete {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 18px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .vc-graph-card-kind-icon.kind-role {

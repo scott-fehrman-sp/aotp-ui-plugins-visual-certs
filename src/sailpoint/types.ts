@@ -687,5 +687,12 @@ export interface AccessSceneNodeData extends Record<string, unknown> {
    * node shown to explain how access derives to a source (not itself reviewed).
    */
   reference?: boolean
+  /**
+   * Rounded percentage (0–100) of this user's first-level access items that are
+   * completed (approved, revoked, or reassigned). Set only on user cards, from
+   * the unfiltered review edges, so hiding completed items does not change it.
+   * Omitted on every other kind.
+   */
+  completedPercent?: number
 }
 

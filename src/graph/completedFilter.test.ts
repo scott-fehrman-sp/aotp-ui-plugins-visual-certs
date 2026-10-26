@@ -3,7 +3,12 @@ import type { AccessGraphData } from '../sailpoint/types'
 import { buildFixtureGraph, statusSubgraph } from '../test/reviewStatusFixture'
 import type { StatusRow } from '../test/reviewStatusFixture'
 import { NODE_HEIGHT, NODE_WIDTH, buildAccessScene } from './buildAccessScene'
-import { isCompletedEdge, isCompletedStatus, withoutCompleted } from './completedFilter'
+import {
+  completionPercent,
+  isCompletedEdge,
+  isCompletedStatus,
+  withoutCompleted,
+} from './completedFilter'
 import { isReferenceNode, withoutReference } from './referenceFilter'
 import { userSubgraph } from './userSubgraph'
 
@@ -267,4 +272,65 @@ describe('withoutCompleted', () => {
       expect(ents[2] - ents[1]).toBe(stride)
     },
   )
+})
+
+describe('completionPercent', () => {
+  const edge = (
+    from: string,
+    status?: 'needsReview' | 'approved' | 'revoked' | 'reassigned',
+    firstLevel = true,
+  ) => ({ from, firstLevel, reviewStatus: status })
+
+  it('counts approved, revoked and reassigned as completed and needsReview as not', () => {
+    const edges = [
+      edge('user:u1', 'approved'),
+      edge('user:u1', 'revoked'),
+      edge('user:u1', 'reassigned'),
+      edge('user:u1', 'needsReview'),
+    ]
+    // 3 of 4.
+    expect(completionPercent(edges, 'user:u1')).toBe(75)
+  })
+
+  it('rounds to the nearest whole percent', () => {
+    expect(
+      completionPercent(
+        [edge('user:u1', 'approved'), edge('user:u1', 'needsReview'), edge('user:u1', 'needsReview')],
+        'user:u1',
+      ),
+    ).toBe(33)
+    expect(
+      completionPercent(
+        [edge('user:u1', 'approved'), edge('user:u1', 'revoked'), edge('user:u1', 'needsReview')],
+        'user:u1',
+      ),
+    ).toBe(67)
+  })
+
+  it('ignores other users, nested edges and edges with no review status', () => {
+    const edges = [
+      edge('user:u1', 'approved'),
+      edge('user:u2', 'needsReview'),
+      edge('user:u1', 'needsReview', false),
+      edge('user:u1'),
+    ]
+    expect(completionPercent(edges, 'user:u1')).toBe(100)
+    expect(completionPercent(edges, 'user:u2')).toBe(0)
+  })
+
+  it('is 0 when the user has no reviewable access items', () => {
+    expect(completionPercent([], 'user:u1')).toBe(0)
+  })
+
+  it('does not change when completed edges are removed from a copy of the list', () => {
+    const edges = [
+      edge('user:u1', 'approved'),
+      edge('user:u1', 'needsReview'),
+    ]
+    const visible = edges.filter((e) => e.reviewStatus === 'needsReview')
+    expect(completionPercent(edges, 'user:u1')).toBe(50)
+    // Counting only the still-visible edges would wrongly report 0.
+    expect(completionPercent(visible, 'user:u1')).toBe(0)
+    expect(completionPercent(edges, 'user:u1')).toBe(50)
+  })
 })

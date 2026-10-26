@@ -699,4 +699,31 @@ describe('buildAccessScene', () => {
       })
     })
   })
+
+  it('stamps completedPercent on the user node only', () => {
+    const scene = buildAccessScene(
+      statusSubgraph([
+        row({
+          id: '1',
+          role: 'Role A',
+          roleId: 'role-a',
+          entitlement: 'read',
+          entitlementId: 'e1',
+          source: 'src',
+          sourceId: 's1',
+          reviewStatus: 'approved',
+          accessItemKind: 'role',
+          accessItemId: 'role-a',
+          accessItemName: 'Role A',
+        }),
+      ]),
+      'LR',
+      { completedPercent: 75 },
+    )
+    const user = scene.nodes.find((n) => n.data.kind === 'user')
+    expect(user?.data.completedPercent).toBe(75)
+    for (const node of scene.nodes) {
+      if (node.data.kind !== 'user') expect(node.data.completedPercent).toBeUndefined()
+    }
+  })
 })

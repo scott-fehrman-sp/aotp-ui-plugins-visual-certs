@@ -16,7 +16,7 @@ import { buildAccessScene, type AccessSceneNode } from './buildAccessScene'
 import { buildUserGridScene } from './buildUserGridScene'
 import { userSubgraph } from './userSubgraph'
 import { withoutReference } from './referenceFilter'
-import { withoutCompleted } from './completedFilter'
+import { completionPercent, withoutCompleted } from './completedFilter'
 import { computeFitPadding, measureOverlays, planFit, toFitViewPadding } from './fitPadding'
 import { EmphasisContext } from './EmphasisContext'
 import { SelectionContext, type SelectionState } from './SelectionContext'
@@ -381,8 +381,12 @@ function CanvasSurface({ graph, backSlot, motionMs: motionMsProp }: AccessGraphC
     // sources when reference is shown). Hiding reference only removes the
     // nested lineage and the sources; the reviewable items stay in the same
     // lanes, so toggling reference never rearranges them by kind.
-    return buildAccessScene(visibleGraph ?? { nodes: [], edges: [] }, rankdir)
-  }, [graph, selectedUserId, visibleGraph, rankdir, width])
+    // The completion percentage is taken from the unfiltered subgraph: the
+    // visible graph may already have completed items removed.
+    return buildAccessScene(visibleGraph ?? { nodes: [], edges: [] }, rankdir, {
+      completedPercent: completionPercent(subgraph?.edges ?? [], selectedUserId),
+    })
+  }, [graph, selectedUserId, visibleGraph, subgraph, rankdir, width])
 
   const inDrilldown = selectedUserId !== null
 
