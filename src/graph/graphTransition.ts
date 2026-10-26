@@ -26,7 +26,7 @@
 import type { CSSProperties } from 'react'
 import type { Edge } from '@xyflow/react'
 import { NODE_HEIGHT, NODE_WIDTH, type AccessSceneNode } from './buildAccessScene'
-import { highlightEdges } from './selectEdges'
+import { highlightEdges, type HighlightOptions } from './selectEdges'
 
 /** Gap between consecutive cards of the grid cascade, capped by REVEAL_SPAN_MS. */
 export const REVEAL_STEP_MS = 70
@@ -505,13 +505,14 @@ export function highlightFrameEdges(
   frameEdges: Edge[],
   selectedId: string | null,
   emphasisId: string | null,
+  options?: HighlightOptions,
 ): Edge[] {
   if (!frameEdges.some((edge) => hasClassToken(edge.className, EXITING_CLASS))) {
-    return highlightEdges(frameEdges, selectedId, emphasisId)
+    return highlightEdges(frameEdges, selectedId, emphasisId, options)
   }
   const live = frameEdges.filter((edge) => !hasClassToken(edge.className, EXITING_CLASS))
   const leaving = frameEdges.filter((edge) => hasClassToken(edge.className, EXITING_CLASS))
-  return [...highlightEdges(live, selectedId, emphasisId), ...leaving]
+  return [...highlightEdges(live, selectedId, emphasisId, options), ...leaving]
 }
 
 /* --------------------------------------------------------------- motion duration */

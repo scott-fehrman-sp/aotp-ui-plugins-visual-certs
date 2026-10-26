@@ -123,12 +123,21 @@ describe('AccessGraphCanvas item selection', () => {
       expect(document.getElementById(described)).toHaveAttribute('data-review-status')
       expect(document.getElementById(described)).toHaveAccessibleName(/needs review|approved|revoked/i)
     }
-    // Reference-only cards and the user card are not buttons.
-    for (const label of ['foo', 'read', 'engr db', 'phone app', 'User One']) {
-      const c = card(label)
-      expect(c).not.toHaveAttribute('role')
-      expect(c).not.toHaveAttribute('aria-pressed')
+    // Reference-only cards are toggle buttons too, so their links can be highlighted.
+    for (const [kind, label] of [
+      ['Access profile', 'foo'],
+      ['Entitlement', 'read'],
+      ['Source', 'engr db'],
+      ['Source', 'phone app'],
+    ]) {
+      const button = btn(`${kind}: ${label}`)
+      expect(button).toBe(card(label))
+      expect(button).toHaveAttribute('aria-pressed', 'false')
     }
+    // The user card is not a selection button.
+    const user = card('User One')
+    expect(user).not.toHaveAttribute('role')
+    expect(user).not.toHaveAttribute('aria-pressed')
   })
 
   it('keeps the grid user cards as plain drill-in buttons', () => {
@@ -228,18 +237,45 @@ describe('AccessGraphCanvas item selection', () => {
     expect(admin).toHaveAttribute('aria-pressed', 'true')
   })
 
-  it('does nothing when a reference-only card or the user card is clicked or keyed', () => {
+  it('highlights the path through a reference-only card, and ignores the user card', () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
-    // reference starts hidden by default; show it so the reference-only cards appear
+    // completed items and reference start hidden by default; show both so the
+    // nested path and the unrelated completed items are present
+    fireEvent.click(btn(/^Show completed items/))
     fireEvent.click(btn('Show reference nodes and links'))
     const edgesBefore = edges()
-    for (const label of ['foo', 'read', 'engr db', 'User One']) {
-      fireEvent.click(card(label))
-      fireEvent.keyDown(card(label), { key: 'Enter' })
-      fireEvent.keyDown(card(label), { key: ' ' })
-    }
+    fireEvent.click(card('User One'))
+    fireEvent.keyDown(card('User One'), { key: 'Enter' })
     expect(edges()).toBe(edgesBefore)
+    expect(pressed()).toHaveLength(0)
+
+    fireEvent.click(card('engr db'))
+    expect(pressed()).toEqual([card('engr db')])
+    expect(lineageEdges().map((e) => e.id).sort()).toEqual(
+      [
+        eid('user:u1', 'role:role-a'),
+        eid('role:role-a', 'accessProfile:ap-foo'),
+        eid('accessProfile:ap-foo', 'entitlement:e1'),
+        eid('entitlement:e1', 'source:s1'),
+      ].sort(),
+    )
+    // The unrelated login → phone app link is dimmed, not highlighted.
+    expect(edges().find((e) => e.id === eid('entitlement:e2', 'source:s2'))?.style?.opacity).toBe(
+      DIM_REFERENCE_OPACITY,
+    )
+    expect(card('foo').className).toContain('vc-graph-card-lineage')
+    expect(card('phone app').className).toContain('vc-graph-card-reference-dim')
+
+    fireEvent.click(card('engr db'))
+    expect(pressed()).toHaveLength(0)
+    expect(lineageEdges()).toHaveLength(0)
+
+    fireEvent.keyDown(card('read'), { key: 'Enter' })
+    expect(pressed()).toEqual([card('read')])
+    expect(lineageEdges().map((e) => e.id)).toContain(eid('entitlement:e1', 'source:s1'))
+    expect(lineageEdges().map((e) => e.id)).toContain(eid('accessProfile:ap-foo', 'entitlement:e1'))
+    fireEvent.keyDown(card('read'), { key: ' ' })
     expect(pressed()).toHaveLength(0)
   })
 

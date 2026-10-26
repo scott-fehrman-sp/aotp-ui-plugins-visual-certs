@@ -1,10 +1,9 @@
 /**
  * Pure SELECTION restyle for the access graph's edges.
  *
- * A reviewer can select one FIRST-LEVEL access item (a role, access profile or
- * entitlement the user holds directly; a node that is not the user and not
- * reference-only). `highlightEdges` then highlights the item's ASSOCIATED
- * edges:
+ * A reviewer can select any node except the user. For a FIRST-LEVEL access item
+ * (a role, access profile or entitlement the user holds directly),
+ * `highlightEdges` highlights the item's ASSOCIATED edges:
  *
  *  1. the incoming user -> item status edge, and
  *  2. every VISIBLE edge forward-reachable downstream of the item
@@ -15,6 +14,13 @@
  * every other edge is dimmed. Because the lineage is derived from the edges
  * that are actually in the scene, hiding reference content leaves only the
  * user -> item edge, and showing it again restores the whole path.
+ *
+ * A reference-only node (a nested item, an attribute, or a source) has no
+ * status edge. Selecting it highlights every visible edge on a directed path
+ * through it — upstream toward the user and downstream toward the source —
+ * keeping each edge's own stroke, and dims the rest. A source therefore lights
+ * the links that reach it, and an attribute lights both the entitlements that
+ * use it and its source.
  *
  * Upstream edges are NOT associated: when an entitlement is both held directly
  * AND nested under a held role, selecting the entitlement does not highlight
@@ -34,6 +40,7 @@ import {
   EMPHASIS_STROKE_WIDTH,
   dimEdge,
   emphasizeEdges,
+  hasReviewStatus,
   incomingStatusEdge,
   raiseEdge,
 } from './emphasizeEdges'
@@ -57,44 +64,56 @@ export const SELECTED_EDGE_CLASS = 'vc-graph-edge-selected'
 export const LINEAGE_EDGE_CLASS = 'vc-graph-edge-lineage'
 
 /**
- * The single definition of "selectable": a first-level access item, i.e. not
- * the user and not a reference-only (nested or source) node.
+ * The single definition of "selectable": every node except the user. Reference
+ * nodes (nested items, attributes, sources) select too, so their links can be
+ * highlighted; the user card drills in or opens details and is not a selection.
  */
 export function isSelectableNodeData(
   data: Pick<AccessSceneNodeData, 'kind' | 'reference'>,
 ): boolean {
-  return data.kind !== 'user' && !data.reference
+  return data.kind !== 'user'
 }
 
 /**
- * Walks forward from `itemNodeId` over `edges`, visiting each node once (a
- * cycle cannot hang it). Returns the ids of every edge leaving a visited node,
- * and the ids of the nodes reached (the item itself excluded).
+ * Walks `direction` from `startId` over `edges`, visiting each node once (a
+ * cycle cannot hang it). Returns the ids of every edge traversed and the ids
+ * of the nodes reached (the start itself excluded).
  */
+function walk(
+  edges: Edge[],
+  startId: string,
+  direction: 'out' | 'in',
+): { edgeIds: Set<string>; nodeIds: Set<string> } {
+  const adjacent = new Map<string, Edge[]>()
+  for (const edge of edges) {
+    const key = direction === 'out' ? edge.source : edge.target
+    const list = adjacent.get(key)
+    if (list) list.push(edge)
+    else adjacent.set(key, [edge])
+  }
+  const edgeIds = new Set<string>()
+  const nodeIds = new Set<string>()
+  const visited = new Set<string>([startId])
+  const queue: string[] = [startId]
+  for (let head = 0; head < queue.length; head += 1) {
+    for (const edge of adjacent.get(queue[head]) ?? []) {
+      edgeIds.add(edge.id)
+      const next = direction === 'out' ? edge.target : edge.source
+      if (visited.has(next)) continue
+      visited.add(next)
+      nodeIds.add(next)
+      queue.push(next)
+    }
+  }
+  return { edgeIds, nodeIds }
+}
+
+/** Forward walk: edges leaving the start, and the nodes downstream of it. */
 function walkLineage(
   edges: Edge[],
   itemNodeId: string,
 ): { edgeIds: Set<string>; nodeIds: Set<string> } {
-  const outgoing = new Map<string, Edge[]>()
-  for (const edge of edges) {
-    const list = outgoing.get(edge.source)
-    if (list) list.push(edge)
-    else outgoing.set(edge.source, [edge])
-  }
-  const edgeIds = new Set<string>()
-  const nodeIds = new Set<string>()
-  const visited = new Set<string>([itemNodeId])
-  const queue: string[] = [itemNodeId]
-  for (let head = 0; head < queue.length; head += 1) {
-    for (const edge of outgoing.get(queue[head]) ?? []) {
-      edgeIds.add(edge.id)
-      if (visited.has(edge.target)) continue
-      visited.add(edge.target)
-      nodeIds.add(edge.target)
-      queue.push(edge.target)
-    }
-  }
-  return { edgeIds, nodeIds }
+  return walk(edges, itemNodeId, 'out')
 }
 
 /**
@@ -109,6 +128,24 @@ export function lineageEdgeIds(edges: Edge[], itemNodeId: string): Set<string> {
 /** Ids of the nodes reachable downstream of `itemNodeId` (never the item itself). */
 export function lineageNodeIds(edges: Edge[], itemNodeId: string): Set<string> {
   return walkLineage(edges, itemNodeId).nodeIds
+}
+
+/**
+ * Edges on any directed path through `nodeId`: everything downstream of it and
+ * everything upstream of it. The node's own id is not an edge. Unknown id or
+ * an isolated node gives an empty set.
+ */
+export function connectedEdgeIds(edges: Edge[], nodeId: string): Set<string> {
+  const downstream = walk(edges, nodeId, 'out')
+  const upstream = walk(edges, nodeId, 'in')
+  return new Set([...downstream.edgeIds, ...upstream.edgeIds])
+}
+
+/** Nodes on any directed path through `nodeId` (never the node itself). */
+export function connectedNodeIds(edges: Edge[], nodeId: string): Set<string> {
+  const downstream = walk(edges, nodeId, 'out')
+  const upstream = walk(edges, nodeId, 'in')
+  return new Set([...downstream.nodeIds, ...upstream.nodeIds])
 }
 
 /** A solid, full-opacity, raised edge in the selected item's status color. */
@@ -129,21 +166,76 @@ function lineageEdge(edge: Edge, status: AccessReviewStatus): Edge {
 }
 
 /**
+ * Raises one edge of a reference-node selection. A status edge keeps its color
+ * and dash and is thickened like a hover; a reference hairline keeps its stroke
+ * and is drawn solid at full opacity. Either way it sits above the cards.
+ */
+function highlightConnectedEdge(edge: Edge): Edge {
+  if (hasReviewStatus(edge)) return raiseEdge(edge, { className: LINEAGE_EDGE_CLASS })
+  return {
+    ...edge,
+    zIndex: EMPHASIS_EDGE_Z_INDEX,
+    interactionWidth: 0,
+    className: `${edge.className ?? ''} ${LINEAGE_EDGE_CLASS}`.trim(),
+    style: {
+      ...edge.style,
+      strokeWidth: LINEAGE_STROKE_WIDTH,
+      opacity: 1,
+    },
+  }
+}
+
+/**
+ * Highlights the path through a reference node and dims every other edge.
+ * An isolated node (no incident edge) falls back to hover emphasis.
+ */
+function highlightReferenceEdges(
+  edges: Edge[],
+  selectedId: string,
+  emphasisId: string | null,
+): Edge[] {
+  const connected = connectedEdgeIds(edges, selectedId)
+  if (connected.size === 0) return emphasizeEdges(edges, emphasisId)
+  const preview =
+    emphasisId !== null && emphasisId !== selectedId
+      ? incomingStatusEdge(edges, emphasisId)
+      : undefined
+  return edges.map((edge) => {
+    if (connected.has(edge.id)) return highlightConnectedEdge(edge)
+    if (edge === preview) return raiseEdge(edge)
+    return dimEdge(edge)
+  })
+}
+
+/** Highlight options. `reference` selects a nested item, attribute, or source. */
+export interface HighlightOptions {
+  /**
+   * The selected node is reference-only. Highlight the path through it in both
+   * directions instead of the first-level status-edge treatment.
+   */
+  reference?: boolean
+}
+
+/**
  * Restyles `edges` for the current selection and hover/focus emphasis.
  *
- * - Nothing selected (or the selected node has no incoming status edge): exactly
- *   `emphasizeEdges(edges, emphasisId)`, including the same-array identity.
- * - Otherwise the selected item's user -> item edge and its lineage are
+ * - Nothing selected, or a non-reference node with no incoming status edge:
+ *   exactly `emphasizeEdges(edges, emphasisId)`, including the same-array identity.
+ * - A first-level item: its user -> item edge and its downstream lineage are
  *   highlighted in the item's status color and every other edge is dimmed.
- *   Hovering or focusing a DIFFERENT first-level item additionally raises that
- *   item's user -> item edge as a preview; the selected item adds nothing.
+ * - A reference node (`options.reference`): every edge on a path through it is
+ *   raised, keeping its own stroke, and every other edge is dimmed.
+ * Hovering or focusing a DIFFERENT first-level item additionally raises that
+ * item's user -> item edge as a preview; the selected item adds nothing.
  */
 export function highlightEdges(
   edges: Edge[],
   selectedId: string | null,
   emphasisId: string | null,
+  options?: HighlightOptions,
 ): Edge[] {
   if (selectedId === null) return emphasizeEdges(edges, emphasisId)
+  if (options?.reference) return highlightReferenceEdges(edges, selectedId, emphasisId)
   const selectedEdge = incomingStatusEdge(edges, selectedId)
   if (!selectedEdge) return emphasizeEdges(edges, emphasisId)
 

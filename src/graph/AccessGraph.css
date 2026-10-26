@@ -521,8 +521,10 @@
     var(--shadow);
 }
 
-/* Reference cards: lineage of the selected item at full strength, the rest muted. */
-.vc-graph-card.vc-graph-card-reference.vc-graph-card-lineage {
+/* Reference cards: the selected one and the rest of its path at full strength,
+   the other reference cards muted. */
+.vc-graph-card.vc-graph-card-reference.vc-graph-card-lineage,
+.vc-graph-card.vc-graph-card-reference.vc-graph-card-selected {
   opacity: 1;
 }
 

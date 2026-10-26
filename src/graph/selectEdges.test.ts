@@ -18,6 +18,8 @@ import {
   SELECTED_EDGE_CLASS,
   SELECTION_STROKE_WIDTH,
   STATUS_STROKE,
+  connectedEdgeIds,
+  connectedNodeIds,
   highlightEdges,
   isSelectableNodeData,
   lineageEdgeIds,
@@ -64,13 +66,14 @@ const sorted = (ids: Iterable<string>) => [...ids].sort()
 const edge = (source: string, target: string): Edge => ({ id: eid(source, target), source, target })
 
 describe('isSelectableNodeData', () => {
-  it('is true only for first-level items', () => {
+  it('is true for every node except the user, including reference nodes', () => {
     expect(isSelectableNodeData({ kind: 'role', reference: false })).toBe(true)
     expect(isSelectableNodeData({ kind: 'accessProfile', reference: false })).toBe(true)
     expect(isSelectableNodeData({ kind: 'entitlement', reference: false })).toBe(true)
     expect(isSelectableNodeData({ kind: 'user', reference: false })).toBe(false)
-    expect(isSelectableNodeData({ kind: 'entitlement', reference: true })).toBe(false)
-    expect(isSelectableNodeData({ kind: 'source', reference: true })).toBe(false)
+    expect(isSelectableNodeData({ kind: 'entitlement', reference: true })).toBe(true)
+    expect(isSelectableNodeData({ kind: 'attribute', reference: true })).toBe(true)
+    expect(isSelectableNodeData({ kind: 'source', reference: true })).toBe(true)
   })
 })
 
@@ -325,5 +328,88 @@ describe('highlightEdges', () => {
   it('returns to the baseline once the selection is cleared', () => {
     highlightEdges(scene.edges, 'role:role-a', null)
     expect(highlightEdges(scene.edges, null, null)).toEqual(clone(scene.edges))
+  })
+})
+
+describe('reference-node selection', () => {
+  // user → role → read → memberOf → ERP, plus an unrelated login → Directory.
+  const edges: Edge[] = [
+    {
+      ...edge('user:u1', 'role:role-a'),
+      data: { reviewStatus: 'needsReview' },
+      style: { stroke: 'var(--vc-warn)', strokeWidth: 2, strokeDasharray: '6 4' },
+    },
+    {
+      ...edge('role:role-a', 'entitlement:e-read'),
+      className: 'vc-graph-edge-reference',
+      data: { reference: true },
+      style: { stroke: 'var(--edge)', strokeWidth: 1, opacity: 0.45 },
+    },
+    {
+      ...edge('entitlement:e-read', 'attribute:s-erp:memberOf'),
+      className: 'vc-graph-edge-reference',
+      data: { reference: true },
+      style: { stroke: 'var(--edge)', strokeWidth: 1, opacity: 0.45 },
+    },
+    {
+      ...edge('attribute:s-erp:memberOf', 'source:s-erp'),
+      className: 'vc-graph-edge-reference',
+      data: { reference: true },
+      style: { stroke: 'var(--edge)', strokeWidth: 1, opacity: 0.45 },
+    },
+    {
+      ...edge('user:u1', 'entitlement:e-login'),
+      data: { reviewStatus: 'approved' },
+      style: { stroke: 'var(--vc-allow)', strokeWidth: 2 },
+    },
+    {
+      ...edge('entitlement:e-login', 'source:s-dir'),
+      className: 'vc-graph-edge-reference',
+      data: { reference: true },
+      style: { stroke: 'var(--edge)', strokeWidth: 1, opacity: 0.45 },
+    },
+  ]
+  const reference = { reference: true } as const
+
+  it('highlights the path through an attribute in both directions and dims the rest', () => {
+    const id = 'attribute:s-erp:memberOf'
+    expect(sorted(connectedEdgeIds(edges, id))).toEqual(
+      sorted([
+        eid('user:u1', 'role:role-a'),
+        eid('role:role-a', 'entitlement:e-read'),
+        eid('entitlement:e-read', 'attribute:s-erp:memberOf'),
+        eid('attribute:s-erp:memberOf', 'source:s-erp'),
+      ]),
+    )
+    expect(connectedNodeIds(edges, id).has('source:s-erp')).toBe(true)
+    expect(connectedNodeIds(edges, id).has('entitlement:e-read')).toBe(true)
+    expect(connectedNodeIds(edges, id).has(id)).toBe(false)
+    expect(connectedEdgeIds(edges, id).has(eid('entitlement:e-login', 'source:s-dir'))).toBe(false)
+
+    const out = highlightEdges(edges, id, null, reference)
+    const highlighted = out.filter((e) => e.className?.includes(LINEAGE_EDGE_CLASS))
+    expect(sorted(highlighted.map((e) => e.id))).toEqual(sorted(connectedEdgeIds(edges, id)))
+    const status = out.find((e) => e.id === eid('user:u1', 'role:role-a'))!
+    expect(status.style?.stroke).toBe('var(--vc-warn)')
+    expect(status.style?.strokeDasharray).toBe('6 4')
+    const link = out.find((e) => e.id === eid('entitlement:e-read', 'attribute:s-erp:memberOf'))!
+    expect(link.style?.stroke).toBe('var(--edge)')
+    expect(link.style?.opacity).toBe(1)
+    expect(link.style?.strokeWidth).toBe(LINEAGE_STROKE_WIDTH)
+    const unrelated = out.find((e) => e.id === eid('entitlement:e-login', 'source:s-dir'))!
+    expect(unrelated.style?.opacity).toBe(DIM_REFERENCE_OPACITY)
+  })
+
+  it('highlights the incoming links of a source, which has nothing downstream', () => {
+    const out = highlightEdges(edges, 'source:s-erp', null, reference)
+    expect(sorted(out.filter((e) => e.className?.includes(LINEAGE_EDGE_CLASS)).map((e) => e.id))).toEqual(
+      sorted(connectedEdgeIds(edges, 'source:s-erp')),
+    )
+    expect(connectedEdgeIds(edges, 'source:s-erp').has(eid('attribute:s-erp:memberOf', 'source:s-erp'))).toBe(
+      true,
+    )
+    expect(connectedEdgeIds(edges, 'source:s-erp').has(eid('user:u1', 'entitlement:e-login'))).toBe(
+      false,
+    )
   })
 })

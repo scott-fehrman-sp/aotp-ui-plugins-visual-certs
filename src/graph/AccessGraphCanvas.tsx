@@ -20,7 +20,7 @@ import { userCompletion, withoutCompleted } from './completedFilter'
 import { computeFitPadding, measureOverlays, planFit, toFitViewPadding } from './fitPadding'
 import { EmphasisContext } from './EmphasisContext'
 import { SelectionContext, type SelectionState } from './SelectionContext'
-import { isSelectableNodeData, lineageNodeIds } from './selectEdges'
+import { connectedNodeIds, isSelectableNodeData, lineageNodeIds } from './selectEdges'
 import { highlightFrameEdges, isFramePlaced } from './graphTransition'
 import { useGraphTransition } from './useGraphTransition'
 import { useMotionMs } from './useMotionMs'
@@ -421,12 +421,16 @@ function CanvasSurface({ graph, backSlot, motionMs: motionMsProp }: AccessGraphC
   // Pointer wins; a keyboard-focused card stays emphasized once the pointer
   // leaves another card. Purely an edge restyle: no layout or refit input.
   const emphasisId = hoverId ?? focusId
-  // Only a first-level node of the current scene can be the active selection.
-  const activeItemId = useMemo(() => {
+  // Any non-user node of the current scene can be the active selection. A
+  // reference node highlights the path through it; a first-level item highlights
+  // its status edge and downstream lineage.
+  const activeNode = useMemo(() => {
     if (!inDrilldown || selectedItemId === null) return null
     const node = scene.nodes.find((candidate) => candidate.id === selectedItemId)
-    return node && isSelectableNodeData(node.data) ? node.id : null
+    return node && isSelectableNodeData(node.data) ? node : null
   }, [inDrilldown, selectedItemId, scene.nodes])
+  const activeItemId = activeNode?.id ?? null
+  const referenceSelection = activeNode?.data.reference === true
   // A selection whose item was hidden by the completed filter is dropped (not
   // merely inert), so it cannot silently come back when completed items are
   // shown again. Selecting a still-visible item is untouched.
@@ -455,12 +459,18 @@ function CanvasSurface({ graph, backSlot, motionMs: motionMsProp }: AccessGraphC
         frame.edges,
         inDrilldown ? activeItemId : null,
         inDrilldown ? emphasisId : null,
+        referenceSelection ? { reference: true } : undefined,
       ),
-    [frame.edges, activeItemId, emphasisId, inDrilldown],
+    [frame.edges, activeItemId, emphasisId, inDrilldown, referenceSelection],
   )
   const lineage = useMemo(
-    () => (activeItemId === null ? NO_LINEAGE : lineageNodeIds(scene.edges, activeItemId)),
-    [scene.edges, activeItemId],
+    () =>
+      activeItemId === null
+        ? NO_LINEAGE
+        : referenceSelection
+          ? connectedNodeIds(scene.edges, activeItemId)
+          : lineageNodeIds(scene.edges, activeItemId),
+    [scene.edges, activeItemId, referenceSelection],
   )
 
   const clearSelection = useCallback(() => {
@@ -548,7 +558,7 @@ function CanvasSurface({ graph, backSlot, motionMs: motionMsProp }: AccessGraphC
       return
     }
     // Drill-down: the click both drives the detail fly-out (any node kind) and,
-    // for a first-level reviewable item, toggles the edge-highlight selection.
+    // for every node except the user, toggles the edge-highlight selection.
     setDetailNodeId((current) => (current === node.id ? null : node.id))
     if (isSelectableNodeData(node.data)) toggleSelection(node.id)
   }

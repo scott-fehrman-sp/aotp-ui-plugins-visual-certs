@@ -732,7 +732,7 @@ describe('AccessGraphCanvas', () => {
         const shared = cardOf('Shared')
         expect(shared).toHaveClass('vc-graph-card-reference')
         expect(shared.querySelector('.vc-graph-status-icon')).toBeNull()
-        expect(shared).not.toHaveAttribute('aria-pressed')
+        expect(shared).toHaveAttribute('aria-pressed', 'false')
         // The needs-review ones still carry their status.
         expect(cardOf('Role B')).toHaveAttribute('data-review-status', 'needsReview')
         expect(cardOf('Login')).toHaveAttribute('data-review-status', 'needsReview')

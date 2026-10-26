@@ -331,13 +331,15 @@ export function AccessNode({ id, data }: NodeProps<AccessSceneNode>) {
       }
     : {}
 
-  // Selection (see `highlightEdges`): a first-level card is a toggle button.
-  // Mouse selection goes through the canvas's node click; the keyboard is
-  // handled here. Reference-only cards in the selected item's lineage are shown
-  // at full strength, the other reference cards are muted.
+  // Selection (see `highlightEdges`): every card except the user is a toggle
+  // button. Mouse selection goes through the canvas's node click; the keyboard
+  // is handled here. Reference cards on the highlighted path are shown at full
+  // strength, the other reference cards are muted. The selected card itself is
+  // never muted.
   const selected = selectable && selectedId === id
   const inLineage = data.reference && lineageNodeIds.has(id)
-  const referenceDimmed = data.reference && selectedId !== null && !inLineage
+  const referenceDimmed =
+    data.reference && selectedId !== null && selectedId !== id && !inLineage
   const selectionClass =
     (selectable ? ' vc-graph-card-selectable' : '') +
     (selected ? ' vc-graph-card-selected' : '') +
