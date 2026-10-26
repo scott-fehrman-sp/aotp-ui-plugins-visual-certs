@@ -205,8 +205,10 @@ describe('AccessNode user card completion percentage', () => {
     const mark = progress(card)
     expect(mark).not.toBeNull()
     expect(mark!.querySelector('.vc-graph-card-kind-icon')).toHaveAttribute('data-kind', 'user')
-    expect(complete(card)).toHaveTextContent('75%')
-    expect(cardFor('User One')).toHaveAccessibleDescription('75% of access items completed')
+    expect(complete(card)).toHaveTextContent('75% (3 of 4)')
+    expect(cardFor('User One')).toHaveAccessibleDescription(
+      '75% (3 of 4) of access items completed',
+    )
   })
 
   it('shows each user their own percentage', () => {
@@ -219,8 +221,8 @@ describe('AccessNode user card completion percentage', () => {
         ])}
       />,
     )
-    expect(complete(cardFor('User One'))).toHaveTextContent('50%')
-    expect(complete(cardFor('User Two'))).toHaveTextContent('100%')
+    expect(complete(cardFor('User One'))).toHaveTextContent('50% (1 of 2)')
+    expect(complete(cardFor('User Two'))).toHaveTextContent('100% (1 of 1)')
   })
 
   it('keeps the same percentage in drill-down while completed items are hidden', () => {
@@ -228,9 +230,9 @@ describe('AccessNode user card completion percentage', () => {
     drillIn()
     // The approved item is hidden by default; the percentage still counts it.
     const card = userCard()
-    expect(complete(card)).toHaveTextContent('50%')
+    expect(complete(card)).toHaveTextContent('50% (1 of 2)')
     expect(screen.getByRole('article', { name: 'User: User One' })).toHaveAccessibleDescription(
-      '50% of access items completed',
+      '50% (1 of 2) of access items completed',
     )
   })
 
@@ -238,17 +240,17 @@ describe('AccessNode user card completion percentage', () => {
     render(<AccessGraphCanvas graph={userWith(['approved', 'needsReview'])} />)
     drillIn()
     fireEvent.click(screen.getByRole('button', { name: /^Show completed items/ }))
-    expect(complete(userCard())).toHaveTextContent('50%')
+    expect(complete(userCard())).toHaveTextContent('50% (1 of 2)')
   })
 
   it('shows 0% when none of the access items are completed', () => {
     render(<AccessGraphCanvas graph={userWith(['needsReview', 'needsReview'])} />)
-    expect(complete(userCard())).toHaveTextContent('0%')
+    expect(complete(userCard())).toHaveTextContent('0% (0 of 2)')
   })
 
   it('shows 100% when every access item is completed', () => {
     render(<AccessGraphCanvas graph={activeUser()} />)
-    expect(complete(userCard())).toHaveTextContent('100%')
+    expect(complete(userCard())).toHaveTextContent('100% (1 of 1)')
   })
 
   it('does not show a percentage on an access-item card', () => {

@@ -143,20 +143,31 @@ function isManagerUser(data: AccessSceneNode['data']): boolean {
 }
 
 /**
- * The person glyph plus the percentage of this user's access items that are
- * completed, anchored together in the card's lower-left corner. The visible
- * text is the bare percentage; a screen-reader-only phrase names what it
- * measures. The card points `aria-describedby` at `id`.
+ * The person glyph plus this user's completion, anchored together in the
+ * card's lower-left corner. The visible text is "X% (Y of Z)"; a
+ * screen-reader-only phrase names what those numbers measure. The card points
+ * `aria-describedby` at `id`.
  */
-function UserProgress({ percent, id }: { percent: number; id: string }) {
+function UserProgress({
+  percent,
+  completed,
+  total,
+  id,
+}: {
+  percent: number
+  completed: number
+  total: number
+  id: string
+}) {
+  const summary = `${percent}% (${completed} of ${total})`
   return (
     <span className="vc-graph-card-user-progress">
       <KindIcon kind="user" className="vc-graph-card-kind-icon" />
       <span className="vc-graph-card-complete" aria-hidden="true">
-        {percent}%
+        {summary}
       </span>
       <span id={id} className="sr-only">
-        {percent}% of access items completed
+        {summary} of access items completed
       </span>
     </span>
   )
@@ -189,7 +200,14 @@ function CardKindMark({
   progressId: string
 }) {
   if (data.kind === 'user' && data.completion) {
-    return <UserProgress percent={data.completion.percent} id={progressId} />
+    return (
+      <UserProgress
+        percent={data.completion.percent}
+        completed={data.completion.completed}
+        total={data.completion.total}
+        id={progressId}
+      />
+    )
   }
   return <KindIcon kind={data.kind} className="vc-graph-card-kind-icon" />
 }
