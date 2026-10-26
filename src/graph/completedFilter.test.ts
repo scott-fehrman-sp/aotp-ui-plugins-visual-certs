@@ -7,6 +7,7 @@ import {
   completionPercent,
   isCompletedEdge,
   isCompletedStatus,
+  userCompletion,
   withoutCompleted,
 } from './completedFilter'
 import { isReferenceNode, withoutReference } from './referenceFilter'
@@ -290,6 +291,11 @@ describe('completionPercent', () => {
     ]
     // 3 of 4.
     expect(completionPercent(edges, 'user:u1')).toBe(75)
+    expect(userCompletion(edges, 'user:u1')).toEqual({
+      percent: 75,
+      completed: 3,
+      total: 4,
+    })
   })
 
   it('rounds to the nearest whole percent', () => {

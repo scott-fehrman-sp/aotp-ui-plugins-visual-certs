@@ -101,6 +101,13 @@
   gap: 10px;
 }
 
+/* First line of a user node's detail: percent complete and completed of total. */
+.vc-graph-detail-completion {
+  margin: 0;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
 /* The per-kind glyph + caption pill sit on one row, the icon first. */
 .vc-graph-detail-kind-row {
   display: flex;
@@ -256,7 +263,7 @@
   color: var(--vc-accent);
 }
 
-/* Horizontal rule separating the review status from the attributes below. */
+/* Horizontal rule under a summary line (user progress, review status). */
 .vc-graph-detail-sep {
   width: 100%;
   height: 0;

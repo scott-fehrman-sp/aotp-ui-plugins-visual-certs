@@ -181,8 +181,8 @@ describe('buildUserGridScene', () => {
       row({ id: '3', userId: 'u2', user: 'Bea Jones', entitlement: 'c', entitlementId: 'e3', source: 'app', sourceId: 's0', reviewStatus: 'revoked', accessItemKind: 'entitlement', accessItemId: 'e3', accessItemName: 'c' }),
     ])
     const scene = buildUserGridScene(graph, 1200)
-    const byId = new Map(scene.nodes.map((n) => [n.id, n.data.completedPercent]))
-    expect(byId.get('user:u1')).toBe(50)
-    expect(byId.get('user:u2')).toBe(100)
+    const byId = new Map(scene.nodes.map((n) => [n.id, n.data.completion]))
+    expect(byId.get('user:u1')).toEqual({ percent: 50, completed: 1, total: 2 })
+    expect(byId.get('user:u2')).toEqual({ percent: 100, completed: 1, total: 1 })
   })
 })

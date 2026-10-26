@@ -38,6 +38,7 @@ import type {
   AccessGraphNodeKind,
   AccessSceneNodeData,
   RankDir,
+  UserCompletion,
 } from '../sailpoint/types'
 import { isReferenceNode, isStatusEdge } from './referenceFilter'
 
@@ -187,13 +188,12 @@ export interface AccessSceneOptions {
    */
   singleLane?: boolean
   /**
-   * Rounded 0–100 percentage of the drilled-in user's first-level access items
-   * that are completed. Stamped onto the user node only. The canvas computes
-   * this from the UNFILTERED subgraph, because the graph passed here may
-   * already have completed items removed. Omitted leaves the user card without
-   * a percentage.
+   * Review progress of the drilled-in user (percent, completed count, total).
+   * Stamped onto the user node only. The canvas computes this from the
+   * UNFILTERED subgraph, because the graph passed here may already have
+   * completed items removed. Omitted leaves the user card without it.
    */
-  completedPercent?: number
+  completion?: UserCompletion
 }
 
 /**
@@ -365,11 +365,11 @@ export function buildAccessScene(
         // A non-user node without a status is reference-only: it is shown to
         // explain how access derives, but is not itself reviewed.
         reference: isReferenceNode(node),
-        // Only the drilled-in user card shows completion. The figure is an
-        // option (not read off this graph) so a filtered scene still reports
-        // the user's full set of access items.
-        ...(node.kind === 'user' && options.completedPercent !== undefined
-          ? { completedPercent: options.completedPercent }
+        // Only the drilled-in user card carries completion. It is an option
+        // (not read off this graph) so a filtered scene still reports the
+        // user's full set of access items.
+        ...(node.kind === 'user' && options.completion !== undefined
+          ? { completion: options.completion }
           : {}),
       },
       width: NODE_WIDTH,

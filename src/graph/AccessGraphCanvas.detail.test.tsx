@@ -180,6 +180,45 @@ describe('AccessGraphCanvas node detail panel', () => {
     expect(within(details).queryByText('Description')).not.toBeInTheDocument()
   })
 
+  it('leads the user detail with percent complete and completed of total', () => {
+    render(<AccessGraphCanvas graph={graph()} />)
+    drillIn()
+    openDetail()
+    // login is approved and hidden by default; the line still counts it.
+    // Role A needs review, login is approved: 1 of 2.
+    fireEvent.click(card('User One'))
+
+    const details = panel()!
+    const line = details.querySelector('.vc-graph-detail-completion')
+    expect(line).toHaveTextContent('50% completed ( 1 of 2 )')
+    // It is the first line of the body, then a divider, then the kind badge.
+    const body = details.querySelector('.vc-graph-detail-body')!
+    expect(body.firstElementChild).toBe(line)
+    const rule = line!.nextElementSibling
+    expect(rule).toHaveClass('vc-graph-detail-sep')
+    expect(rule!.nextElementSibling).toHaveClass('vc-graph-detail-kind-row')
+    expect(within(details).queryByText('Description')).not.toBeInTheDocument()
+  })
+
+  it('keeps the user completion line when completed items are shown', () => {
+    render(<AccessGraphCanvas graph={graph()} />)
+    drillIn()
+    openDetail()
+    fireEvent.click(btn(/^Show completed items/))
+    fireEvent.click(card('User One'))
+    expect(panel()!.querySelector('.vc-graph-detail-completion')).toHaveTextContent(
+      '50% completed ( 1 of 2 )',
+    )
+  })
+
+  it('does not show a completion line on an access item', () => {
+    render(<AccessGraphCanvas graph={graph()} />)
+    drillIn()
+    openDetail()
+    fireEvent.click(card('Role A'))
+    expect(panel()!.querySelector('.vc-graph-detail-completion')).toBeNull()
+  })
+
   it('clicking the same node again clears the detail target', () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()

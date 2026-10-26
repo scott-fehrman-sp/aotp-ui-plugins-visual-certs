@@ -25,6 +25,7 @@ import type {
   AccessGraphData,
   AccessGraphEdge,
   AccessReviewStatus,
+  UserCompletion,
 } from '../sailpoint/types'
 
 /** The result of {@link withoutCompleted}. */
@@ -48,20 +49,21 @@ export function isCompletedEdge(
 }
 
 /**
- * Rounded percentage (0–100) of one user's first-level access items that are
- * completed. An access item is a first-level edge that carries a review status
- * — the same set {@link withoutCompleted} hides. `approved`, `revoked` and
- * `reassigned` count as completed; `needsReview` does not. Nested lineage and
- * edges with no review status are not access items and are ignored.
+ * Completion of one user's first-level access items: how many are done, how
+ * many there are, and the rounded percentage. An access item is a first-level
+ * edge that carries a review status — the same set {@link withoutCompleted}
+ * hides. `approved`, `revoked` and `reassigned` count as completed;
+ * `needsReview` does not. Nested lineage and edges with no review status are
+ * not access items and are ignored.
  *
  * Pass the user's UNFILTERED edges. Hiding completed items removes those
- * edges, so counting the visible graph would report the wrong percentage.
- * A user with no reviewable items is 0.
+ * edges, so counting the visible graph would report the wrong figures.
+ * A user with no reviewable items is `{ percent: 0, completed: 0, total: 0 }`.
  */
-export function completionPercent(
+export function userCompletion(
   edges: readonly Pick<AccessGraphEdge, 'from' | 'firstLevel' | 'reviewStatus'>[],
   userNodeId: string,
-): number {
+): UserCompletion {
   let total = 0
   let completed = 0
   for (const edge of edges) {
@@ -69,7 +71,19 @@ export function completionPercent(
     total += 1
     if (isCompletedStatus(edge.reviewStatus)) completed += 1
   }
-  return total > 0 ? Math.round((completed / total) * 100) : 0
+  return {
+    percent: total > 0 ? Math.round((completed / total) * 100) : 0,
+    completed,
+    total,
+  }
+}
+
+/** Rounded percentage (0–100) from {@link userCompletion}. */
+export function completionPercent(
+  edges: readonly Pick<AccessGraphEdge, 'from' | 'firstLevel' | 'reviewStatus'>[],
+  userNodeId: string,
+): number {
+  return userCompletion(edges, userNodeId).percent
 }
 
 /**

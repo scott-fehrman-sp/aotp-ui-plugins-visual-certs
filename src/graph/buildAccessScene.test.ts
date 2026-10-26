@@ -700,7 +700,8 @@ describe('buildAccessScene', () => {
     })
   })
 
-  it('stamps completedPercent on the user node only', () => {
+  it('stamps completion on the user node only', () => {
+    const completion = { percent: 75, completed: 3, total: 4 }
     const scene = buildAccessScene(
       statusSubgraph([
         row({
@@ -718,12 +719,12 @@ describe('buildAccessScene', () => {
         }),
       ]),
       'LR',
-      { completedPercent: 75 },
+      { completion },
     )
     const user = scene.nodes.find((n) => n.data.kind === 'user')
-    expect(user?.data.completedPercent).toBe(75)
+    expect(user?.data.completion).toEqual(completion)
     for (const node of scene.nodes) {
-      if (node.data.kind !== 'user') expect(node.data.completedPercent).toBeUndefined()
+      if (node.data.kind !== 'user') expect(node.data.completion).toBeUndefined()
     }
   })
 })

@@ -16,7 +16,7 @@ import { buildAccessScene, type AccessSceneNode } from './buildAccessScene'
 import { buildUserGridScene } from './buildUserGridScene'
 import { userSubgraph } from './userSubgraph'
 import { withoutReference } from './referenceFilter'
-import { completionPercent, withoutCompleted } from './completedFilter'
+import { userCompletion, withoutCompleted } from './completedFilter'
 import { computeFitPadding, measureOverlays, planFit, toFitViewPadding } from './fitPadding'
 import { EmphasisContext } from './EmphasisContext'
 import { SelectionContext, type SelectionState } from './SelectionContext'
@@ -384,7 +384,7 @@ function CanvasSurface({ graph, backSlot, motionMs: motionMsProp }: AccessGraphC
     // The completion percentage is taken from the unfiltered subgraph: the
     // visible graph may already have completed items removed.
     return buildAccessScene(visibleGraph ?? { nodes: [], edges: [] }, rankdir, {
-      completedPercent: completionPercent(subgraph?.edges ?? [], selectedUserId),
+      completion: userCompletion(subgraph?.edges ?? [], selectedUserId),
     })
   }, [graph, selectedUserId, visibleGraph, subgraph, rankdir, width])
 

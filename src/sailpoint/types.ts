@@ -640,6 +640,18 @@ export type RankDir = 'LR' | 'TB'
 export type AccessGraphViewMode = 'grid' | 'drilldown'
 
 /**
+ * How far one user's first-level access items have been reviewed. `completed`
+ * counts approved, revoked, and reassigned items; `total` is every access item
+ * under review; `percent` is `completed / total`, rounded, or 0 when `total`
+ * is 0.
+ */
+export interface UserCompletion {
+  percent: number
+  completed: number
+  total: number
+}
+
+/**
  * The `data` payload carried on each React Flow node in the access scene. Kept
  * intentionally small — the custom node renders only a label plus a per-kind
  * accent — so the pure scene builder stays trivially serializable and testable.
@@ -688,11 +700,11 @@ export interface AccessSceneNodeData extends Record<string, unknown> {
    */
   reference?: boolean
   /**
-   * Rounded percentage (0–100) of this user's first-level access items that are
-   * completed (approved, revoked, or reassigned). Set only on user cards, from
-   * the unfiltered review edges, so hiding completed items does not change it.
-   * Omitted on every other kind.
+   * Review progress for this user: percent complete plus completed and total
+   * access-item counts. Set only on user cards, from the unfiltered review
+   * edges, so hiding completed items does not change it. Omitted on every
+   * other kind.
    */
-  completedPercent?: number
+  completion?: UserCompletion
 }
 

@@ -9,9 +9,10 @@
  * the toggle is turned off.
  *
  * It reads only the small `AccessSceneNodeData` the scene already carries (kind,
- * label, detail, review status, reference flag); the surrounding canvas owns
- * which node is shown. With no node selected it invites the reviewer to pick one
- * rather than rendering empty, so the panel always explains itself.
+ * label, detail, review status, reference flag, and — for a user — completion);
+ * the surrounding canvas owns which node is shown. With no node selected it
+ * invites the reviewer to pick one rather than rendering empty, so the panel
+ * always explains itself.
  *
  * Styling matches the legend panel (`.vc-graph-legend`) — a bordered, shadowed
  * card using the graph tokens — mounted inside a React Flow `top-right` panel.
@@ -194,6 +195,14 @@ export function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps) {
         </p>
       ) : (
         <div className="vc-graph-detail-body">
+          {isUser && node.completion ? (
+            <>
+              <p className="vc-graph-detail-completion">
+                {`${node.completion.percent}% completed ( ${node.completion.completed} of ${node.completion.total} )`}
+              </p>
+              <hr className="vc-graph-detail-sep" />
+            </>
+          ) : null}
           <div className="vc-graph-detail-kind-row">
             <KindIcon kind={node.kind} className="vc-graph-detail-kind-icon" />
             <span className={`vc-graph-detail-kind kind-${node.kind}`}>

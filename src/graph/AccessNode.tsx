@@ -169,8 +169,8 @@ function CardKindMark({
   data: AccessSceneNode['data']
   progressId: string
 }) {
-  if (data.kind === 'user' && data.completedPercent !== undefined) {
-    return <UserProgress percent={data.completedPercent} id={progressId} />
+  if (data.kind === 'user' && data.completion) {
+    return <UserProgress percent={data.completion.percent} id={progressId} />
   }
   return <KindIcon kind={data.kind} className="vc-graph-card-kind-icon" />
 }
@@ -232,7 +232,7 @@ export function AccessNode({ id, data }: NodeProps<AccessSceneNode>) {
   const progressId = useId()
   const kindLabel = KIND_LABEL[data.kind]
   const completionDescribedBy =
-    data.kind === 'user' && data.completedPercent !== undefined ? progressId : undefined
+    data.kind === 'user' && data.completion ? progressId : undefined
   const status = data.reviewStatus
   // Review status marks only the user's directly-held access item (drill-down).
   const statusClass =
