@@ -23,6 +23,8 @@
   --meta: #3a4d5e;
   --card: #ffffff;
   --card-focus: #f7fbff;
+  /* Selected node fill: a quiet step off white, still a light card. */
+  --card-selected: #d4e4f4;
   --line: #d5e0ea;
   --accent: #0b4f8a;
   --accent-ink: #ffffff;
@@ -58,6 +60,8 @@
   --meta: #d7e4f0;
   --card: #2c4256;
   --card-focus: #35506a;
+  /* Selected node fill: a quiet step lighter than the card, still a dark card. */
+  --card-selected: #3a5670;
   --line: #6e8ba3;
   --accent: #8eb6ff;
   --accent-ink: #0d1722;

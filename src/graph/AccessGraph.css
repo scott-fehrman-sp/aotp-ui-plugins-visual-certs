@@ -503,10 +503,13 @@
 }
 
 /*
- * Selected first-level card. A neutral second ring (--ink, never one of the four
- * status colors) sits outside the status ring, separated by a --canvas gap, so
- * "selected" is unmistakable next to a merely hovered card while the status
- * ring, stripe and corner icon stay. Specificity beats the status :hover rule.
+ * Selected card. Two cues, so selection does not rely on color alone: a quiet
+ * fill (--card-selected, a light tint in light mode and a slightly lighter
+ * card in dark mode) and a neutral outer ring (--ink, never one of the four
+ * status colors) outside the status ring, separated by a --canvas gap. The
+ * label, icons, left stripe and status ring stay as they are on an unselected
+ * card. The transparent fallback keeps the ink ring when a reference card has
+ * no status color. Specificity beats the status :hover rule.
  */
 .vc-graph-card-selectable {
   cursor: pointer;
@@ -514,8 +517,9 @@
 
 .vc-graph-card.vc-graph-card-selected,
 .vc-graph-card.vc-graph-card-selected:hover {
+  background: var(--card-selected);
   box-shadow:
-    0 0 0 2px var(--vc-graph-status),
+    0 0 0 2px var(--vc-graph-status, transparent),
     0 0 0 5px var(--canvas),
     0 0 0 7px var(--ink),
     var(--shadow);
