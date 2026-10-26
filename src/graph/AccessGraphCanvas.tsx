@@ -73,6 +73,7 @@ const MINIMAP_COLOR: Record<string, string> = {
   role: '#6b3fa0',
   accessProfile: '#0e7a43',
   entitlement: '#9c5836',
+  attribute: '#0f6f86',
   source: '#3a4d5e',
 }
 

@@ -211,6 +211,63 @@ describe('AccessGraphCanvas node detail panel', () => {
     )
   })
 
+  it('shows an attribute node with its source and how many entitlements use it', () => {
+    render(
+      <AccessGraphCanvas
+        graph={statusGraph([
+          row({
+            id: '1',
+            entitlement: 'read',
+            entitlementId: 'e1',
+            entitlementAttribute: 'memberOf',
+            source: 'engr db',
+            sourceId: 's1',
+            reviewStatus: 'needsReview',
+            accessItemKind: 'entitlement',
+            accessItemId: 'e1',
+            accessItemName: 'read',
+          }),
+          row({
+            id: '2',
+            entitlement: 'write',
+            entitlementId: 'e2',
+            entitlementAttribute: 'memberOf',
+            source: 'engr db',
+            sourceId: 's1',
+            reviewStatus: 'needsReview',
+            accessItemKind: 'entitlement',
+            accessItemId: 'e2',
+            accessItemName: 'write',
+          }),
+        ])}
+      />,
+    )
+    drillIn()
+    openDetail()
+    fireEvent.click(btn('Show reference nodes and links'))
+    const attributeCard = card('memberOf')
+    expect(
+      attributeCard.querySelector('.vc-graph-card-entitlement-count [aria-hidden="true"]'),
+    ).toHaveTextContent('2')
+    expect(attributeCard).toHaveAccessibleDescription('2 entitlements')
+    expect(
+      document.querySelector('.vc-graph-card.kind-entitlement .vc-graph-card-entitlement-count'),
+    ).toBeNull()
+    fireEvent.click(attributeCard)
+
+    const details = panel()!
+    expect(within(details).getByText('Attribute')).toBeInTheDocument()
+    expect(within(details).getByText('memberOf')).toBeInTheDocument()
+    expect(within(details).getByText('Source')).toBeInTheDocument()
+    expect(within(details).getByText('engr db')).toBeInTheDocument()
+    expect(within(details).getByText('Source ID')).toBeInTheDocument()
+    expect(within(details).getByText('s1')).toBeInTheDocument()
+    expect(within(details).getByText('Entitlements')).toBeInTheDocument()
+    expect(within(details).getByText('2')).toBeInTheDocument()
+    const icon = details.querySelector('.vc-graph-detail-kind-icon')
+    expect(icon).toHaveAttribute('data-kind', 'attribute')
+  })
+
   it('does not show a completion line on an access item', () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()

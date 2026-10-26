@@ -13,6 +13,7 @@ import type {
   AccessMatrixRowVM,
   NodeDetail,
 } from '../sailpoint/types'
+import { withAttributeEntitlementCounts } from './attributeEntitlementCounts'
 import { reviewKey } from './reviewOverlay'
 
 /**
@@ -99,6 +100,12 @@ function detailFor(
     if (row.roleCreated) detail.created = row.roleCreated
     if (row.roleModified) detail.modified = row.roleModified
     if (row.roleId) detail.roleId = row.roleId
+  } else if (kind === 'attribute') {
+    // The source this attribute belongs to. The entitlement count is stamped
+    // after every edge exists, so it reflects distinct entitlements, not the
+    // first row that introduced the node.
+    if (row.source) detail.source = row.source
+    if (row.sourceId) detail.sourceId = row.sourceId
   } else if (kind === 'accessProfile') {
     // The full attribute set for an access profile.
     if (row.accessProfileDescription) {
@@ -137,6 +144,7 @@ const KIND_LABEL: Record<AccessGraphNodeKind, string> = {
   role: 'role',
   accessProfile: 'access profile',
   entitlement: 'entitlement',
+  attribute: 'attribute',
   source: 'source',
 }
 
@@ -157,10 +165,14 @@ function entitlementFallbackId(row: AccessMatrixRowVM): string {
  * Derives a deduped node/edge graph from the access matrix rows. PURE: no I/O,
  * no mutation of inputs, deterministic output order (insertion order over the
  * given rows). Direction is
- *   user → (role?) → (accessProfile?) → entitlement → source
+ *   user → (role?) → (accessProfile?) → entitlement → (attribute?) → source
  * with absent (blank) levels SKIPPED so the chain always connects consecutive
- * present levels:
+ * present levels. An entitlement that carries a schema attribute
+ * (`entitlementAttribute`) inserts an ATTRIBUTE node for that attribute on
+ * its source, and the entitlement links to the attribute instead of the
+ * source. Entitlements with no attribute still link straight to the source:
  *   - direct entitlement:        user → entitlement → source
+ *   - with an attribute:         user → entitlement → attribute → source
  *   - AP grant:                  user → accessProfile → entitlement → source
  *   - role direct entitlement:   user → role → entitlement → source
  *   - role → AP → entitlement:   user → role → accessProfile → entitlement → source
@@ -182,6 +194,8 @@ function entitlementFallbackId(row: AccessMatrixRowVM): string {
  *   - `entitlement:<entitlementId>`   (fallback
  *     `entitlement:name:<sourceId|sourceName>:<entName>` — keeps same-named
  *     entitlements on different sources distinct even without ids)
+ *   - `attribute:<sourceKey>:<name>`  one node per attribute name on a source
+ *     (`sourceKey` is the source id, or `name:<sourceName>` when it has none)
  *   - `source:<sourceId>`             (fallback `source:name:<sourceName>`)
  *
  * Nodes dedupe by namespaced id (first label wins). Edges dedupe by
@@ -277,6 +291,26 @@ export function deriveAccessGraph(
         detail: detailFor('entitlement', row),
       })
     }
+    // A schema attribute on this entitlement becomes its own node, shared by
+    // every entitlement that uses the same attribute on the same source. The
+    // entitlement then links to the attribute, and the attribute links once
+    // to the source (edge dedupe), instead of the entitlement linking to the
+    // source directly. No attribute, or no source to attach it to, leaves the
+    // entitlement → source hop as it was.
+    const attributeName = (row.entitlementAttribute ?? '').trim()
+    if (
+      levels[levels.length - 1]?.kind === 'entitlement' &&
+      attributeName !== '' &&
+      row.source !== ''
+    ) {
+      const sourceKey = row.sourceId ? row.sourceId : `name:${row.source}`
+      levels.push({
+        id: `attribute:${sourceKey}:${attributeName}`,
+        kind: 'attribute',
+        label: attributeName,
+        detail: detailFor('attribute', row),
+      })
+    }
     if (row.source !== '') {
       levels.push({
         id: row.sourceId ? `source:${row.sourceId}` : `source:name:${row.source}`,
@@ -318,8 +352,8 @@ export function deriveAccessGraph(
     }
   }
 
-  return {
+  return withAttributeEntitlementCounts({
     nodes: [...nodes.values()],
     edges: [...edges.values()],
-  }
+  })
 }

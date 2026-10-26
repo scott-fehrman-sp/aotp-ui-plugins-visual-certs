@@ -27,6 +27,7 @@ import type {
   AccessReviewStatus,
   UserCompletion,
 } from '../sailpoint/types'
+import { withAttributeEntitlementCounts } from '../domain/attributeEntitlementCounts'
 
 /** The result of {@link withoutCompleted}. */
 export interface CompletedFilterResult {
@@ -144,5 +145,8 @@ export function withoutCompleted(graph: AccessGraphData): CompletedFilterResult 
       return copy
     })
 
-  return { graph: { nodes, edges }, hiddenCount: hiddenItems.size }
+  return {
+    graph: withAttributeEntitlementCounts({ nodes, edges }),
+    hiddenCount: hiddenItems.size,
+  }
 }

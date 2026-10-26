@@ -156,7 +156,12 @@ describe('lineageEdgeIds / lineageNodeIds', () => {
 
     it('excludes upstream edges for the entitlement', () => {
       const ids = lineageEdgeIds(both, 'entitlement:e-read')
-      expect([...ids]).toEqual([eid('entitlement:e-read', 'source:s-erp')])
+      expect([...ids].sort()).toEqual(
+        [
+          eid('entitlement:e-read', 'attribute:s-erp:memberOf'),
+          eid('attribute:s-erp:memberOf', 'source:s-erp'),
+        ].sort(),
+      )
       expect(ids.has(eid('accessProfile:ap-foo', 'entitlement:e-read'))).toBe(false)
     })
 
@@ -164,7 +169,8 @@ describe('lineageEdgeIds / lineageNodeIds', () => {
       const ids = lineageEdgeIds(both, 'role:role-a')
       expect(ids.has(eid('role:role-a', 'accessProfile:ap-foo'))).toBe(true)
       expect(ids.has(eid('accessProfile:ap-foo', 'entitlement:e-read'))).toBe(true)
-      expect(ids.has(eid('entitlement:e-read', 'source:s-erp'))).toBe(true)
+      expect(ids.has(eid('entitlement:e-read', 'attribute:s-erp:memberOf'))).toBe(true)
+      expect(ids.has(eid('attribute:s-erp:memberOf', 'source:s-erp'))).toBe(true)
       expect(ids.has(eid('role:role-a', 'entitlement:e-del'))).toBe(true)
       expect(ids.has(eid('user:u-a', 'entitlement:e-read'))).toBe(false)
     })

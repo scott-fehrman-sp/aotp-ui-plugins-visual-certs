@@ -3,8 +3,8 @@
  *
  * Unlike the hover tooltip (which is transient and anchored to a card), this is
  * a persistent side panel that shows the full detail of whichever node the
- * reviewer last activated — ANY of the five kinds (user, role, access profile,
- * entitlement, source), including reference-only nodes. It is toggled from the
+ * reviewer last activated — ANY kind (user, role, access profile, entitlement,
+ * attribute, source), including reference-only nodes. It is toggled from the
  * control panel's "detail" button and closes with its own close control or when
  * the toggle is turned off.
  *
@@ -28,6 +28,7 @@ const KIND_LABEL: Record<AccessGraphNodeKind, string> = {
   role: 'Role',
   accessProfile: 'Access profile',
   entitlement: 'Entitlement',
+  attribute: 'Attribute',
   source: 'Source',
 }
 
@@ -133,6 +134,11 @@ export function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps) {
     ['Modified', e.modified ?? ''],
     ['Access profile ID', e.accessProfileId ?? ''],
   ]
+  const attributeRows: Array<[string, string]> = [
+    ['Source', e.source ?? ''],
+    ['Source ID', e.sourceId ?? ''],
+    ['Entitlements', e.entitlementCount ?? ''],
+  ]
   const sourceRows: Array<[string, string]> = [
     ['Description', e.description ?? ''],
     ['Type', e.type ?? ''],
@@ -155,9 +161,11 @@ export function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps) {
         ? roleRows
         : node?.kind === 'accessProfile'
           ? accessProfileRows
-          : node?.kind === 'source'
-            ? sourceRows
-            : []
+          : node?.kind === 'attribute'
+            ? attributeRows
+            : node?.kind === 'source'
+              ? sourceRows
+              : []
   const visiblePrimaryRows = primaryRows.filter(([, value]) => value)
   // The free-form source attributes shown under an "Additional attributes"
   // heading, mirroring the ISC panel. Empty when the entitlement carried none.
@@ -279,8 +287,7 @@ export function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps) {
               ) : null}
             </>
           ) : (
-            // Source node (the only remaining kind): its full attribute set,
-            // same visible-row pattern as the access items.
+            // Source or attribute: the visible field set for that kind.
             <dl className="vc-graph-detail-fields">
               {visiblePrimaryRows.length > 0 ? (
                 visiblePrimaryRows.map(([label, value]) => (

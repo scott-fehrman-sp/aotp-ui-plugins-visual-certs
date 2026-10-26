@@ -527,7 +527,7 @@ describe('AccessGraphCanvas item selection', () => {
 })
 
 describe('AccessGraphCanvas selection: an item both first-level and nested', () => {
-  it('Role A highlights the nested path to Read but not the user -> Read edge; Read only its source edge', async () => {
+  it('Role A highlights the nested path to Read but not the user -> Read edge; Read highlights its attribute and source', async () => {
     render(<AccessGraphCanvas graph={await buildFixtureGraph()} />)
     fireEvent.click(btn('Show access for Alice Adams'))
     // completed items and reference start hidden by default; show both so the
@@ -538,7 +538,8 @@ describe('AccessGraphCanvas selection: an item both first-level and nested', () 
     fireEvent.click(card('Role A'))
     const ids = new Set(lineageEdges().map((e) => e.id))
     expect(ids.has(eid('accessProfile:ap-foo', 'entitlement:e-read'))).toBe(true)
-    expect(ids.has(eid('entitlement:e-read', 'source:s-erp'))).toBe(true)
+    expect(ids.has(eid('entitlement:e-read', 'attribute:s-erp:memberOf'))).toBe(true)
+    expect(ids.has(eid('attribute:s-erp:memberOf', 'source:s-erp'))).toBe(true)
     expect(ids.has(eid('user:u-a', 'entitlement:e-read'))).toBe(false)
     const userRead = edges().find((e) => e.id === eid('user:u-a', 'entitlement:e-read'))!
     expect(userRead.style?.opacity).toBe(DIM_STATUS_OPACITY)
@@ -546,7 +547,12 @@ describe('AccessGraphCanvas selection: an item both first-level and nested', () 
     fireEvent.click(card('Read'))
     expect(pressed()).toEqual([card('Read')])
     expect(selectedEdges().map((e) => e.id)).toEqual([eid('user:u-a', 'entitlement:e-read')])
-    expect(lineageEdges().map((e) => e.id)).toEqual([eid('entitlement:e-read', 'source:s-erp')])
+    expect(lineageEdges().map((e) => e.id).sort()).toEqual(
+      [
+        eid('entitlement:e-read', 'attribute:s-erp:memberOf'),
+        eid('attribute:s-erp:memberOf', 'source:s-erp'),
+      ].sort(),
+    )
     expect(selectedEdges()[0].style?.stroke).toBe(STATUS_STROKE.approved)
     const upstream = edges().find((e) => e.id === eid('accessProfile:ap-foo', 'entitlement:e-read'))!
     expect(upstream.style?.opacity).toBe(DIM_REFERENCE_OPACITY)

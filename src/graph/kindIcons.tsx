@@ -2,7 +2,7 @@
  * Shared per-kind line-art glyphs for the access graph.
  *
  * One distinct glyph per node kind (user / role / access profile / entitlement
- * / source). Used by the node card's lower-left corner icon and by the detail
+ * / attribute / source). Used by the node card's lower-left corner icon and by the detail
  * panel's kind badge, so both show the same visual shorthand for a kind. The
  * glyphs are `currentColor`-stroked on an 18×18 viewBox, so the caller controls
  * size and color; they carry no accessible name (the kind is named in text
@@ -49,6 +49,19 @@ const KIND_ICON_SHAPE: Record<AccessGraphNodeKind, ReactNode> = {
     <>
       <circle cx="6" cy="6" r="3" fill="none" stroke="currentColor" strokeWidth="1.5" />
       <path d="M8.1 8.1 L15 15 M12.5 12.5 L14 11 M14 14 L15.5 12.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </>
+  ),
+  // Attribute: a tag, the schema field an entitlement is filed under.
+  attribute: (
+    <>
+      <path
+        d="M2.5 6 H10 L15 9 L10 12 H2.5 Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      <circle cx="5.5" cy="9" r="1" fill="currentColor" />
     </>
   ),
   // Source: a database cylinder.

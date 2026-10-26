@@ -20,6 +20,7 @@
  * edge order among the kept items, so identical input yields identical output.
  */
 import type { AccessGraphData } from '../sailpoint/types'
+import { withAttributeEntitlementCounts } from '../domain/attributeEntitlementCounts'
 
 /**
  * Returns the forward-reachable subgraph rooted at `userNodeId`.
@@ -91,5 +92,8 @@ export function userSubgraph(
       return copy
     })
 
-  return { nodes: keptNodes, edges: keptEdges }
+  // Attribute nodes are shared in the full graph, but only this user's
+  // entitlement links were kept above. Recalculate the card count from those
+  // visible links instead of retaining the full-graph count.
+  return withAttributeEntitlementCounts({ nodes: keptNodes, edges: keptEdges })
 }

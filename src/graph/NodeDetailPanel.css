@@ -141,6 +141,10 @@
   color: var(--vc-graph-entitlement);
 }
 
+.vc-graph-detail-kind-icon.kind-attribute {
+  color: var(--vc-graph-attribute);
+}
+
 .vc-graph-detail-kind-icon.kind-source {
   color: var(--vc-graph-source);
 }
@@ -173,6 +177,10 @@
 
 .vc-graph-detail-kind.kind-entitlement {
   color: var(--vc-graph-entitlement);
+}
+
+.vc-graph-detail-kind.kind-attribute {
+  color: var(--vc-graph-attribute);
 }
 
 .vc-graph-detail-kind.kind-source {

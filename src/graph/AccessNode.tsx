@@ -15,6 +15,7 @@ const KIND_LABEL: Record<AccessGraphNodeKind, string> = {
   role: 'Role',
   accessProfile: 'Access profile',
   entitlement: 'Entitlement',
+  attribute: 'Attribute',
   source: 'Source',
 }
 
@@ -161,6 +162,24 @@ function UserProgress({ percent, id }: { percent: number; id: string }) {
   )
 }
 
+/**
+ * The number of entitlements that use this attribute, pinned to the attribute
+ * card's lower-right corner. The visible text is the bare count; a
+ * screen-reader-only phrase names what it counts. The card points
+ * `aria-describedby` at `id`.
+ */
+function EntitlementCount({ count, id }: { count: string; id: string }) {
+  const phrase = count === '1' ? '1 entitlement' : `${count} entitlements`
+  return (
+    <span className="vc-graph-card-entitlement-count">
+      <span aria-hidden="true">{count}</span>
+      <span id={id} className="sr-only">
+        {phrase}
+      </span>
+    </span>
+  )
+}
+
 /** The lower-left kind glyph. User cards pair it with their completion percentage. */
 function CardKindMark({
   data,
@@ -230,9 +249,13 @@ export function AccessNode({ id, data }: NodeProps<AccessSceneNode>) {
   const { selectedId, lineageNodeIds, toggle } = useContext(SelectionContext)
   const statusIconId = useId()
   const progressId = useId()
+  const countId = useId()
   const kindLabel = KIND_LABEL[data.kind]
   const completionDescribedBy =
     data.kind === 'user' && data.completion ? progressId : undefined
+  const entitlementCount =
+    data.kind === 'attribute' ? data.detail?.entitlementCount : undefined
+  const countDescribedBy = entitlementCount ? countId : undefined
   const status = data.reviewStatus
   // Review status marks only the user's directly-held access item (drill-down).
   const statusClass =
@@ -265,6 +288,9 @@ export function AccessNode({ id, data }: NodeProps<AccessSceneNode>) {
         >
           <CardBody data={data} />
           <CardKindMark data={data} progressId={progressId} />
+          {entitlementCount ? (
+            <EntitlementCount count={entitlementCount} id={countId} />
+          ) : null}
           {status ? <StatusIcon status={status} /> : null}
           {isManagerUser(data) ? <ManagerIcon /> : null}
         </article>
@@ -330,9 +356,13 @@ export function AccessNode({ id, data }: NodeProps<AccessSceneNode>) {
         {...selectionProps}
         {...emphasisHandlers}
         {...(completionDescribedBy ? { 'aria-describedby': completionDescribedBy } : {})}
+        {...(countDescribedBy ? { 'aria-describedby': countDescribedBy } : {})}
       >
         <CardBody data={data} />
         <CardKindMark data={data} progressId={progressId} />
+        {entitlementCount ? (
+          <EntitlementCount count={entitlementCount} id={countId} />
+        ) : null}
         {status ? <StatusIcon status={status} id={statusIconId} /> : null}
         {isManagerUser(data) ? <ManagerIcon /> : null}
       </article>

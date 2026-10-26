@@ -36,11 +36,12 @@
   --control: #ffffff;
   --sans: "Segoe UI", system-ui, sans-serif;
 
-  /* Per-kind left-border accents for the five node layers. */
+  /* Per-kind left-border accents for the node layers. */
   --vc-graph-user: #0b4f8a;
   --vc-graph-role: #6b3fa0;
   --vc-graph-accessProfile: #0e7a43;
   --vc-graph-entitlement: #9c5836;
+  --vc-graph-attribute: #0f6f86;
   --vc-graph-source: #3a4d5e;
 
   /* Manager badge on a user card, mirroring org-graph's `--manager*` tokens
@@ -73,6 +74,7 @@
   --vc-graph-role: #c4a6e8;
   --vc-graph-accessProfile: #7dcea0;
   --vc-graph-entitlement: #c4a06a;
+  --vc-graph-attribute: #7dcfdf;
   --vc-graph-source: #a8b6c8;
 }
 

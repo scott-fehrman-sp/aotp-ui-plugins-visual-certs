@@ -94,6 +94,23 @@ describe('withoutCompleted', () => {
     expect(result.hiddenCount).toBe(0)
   })
 
+  it('recounts an attribute after completed entitlement links are hidden', () => {
+    const sub = statusSubgraph([
+      row({ id: '1', entitlement: 'Read', entitlementId: 'e1', entitlementAttribute: 'memberOf', source: 'Directory', sourceId: 's1', reviewStatus: 'needsReview', accessItemKind: 'entitlement', accessItemId: 'e1' }),
+      row({ id: '2', entitlement: 'Write', entitlementId: 'e2', entitlementAttribute: 'memberOf', source: 'Directory', sourceId: 's1', reviewStatus: 'approved', accessItemKind: 'entitlement', accessItemId: 'e2' }),
+    ])
+    const attributeId = 'attribute:s1:memberOf'
+    expect(sub.nodes.find((node) => node.id === attributeId)?.detail?.entitlementCount).toBe('2')
+
+    const { graph } = withoutCompleted(sub)
+    expect(graph.nodes.find((node) => node.id === attributeId)?.detail?.entitlementCount).toBe(
+      '1',
+    )
+    expect(
+      graph.edges.filter((edge) => edge.to === attributeId && edge.from.startsWith('entitlement:')),
+    ).toHaveLength(1)
+  })
+
   it('example 1: keeps lineage shared with a visible item, only through that item', () => {
     const sub = statusSubgraph(example1())
     const { graph, hiddenCount } = withoutCompleted(sub)
@@ -233,10 +250,10 @@ describe('withoutCompleted', () => {
     const alice = withoutCompleted(userSubgraph(graph, 'user:u-a'))
     // Billing (needsReview) -> Pay -> ERP stays; Role A (reassigned), Login,
     // Admin and Read (held directly, approved) go, with everything only they reach.
-    expect(labels(alice.graph)).toEqual(['Alice Adams', 'Billing', 'ERP', 'Pay'])
+    expect(labels(alice.graph)).toEqual(['Alice Adams', 'Billing', 'ERP', 'Pay', 'memberOf'])
     expect(alice.hiddenCount).toBe(4)
     const bob = withoutCompleted(userSubgraph(graph, 'user:u-b'))
-    expect(labels(bob.graph)).toEqual(['Bob Brown', 'Directory', 'Login'])
+    expect(labels(bob.graph)).toEqual(['Bob Brown', 'Directory', 'Login', 'memberOf'])
     expect(bob.hiddenCount).toBe(1)
   })
 

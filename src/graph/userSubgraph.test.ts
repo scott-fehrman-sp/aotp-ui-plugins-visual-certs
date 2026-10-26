@@ -83,6 +83,24 @@ describe('userSubgraph', () => {
     }
   })
 
+  it('counts only this user’s visible entitlement links on a shared attribute', () => {
+    const graph = deriveAccessGraph([
+      row({ id: '1', userId: 'u1', entitlement: 'read', entitlementId: 'e1', entitlementAttribute: 'memberOf', source: 'directory', sourceId: 's1' }),
+      row({ id: '2', userId: 'u1', entitlement: 'write', entitlementId: 'e2', entitlementAttribute: 'memberOf', source: 'directory', sourceId: 's1' }),
+      row({ id: '3', userId: 'u2', user: 'User Two', entitlement: 'admin', entitlementId: 'e3', entitlementAttribute: 'memberOf', source: 'directory', sourceId: 's1' }),
+    ])
+    const attributeId = 'attribute:s1:memberOf'
+    expect(graph.nodes.find((node) => node.id === attributeId)?.detail?.entitlementCount).toBe(
+      '3',
+    )
+
+    const sub = userSubgraph(graph, 'user:u1')
+    expect(sub.nodes.find((node) => node.id === attributeId)?.detail?.entitlementCount).toBe('2')
+    expect(
+      sub.edges.filter((edge) => edge.to === attributeId && edge.from.startsWith('entitlement:')),
+    ).toHaveLength(2)
+  })
+
   it('returns just the single user node for a user with no outgoing edges', () => {
     // A degenerate all-blank-leaf `access`-kind row contributes only the user.
     const graph = deriveAccessGraph([row({ userId: 'u1', user: 'User One' })])

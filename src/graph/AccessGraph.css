@@ -240,6 +240,20 @@
   white-space: nowrap;
 }
 
+/* How many entitlements use this attribute, pinned to the card's bottom-right
+   corner (the same corner a review-status icon uses on an access item). */
+.vc-graph-card-entitlement-count {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  color: var(--vc-graph-attribute);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 18px;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
 .vc-graph-card-kind-icon.kind-role {
   color: var(--vc-graph-role);
 }
@@ -250,6 +264,10 @@
 
 .vc-graph-card-kind-icon.kind-entitlement {
   color: var(--vc-graph-entitlement);
+}
+
+.vc-graph-card-kind-icon.kind-attribute {
+  color: var(--vc-graph-attribute);
 }
 
 .vc-graph-card-kind-icon.kind-source {
@@ -271,6 +289,10 @@
 
 .vc-graph-card.kind-entitlement {
   border-left-color: var(--vc-graph-entitlement);
+}
+
+.vc-graph-card.kind-attribute {
+  border-left-color: var(--vc-graph-attribute);
 }
 
 .vc-graph-card.kind-source {

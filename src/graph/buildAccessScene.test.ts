@@ -417,6 +417,47 @@ describe('buildAccessScene', () => {
     expect(colX('entitlement')).toBeLessThan(colX('source'))
   })
 
+  it('puts the attribute lane between entitlement and source, in both layouts', () => {
+    const graph = deriveAccessGraph([
+      row({
+        id: '1',
+        entitlement: 'read',
+        entitlementId: 'e1',
+        entitlementAttribute: 'memberOf',
+        source: 'engr db',
+        sourceId: 's1',
+        accessItemKind: 'entitlement',
+        accessItemId: 'e1',
+        accessItemName: 'read',
+      }),
+      row({
+        id: '2',
+        entitlement: 'write',
+        entitlementId: 'e2',
+        entitlementAttribute: 'memberOf',
+        source: 'engr db',
+        sourceId: 's1',
+        accessItemKind: 'entitlement',
+        accessItemId: 'e2',
+        accessItemName: 'write',
+      }),
+    ])
+    for (const rankdir of ['LR', 'TB'] as const) {
+      const scene = buildAccessScene(graph, rankdir)
+      const axis = rankdir === 'LR' ? 'x' : 'y'
+      const at = (kind: string) =>
+        scene.nodes.find((node) => node.data.kind === kind)!.position[axis]
+      expect(at('entitlement')).toBeLessThan(at('attribute'))
+      expect(at('attribute')).toBeLessThan(at('source'))
+      const entitlementAxis = new Set(
+        scene.nodes
+          .filter((node) => node.data.kind === 'entitlement')
+          .map((node) => node.position[axis]),
+      )
+      expect(entitlementAxis.size).toBe(1)
+    }
+  })
+
   it('pins each kind to its own row in TB (same y per kind, ordered user→source)', () => {
     const graph = deriveAccessGraph(workedExample())
     const scene = buildAccessScene(graph, 'TB')

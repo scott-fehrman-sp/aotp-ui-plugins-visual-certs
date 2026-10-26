@@ -672,3 +672,100 @@ describe('deriveAccessGraph first-level structure (shared fixture)', () => {
     expect(nodes.every((n) => n.reviewStatus === undefined)).toBe(true)
   })
 })
+
+describe('attribute lane', () => {
+  const has = (edges: { from: string; to: string }[], from: string, to: string) =>
+    edges.some((edge) => edge.from === from && edge.to === to)
+
+  it('routes an entitlement through its attribute instead of straight to the source', () => {
+    const { nodes, edges } = deriveAccessGraph([
+      row({
+        id: '1',
+        entitlement: 'read',
+        entitlementId: 'e1',
+        entitlementAttribute: 'memberOf',
+        source: 'engr db',
+        sourceId: 'src-engr',
+      }),
+    ])
+    const attribute = nodes.find((node) => node.kind === 'attribute')
+    expect(attribute).toMatchObject({
+      id: 'attribute:src-engr:memberOf',
+      label: 'memberOf',
+      detail: { source: 'engr db', sourceId: 'src-engr', entitlementCount: '1' },
+    })
+    expect(has(edges, 'entitlement:e1', 'attribute:src-engr:memberOf')).toBe(true)
+    expect(has(edges, 'attribute:src-engr:memberOf', 'source:src-engr')).toBe(true)
+    expect(has(edges, 'entitlement:e1', 'source:src-engr')).toBe(false)
+  })
+
+  it('shares one attribute node per source and counts distinct entitlements', () => {
+    const { nodes, edges } = deriveAccessGraph([
+      row({
+        id: '1',
+        entitlement: 'read',
+        entitlementId: 'e1',
+        entitlementAttribute: 'memberOf',
+        source: 'engr db',
+        sourceId: 'src-engr',
+      }),
+      row({
+        id: '2',
+        entitlement: 'write',
+        entitlementId: 'e2',
+        entitlementAttribute: 'memberOf',
+        source: 'engr db',
+        sourceId: 'src-engr',
+      }),
+      // The same entitlement on a second path must not inflate the count.
+      row({
+        id: '3',
+        role: 'Role A',
+        roleId: 'role-a',
+        entitlement: 'read',
+        entitlementId: 'e1',
+        entitlementAttribute: 'memberOf',
+        source: 'engr db',
+        sourceId: 'src-engr',
+      }),
+      row({
+        id: '4',
+        entitlement: 'login',
+        entitlementId: 'e3',
+        entitlementAttribute: 'memberOf',
+        source: 'phone app',
+        sourceId: 'src-phone',
+      }),
+    ])
+    const attributes = nodes.filter((node) => node.kind === 'attribute')
+    expect(attributes.map((node) => node.id).sort()).toEqual([
+      'attribute:src-engr:memberOf',
+      'attribute:src-phone:memberOf',
+    ])
+    expect(
+      attributes.find((node) => node.id === 'attribute:src-engr:memberOf')?.detail
+        ?.entitlementCount,
+    ).toBe('2')
+    const toEngr = edges.filter((edge) => edge.from === 'attribute:src-engr:memberOf')
+    expect(toEngr).toEqual([
+      { from: 'attribute:src-engr:memberOf', to: 'source:src-engr', pathCount: 3 },
+    ])
+    expect(has(edges, 'entitlement:e1', 'attribute:src-engr:memberOf')).toBe(true)
+    expect(has(edges, 'entitlement:e2', 'attribute:src-engr:memberOf')).toBe(true)
+    expect(has(edges, 'entitlement:e1', 'source:src-engr')).toBe(false)
+  })
+
+  it('keeps a direct source link when the entitlement has no attribute', () => {
+    const { nodes, edges } = deriveAccessGraph([
+      row({
+        id: '1',
+        entitlement: 'read',
+        entitlementId: 'e1',
+        source: 'engr db',
+        sourceId: 'src-engr',
+      }),
+    ])
+    expect(nodes.some((node) => node.kind === 'attribute')).toBe(false)
+    expect(has(edges, 'entitlement:e1', 'source:src-engr')).toBe(true)
+  })
+})

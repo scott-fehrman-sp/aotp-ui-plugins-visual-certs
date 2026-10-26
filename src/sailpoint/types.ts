@@ -496,6 +496,11 @@ export interface NodeDetail {
   status?: string
   /** The source's own id. Source nodes only. */
   sourceId?: string
+  /**
+   * How many distinct entitlements link to this attribute node. Attribute nodes
+   * only. A decimal string so the detail panel can render it like other fields.
+   */
+  entitlementCount?: string
   // --- user-node identity fields ---------------------------------------------
   /**
    * The user's given / family name. Carried on a user node so the grid can sort
@@ -522,12 +527,13 @@ export interface NodeDetail {
   identityId?: string
 }
 
-/** The kind of a graph node — the five node layers of the matrix. */
+/** The kind of a graph node — the layers of the matrix. */
 export type AccessGraphNodeKind =
   | 'user'
   | 'role'
   | 'accessProfile'
   | 'entitlement'
+  | 'attribute'
   | 'source'
 
 /**
@@ -658,7 +664,7 @@ export interface UserCompletion {
  * Extends `Record<string, unknown>` to satisfy React Flow's node-data bound.
  */
 export interface AccessSceneNodeData extends Record<string, unknown> {
-  /** Which of the five layers this node belongs to (drives the accent color). */
+  /** Which layer this node belongs to (drives the accent color). */
   kind: AccessGraphNodeKind
   /** Human-readable label shown on the card (the node's display name). */
   label: string

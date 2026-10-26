@@ -10,13 +10,15 @@
  * Two layouts share one node/edge mapping:
  *
  * - "lanes" (default): every kind is pinned to its own column (LR) / row (TB)
- *   so the layers user → role → access profile → entitlement → source read left
- *   to right. The canvas uses this whether reference content is shown or
- *   hidden: with reference hidden the nested lineage and the sources are simply
- *   absent, and the first-level items keep their role / access profile /
- *   entitlement lanes.
+ *   so the layers user → role → access profile → entitlement → attribute →
+ *   source read left to right. The attribute lane is omitted when the graph
+ *   has no attribute nodes, so a source stays beside its entitlements until
+ *   an attribute is there to show. The canvas uses this whether reference
+ *   content is shown or hidden: with reference hidden the nested lineage and
+ *   the sources are simply absent, and the first-level items keep their role /
+ *   access profile / entitlement lanes.
  *   A lane that holds MORE than `MAX_ITEMS_PER_LANE` (10) role / access profile
- *   / entitlement cards wraps into `ceil(n / 10)` balanced sub-columns (LR) or
+ *   / entitlement / attribute cards wraps into `ceil(n / 10)` balanced sub-columns (LR) or
  *   sub-rows (TB), placed side by side along the rank axis `WRAP_GAP` apart.
  *   Later lanes shift by the extra width; absent lanes keep their slot. The user
  *   and source lanes never wrap.
@@ -53,14 +55,26 @@ const KIND_ORDER: readonly AccessGraphNodeKind[] = [
   'role',
   'accessProfile',
   'entitlement',
+  'attribute',
   'source',
 ]
 
-/** Index of a kind in {@link KIND_ORDER} (its fixed rank). */
-function kindRank(kind: AccessGraphNodeKind): number {
-  const index = KIND_ORDER.indexOf(kind)
+/**
+ * Index of a kind in the layer order. The attribute lane is dropped when the
+ * graph has no attribute nodes, so source keeps the rank it had before that
+ * lane existed. Other absent kinds still keep their slot.
+ */
+function kindRank(kind: AccessGraphNodeKind, attributeLane: boolean): number {
+  const order = attributeLane
+    ? KIND_ORDER
+    : KIND_ORDER.filter((layer) => layer !== 'attribute')
+  const index = order.indexOf(kind)
   // Unknown kinds (shouldn't happen) sort after the known layers.
-  return index === -1 ? KIND_ORDER.length : index
+  return index === -1 ? order.length : index
+}
+
+function hasAttributeLane(graph: AccessGraphData): boolean {
+  return graph.nodes.some((node) => node.kind === 'attribute')
 }
 
 /** A positioned React Flow node whose `data` is our small scene payload. */
@@ -126,6 +140,7 @@ const WRAPPING_KINDS: ReadonlySet<AccessGraphNodeKind> = new Set([
   'role',
   'accessProfile',
   'entitlement',
+  'attribute',
 ])
 
 /**
@@ -220,6 +235,7 @@ function singleLanePlacements(
   bandStep: number,
   crossStride: number,
 ): Map<string, Placement> {
+  const attributeLane = hasAttributeLane(graph)
   const placements = new Map<string, Placement>()
   const place = (nodes: AccessGraphData['nodes'], band: number) => {
     const rank = MARGIN + band * bandStep
@@ -235,7 +251,7 @@ function singleLanePlacements(
   const items = graph.nodes
     .filter((node) => node.kind !== 'user')
     .sort((a, b) => {
-      const byKind = kindRank(a.kind) - kindRank(b.kind)
+      const byKind = kindRank(a.kind, attributeLane) - kindRank(b.kind, attributeLane)
       if (byKind !== 0) return byKind
       const byLabel = compareLabels(a.label, b.label)
       if (byLabel !== 0) return byLabel
@@ -249,7 +265,7 @@ function singleLanePlacements(
  * Lanes placement: every kind is pinned to its fixed band (a column in LR, a
  * row in TB) and each lane is laid out independently — its cards ordered
  * alphabetically by display name and de-overlapped at a fixed stride. A role /
- * access profile / entitlement lane with more than `MAX_ITEMS_PER_LANE` cards
+ * access profile / entitlement / attribute lane with more than `MAX_ITEMS_PER_LANE` cards
  * is split (column-major, in that same name order) into balanced sub-columns /
  * sub-rows `subStep` apart on the rank axis, each centered on cross 0. Lanes
  * are visited in layer order and every lane after a wrapped one shifts by the
@@ -264,8 +280,9 @@ function lanePlacements(
 ): Map<string, Placement> {
   // Pin the rank axis to the kind's fixed band so every kind forms its own
   // column (LR) or row (TB).
+  const attributeLane = hasAttributeLane(graph)
   const rankCoordFor = (kind: AccessGraphNodeKind): number =>
-    MARGIN + kindRank(kind) * bandStep
+    MARGIN + kindRank(kind, attributeLane) * bandStep
 
   // Each lane is laid out independently: cards are ordered alphabetically by
   // display name (see below) and re-spaced at a fixed cross-axis stride so no
@@ -278,7 +295,9 @@ function lanePlacements(
     lane.push(node)
     byKind.set(node.kind, lane)
   }
-  const kinds = [...byKind.keys()].sort((a, b) => kindRank(a) - kindRank(b))
+  const kinds = [...byKind.keys()].sort(
+    (a, b) => kindRank(a, attributeLane) - kindRank(b, attributeLane),
+  )
   // Extra rank-axis width taken by the wrapped lanes visited so far.
   let shift = 0
   for (const kind of kinds) {
