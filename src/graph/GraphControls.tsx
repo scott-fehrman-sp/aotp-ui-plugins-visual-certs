@@ -17,7 +17,7 @@ interface GraphControlsProps {
   hiddenCompletedCount: number | null
   showMinimap: boolean
   onToggleMinimap: () => void
-  /** The review-status legend is shown (drill-down only). */
+  /** The node legend is shown. The button itself is drill-down only. */
   showLegend: boolean
   onToggleLegend: () => void
   /** The right-side node detail fly-out panel is shown. */
@@ -28,8 +28,9 @@ interface GraphControlsProps {
 /**
  * The left-side vertical control panel for the access graph, styled after
  * org-graph's floating toolbar. Top to bottom: layout direction, reference
- * nodes/links visibility, completed items visibility, legend visibility,
- * minimap visibility, node detail panel visibility.
+ * nodes/links visibility, completed items visibility, legend visibility
+ * (drill-down only — the user grid has no legend), minimap visibility, node
+ * detail panel visibility.
  */
 export function GraphControls({
   inDrilldown,
@@ -65,11 +66,7 @@ export function GraphControls({
       : hiddenCompletedCount === null
         ? 'Show completed items'
         : `Show completed items (${hiddenCompletedCount} hidden)`
-  const legendLabel = !inDrilldown
-    ? 'Legend (open a user to change)'
-    : showLegend
-      ? 'Hide legend'
-      : 'Show legend'
+  const legendLabel = showLegend ? 'Hide legend' : 'Show legend'
   const minimapLabel = showMinimap ? 'Hide minimap' : 'Show minimap'
   const detailLabel = showDetail ? 'Hide details panel' : 'Show details panel'
 
@@ -111,18 +108,19 @@ export function GraphControls({
           <ControlIcon name={showCompleted ? 'completed' : 'completedHidden'} />
         </button>
       </ControlHint>
-      <ControlHint label={legendLabel}>
-        <button
-          type="button"
-          className={`vc-graph-control${showLegend ? ' vc-graph-control-active' : ''}`}
-          aria-label={legendLabel}
-          aria-pressed={showLegend}
-          disabled={!inDrilldown}
-          onClick={onToggleLegend}
-        >
-          <ControlIcon name="legend" />
-        </button>
-      </ControlHint>
+      {inDrilldown && (
+        <ControlHint label={legendLabel}>
+          <button
+            type="button"
+            className={`vc-graph-control${showLegend ? ' vc-graph-control-active' : ''}`}
+            aria-label={legendLabel}
+            aria-pressed={showLegend}
+            onClick={onToggleLegend}
+          >
+            <ControlIcon name="legend" />
+          </button>
+        </ControlHint>
+      )}
       <ControlHint label={minimapLabel}>
         <button
           type="button"

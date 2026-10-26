@@ -27,8 +27,9 @@ import { useGraphTransition } from './useGraphTransition'
 import { useMotionMs } from './useMotionMs'
 import { ScrollHint } from './ScrollHint'
 import { GraphControls } from './GraphControls'
+import { GraphLegend } from './GraphLegend'
 import { NodeDetailPanel } from './NodeDetailPanel'
-import { AccessNode, StatusIcon } from './AccessNode'
+import { AccessNode } from './AccessNode'
 import { useColorMode } from './useColorMode'
 import { EmptyState } from '../components/EmptyState'
 import { createPortal } from 'react-dom'
@@ -111,8 +112,9 @@ const MINIMAP_COLOR: Record<string, string> = {
  * the legend, minimap, controls and panels so no card sits under them.
  *
  * A left-side vertical control panel (`GraphControls`, in both modes) holds the
- * layout direction, reference visibility, completed-items visibility, legend
- * visibility and minimap toggles. Those preferences live in memory and survive switching users
+ * layout direction, reference visibility, completed-items visibility, minimap
+ * and detail toggles. The node-legend toggle is drill-down only: the user grid
+ * shows neither the legend nor its control. Those preferences live in memory and survive switching users
  * and grid/drill-down. The completed toggle (drill-down only) hides the
  * first-level items whose status is approved / revoked / reassigned plus any
  * lineage left orphaned (`withoutCompleted`), re-lays out and refits once.
@@ -714,48 +716,20 @@ function CanvasSurface({ graph, backSlot, motionMs: motionMsProp }: AccessGraphC
               backSlot,
             )
           : null}
-        {/* Both top-right overlays share ONE panel so they stack in a column
-            instead of colliding at the same corner (React Flow pins every
-            same-position panel to top:0;right:0). The legend sits above the
-            detail fly-out when both are shown. */}
-        {((inDrilldown && showLegend) || showDetail) && (
+        {/* The node legend is its own bottom-left panel, offset in CSS to sit
+            beside the zoom controls (React Flow pins every same-position panel
+            to the same corner). The user grid never mounts it. */}
+        {inDrilldown && showLegend && (
+          <Panel position="bottom-left" className="vc-graph-legend-panel">
+            <GraphLegend />
+          </Panel>
+        )}
+        {showDetail && (
           <Panel position="top-right" className="vc-graph-right-stack">
-            {inDrilldown && showLegend && (
-              <div className="vc-graph-legend" role="group" aria-label="Review status legend">
-                <p className="vc-graph-legend-title">Review status</p>
-                <span className="vc-graph-legend-row">
-                  <StatusIcon status="needsReview" decorative />
-                  Needs review
-                </span>
-                <span className="vc-graph-legend-row">
-                  <StatusIcon status="approved" decorative />
-                  Approved
-                </span>
-                <span className="vc-graph-legend-row">
-                  <StatusIcon status="revoked" decorative />
-                  Revoked
-                </span>
-                <span className="vc-graph-legend-row">
-                  <StatusIcon status="reassigned" decorative />
-                  Reassigned
-                </span>
-                {showReference && (
-                  <span className="vc-graph-legend-row">
-                    <span
-                      className="vc-graph-legend-swatch vc-graph-legend-swatch-reference"
-                      aria-hidden="true"
-                    />
-                    Reference Only
-                  </span>
-                )}
-              </div>
-            )}
-            {showDetail && (
-              <NodeDetailPanel
-                node={detailNode}
-                onClose={() => setShowDetail(false)}
-              />
-            )}
+            <NodeDetailPanel
+              node={detailNode}
+              onClose={() => setShowDetail(false)}
+            />
           </Panel>
         )}
         {isDegenerate && (

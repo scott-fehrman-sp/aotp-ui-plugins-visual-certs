@@ -2,9 +2,10 @@
  * Shared per-kind line-art glyphs for the access graph.
  *
  * One distinct glyph per node kind (user / role / access profile / entitlement
- * / attribute / source). Used by the node card's lower-left corner icon and by the detail
- * panel's kind badge, so both show the same visual shorthand for a kind. The
- * glyphs are `currentColor`-stroked on an 18×18 viewBox, so the caller controls
+ * / attribute / source). Used by the node card's lower-left corner icon, the
+ * detail panel's kind badge, and the drill-down node legend, so each shows the
+ * same visual shorthand for a kind. The glyphs are `currentColor`-stroked on an
+ * 18×18 viewBox, so the caller controls
  * size and color; they carry no accessible name (the kind is named in text
  * beside them and in the card's accessible name).
  *

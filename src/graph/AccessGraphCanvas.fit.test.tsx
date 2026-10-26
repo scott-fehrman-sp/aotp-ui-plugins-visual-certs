@@ -111,12 +111,12 @@ describe('AccessGraphCanvas overlay-aware fit', () => {
     const { container } = render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
     await waitFor(() => expect(fitViewSpy).toHaveBeenCalled())
-    // The legend overlay starts off; show it so the right stack has a size.
+    // The legend overlay starts off; show it so the bottom-left panel has a size.
     fireEvent.click(btn('Show legend'))
     // Scoped, per-instance rects (never Element.prototype).
     const root = container.querySelector<HTMLElement>('.react-flow')!
     root.getBoundingClientRect = () => rect(0, 0, 968, 490)
-    const legend = container.querySelector<HTMLElement>('.vc-graph-right-stack')!
+    const legend = container.querySelector<HTMLElement>('.vc-graph-legend-panel')!
     legend.getBoundingClientRect = () => rect(15, 200, 236, 186) // right 251, bottom 386
     fireEvent.click(btn('Show minimap')) // triggers a refit
     await waitFor(() => expect(parseInt(lastPadding()!.left, 10)).toBeGreaterThanOrEqual(251 + 12))

@@ -169,7 +169,7 @@ describe('AccessGraphCanvas', () => {
     expect(screen.getByText('No users to map')).toBeInTheDocument()
   })
 
-  it('marks review status in drill-down: name, four-state corner icon, legend, no chip', () => {
+  it('marks review status in drill-down: name, four-state corner icon, no chip', () => {
     // One user with four directly-held items covering every state: an undecided
     // role (needsReview), a kept directly-held entitlement (approved), a removed
     // directly-held entitlement (revoked), and a reassigned access profile
@@ -231,14 +231,14 @@ describe('AccessGraphCanvas', () => {
     render(<AccessGraphCanvas graph={graph} />)
 
     // Grid shows no legend and no status icons.
-    expect(screen.queryByRole('group', { name: /review status legend/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('group', { name: /node legend/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /legend/i })).not.toBeInTheDocument()
 
     // Drill into the user.
     fireEvent.click(screen.getByRole('button', { name: 'Show access for User One' }))
-    // completed items and the legend start hidden by default; show them so the
-    // approved/revoked/reassigned cards and the legend are present for this test
+    // completed items start hidden by default; show them so the
+    // approved/revoked/reassigned cards are present for this test
     fireEvent.click(screen.getByRole('button', { name: /^Show completed items/ }))
-    fireEvent.click(screen.getByRole('button', { name: 'Show legend' }))
 
     // Every access-item node renders its NAME (label).
     expect(screen.getByText('Role A')).toBeInTheDocument()
@@ -251,8 +251,7 @@ describe('AccessGraphCanvas', () => {
     expect(document.querySelector('.vc-graph-status-chip')).toBeNull()
 
     // Each directly-held item shows its corner status ICON with a distinct,
-    // accessible name. The legend's icons are decorative (aria-hidden), so the
-    // only accessibly-named icon per status is the node's.
+    // accessible name.
     const needsReviewIcon = screen.getByLabelText('Needs review')
     expect(needsReviewIcon).toHaveAttribute('data-review-status', 'needsReview')
     const approvedIcon = screen.getByLabelText('Approved')
@@ -262,35 +261,62 @@ describe('AccessGraphCanvas', () => {
     const reassignedIcon = screen.getByLabelText('Reassigned')
     expect(reassignedIcon).toHaveAttribute('data-review-status', 'reassigned')
 
-    // The legend lists all four states.
-    const legend = screen.getByRole('group', { name: /review status legend/i })
-    expect(legend).toHaveTextContent('Needs review')
-    expect(legend).toHaveTextContent('Approved')
-    expect(legend).toHaveTextContent('Revoked')
-    expect(legend).toHaveTextContent('Reassigned')
-
     // No numeric count badge anywhere (the old accessCount edge is gone).
     expect(document.querySelector('.vc-graph-edge-badge')).toBeNull()
   })
 
-  it('places the legend in a panel that clears the zoom controls', () => {
+  it('places the legend in the bottom-left beside the zoom controls', () => {
     render(<AccessGraphCanvas graph={referenceGraph()} />)
     fireEvent.click(screen.getByRole('button', { name: /show access for/i }))
     // legend starts hidden by default; show it for this test
     fireEvent.click(screen.getByRole('button', { name: 'Show legend' }))
-    const legend = screen.getByRole('group', { name: /review status legend/i })
-    expect(legend.closest('.react-flow__panel')).toHaveClass('vc-graph-right-stack')
+    const legend = screen.getByRole('group', { name: /node legend/i })
+    const panel = legend.closest('.react-flow__panel')!
+    expect(panel).toHaveClass('vc-graph-legend-panel')
+    expect(panel).toHaveClass('bottom')
+    expect(panel).toHaveClass('left')
+    const controls = document.querySelector('.react-flow__controls')!
+    expect(controls).toHaveClass('bottom')
+    expect(controls).toHaveClass('left')
+    expect(controls).not.toBe(panel)
   })
 
-  it('legend toggle hides and restores the legend panel in drill-down', () => {
+  it('legend lists type and status columns separated by a vertical rule', () => {
     render(<AccessGraphCanvas graph={referenceGraph()} />)
-    // Disabled in the grid, where there is no legend.
-    expect(screen.getByRole('button', { name: /^Legend \(open a user/ })).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', { name: 'Show access for User One' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Show legend' }))
+    const legend = screen.getByRole('group', { name: /node legend/i })
+    const columns = legend.querySelectorAll('.vc-graph-legend-col')
+    expect(columns).toHaveLength(2)
+    expect(columns[0]).toHaveTextContent('Types')
+    expect(columns[1]).toHaveTextContent('Status')
+    expect(legend.querySelector('.vc-graph-legend-sep')).not.toBeNull()
+    const kinds = ['User', 'Role', 'Access profile', 'Entitlement', 'Attribute', 'Source']
+    for (const label of kinds) expect(within(columns[0] as HTMLElement).getByText(label)).toBeInTheDocument()
+    expect(
+      Array.from(columns[0].querySelectorAll('.vc-graph-legend-icon')).map((icon) =>
+        icon.getAttribute('data-kind'),
+      ),
+    ).toEqual(['user', 'role', 'accessProfile', 'entitlement', 'attribute', 'source'])
+    const statuses = ['Needs Review', 'Approved', 'Revoked', 'Reassigned']
+    for (const label of statuses) expect(within(columns[1] as HTMLElement).getByText(label)).toBeInTheDocument()
+    expect(
+      Array.from(columns[1].querySelectorAll('.vc-graph-status-icon')).map((icon) =>
+        icon.getAttribute('data-review-status'),
+      ),
+    ).toEqual(['needsReview', 'approved', 'revoked', 'reassigned'])
+  })
+
+  it('legend toggle hides and restores the legend panel in drill-down and omits it on the user grid', () => {
+    render(<AccessGraphCanvas graph={referenceGraph()} />)
+    // The user grid has no legend and no legend control.
+    expect(screen.queryByRole('button', { name: /legend/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('group', { name: /node legend/i })).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /show access for/i }))
     // legend starts hidden by default; show it to capture the shown baseline
     fireEvent.click(screen.getByRole('button', { name: 'Show legend' }))
 
-    const legendGroup = () => screen.queryByRole('group', { name: /review status legend/i })
+    const legendGroup = () => screen.queryByRole('group', { name: /node legend/i })
     expect(legendGroup()).toBeInTheDocument()
     const toggle = () => screen.getByRole('button', { name: /^(Hide|Show) legend$/ })
     expect(toggle()).toHaveAttribute('aria-pressed', 'true')
@@ -302,6 +328,10 @@ describe('AccessGraphCanvas', () => {
     fireEvent.click(toggle())
     expect(legendGroup()).toBeInTheDocument()
     expect(toggle()).toHaveAttribute('aria-pressed', 'true')
+
+    fireEvent.click(screen.getByRole('button', { name: /back to all users/i }))
+    expect(legendGroup()).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /legend/i })).not.toBeInTheDocument()
   })
 
   /** role-a{ap-foo{e1}} needsReview; e2 held directly (approved). */
@@ -335,20 +365,6 @@ describe('AccessGraphCanvas', () => {
   }
 
   const cardFor = (text: string) => screen.getByText(text).closest<HTMLElement>('.vc-graph-card')!
-
-  it('legend lists a Reference Only entry distinct from the four statuses', () => {
-    render(<AccessGraphCanvas graph={referenceGraph()} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Show access for User One' }))
-    // legend and reference start hidden by default; show both so the legend
-    // renders its Reference Only entry alongside the four status rows
-    fireEvent.click(screen.getByRole('button', { name: 'Show legend' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Show reference nodes and links' }))
-    const legend = screen.getByRole('group', { name: /review status legend/i })
-    expect(legend).toHaveTextContent('Reference Only')
-    // The reference entry is a hairline swatch, not a status icon.
-    expect(legend.querySelectorAll('.vc-graph-status-icon')).toHaveLength(4)
-    expect(legend.querySelector('.vc-graph-legend-swatch-reference')).not.toBeNull()
-  })
 
   it('every first-level card has exactly one icon equal to its card status and its incoming edge status', () => {
     render(<AccessGraphCanvas graph={referenceGraph()} />)
@@ -464,13 +480,13 @@ describe('AccessGraphCanvas', () => {
         return labels
       }
       // All control-panel options start hidden by default, so the toggles read
-      // "Show ..." (the layout/reference/completed/legend toggles are disabled
-      // in the grid and keep their open-a-user labels).
+      // "Show ..." (the layout/reference/completed toggles are disabled in the
+      // grid and keep their open-a-user labels). The user grid has no legend
+      // control.
       expect(check()).toEqual([
         'Layout (open a user to change)',
         'Reference nodes and links (open a user to change)',
         'Completed items (open a user to filter)',
-        'Legend (open a user to change)',
         'Show minimap',
         'Show details panel',
       ])
@@ -531,21 +547,20 @@ describe('AccessGraphCanvas', () => {
       expect(announcement()).toHaveTextContent('Minimap shown.')
     })
 
-    it('reference toggle removes nested items, sources, edges and the legend row; restores them', () => {
+    it('reference toggle removes nested items, sources and edges; restores them', () => {
       render(<AccessGraphCanvas graph={referenceGraph()} />)
       expect(btn(/^Reference nodes/)).toBeDisabled()
       drillIn()
-      // reference, completed items and the legend start hidden by default; show
-      // each so the nested lineage, the approved `login` card and the legend
-      // form the shown baseline this toggle test compares against
+      // reference and completed items start hidden by default; show each so the
+      // nested lineage and the approved `login` card form the shown baseline.
+      // The node legend stays the same either way.
       fireEvent.click(btn('Show reference nodes and links'))
       fireEvent.click(btn(/^Show completed items/))
       fireEvent.click(btn('Show legend'))
       const nestedLabels = ['foo', 'read', 'engr db', 'phone app']
       for (const t of nestedLabels) expect(screen.getByText(t)).toBeInTheDocument()
-      expect(screen.getByRole('group', { name: /review status legend/i })).toHaveTextContent(
-        'Reference Only',
-      )
+      const legend = screen.getByRole('group', { name: /node legend/i })
+      expect(legend).toHaveTextContent('Source')
       expect(btn('Hide reference nodes and links')).toHaveAttribute('aria-pressed', 'true')
 
       fireEvent.click(btn('Hide reference nodes and links'))
@@ -555,16 +570,14 @@ describe('AccessGraphCanvas', () => {
       expect(btn('Show reference nodes and links')).toHaveAttribute('aria-pressed', 'false')
       expect(announcement()).toHaveTextContent('Reference nodes and links hidden.')
 
-      // First level, statuses and the four status legend rows are intact.
+      // First level and statuses are intact, and the node legend is unchanged.
       for (const t of ['Role A', 'login', 'User One']) expect(screen.getByText(t)).toBeInTheDocument()
       expect(document.querySelectorAll('.react-flow__node .vc-graph-status-icon')).toHaveLength(2)
-      const legend = screen.getByRole('group', { name: /review status legend/i })
-      expect(legend).not.toHaveTextContent('Reference Only')
-      expect(legend.querySelectorAll('.vc-graph-status-icon')).toHaveLength(4)
+      expect(legend.querySelectorAll('.vc-graph-legend-icon')).toHaveLength(6)
 
       fireEvent.click(btn('Show reference nodes and links'))
       for (const t of nestedLabels) expect(screen.getByText(t)).toBeInTheDocument()
-      expect(legend).toHaveTextContent('Reference Only')
+      expect(legend.querySelectorAll('.vc-graph-legend-icon')).toHaveLength(6)
       expect(announcement()).toHaveTextContent('Reference nodes and links shown.')
     })
 
@@ -698,8 +711,8 @@ describe('AccessGraphCanvas', () => {
         drillIn()
         // completed items start hidden by default; show them to capture the
         // shown baseline, then hide them to exercise the hide path/announcement.
-        // reference and legend start hidden too; show them so the legend (with
-        // its Reference Only row) is present to assert on.
+        // reference and legend start hidden too; show them so the node legend
+        // is present to assert it is unchanged.
         fireEvent.click(btn(/^Show completed items/))
         fireEvent.click(btn('Show reference nodes and links'))
         fireEvent.click(btn('Show legend'))
@@ -712,10 +725,10 @@ describe('AccessGraphCanvas', () => {
         expect(hidden).not.toHaveClass('vc-graph-control-active')
         expect(hidden.querySelector('svg')).toHaveAttribute('data-icon', 'completedHidden')
         expect(announcement()).toHaveTextContent('Completed items hidden (4).')
-        // Legend unchanged.
-        const legend = screen.getByRole('group', { name: /review status legend/i })
-        expect(legend.querySelectorAll('.vc-graph-status-icon')).toHaveLength(4)
-        expect(legend).toHaveTextContent('Reference Only')
+        // Node legend unchanged.
+        const legend = screen.getByRole('group', { name: /node legend/i })
+        expect(legend.querySelectorAll('.vc-graph-legend-icon')).toHaveLength(6)
+        expect(legend).toHaveTextContent('Entitlement')
       })
 
       it('keeps a directly-held completed entitlement that is nested under a visible item as muted reference', () => {

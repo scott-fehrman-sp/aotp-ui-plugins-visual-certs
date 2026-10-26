@@ -283,7 +283,7 @@ describe('AccessGraphCanvas lane wrapping', () => {
     })
   })
 
-  it('keeps the status on every wrapped card and the legend entries', () => {
+  it('keeps the status on every wrapped card and lists every node kind in the legend', () => {
     render(<AccessGraphCanvas graph={statusGraph(ents(12, 2))} />)
     drillIn()
     // completed items and the legend start hidden by default; show both so the
@@ -298,8 +298,21 @@ describe('AccessGraphCanvas lane wrapping', () => {
         i < 2 ? 'approved' : 'needsReview',
       )
     }
-    const legend = screen.getByRole('group', { name: /legend/i })
-    for (const text of ['Needs review', 'Approved', 'Revoked', 'Reassigned']) {
+    const legend = screen.getByRole('group', { name: /node legend/i })
+    for (const text of [
+      'Types',
+      'User',
+      'Role',
+      'Access profile',
+      'Entitlement',
+      'Attribute',
+      'Source',
+      'Status',
+      'Needs Review',
+      'Approved',
+      'Revoked',
+      'Reassigned',
+    ]) {
       expect(within(legend).getByText(text)).toBeInTheDocument()
     }
   })

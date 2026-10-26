@@ -7,20 +7,16 @@
  */
 
 /*
- * The shared top-right column that stacks the legend above the detail panel in
- * ONE React Flow panel (React Flow pins every same-position panel to the same
- * corner, so two separate top-right panels would overlap). `align-items:
- * flex-end` keeps each child hugging the right edge even when they differ in
- * width (the narrow legend vs the wider detail card).
+ * The top-right column for the detail panel. One React Flow panel keeps the
+ * card pinned to that corner.
  */
 .vc-graph-right-stack {
   display: flex;
   flex-direction: column;
   gap: 10px;
   align-items: flex-end;
-  /* Keep the whole stack inside the canvas (the panel sits 15px from the top;
-     leave a matching gap at the bottom). The detail card scrolls internally
-     when the legend above it leaves it little room. */
+  /* Keep the card inside the canvas (the panel sits 15px from the top; leave a
+     matching gap at the bottom). The detail card scrolls internally. */
   max-height: calc(min(70vh, 640px) - 30px);
   min-height: 0;
   /* Panels disable pointer events on the wrapper; re-enable so the detail
@@ -33,8 +29,7 @@
   flex-direction: column;
   gap: 10px;
   width: 260px;
-  /* In the shared right stack this card takes the room left under the legend
-     and scrolls its own body; `min-height: 0` lets it shrink below content. */
+  /* The card scrolls its own body; `min-height: 0` lets it shrink below content. */
   flex: 0 1 auto;
   min-height: 0;
   padding: 12px 14px;

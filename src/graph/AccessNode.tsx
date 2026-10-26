@@ -87,8 +87,9 @@ export function StatusIcon({
   id?: string
   /**
    * When true the icon is purely decorative (hidden from the a11y tree) — used
-   * in the legend where an adjacent text label already names the status. On a
-   * node card it defaults to false so the icon carries the accessible name.
+   * in the detail panel and the legend, where an adjacent text label already
+   * names the status. On a node card it defaults to false so the icon carries
+   * the accessible name.
    */
   decorative?: boolean
 }) {

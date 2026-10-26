@@ -327,7 +327,7 @@
 /*
  * ONE status color per state, shared by everything on the card that expresses
  * status: the thick left stripe, the outline ring, and the hover ring. The
- * user→item edge, the corner icon and the legend swatch use these same four
+ * user→item edge and the corner icon use these same four
  * `--vc-*` tokens (see buildAccessScene.ts and the rules below), so a reviewable
  * item's edge, outline and stripe are always the same color.
  */
@@ -537,17 +537,20 @@
 }
 
 /*
- * Drill-down legend: four rows (needs review / approved / revoked / reassigned),
- * each a status icon + text, in a corner panel styled like the layout toggle /
- * back button. The icon reuses the node's `.vc-graph-status-icon*` classes so
- * the legend visually matches the node corner icons.
+ * Drill-down node legend: a Types column and a Status column, split by a
+ * vertical rule. The panel is bottom-left, shifted right of the zoom controls
+ * (26px button, 1px border each side, 15px panel margin) so the two sit side
+ * by side on the same bottom edge. The user grid does not mount this panel.
  */
-/* The legend sits in the top-right corner. */
+.vc-graph-wrap .react-flow__panel.vc-graph-legend-panel {
+  margin-left: 52px;
+}
 
 .vc-graph-legend {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 12px;
   padding: 8px 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -558,13 +561,24 @@
   box-shadow: var(--shadow);
 }
 
-.vc-graph-legend-title {
+.vc-graph-legend-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.vc-graph-legend-heading {
   margin: 0 0 2px;
   font-size: 11px;
   font-weight: 700;
-  text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--muted);
+}
+
+.vc-graph-legend-sep {
+  flex: 0 0 auto;
+  width: 1px;
+  background: var(--line);
 }
 
 .vc-graph-legend-row {
@@ -573,44 +587,39 @@
   gap: 8px;
 }
 
-.vc-graph-legend-swatch {
-  flex: 0 0 auto;
-  width: 22px;
-  height: 0;
-  border-top-width: 3px;
-  border-top-style: solid;
-}
-
-.vc-graph-legend-swatch-needsReview {
-  border-top-style: dashed;
-  border-top-color: var(--vc-warn);
-}
-
-.vc-graph-legend-swatch-approved {
-  border-top-color: var(--vc-allow);
-}
-
-.vc-graph-legend-swatch-revoked {
-  border-top-color: var(--vc-deny);
-}
-
-.vc-graph-legend-swatch-reassigned {
-  border-top-style: dotted;
-  border-top-color: var(--vc-accent);
-}
-
-.vc-graph-legend-swatch-reference {
-  border-top-color: var(--edge);
-  border-top-width: 1px;
-}
-
-/*
- * The legend reuses the node's corner status icon. Inside a legend row it must
- * sit inline rather than absolutely in the card corner, so reset positioning.
- */
+/* Status icons are absolutely positioned on a card. In a legend row they sit
+   inline beside the label, the same reset the detail panel uses. */
 .vc-graph-legend-row .vc-graph-status-icon {
   position: static;
   flex: 0 0 auto;
+}
+
+.vc-graph-legend-icon {
+  flex: 0 0 auto;
+}
+
+.vc-graph-legend-icon.kind-user {
+  color: var(--vc-graph-user);
+}
+
+.vc-graph-legend-icon.kind-role {
+  color: var(--vc-graph-role);
+}
+
+.vc-graph-legend-icon.kind-accessProfile {
+  color: var(--vc-graph-accessProfile);
+}
+
+.vc-graph-legend-icon.kind-entitlement {
+  color: var(--vc-graph-entitlement);
+}
+
+.vc-graph-legend-icon.kind-attribute {
+  color: var(--vc-graph-attribute);
+}
+
+.vc-graph-legend-icon.kind-source {
+  color: var(--vc-graph-source);
 }
 
 /*

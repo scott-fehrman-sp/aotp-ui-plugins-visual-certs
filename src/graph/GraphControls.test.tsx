@@ -125,7 +125,7 @@ describe('GraphControls', () => {
     expect(hidden.querySelector('svg')).toHaveAttribute('data-icon', 'completedHidden')
   })
 
-  it('disables Layout, Reference, Completed and Legend in the grid but keeps Minimap and Detail enabled', () => {
+  it('disables Layout, Reference and Completed in the grid, omits Legend, and keeps Minimap and Detail enabled', () => {
     const props = setup({ inDrilldown: false })
     const layout = screen.getByRole('button', { name: 'Layout (open a user to change)' })
     const reference = screen.getByRole('button', {
@@ -134,19 +134,17 @@ describe('GraphControls', () => {
     const completed = screen.getByRole('button', {
       name: 'Completed items (open a user to filter)',
     })
-    const legend = screen.getByRole('button', { name: 'Legend (open a user to change)' })
     const minimap = screen.getByRole('button', { name: 'Hide minimap' })
     const detail = screen.getByRole('button', { name: 'Hide details panel' })
     expect(layout).toBeDisabled()
     expect(reference).toBeDisabled()
     expect(completed).toBeDisabled()
-    expect(legend).toBeDisabled()
+    expect(screen.queryByRole('button', { name: /legend/i })).not.toBeInTheDocument()
     expect(minimap).toBeEnabled()
     expect(detail).toBeEnabled()
     fireEvent.click(layout)
     fireEvent.click(reference)
     fireEvent.click(completed)
-    fireEvent.click(legend)
     fireEvent.click(minimap)
     fireEvent.click(detail)
     expect(props.onToggleLayout).not.toHaveBeenCalled()
