@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { deriveAccessGraph } from '../domain/accessGraph'
 import { buildAccessScene } from '../graph/buildAccessScene'
 import type { AccessMatrixState } from '../state/useAccessMatrix'
@@ -52,6 +52,11 @@ function readyState(
 }
 
 describe('AccessMatrixView', () => {
+  afterEach(() => {
+    document.getElementById('vc-title-nav')?.remove()
+    document.getElementById('vc-header-slot')?.remove()
+  })
+
   it('renders the graph surface with the preserved chrome for the worked example', () => {
     const matrix = readyState(workedExample())
     const { container } = render(
@@ -106,7 +111,10 @@ describe('AccessMatrixView', () => {
     expect(screen.getByLabelText('Source: engr db')).toBeInTheDocument()
   })
 
-  it('puts "Back to all users" in the nav row next to "Back to overview", outside the graph', () => {
+  it('puts "Back to all users" in the title bar next to "Back to overview", outside the graph', () => {
+    const titleNav = document.createElement('div')
+    titleNav.id = 'vc-title-nav'
+    document.body.appendChild(titleNav)
     const { container } = render(
       <AccessMatrixView
         campaignName="Q3 review"
@@ -115,6 +123,8 @@ describe('AccessMatrixView', () => {
       />,
     )
     const nav = screen.getByRole('navigation', { name: /access map navigation/i })
+    expect(titleNav).toContainElement(nav)
+    expect(container.querySelector('section.vc-matrix-view')).not.toContainElement(nav)
 
     // Grid mode: only "Back to overview" is there; there is no per-user back.
     expect(screen.queryByRole('button', { name: /back to all users/i })).toBeNull()
@@ -124,7 +134,7 @@ describe('AccessMatrixView', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Show access for User One' }))
 
-    // Drill-down: both back controls live in the same nav row...
+    // Drill-down: both back controls live together in the title bar...
     const backToUsers = within(nav).getByRole('button', { name: /back to all users/i })
     expect(backToUsers).toBeInTheDocument()
     const labels = within(nav)
@@ -284,7 +294,5 @@ describe('AccessMatrixView', () => {
     expect(banner).toHaveTextContent(/Unresolved/i)
     // It lands in the header slot, not inside the matrix view / above the graph.
     expect(headerSlot).toContainElement(banner)
-
-    document.body.removeChild(headerSlot)
   })
 })

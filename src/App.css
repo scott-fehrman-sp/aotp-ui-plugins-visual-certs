@@ -14,6 +14,25 @@
   margin-bottom: 4px;
 }
 
+/* Title plus the slot views use for controls that belong next to it. */
+.vc-header-leading {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-width: 0;
+}
+
+/* Empty until a view portals into it; hidden so it doesn't open a gap. */
+.vc-title-nav {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.vc-title-nav:empty {
+  display: none;
+}
+
 /* Right side of the header: the portal slot plus the theme toggle, kept
    together and pushed to the trailing edge. */
 .vc-header-actions {

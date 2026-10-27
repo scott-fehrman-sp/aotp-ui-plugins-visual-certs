@@ -1,9 +1,15 @@
 /* One row for both back controls: "Back to overview" (always) and, while a
-   user is drilled into, "Back to all users" (portaled in by the graph canvas). */
+   user is drilled into, "Back to all users" (portaled in by the graph canvas).
+   In the app this row is portaled into the title bar; the margin only applies
+   when it has to fall back into the page, above the graph. */
 .vc-matrix-nav {
   display: flex;
   align-items: center;
   gap: 20px;
+  margin: 0;
+}
+
+.vc-matrix-view > .vc-matrix-nav {
   margin-bottom: 4px;
 }
 
@@ -34,8 +40,9 @@
 /*
  * The map screen fills the rest of the page: the section is a flex column that
  * takes the space left by the page shell (see the `:has(.vc-matrix-view)` rules
- * in App.css), and the graph canvas takes whatever the section has left after
- * the nav row and any banner. `min-height` keeps the canvas usable when the
+ * in App.css), and the graph canvas takes whatever the section has left. The
+ * back links and the unresolved notice live in the app header, so they don't
+ * sit above the canvas. `min-height` keeps the canvas usable when the
  * window is very short (the page then scrolls instead of crushing the graph).
  */
 .vc-matrix-view {
@@ -68,4 +75,7 @@
   flex: 1 1 auto;
   height: auto;
   min-height: 360px;
+  /* The standalone canvas keeps an 8px top margin. On this screen the back
+     links live in the title bar, so the canvas starts at the top of the section. */
+  margin-top: 0;
 }

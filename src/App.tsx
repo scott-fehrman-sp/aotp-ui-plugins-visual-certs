@@ -44,7 +44,12 @@ function App() {
   return (
     <div className="vc-app">
       <header className="vc-header">
-        <h1 className="vc-title">Access Review</h1>
+        <div className="vc-header-leading">
+          <h1 className="vc-title">Access Review</h1>
+          {/* Slot beside the title. The access map portals its back links here
+              so they don't take a row above the graph. */}
+          <div id="vc-title-nav" className="vc-title-nav" />
+        </div>
         <div className="vc-header-actions">
           {/* Right-aligned slot in the app header. Views deeper in the tree (e.g.
               the access map's unresolved-paths notice) portal content here so it

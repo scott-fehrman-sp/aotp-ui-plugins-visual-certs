@@ -38,20 +38,32 @@ export function AccessMatrixView({
   // with the "Access Review" title (top-right) instead of taking room above the
   // graph. Resolved after mount; `null` falls back to no header notice.
   const [headerSlot, setHeaderSlot] = useState<HTMLElement | null>(null)
+  // The slot beside the application title. `undefined` until the lookup runs,
+  // then the element or `null` when this view is rendered without the app shell.
+  const [titleNav, setTitleNav] = useState<HTMLElement | null | undefined>(undefined)
   useEffect(() => {
     setHeaderSlot(document.getElementById('vc-header-slot'))
+    setTitleNav(document.getElementById('vc-title-nav'))
   }, [])
+
+  // Leave the map, and (in a user's drill-down) go back to the all-users grid.
+  // Portaled beside the application title so the row doesn't sit above the graph.
+  const mapNav = (
+    <nav className="vc-matrix-nav" aria-label="Access map navigation">
+      <button type="button" className="vc-link-btn" onClick={onBack}>
+        ← Back to overview
+      </button>
+      <span ref={setBackSlot} className="vc-matrix-nav-slot" />
+    </nav>
+  )
 
   return (
     <section className="vc-matrix-view" aria-label={`Access map for ${campaignName}`}>
-      {/* One navigation row: leave the map, and (in a user's drill-down) go back
-          to the all-users grid. Kept outside the canvas to save graph space. */}
-      <nav className="vc-matrix-nav" aria-label="Access map navigation">
-        <button type="button" className="vc-link-btn" onClick={onBack}>
-          ← Back to overview
-        </button>
-        <span ref={setBackSlot} className="vc-matrix-nav-slot" />
-      </nav>
+      {titleNav === undefined
+        ? null
+        : titleNav
+          ? createPortal(mapNav, titleNav)
+          : mapNav}
 
       {/* The visible "All access paths" sub-heading was removed to give the
           graph more vertical room. A visually hidden heading keeps the page

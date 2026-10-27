@@ -44,9 +44,9 @@ interface AccessGraphCanvasProps {
   /**
    * Where the drill-down "Back to all users" button is rendered, so the host
    * view can place it OUTSIDE the canvas next to its own "Back to overview"
-   * button (saving the canvas's top-left corner and keeping both back controls
-   * together). The canvas still owns the selected-user state; it just portals
-   * the button into this element.
+   * button (in the app title bar, beside the application title). The canvas
+   * still owns the selected-user state; it just portals the button into this
+   * element.
    *  - `undefined` (prop omitted): the button renders inside the canvas, in a
    *    top-left panel, as it always has (standalone use / existing tests).
    *  - an element: the button is portaled into it.
