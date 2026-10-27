@@ -479,17 +479,9 @@ describe('AccessGraphCanvas', () => {
         )
         return labels
       }
-      // All control-panel options start hidden by default, so the toggles read
-      // "Show ..." (the layout/reference/completed toggles are disabled in the
-      // grid and keep their open-a-user labels). The user grid has no legend
-      // control.
-      expect(check()).toEqual([
-        'Layout (open a user to change)',
-        'Reference nodes and links (open a user to change)',
-        'Completed items (open a user to filter)',
-        'Show minimap',
-        'Show details panel',
-      ])
+      // The user grid control panel is only the minimap. Every option starts
+      // hidden, so the toggle reads "Show minimap".
+      expect(check()).toEqual(['Show minimap'])
       drillIn()
       // layout now starts in TB, so the layout button reads "Layout: horizontal" and is unpressed
       expect(check()).toEqual([
@@ -525,9 +517,9 @@ describe('AccessGraphCanvas', () => {
       expect(screen.getByRole('button', { name: 'Show access for User One' })).toBeInTheDocument()
     })
 
-    it('layout toggle flips the label and pressed state; disabled in the grid', () => {
+    it('layout toggle flips the label and pressed state; absent in the grid', () => {
       render(<AccessGraphCanvas graph={referenceGraph()} />)
-      expect(btn(/^Layout/)).toBeDisabled()
+      expect(screen.queryByRole('button', { name: /^Layout/ })).not.toBeInTheDocument()
       drillIn()
       // layout now starts in TB: the button is unpressed and reads "Layout: horizontal"
       expect(btn('Layout: horizontal')).toHaveAttribute('aria-pressed', 'false')
@@ -562,7 +554,7 @@ describe('AccessGraphCanvas', () => {
 
     it('reference toggle removes nested items, sources and edges; restores them', () => {
       render(<AccessGraphCanvas graph={referenceGraph()} />)
-      expect(btn(/^Reference nodes/)).toBeDisabled()
+      expect(screen.queryByRole('button', { name: /^Reference nodes/ })).not.toBeInTheDocument()
       drillIn()
       // reference and completed items start hidden by default; show each so the
       // nested lineage and the approved `login` card form the shown baseline.
@@ -601,8 +593,8 @@ describe('AccessGraphCanvas', () => {
       expect(screen.queryByText('read')).toBeNull()
 
       fireEvent.click(btn(/back to all users/i))
-      // Layout/reference are disabled in the grid, but the preference is kept.
-      expect(btn(/^Reference nodes/)).toBeDisabled()
+      // The reference control is drill-down only; the preference is kept.
+      expect(screen.queryByRole('button', { name: /^Reference nodes/ })).not.toBeInTheDocument()
       drillIn('User Two')
       // User Two's Role B is approved (completed); completed items start hidden
       // by default, so show them to assert Role B's reference behavior here
@@ -698,9 +690,9 @@ describe('AccessGraphCanvas', () => {
       const COMPLETED_ONLY = ['Role A', 'foo', 'Billing AP', 'pay', 'Payroll', 'Legacy']
       const KEPT = ['Role B', 'read', 'ERP', 'Login', 'Directory', 'Shared']
 
-      it('is enabled and unpressed by default in drill-down, disabled in the grid', () => {
+      it('is enabled and unpressed by default in drill-down, absent in the grid', () => {
         render(<AccessGraphCanvas graph={completedGraph()} />)
-        expect(btn('Completed items (open a user to filter)')).toBeDisabled()
+        expect(screen.queryByRole('button', { name: /completed items/i })).not.toBeInTheDocument()
         drillIn()
         // reference starts hidden by default; show it so the needs-review lineage
         // in KEPT (read, ERP, Directory, Shared) is present for the comparison
@@ -807,8 +799,8 @@ describe('AccessGraphCanvas', () => {
         // completed items start hidden by default, so the hidden preference is
         // already in effect before navigating between users
         fireEvent.click(btn(/back to all users/i))
-        // Grid: unfiltered, disabled, all users present.
-        expect(btn('Completed items (open a user to filter)')).toBeDisabled()
+        // Grid: the completed control is absent, and all users are present.
+        expect(screen.queryByRole('button', { name: /completed items/i })).not.toBeInTheDocument()
         expect(screen.getByRole('button', { name: 'Show access for User Two' })).toBeInTheDocument()
         drillIn('User Two')
         expect(btn('Show completed items (2 hidden)')).toHaveAttribute('aria-pressed', 'false')

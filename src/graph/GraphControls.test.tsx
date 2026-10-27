@@ -125,34 +125,20 @@ describe('GraphControls', () => {
     expect(hidden.querySelector('svg')).toHaveAttribute('data-icon', 'completedHidden')
   })
 
-  it('disables Layout, Reference and Completed in the grid, omits Legend, and keeps Minimap and Detail enabled', () => {
+  it('shows only the Minimap button in the user grid', () => {
     const props = setup({ inDrilldown: false })
-    const layout = screen.getByRole('button', { name: 'Layout (open a user to change)' })
-    const reference = screen.getByRole('button', {
-      name: 'Reference nodes and links (open a user to change)',
-    })
-    const completed = screen.getByRole('button', {
-      name: 'Completed items (open a user to filter)',
-    })
-    const minimap = screen.getByRole('button', { name: 'Hide minimap' })
-    const detail = screen.getByRole('button', { name: 'Hide details panel' })
-    expect(layout).toBeDisabled()
-    expect(reference).toBeDisabled()
-    expect(completed).toBeDisabled()
-    expect(screen.queryByRole('button', { name: /legend/i })).not.toBeInTheDocument()
+    const toolbar = screen.getByRole('toolbar', { name: 'Graph controls' })
+    const buttons = within(toolbar).getAllByRole('button')
+    expect(buttons.map((b) => b.getAttribute('aria-label'))).toEqual(['Hide minimap'])
+    const minimap = buttons[0]
     expect(minimap).toBeEnabled()
-    expect(detail).toBeEnabled()
-    fireEvent.click(layout)
-    fireEvent.click(reference)
-    fireEvent.click(completed)
     fireEvent.click(minimap)
-    fireEvent.click(detail)
+    expect(props.onToggleMinimap).toHaveBeenCalledTimes(1)
     expect(props.onToggleLayout).not.toHaveBeenCalled()
     expect(props.onToggleReference).not.toHaveBeenCalled()
     expect(props.onToggleCompleted).not.toHaveBeenCalled()
     expect(props.onToggleLegend).not.toHaveBeenCalled()
-    expect(props.onToggleMinimap).toHaveBeenCalledTimes(1)
-    expect(props.onToggleDetail).toHaveBeenCalledTimes(1)
+    expect(props.onToggleDetail).not.toHaveBeenCalled()
   })
 
   it('enables all buttons in drill-down and fires their handlers', () => {
@@ -245,13 +231,13 @@ describe('GraphControls', () => {
       }
     })
 
-    it('shows a tooltip on a disabled button anchor in the grid', () => {
+    it('shows a tooltip on the minimap button in the user grid', () => {
       setup({ inDrilldown: false })
-      const button = screen.getByRole('button', { name: 'Layout (open a user to change)' })
+      const button = screen.getByRole('button', { name: 'Hide minimap' })
       const anchor = anchorOf(button)
       stubRect(anchor)
       fireEvent.mouseEnter(anchor)
-      expect(screen.getByRole('tooltip')).toHaveTextContent('Layout (open a user to change)')
+      expect(screen.getByRole('tooltip')).toHaveTextContent('Hide minimap')
     })
   })
 })

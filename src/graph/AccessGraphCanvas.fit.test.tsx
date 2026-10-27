@@ -96,13 +96,11 @@ describe('AccessGraphCanvas overlay-aware fit', () => {
     await expectOneMore()
   })
 
-  it('does not refit from the disabled Completed button in the grid', async () => {
+  it('omits the Completed button in the grid, so the grid fit stays put', async () => {
     render(<AccessGraphCanvas graph={graph()} />)
     await waitFor(() => expect(fitViewSpy).toHaveBeenCalled())
     const calls = fitViewSpy.mock.calls.length
-    const completed = btn('Completed items (open a user to filter)')
-    expect(completed).toBeDisabled()
-    fireEvent.click(completed)
+    expect(screen.queryByRole('button', { name: /completed items/i })).not.toBeInTheDocument()
     await new Promise((resolve) => setTimeout(resolve, 30))
     expect(fitViewSpy).toHaveBeenCalledTimes(calls)
   })

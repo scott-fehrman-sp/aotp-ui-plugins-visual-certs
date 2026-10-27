@@ -83,9 +83,9 @@ const MINIMAP_COLOR: Record<string, string> = {
  * The React Flow canvas for the access graph. It has two modes:
  *
  * 1. OVERVIEW (default): only `user`-kind cards, laid out in a centered grid
- *    (`buildUserGridScene`), each a selectable control. No edges; the layout and
- *    reference toggles in the control panel are disabled (they only apply to the
- *    dagre drill-down layout).
+ *    (`buildUserGridScene`), each a selectable control. No edges. The control
+ *    panel is only the minimap toggle; layout, reference, completed, legend and
+ *    detail apply to the dagre drill-down.
  * 2. DRILL-DOWN: activating a user card shows ONLY that user's forward-reachable
  *    subgraph (`buildAccessScene(userSubgraph(graph, id), rankdir)`), with a
  *    "Back to all users" panel control and Escape returning to the grid. The
@@ -113,10 +113,10 @@ const MINIMAP_COLOR: Record<string, string> = {
  * window resize) is overlay-aware: it pads the viewport by the measured size of
  * the legend, minimap, controls and panels so no card sits under them.
  *
- * A left-side vertical control panel (`GraphControls`, in both modes) holds the
- * layout direction, reference visibility, completed-items visibility, minimap
- * and detail toggles. The node-legend toggle is drill-down only: the user grid
- * shows neither the legend nor its control. Those preferences live in memory and survive switching users
+ * A left-side vertical control panel (`GraphControls`) is present in both modes.
+ * The user grid shows only the minimap toggle. Drill-down adds layout direction,
+ * reference visibility, completed-items visibility, the node legend and the
+ * detail panel. Those preferences live in memory and survive switching users
  * and grid/drill-down. The completed toggle (drill-down only) hides the
  * first-level items whose status is approved / revoked / reassigned plus any
  * lineage left orphaned (`withoutCompleted`), re-lays out and refits once.
