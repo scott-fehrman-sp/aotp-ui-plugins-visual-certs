@@ -148,13 +148,12 @@ describe('AccessGraphCanvas overlay-aware fit', () => {
       // first-level items (three of them completed) render.
       fireEvent.click(btn(/^Show completed items/))
 
-      // Only the user and the four first-level items remain.
-      expect(container.querySelectorAll('.react-flow__node')).toHaveLength(5)
+      // The four first-level items stay in the graph. The user card is pinned.
+      expect(container.querySelectorAll('.react-flow__node')).toHaveLength(4)
+      expect(container.querySelector('.vc-graph-user-pin')).toHaveTextContent('User One')
       const [role, ap, login, admin] = items.map(translate)
-      const user = translate('User One')
 
-      // Left to right: user, then role, then access profile, then entitlements.
-      expect(user.x).toBeLessThan(role.x)
+      // Left to right: role, then access profile, then entitlements.
       expect(role.x).toBeLessThan(ap.x)
       expect(ap.x).toBeLessThan(login.x)
       // Both entitlements share the entitlement column, stacked apart.
@@ -170,8 +169,6 @@ describe('AccessGraphCanvas overlay-aware fit', () => {
       // layout now starts in TB (vertical), so no layout click is needed
 
       const [role, ap, login, admin] = items.map(translate)
-      const user = translate('User One')
-      expect(user.y).toBeLessThan(role.y)
       expect(role.y).toBeLessThan(ap.y)
       expect(ap.y).toBeLessThan(login.y)
       expect(login.y).toBe(admin.y)
@@ -230,8 +227,6 @@ describe('AccessGraphCanvas overlay-aware fit', () => {
         const role = translate('Role A')
         const ent1 = translate('e-one')
         const ent3 = translate('e-three')
-        const user = translate('User One')
-        expect(user.x).toBeLessThan(role.x)
         expect(role.x).toBeLessThan(ent1.x)
         expect(ent1.x).toBe(ent3.x)
         // The two remaining entitlements are adjacent (one stride apart), not
@@ -253,8 +248,6 @@ describe('AccessGraphCanvas overlay-aware fit', () => {
         const role = translate('Role A')
         const ent1 = translate('e-one')
         const ent3 = translate('e-three')
-        const user = translate('User One')
-        expect(user.y).toBeLessThan(role.y)
         expect(role.y).toBeLessThan(ent1.y)
         expect(ent1.y).toBe(ent3.y)
         expect(Math.abs(ent3.x - ent1.x)).toBe(stride)
@@ -277,10 +270,8 @@ describe('AccessGraphCanvas overlay-aware fit', () => {
       // Reference nodes/links are hidden by default; both items are completed,
       // which is also hidden by default, so show completed to render the cards.
       fireEvent.click(btn(/^Show completed items/))
-      const user = translate('User One')
       const login = translate('login')
       const admin = translate('admin')
-      expect(user.x).toBeLessThan(login.x)
       expect(login.x).toBe(admin.x)
     })
   })

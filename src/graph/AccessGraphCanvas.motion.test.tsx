@@ -107,22 +107,26 @@ function drill(view: ReturnType<typeof mount>) {
 }
 
 describe('drill-down transition', () => {
-  it('keeps the clicked card mounted while the other users fade out and are then removed', () => {
+  it('pins the clicked user and fades both grid cards out', () => {
     const { container } = mount()
     const clicked = wrapper(container, 'user:u1')!
     const other = wrapper(container, 'user:u2')!
     drillIn()
+    // The identity moves to the pinned card immediately. Both grid cards,
+    // including the one that was clicked, leave the flow.
+    expect(document.querySelector('.vc-graph-user-pin')).toHaveTextContent('User One')
     expect(wrapper(container, 'user:u1')).toBe(clicked)
     expect(wrapper(container, 'user:u2')).toBe(other)
+    expect(hasClass(clicked, 'exiting')).toBe(true)
     expect(hasClass(other, 'exiting')).toBe(true)
     expect(other.hasAttribute('inert')).toBe(true)
     expect(other.getAttribute('aria-hidden')).toBe('true')
-    expect(hasClass(clicked, 'exiting')).toBe(false)
     advance(MOTION - 1)
     expect(wrapper(container, 'user:u2')).not.toBeNull()
     advance(1)
     expect(wrapper(container, 'user:u2')).toBeNull()
-    expect(wrapper(container, 'user:u1')).toBe(clicked)
+    expect(wrapper(container, 'user:u1')).toBeNull()
+    expect(document.querySelector('.vc-graph-user-pin')).toHaveTextContent('User One')
   })
 
   it('lineage cards appear entering, lose the class after two frames, and end clean', () => {
@@ -140,7 +144,7 @@ describe('drill-down transition', () => {
     )
   })
 
-  it('keeps keyboard focus on the clicked card', () => {
+  it('moves keyboard focus to the pinned user card', () => {
     const { container } = mount()
     const clicked = wrapper(container, 'user:u1')!
     const cardEl = clicked.querySelector<HTMLElement>('article')!
@@ -148,21 +152,25 @@ describe('drill-down transition', () => {
     expect(document.activeElement).toBe(cardEl)
     fireEvent.keyDown(cardEl, { key: 'Enter' })
     advance(MOTION + 100)
-    expect(wrapper(container, 'user:u1')).toBe(clicked)
-    expect(clicked.contains(document.activeElement)).toBe(true)
+    expect(wrapper(container, 'user:u1')).toBeNull()
+    const pinned = document.querySelector<HTMLElement>('.vc-graph-user-pin article')!
+    expect(document.activeElement).toBe(pinned)
   })
 
-  it('Back to all users mirrors it: the lineage fades out, the other users cascade in', () => {
+  it('Back to all users mirrors it: the lineage fades out, the users cascade in', () => {
     const { container } = drill(mount())
-    const clicked = wrapper(container, 'user:u1')!
+    expect(document.querySelector('.vc-graph-user-pin')).not.toBeNull()
     fireEvent.click(screen.getByRole('button', { name: /back to all users/i }))
-    expect(wrapper(container, 'user:u1')).toBe(clicked)
+    expect(document.querySelector('.vc-graph-user-pin')).toBeNull()
     const lineage = wrappers(container).filter((el) => /^(role|accessProfile|entitlement|source):/.test(el.dataset.id!))
     expect(lineage.length).toBeGreaterThan(0)
     expect(lineage.every((el) => hasClass(el, 'exiting') && el.hasAttribute('inert'))).toBe(true)
-    const other = wrapper(container, 'user:u2')!
-    expect(hasClass(other, 'reveal')).toBe(true)
-    expect(other.style.getPropertyValue('--reveal-delay')).toMatch(/^\d+ms$/)
+    // The pinned user was not a flow node, so both grid cards arrive together.
+    for (const id of ['user:u1', 'user:u2']) {
+      const card = wrapper(container, id)!
+      expect(hasClass(card, 'reveal')).toBe(true)
+      expect(card.style.getPropertyValue('--reveal-delay')).toMatch(/^\d+ms$/)
+    }
     advance(MOTION)
     expect(idsOf(container).sort()).toEqual(['user:u1', 'user:u2'])
   })
@@ -182,7 +190,7 @@ describe('toggles', () => {
     // exist to fade out when hidden again
     fireEvent.click(btn(/^Show completed items/))
     advance(MOTION + 100)
-    const staying = ['user:u1', 'role:role-a'].map((id) => wrapper(container, id)!)
+    const staying = [wrapper(container, 'role:role-a')!]
     const completedIds = idsOf(container).filter((id) => /e2|e3/.test(id))
     expect(completedIds.length).toBeGreaterThan(0)
     fireEvent.click(btn('Hide completed items'))

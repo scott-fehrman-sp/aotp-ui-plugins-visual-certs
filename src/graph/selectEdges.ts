@@ -57,8 +57,8 @@ export const STATUS_STROKE: Record<AccessReviewStatus, string> = {
 
 /** Stroke width of the selected item's user -> item edge. */
 export const SELECTION_STROKE_WIDTH = EMPHASIS_STROKE_WIDTH
-/** Stroke width of the solid lineage edges below the selected item. */
-export const LINEAGE_STROKE_WIDTH = 2.5
+/** Stroke width of the lineage edges below the selected item. */
+export const LINEAGE_STROKE_WIDTH = 3.5
 
 /** Class on the selected item's user -> item edge (CSS makes it ignore the pointer). */
 export const SELECTED_EDGE_CLASS = 'vc-graph-edge-selected'
@@ -150,7 +150,11 @@ export function connectedNodeIds(edges: Edge[], nodeId: string): Set<string> {
   return new Set([...downstream.nodeIds, ...upstream.nodeIds])
 }
 
-/** A solid, full-opacity, raised edge in the selected item's status color. */
+/**
+ * A full-opacity, raised edge in the selected item's status color. The dash
+ * pattern is left to CSS (`.vc-graph-edge-lineage`): the highlighted path
+ * marches source → target. Forcing `strokeDasharray` here would freeze it.
+ */
 function lineageEdge(edge: Edge, status: AccessReviewStatus): Edge {
   return {
     ...edge,
@@ -161,7 +165,6 @@ function lineageEdge(edge: Edge, status: AccessReviewStatus): Edge {
       ...edge.style,
       stroke: STATUS_STROKE[status],
       strokeWidth: LINEAGE_STROKE_WIDTH,
-      strokeDasharray: 'none',
       opacity: 1,
     },
   }
@@ -170,7 +173,8 @@ function lineageEdge(edge: Edge, status: AccessReviewStatus): Edge {
 /**
  * Raises one edge of a reference-node selection. A status edge keeps its color
  * and dash and is thickened like a hover; a reference hairline keeps its stroke
- * and is drawn solid at full opacity. Either way it sits above the cards.
+ * and is drawn at full opacity. Either way it sits above the cards and, with
+ * the lineage class, marches source → target.
  */
 function highlightConnectedEdge(edge: Edge): Edge {
   if (hasReviewStatus(edge)) return raiseEdge(edge, { className: LINEAGE_EDGE_CLASS })

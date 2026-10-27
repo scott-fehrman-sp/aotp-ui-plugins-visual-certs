@@ -172,9 +172,9 @@ describe('AccessGraphCanvas item selection', () => {
       expect(e.style).toMatchObject({
         stroke: STATUS_STROKE.needsReview,
         strokeWidth: LINEAGE_STROKE_WIDTH,
-        strokeDasharray: 'none',
         opacity: 1,
       })
+      expect(e.className).toContain(LINEAGE_EDGE_CLASS)
     }
     const highlighted = new Set(lineageEdges().map((e) => e.id))
     const others = edges().filter((e) => !highlighted.has(e.id))

@@ -1,7 +1,7 @@
-import { useContext, useId, type KeyboardEvent, type ReactNode } from 'react'
+import { useContext, useEffect, useId, useRef, type KeyboardEvent, type ReactNode } from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import type { AccessGraphNodeKind, AccessReviewStatus } from '../sailpoint/types'
-import type { AccessSceneNode } from './buildAccessScene'
+import { NODE_USER_HEIGHT, NODE_WIDTH, type AccessSceneNode } from './buildAccessScene'
 import { EmphasisContext } from './EmphasisContext'
 import { SelectionContext } from './SelectionContext'
 import { isSelectableNodeData } from './selectEdges'
@@ -263,7 +263,20 @@ function CardBody({ data }: { data: AccessSceneNode['data'] }) {
   )
 }
 
-export function AccessNode({ id, data }: NodeProps<AccessSceneNode>) {
+function AccessNodeView({
+  id,
+  data,
+  showHandles,
+  onActivate,
+  autoFocus = false,
+}: {
+  id: string
+  data: AccessSceneNode['data']
+  /** Connection handles. Omitted on the pinned drill-down user card. */
+  showHandles: boolean
+  /** Opens this card's detail. Set only for the pinned user card. */
+  onActivate?: () => void
+}) {
   const { setHover, setFocus } = useContext(EmphasisContext)
   const { selectedId, lineageNodeIds, toggle } = useContext(SelectionContext)
   const statusIconId = useId()
@@ -376,6 +389,17 @@ export function AccessNode({ id, data }: NodeProps<AccessSceneNode>) {
         data-review-status={status}
         {...selectionProps}
         {...emphasisHandlers}
+        {...(onActivate
+          ? {
+              onClick: onActivate,
+              onKeyDown: (event: KeyboardEvent<HTMLElement>) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault()
+                  onActivate()
+                }
+              },
+            }
+          : {})}
         {...(completionDescribedBy ? { 'aria-describedby': completionDescribedBy } : {})}
         {...(countDescribedBy ? { 'aria-describedby': countDescribedBy } : {})}
       >
@@ -388,8 +412,44 @@ export function AccessNode({ id, data }: NodeProps<AccessSceneNode>) {
         {isManagerUser(data) ? <ManagerIcon /> : null}
       </article>
       {/* Sibling of the card, not a child: see `Handles`. */}
-      <Handles />
+      {showHandles ? <Handles /> : null}
     </>
+  )
+}
+
+/** React Flow node. The grid and every access-item card use this. */
+export function AccessNode(props: NodeProps<AccessSceneNode>) {
+  return <AccessNodeView id={props.id} data={props.data} showHandles />
+}
+
+/**
+ * The drilled-in user, drawn at the layout card size but outside the graph:
+ * the canvas pins it in the upper left, beside the control panel, so it does
+ * not pan or zoom with the access items.
+ */
+export function PinnedAccessCard({
+  id,
+  data,
+  onActivate,
+}: {
+  id: string
+  data: AccessSceneNode['data']
+  onActivate: () => void
+}) {
+  const frameRef = useRef<HTMLDivElement>(null)
+  // The grid card that was focused is marked inert as it leaves, which drops
+  // focus to the page. Restore it here, after that, so the pinned card keeps it.
+  useEffect(() => {
+    frameRef.current?.querySelector<HTMLElement>('article')?.focus()
+  }, [])
+  return (
+    <div
+      ref={frameRef}
+      className="vc-graph-user-pin-frame"
+      style={{ width: NODE_WIDTH, height: NODE_USER_HEIGHT }}
+    >
+      <AccessNodeView id={id} data={data} showHandles={false} onActivate={onActivate} />
+    </div>
   )
 }
 

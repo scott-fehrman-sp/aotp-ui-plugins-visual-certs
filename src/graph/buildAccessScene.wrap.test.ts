@@ -446,7 +446,7 @@ describe('lane wrap past MAX_ITEMS_PER_LANE', () => {
           } else {
             expect(edge.className).toBe('vc-graph-edge-reference')
             expect(edge.zIndex).toBe(0)
-            expect(edge.style).toEqual({ stroke: 'var(--edge)', strokeWidth: 1, opacity: 0.45 })
+            expect(edge.style).toEqual({ stroke: 'var(--edge)', strokeWidth: 2, opacity: 0.45 })
           }
         })
       })

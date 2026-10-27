@@ -117,8 +117,6 @@ describe('AccessGraphCanvas lane wrapping', () => {
     // Role and access profile sit where they do with only 3 entitlements.
     const role = translate('Role A')
     const ap = translate('AP A')
-    const user = translate('User One')
-    expect(user.x).toBeLessThan(role.x)
     expect(role.x).toBeLessThan(ap.x)
     expect(ap.x).toBeLessThan(xs[0])
     expect(role.x).toBe(344)
@@ -217,13 +215,13 @@ describe('AccessGraphCanvas lane wrapping', () => {
   })
 
   it('shows the visible first-level count in the hint, unaffected by wrapping', async () => {
-    const { container } = render(<AccessGraphCanvas graph={statusGraph(ents(100))} />)
+    const { container } = render(<AccessGraphCanvas graph={statusGraph(ents(200))} />)
     drillIn()
     const root = container.querySelector<HTMLElement>('.react-flow')!
     root.getBoundingClientRect = () =>
       ({ left: 0, top: 0, width: 968, height: 490, right: 968, bottom: 490, x: 0, y: 0, toJSON() {} }) as DOMRect
     await waitFor(() => expect(plans()).toBeGreaterThan(0))
-    expect(await screen.findByRole('status')).toHaveTextContent('100 items')
+    expect(await screen.findByRole('status')).toHaveTextContent('200 items')
   })
 
   describe('interactions on a card in the last sub-column', () => {

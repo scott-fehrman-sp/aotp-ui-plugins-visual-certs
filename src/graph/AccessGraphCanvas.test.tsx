@@ -502,6 +502,19 @@ describe('AccessGraphCanvas', () => {
       ])
     })
 
+    it('pins the drilled-in user card in the upper left, beside the controls', () => {
+      render(<AccessGraphCanvas graph={referenceGraph()} />)
+      drillIn()
+      const pin = document.querySelector('.vc-graph-user-pin')
+      expect(pin).not.toBeNull()
+      expect(pin).toHaveClass('top', 'left')
+      expect(pin?.querySelector('.vc-graph-card-label')).toHaveTextContent('User One')
+      expect(document.querySelector('.react-flow__node[data-id="user:u1"]')).toBeNull()
+      // The toolbar stays the leftmost top panel; the card is shifted beside it.
+      const toolbar = screen.getByRole('toolbar', { name: 'Graph controls' })
+      expect(toolbar.closest('.react-flow__panel')).not.toHaveClass('vc-graph-user-pin')
+    })
+
     it('removes the old layout button from the top-left panel; Back still works', () => {
       render(<AccessGraphCanvas graph={referenceGraph()} />)
       drillIn()
@@ -773,8 +786,10 @@ describe('AccessGraphCanvas', () => {
         // completed and reference both start hidden by default, which is exactly
         // the both-filters-on state this test's baseline `a` captures.
         const a = nodeLabels().sort()
-        // Only the user and the needs-review first-level items remain.
-        expect(a).toEqual(['Login', 'Role B', 'User One'].map((t) => expect.stringContaining(t)))
+        // Needs-review first-level items stay in the graph. The user card is
+        // pinned beside the controls, not a flow node.
+        expect(a).toEqual(['Login', 'Role B'].map((t) => expect.stringContaining(t)))
+        expect(document.querySelector('.vc-graph-user-pin')).toHaveTextContent('User One')
         fireEvent.click(btn('Show reference nodes and links'))
         fireEvent.click(btn('Show completed items (4 hidden)'))
         fireEvent.click(btn('Hide reference nodes and links'))
@@ -819,7 +834,9 @@ describe('AccessGraphCanvas', () => {
         expect(panel).toHaveClass('top')
         expect(panel).toHaveClass('center')
         expect(label('No expanded access for this user.')).toBeNull()
-        expect(nodeLabels()).toEqual(['User Two'])
+        // No access items left in the graph; the user stays on the pinned card.
+        expect(nodeLabels()).toEqual([])
+        expect(document.querySelector('.vc-graph-user-pin')).toHaveTextContent('User Two')
         fireEvent.click(btn('Show completed items (2 hidden)'))
         expect(label('All access items are complete. Show completed items to see them.')).toBeNull()
         expect(label('Role X')).toBeInTheDocument()

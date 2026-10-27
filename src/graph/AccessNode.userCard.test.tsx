@@ -51,9 +51,10 @@ function activeUser(overrides: Partial<StatusRow> = {}): AccessGraphData {
   ])
 }
 
-/** The user card in whichever mode is current (grid or drill-down). */
+/** The user card in whichever mode is current (grid node, or the pinned drill-down card). */
 const userCard = () =>
-  Array.from(document.querySelectorAll<HTMLElement>('.react-flow__node .vc-graph-card.kind-user'))[0]
+  (document.querySelector<HTMLElement>('.vc-graph-user-pin .vc-graph-card.kind-user') ??
+    document.querySelector<HTMLElement>('.react-flow__node .vc-graph-card.kind-user'))!
 const label = (el: HTMLElement) => el.querySelector('.vc-graph-card-label')!
 const infoLines = (el: HTMLElement) =>
   Array.from(el.querySelectorAll('.vc-graph-card-info')).map((n) => n.textContent)

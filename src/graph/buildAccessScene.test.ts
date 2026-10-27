@@ -265,7 +265,7 @@ describe('buildAccessScene', () => {
     )
     expect(nested?.className).toBe('vc-graph-edge-reference')
     expect(nested?.style?.stroke).toBe('var(--edge)')
-    expect(nested?.style?.strokeWidth).toBe(1)
+    expect(nested?.style?.strokeWidth).toBe(2)
     expect(nested?.style?.strokeDasharray).toBeUndefined()
     expect(Number(nested?.style?.opacity)).toBeLessThan(1)
     expect(nested?.data).toEqual({ reference: true })

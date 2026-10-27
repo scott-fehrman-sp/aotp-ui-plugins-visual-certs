@@ -82,6 +82,23 @@
   align-items: flex-start;
 }
 
+/*
+ * Drilled-in user card. React Flow stacks same-corner panels on top of each
+ * other, so this one is shifted right of the control toolbar: 15px panel
+ * margin + 6px pad + 32px button + 6px pad + 2px border = 61px, plus a 12px
+ * gap. Top margin stays the panel default so the card lines up with the
+ * toolbar. The card does not pan or zoom.
+ */
+.vc-graph-wrap .react-flow__panel.vc-graph-user-pin {
+  margin-left: 73px;
+  pointer-events: auto;
+  z-index: 6;
+}
+
+.vc-graph-user-pin .vc-graph-card {
+  cursor: pointer;
+}
+
 .vc-graph-toggle {
   padding: 6px 12px;
   border: 1px solid var(--line);
@@ -455,32 +472,58 @@
  */
 .vc-graph-wrap .react-flow__edge.vc-graph-edge-needsReview .react-flow__edge-path {
   stroke: var(--vc-warn);
-  stroke-width: 2;
+  stroke-width: 3;
   stroke-dasharray: 6 4;
 }
 
 .vc-graph-wrap .react-flow__edge.vc-graph-edge-approved .react-flow__edge-path {
   stroke: var(--vc-allow);
-  stroke-width: 2;
+  stroke-width: 3;
 }
 
 .vc-graph-wrap .react-flow__edge.vc-graph-edge-revoked .react-flow__edge-path {
   stroke: var(--vc-deny);
-  stroke-width: 2;
+  stroke-width: 3;
 }
 
 .vc-graph-wrap .react-flow__edge.vc-graph-edge-reassigned .react-flow__edge-path {
   stroke: var(--vc-accent);
-  stroke-width: 2;
+  stroke-width: 3;
   stroke-dasharray: 2 3;
 }
 
-/* Reference edges: thin muted hairlines under the status edges. */
+/* Reference edges: muted lines under the status edges. */
 .vc-graph-wrap .react-flow__edge.vc-graph-edge-reference .react-flow__edge-path {
   stroke: var(--edge);
-  stroke-width: 1;
+  stroke-width: 2;
   stroke-dasharray: none;
   opacity: 0.45;
+}
+
+/*
+ * Selected path. An access item's downstream edges, and every edge through a
+ * selected reference-only node, march in the direction of the stroke (source
+ * toward target). A decreasing dash offset travels with the path. The rule
+ * follows the status and reference dash rules so it wins when both match;
+ * an inline status dash (needs-review, reassigned) stays and still travels.
+ */
+.vc-graph-wrap .react-flow__edge.vc-graph-edge-lineage .react-flow__edge-path,
+.vc-graph-wrap .react-flow__edge.vc-graph-edge-selected .react-flow__edge-path {
+  stroke-dasharray: 6 10;
+  animation: vc-graph-edge-flow 0.85s linear infinite;
+}
+
+@keyframes vc-graph-edge-flow {
+  from { stroke-dashoffset: 16; }
+  to { stroke-dashoffset: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vc-graph-wrap .react-flow__edge.vc-graph-edge-lineage .react-flow__edge-path,
+  .vc-graph-wrap .react-flow__edge.vc-graph-edge-selected .react-flow__edge-path {
+    animation: none;
+    stroke-dasharray: none;
+  }
 }
 
 /*

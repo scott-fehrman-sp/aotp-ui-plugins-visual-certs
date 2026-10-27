@@ -223,9 +223,10 @@ describe('highlightEdges', () => {
       expect(e.style).toMatchObject({
         stroke: STATUS_STROKE.needsReview,
         strokeWidth: LINEAGE_STROKE_WIDTH,
-        strokeDasharray: 'none',
         opacity: 1,
       })
+      // The flowing dash is CSS on the lineage class, not an inline freeze.
+      expect(e.style?.strokeDasharray).toBeUndefined()
     }
 
     const highlighted = new Set([selected.id, ...lineage.map((e) => e.id)])

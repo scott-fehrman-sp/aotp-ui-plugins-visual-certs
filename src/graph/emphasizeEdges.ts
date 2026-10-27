@@ -19,8 +19,8 @@ import type { Edge } from '@xyflow/react'
 
 /** Above `CARD_Z_INDEX` (2) so the edge paints over crossed cards. */
 export const EMPHASIS_EDGE_Z_INDEX = 10
-/** Stroke width of the emphasized edge (status default is 2). */
-export const EMPHASIS_STROKE_WIDTH = 3.5
+/** Stroke width of the emphasized edge (status default is 3). */
+export const EMPHASIS_STROKE_WIDTH = 4.5
 /** Opacity of the non-emphasized status edges. */
 export const DIM_STATUS_OPACITY = 0.25
 /** Opacity of the reference edges (already 0.45 at rest). */

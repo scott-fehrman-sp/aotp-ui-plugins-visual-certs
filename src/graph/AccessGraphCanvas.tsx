@@ -29,7 +29,7 @@ import { ScrollHint } from './ScrollHint'
 import { GraphControls } from './GraphControls'
 import { GraphLegend } from './GraphLegend'
 import { NodeDetailPanel } from './NodeDetailPanel'
-import { AccessNode } from './AccessNode'
+import { AccessNode, PinnedAccessCard } from './AccessNode'
 import { useColorMode } from './useColorMode'
 import { EmptyState } from '../components/EmptyState'
 import { createPortal } from 'react-dom'
@@ -90,7 +90,9 @@ const MINIMAP_COLOR: Record<string, string> = {
  *    subgraph (`buildAccessScene(userSubgraph(graph, id), rankdir)`), with a
  *    "Back to all users" panel control and Escape returning to the grid. The
  *    reference toggle can hide the reference-only lineage (nested items,
- *    sources) so only the reviewable first level remains.
+ *    sources) so only the reviewable first level remains. The user card itself
+ *    is not part of that layout: it is pinned in the upper left, beside the
+ *    control panel, and stays there while the access items pan and zoom.
  *
  * SELECTION (drill-down only). Clicking a first-level card (role, access
  * profile or directly-held entitlement), or pressing Enter / Space on it,
@@ -184,12 +186,11 @@ interface FitOutcome {
  * - Mode A (fit-everything zoom >= SCROLL_MODE_FIT_ZOOM): today's `fitView`
  *   with overlay padding, strict: no node under an overlay, all nodes inside.
  * - Mode B (below it, a long list): `setViewport` at READABLE_MIN_ZOOM. The
- *   content START is aligned to the overlay-free region (rank axis), or the
- *   user is centered when the lane is too long to start-align it (the user
- *   sits at the lane midpoint), and overlays are assigned away from the scroll
- *   axis. The user card and nearest items are clear of every overlay; the rest
- *   is reached by scrolling or dragging, and the scroll hint says so. The
- *   Controls fit-view button still shows everything.
+ *   content START is aligned to the overlay-free region (the pinned user card
+ *   is one of those overlays, so the first items sit clear of it), and overlays
+ *   are assigned away from the scroll axis. The rest of a long list is reached
+ *   by scrolling or dragging, and the scroll hint says so. The Controls
+ *   fit-view button still shows everything.
  * The overview grid keeps the plain overlay-aware `fitView`. Refit triggers are
  * unchanged (`fitKey`, canvas size); node data is read inside the frame
  * callback so scene changes do not add triggers.
@@ -251,22 +252,22 @@ function FitOnSceneChange({
         return
       }
       const { canvas, overlays } = measureOverlays(root)
-      const nodes = inDrilldown ? target : []
-      const user = nodes.find(
-        (node) => (node.data as AccessSceneNodeData).kind === 'user',
-      )
-      if (!user) {
-        void fitView({
-          nodes: ids,
-          padding: toFitViewPadding(computeFitPadding(canvas, overlays)),
-          duration,
-        })
+      const padding = toFitViewPadding(computeFitPadding(canvas, overlays))
+      // Grid, or a drill-down whose only card is the pinned user: frame whatever
+      // flow nodes there are. The pinned card is a panel, so measureOverlays
+      // already keeps the items clear of it.
+      if (!inDrilldown || target.length === 0) {
+        void fitView({ nodes: ids, padding, duration })
         onPlan({ fitKey, long: false })
         return
       }
+      const bounds = getNodesBounds(target)
       const plan = planFit({
-        bounds: getNodesBounds(nodes),
-        focus: getNodesBounds([user]),
+        bounds,
+        // The user card is pinned, so a long list opens at the start of the
+        // access items (A→Z) instead of centering a card that is no longer in
+        // the layout.
+        focus: { x: bounds.x, y: bounds.y, width: 0, height: 0 },
         canvas,
         overlays,
         minZoom: MIN_ZOOM,
@@ -401,6 +402,16 @@ function CanvasSurface({ graph, backSlot, motionMs: motionMsProp }: AccessGraphC
   )
 
   const inDrilldown = selectedUserId !== null
+  // The drilled-in user is pinned beside the controls (see the panel below),
+  // so it is not a flow node: the layout still reserves its lane, but the
+  // camera frames only the access items.
+  const pinnedUser = inDrilldown
+    ? scene.nodes.find((node) => node.data.kind === 'user')
+    : undefined
+  const layoutNodes = useMemo(
+    () => (pinnedUser ? scene.nodes.filter((node) => node.id !== pinnedUser.id) : scene.nodes),
+    [scene.nodes, pinnedUser],
+  )
 
   // Hover / keyboard-focus emphasis. A card whose scene is replaced (user,
   // reference or layout change) may unmount without a mouseleave/blur, so any
@@ -420,7 +431,7 @@ function CanvasSurface({ graph, backSlot, motionMs: motionMsProp }: AccessGraphC
   // What React Flow renders: the structural scene run through the transition.
   // Hover / selection are NOT inputs (they restyle `frame.edges` below).
   const frame = useGraphTransition(
-    scene.nodes,
+    layoutNodes,
     drawnEdges,
     sceneKey,
     motionMs,
@@ -428,7 +439,10 @@ function CanvasSurface({ graph, backSlot, motionMs: motionMsProp }: AccessGraphC
   )
   // True once every target card sits in the frame at its final position (see
   // `FitOnSceneChange`).
-  const placed = useMemo(() => isFramePlaced(frame.nodes, scene.nodes), [frame.nodes, scene.nodes])
+  const placed = useMemo(
+    () => isFramePlaced(frame.nodes, layoutNodes),
+    [frame.nodes, layoutNodes],
+  )
   // Pointer wins; a keyboard-focused card stays emphasized once the pointer
   // leaves another card. Purely an edge restyle: no layout or refit input.
   const emphasisId = hoverId ?? focusId
@@ -662,7 +676,7 @@ function CanvasSurface({ graph, backSlot, motionMs: motionMsProp }: AccessGraphC
           fitKey={fitKey}
           rankdir={rankdir}
           inDrilldown={inDrilldown}
-          targetNodes={scene.nodes}
+          targetNodes={layoutNodes}
           placed={placed}
           motionMs={motionMs}
           onPlan={setFitOutcome}
@@ -691,6 +705,19 @@ function CanvasSurface({ graph, backSlot, motionMs: motionMsProp }: AccessGraphC
             onToggleDetail={toggleDetail}
           />
         </Panel>
+        {pinnedUser && (
+          <Panel position="top-left" className="vc-graph-user-pin">
+            <PinnedAccessCard
+              id={pinnedUser.id}
+              data={pinnedUser.data}
+              onActivate={() =>
+                setDetailNodeId((current) =>
+                  current === pinnedUser.id ? null : pinnedUser.id,
+                )
+              }
+            />
+          </Panel>
+        )}
         {inDrilldown && backSlot === undefined && (
           <Panel position="top-left" className="vc-graph-nav-panel">
             <button

@@ -68,7 +68,7 @@ function shortGraph() {
  * 100 directly held entitlements: a long list. The lane wraps into ten
  * sub-columns (LR) / sub-rows (TB), still too wide to fit at a readable zoom.
  */
-function longGraph(count = 100) {
+function longGraph(count = 200) {
   return statusGraph(
     Array.from({ length: count }, (_, i) => {
       const n = i + 1
@@ -78,7 +78,7 @@ function longGraph(count = 100) {
 }
 
 /** `total` directly held entitlements, the first `completed` of them approved. */
-function longWithCompleted(completed: number, total = 100) {
+function longWithCompleted(completed: number, total = 200) {
   return statusGraph(
     Array.from({ length: total }, (_, i) => {
       const n = i + 1
@@ -132,7 +132,7 @@ describe('AccessGraphCanvas readable zoom for long graphs', () => {
     expect(spies.fitView).not.toHaveBeenCalled()
     expect(lastZoom()).toBe(READABLE_MIN_ZOOM)
     const hint = screen.getByRole('status')
-    expect(hint).toHaveTextContent('100 items — scroll or drag to see all')
+    expect(hint).toHaveTextContent('200 items — scroll or drag to see all')
     expect(hint.closest('.react-flow__panel')).toHaveClass('top', 'center', 'vc-graph-fit-ignore')
   })
 
@@ -153,7 +153,7 @@ describe('AccessGraphCanvas readable zoom for long graphs', () => {
     // layout now starts in TB, so no layout click is needed to reach it
     await sizeCanvas(container, 968, 490)
     expect(lastZoom()).toBe(READABLE_MIN_ZOOM)
-    expect(screen.getByRole('status')).toHaveTextContent('100 items')
+    expect(screen.getByRole('status')).toHaveTextContent('200 items')
   })
 
   it('each refit trigger produces exactly one plan', async () => {
@@ -192,7 +192,7 @@ describe('AccessGraphCanvas readable zoom for long graphs', () => {
       // Completed items start hidden; show them to reach the full-list baseline.
       fireEvent.click(btn(/^Show completed items/))
       await waitFor(() =>
-        expect(screen.getByRole('status')).toHaveTextContent('100 items — scroll or drag to see all'),
+        expect(screen.getByRole('status')).toHaveTextContent('200 items — scroll or drag to see all'),
       )
       spies.setViewport.mockClear()
 
@@ -201,21 +201,21 @@ describe('AccessGraphCanvas readable zoom for long graphs', () => {
       await waitFor(() => expect(plans()).toBe(before + 1))
       expect(spies.setViewport).toHaveBeenCalledTimes(1)
       expect(lastZoom()).toBe(READABLE_MIN_ZOOM)
-      expect(screen.getByRole('status')).toHaveTextContent('90 items — scroll or drag to see all')
+      expect(screen.getByRole('status')).toHaveTextContent('190 items — scroll or drag to see all')
 
       const afterHide = plans()
       fireEvent.click(btn(/^Show completed items/))
       await waitFor(() => expect(plans()).toBe(afterHide + 1))
-      expect(screen.getByRole('status')).toHaveTextContent('100 items')
+      expect(screen.getByRole('status')).toHaveTextContent('200 items')
     })
 
     it('drops back to a normal fit with no hint when few items remain', async () => {
-      const { container } = render(<AccessGraphCanvas graph={longWithCompleted(94)} />)
+      const { container } = render(<AccessGraphCanvas graph={longWithCompleted(194)} />)
       drillIn()
       await sizeCanvas(container, 968, 490)
       // Completed items start hidden; show them to reach the full-list baseline.
       fireEvent.click(btn(/^Show completed items/))
-      await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('100 items'))
+      await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('200 items'))
       spies.fitView.mockClear()
       spies.setViewport.mockClear()
 

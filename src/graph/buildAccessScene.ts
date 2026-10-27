@@ -410,7 +410,7 @@ export function buildAccessScene(
   //   approved    → solid green (--vc-allow),
   //   revoked     → solid red (--vc-deny),
   //   reassigned  → dotted blue (--vc-accent, terminal).
-  // approved vs revoked differ by COLOR only on this thin edge; the node's
+  // approved vs revoked differ by COLOR only on this edge; the node's
   // corner icon carries the non-color SHAPE distinction (check vs X). The node
   // also carries the shape/text signal for every state. Deeper hops are
   // reference-only hairlines (muted, solid, below the status edges). The count badge was removed with the drill-down rework, so
@@ -421,13 +421,13 @@ export function buildAccessScene(
   ): Edge['style'] => {
     switch (status) {
       case 'needsReview':
-        return { stroke: 'var(--vc-warn)', strokeWidth: 2, strokeDasharray: '6 4' }
+        return { stroke: 'var(--vc-warn)', strokeWidth: 3, strokeDasharray: '6 4' }
       case 'approved':
-        return { stroke: 'var(--vc-allow)', strokeWidth: 2 }
+        return { stroke: 'var(--vc-allow)', strokeWidth: 3 }
       case 'revoked':
-        return { stroke: 'var(--vc-deny)', strokeWidth: 2 }
+        return { stroke: 'var(--vc-deny)', strokeWidth: 3 }
       case 'reassigned':
-        return { stroke: 'var(--vc-accent)', strokeWidth: 2, strokeDasharray: '2 3' }
+        return { stroke: 'var(--vc-accent)', strokeWidth: 3, strokeDasharray: '2 3' }
     }
   }
   const edges: Edge[] = graph.edges.map((edge) => {
@@ -453,7 +453,7 @@ export function buildAccessScene(
       ...base,
       className: 'vc-graph-edge-reference',
       data: { reference: true },
-      style: { stroke: 'var(--edge)', strokeWidth: 1, opacity: 0.45 },
+      style: { stroke: 'var(--edge)', strokeWidth: 2, opacity: 0.45 },
       zIndex: 0,
     }
   })

@@ -66,9 +66,11 @@ const btn = (name: string | RegExp) => screen.getByRole('button', { name })
 // Scope to the graph's node cards: once the detail panel echoes a node's label,
 // a bare getByText would match both the card and the panel.
 const card = (label: string) =>
-  Array.from(document.querySelectorAll<HTMLElement>('.react-flow__node .vc-graph-card')).find(
-    (el) => el.querySelector('.vc-graph-card-label')?.textContent === label,
-  )!
+  Array.from(
+    document.querySelectorAll<HTMLElement>(
+      '.react-flow__node .vc-graph-card, .vc-graph-user-pin .vc-graph-card',
+    ),
+  ).find((el) => el.querySelector('.vc-graph-card-label')?.textContent === label)!
 const drillIn = (user = 'User One') => fireEvent.click(btn(`Show access for ${user}`))
 const panel = () => screen.queryByRole('group', { name: 'Node details' })
 const openDetail = () => fireEvent.click(btn('Show details panel'))
