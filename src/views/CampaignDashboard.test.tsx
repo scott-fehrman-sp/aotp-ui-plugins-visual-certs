@@ -95,6 +95,20 @@ describe('CampaignDashboard', () => {
     ).toBeInTheDocument()
   })
 
+  it('offers View Users and a disabled View Access Items button', () => {
+    render(
+      <CampaignDashboard
+        campaign={campaign}
+        items={items}
+        onStartReviewing={vi.fn()}
+        onViewMatrix={vi.fn()}
+        now={now}
+      />,
+    )
+    expect(screen.getByRole('button', { name: 'View Users' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'View Access Items' })).toBeDisabled()
+  })
+
   it('fires the start-reviewing callback', async () => {
     const onStart = vi.fn()
     render(
@@ -143,17 +157,44 @@ describe('CampaignDashboard', () => {
     expect(labels).toEqual([
       'Users',
       'Access items',
+      'Total Decisions',
       'Still to review',
       'Reviewed',
       'Kept',
       'Removed',
     ])
     // Three review items, two identities: a user with several items counts once.
-    expect(screen.getByText('Access items').closest('.vc-metric')).toHaveTextContent('3')
+    // These three rows are the same unnamed entitlement, so it is one access item.
+    expect(screen.getByText('Total Decisions').closest('.vc-metric')).toHaveTextContent('3')
     expect(screen.getByText('Users').closest('.vc-metric')).toHaveTextContent('2')
+    const access = screen.getByText('Access items').closest('.vc-metric')
+    expect(access).toHaveTextContent('1')
+    expect(access).toHaveTextContent('Roles (0), Access Profiles (0), Entitlements (1)')
   })
 
-  it('shows a placeholder on Access items and Users until the review items load', () => {
+  it('counts a shared role once and lists roles, access profiles, and entitlements', () => {
+    render(
+      <CampaignDashboard
+        campaign={campaign}
+        items={[
+          reviewItem({ id: '1', identityId: 'u1', accessKind: 'role', accessId: 'role-a', accessName: 'Role A' }),
+          reviewItem({ id: '2', identityId: 'u2', accessKind: 'role', accessId: 'role-a', accessName: 'Role A' }),
+          reviewItem({ id: '3', identityId: 'u1', accessKind: 'accessProfile', accessId: 'ap-1', accessName: 'Billing' }),
+          reviewItem({ id: '4', identityId: 'u1', accessKind: 'entitlement', accessId: 'e-1', accessName: 'Login' }),
+          reviewItem({ id: '5', identityId: 'u2', accessKind: 'entitlement', accessId: 'e-2', accessName: 'Admin' }),
+        ]}
+        onStartReviewing={vi.fn()}
+        now={now}
+      />,
+    )
+    const access = screen.getByText('Access items').closest('.vc-metric')
+    expect(access).toHaveTextContent('4')
+    expect(access).toHaveTextContent('Roles (1), Access Profiles (1), Entitlements (2)')
+    // Five person-item rows, four distinct items.
+    expect(screen.getByText('Total Decisions').closest('.vc-metric')).toHaveTextContent('5')
+  })
+
+  it('shows a placeholder on Total Decisions and Users until the review items load', () => {
     render(
       <CampaignDashboard
         campaign={campaign}
@@ -162,8 +203,11 @@ describe('CampaignDashboard', () => {
         now={now}
       />,
     )
-    expect(screen.getByText('Access items').closest('.vc-metric')).toHaveTextContent('—')
+    expect(screen.getByText('Total Decisions').closest('.vc-metric')).toHaveTextContent('—')
     expect(screen.getByText('Users').closest('.vc-metric')).toHaveTextContent('—')
+    const access = screen.getByText('Access items').closest('.vc-metric')
+    expect(access).toHaveTextContent('—')
+    expect(access).toHaveTextContent('Roles (—), Access Profiles (—), Entitlements (—)')
   })
 
   it('shows a done message and hides the CTA when everything is decided', () => {

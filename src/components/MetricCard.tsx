@@ -10,12 +10,20 @@ interface MetricCardProps {
   hint?: string
   /** Accent tone for the value. */
   tone?: 'neutral' | 'allow' | 'deny' | 'warn' | 'accent' | 'reassign'
+  /** Extra class on the card, for layout (for example a wider grid span). */
+  className?: string
 }
 
 /** A single headline number with a plain-language label. */
-export function MetricCard({ label, value, hint, tone = 'neutral' }: MetricCardProps) {
+export function MetricCard({
+  label,
+  value,
+  hint,
+  tone = 'neutral',
+  className,
+}: MetricCardProps) {
   return (
-    <div className="vc-metric" data-tone={tone}>
+    <div className={className ? `vc-metric ${className}` : 'vc-metric'} data-tone={tone}>
       <div className="vc-metric-value">{value}</div>
       <div className="vc-metric-label">{label}</div>
       {hint && <div className="vc-metric-hint">{hint}</div>}

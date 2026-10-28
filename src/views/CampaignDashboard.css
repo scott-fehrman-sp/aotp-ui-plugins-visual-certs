@@ -39,12 +39,17 @@
 
 .vc-metrics-row {
   display: grid;
-  /* Six metric cards (Users, Access items, Still to review, Reviewed, Kept,
-   * Removed) in a single row. Users and Access items both come from the review
-   * items already loaded for this certification — see CampaignDashboard. */
-  grid-template-columns: repeat(6, 1fr);
+  /* Seven metric cards. Access items sits after Users and spans two tracks so
+     "Roles (X), Access Profiles (Y), Entitlements (Z)" can stay on one line.
+     The other six cards are one track each: Users, Total Decisions, Still to
+     review, Reviewed, Kept, Removed. */
+  grid-template-columns: repeat(8, minmax(0, 1fr));
   gap: 12px;
   margin-bottom: 20px;
+}
+
+.vc-metric-access {
+  grid-column: span 2;
 }
 .vc-charts-grid {
   display: grid;
@@ -54,7 +59,10 @@
 
 @media (max-width: 860px) {
   .vc-metrics-row {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .vc-metric-access {
+    grid-column: auto;
   }
   .vc-charts-grid {
     grid-template-columns: 1fr;

@@ -4,6 +4,7 @@ import { DecisionBar } from '../components/charts/DecisionBar'
 import { PriorityBreakdown } from '../components/charts/PriorityBreakdown'
 import { ProgressDonut } from '../components/charts/ProgressDonut'
 import { MetricCard } from '../components/MetricCard'
+import { countUniqueAccessItems, type UniqueAccessItems } from '../domain/accessCounts'
 import { computeMetrics } from '../domain/metrics'
 import { countByPriority, prioritize } from '../domain/priority'
 import type { CampaignVM, ReviewItemVM } from '../sailpoint/types'
@@ -17,7 +18,7 @@ interface CampaignDashboardProps {
   onStartReviewing: () => void
   /**
    * Called when the user opens the access expansion matrix. When omitted the
-   * "View access map" button is not rendered (keeps existing layout/tests
+   * "View Users" button is not rendered (keeps existing layout/tests
    * intact).
    */
   onViewMatrix?: () => void
@@ -57,13 +58,16 @@ export function CampaignDashboard({
     [items],
   )
 
-  // Both counts come straight from the review items already loaded for this
-  // certification. Access items is one per review item (the first-level role,
-  // access profile, or entitlement the reviewer can act on). Users is the
-  // number of distinct identities those items belong to. Neither calls the
-  // role / access-profile / entitlement / source APIs.
-  const accessItemCount: string | number = items ? items.length : '—'
+  // All three counts come straight from the review items already loaded for
+  // this certification. Users is the number of distinct identities. Access
+  // items is the number of distinct roles, access profiles, and entitlements
+  // (the same item held by several people counts once). Total Decisions is one
+  // per review item, the decision the reviewer makes for one person and one
+  // item. None of them calls the role / access-profile / entitlement / source
+  // APIs.
+  const decisionCount: string | number = items ? items.length : '—'
   const userCount: string | number = items ? countUsers(items) : '—'
+  const uniqueAccess = items ? countUniqueAccessItems(items) : null
 
   const highCount = priorityCounts?.high ?? 0
   const ctaLabel = metrics.reviewed > 0 ? 'Continue reviewing' : 'Start reviewing'
@@ -91,13 +95,18 @@ export function CampaignDashboard({
             </button>
           )}
           {onViewMatrix && (
-            <button
-              type="button"
-              className="vc-btn vc-btn-secondary"
-              onClick={onViewMatrix}
-            >
-              View access map
-            </button>
+            <>
+              <button
+                type="button"
+                className="vc-btn vc-btn-secondary"
+                onClick={onViewMatrix}
+              >
+                View Users
+              </button>
+              <button type="button" className="vc-btn vc-btn-secondary" disabled>
+                View Access Items
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -116,8 +125,14 @@ export function CampaignDashboard({
       <div className="vc-metrics-row">
         <MetricCard label="Users" value={userCount} hint="Identities in this review" />
         <MetricCard
+          className="vc-metric-access"
           label="Access items"
-          value={accessItemCount}
+          value={uniqueAccess ? uniqueAccess.total : '—'}
+          hint={accessItemsHint(uniqueAccess)}
+        />
+        <MetricCard
+          label="Total Decisions"
+          value={decisionCount}
           hint="Directly assigned to users"
         />
         <MetricCard label="Still to review" value={metrics.remaining} tone="accent" />
@@ -142,6 +157,12 @@ export function CampaignDashboard({
       </div>
     </section>
   )
+}
+
+/** "Roles (X), Access Profiles (Y), Entitlements (Z)", or an em dash per count while items are still loading. */
+function accessItemsHint(counts: UniqueAccessItems | null): string {
+  const n = (value: number) => (counts ? value : '—')
+  return `Roles (${n(counts?.roles ?? 0)}), Access Profiles (${n(counts?.accessProfiles ?? 0)}), Entitlements (${n(counts?.entitlements ?? 0)})`
 }
 
 /** Distinct identities among the already-loaded review items. A blank

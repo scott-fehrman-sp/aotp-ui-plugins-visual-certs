@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { deriveAccessGraph } from './accessGraph'
-import { computeAccessCounts } from './accessCounts'
+import { computeAccessCounts, countUniqueAccessItems } from './accessCounts'
 import type { AccessMatrixRowVM, ReviewItemVM } from '../sailpoint/types'
 
 function row(overrides: Partial<AccessMatrixRowVM>): AccessMatrixRowVM {
@@ -94,5 +94,47 @@ describe('computeAccessCounts', () => {
     expect(
       computeAccessCounts(graph, [item({ identityId: 'u9', accessKind: 'access' })]),
     ).toEqual({ users: 1, accessItems: 1, sources: 0 })
+  })
+})
+
+describe('countUniqueAccessItems', () => {
+  it('returns zeros when there are no items', () => {
+    expect(countUniqueAccessItems([])).toEqual({
+      total: 0,
+      roles: 0,
+      accessProfiles: 0,
+      entitlements: 0,
+    })
+  })
+
+  it('counts an item once no matter how many identities hold it', () => {
+    const items = [
+      item({ id: '1', identityId: 'u1', accessKind: 'role', accessId: 'role-a', accessName: 'Role A' }),
+      item({ id: '2', identityId: 'u2', accessKind: 'role', accessId: 'role-a', accessName: 'Role A' }),
+      item({ id: '3', identityId: 'u1', accessKind: 'accessProfile', accessId: 'ap-1', accessName: 'Billing' }),
+      item({ id: '4', identityId: 'u2', accessKind: 'entitlement', accessId: 'e-1', accessName: 'Login' }),
+      item({ id: '5', identityId: 'u3', accessKind: 'entitlement', accessId: 'e-2', accessName: 'Login' }),
+    ]
+    expect(countUniqueAccessItems(items)).toEqual({
+      total: 4,
+      roles: 1,
+      accessProfiles: 1,
+      entitlements: 2,
+    })
+  })
+
+  it('falls back to the access name when an item has no id, and ignores the generic access kind', () => {
+    const items = [
+      item({ id: '1', accessKind: 'entitlement', accessId: null, accessName: 'Read' }),
+      item({ id: '2', accessKind: 'entitlement', accessId: '  ', accessName: 'Read' }),
+      item({ id: '3', accessKind: 'entitlement', accessId: null, accessName: 'Write' }),
+      item({ id: '4', accessKind: 'access', accessId: null, accessName: 'Mystery' }),
+    ]
+    expect(countUniqueAccessItems(items)).toEqual({
+      total: 2,
+      roles: 0,
+      accessProfiles: 0,
+      entitlements: 2,
+    })
   })
 })

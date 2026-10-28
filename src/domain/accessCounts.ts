@@ -49,3 +49,43 @@ export function computeAccessCounts(
   }
   return { users, accessItems: items ? items.length : 0, sources }
 }
+
+/** Distinct roles, access profiles, and entitlements in a certification. */
+export interface UniqueAccessItems {
+  /** Roles + access profiles + entitlements. The same item held by several users counts once. */
+  total: number
+  roles: number
+  accessProfiles: number
+  entitlements: number
+}
+
+/**
+ * Distinct access items the review covers, split by kind. An item held by
+ * several identities counts once. Identity is `accessId` when the review item
+ * has one, otherwise the access name. The generic `access` kind is not a role,
+ * access profile, or entitlement, so it is left out of every count.
+ */
+export function countUniqueAccessItems(items: ReviewItemVM[]): UniqueAccessItems {
+  const roles = new Set<string>()
+  const accessProfiles = new Set<string>()
+  const entitlements = new Set<string>()
+  for (const item of items) {
+    const bucket =
+      item.accessKind === 'role'
+        ? roles
+        : item.accessKind === 'accessProfile'
+          ? accessProfiles
+          : item.accessKind === 'entitlement'
+            ? entitlements
+            : null
+    if (!bucket) continue
+    const id = item.accessId?.trim()
+    bucket.add(id ? `id:${id}` : `name:${item.accessName.trim()}`)
+  }
+  return {
+    total: roles.size + accessProfiles.size + entitlements.size,
+    roles: roles.size,
+    accessProfiles: accessProfiles.size,
+    entitlements: entitlements.size,
+  }
+}
