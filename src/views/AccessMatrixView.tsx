@@ -1,27 +1,31 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { EmptyState } from '../components/EmptyState'
-import { ErrorState } from '../components/ErrorState'
 import { LoadingState } from '../components/LoadingState'
 import { AccessGraphCanvas } from '../graph/AccessGraphCanvas'
-import type { AccessMatrixState } from '../state/useAccessMatrix'
+import type { AccessMatrixState, UserDetailState } from '../state/useAccessMatrix'
 import './AccessMatrixView.css'
 
 interface AccessMatrixViewProps {
   campaignName: string
-  /** The resolved matrix state (status/rows/graph/…) from useAccessMatrix. */
+  /** The resolved matrix state (status/graph/userDetails/resolveUser) from useAccessMatrix. */
   matrix: AccessMatrixState
   /** Back to the campaign dashboard. */
   onBack: () => void
 }
 
 /**
- * The access expansion map screen: an interactive node/edge graph of every path
- * from a user down to a leaf entitlement on a source. The graph renders
- * `matrix.graph` (nodes across five layers user → role → access profile →
- * entitlement → source, blank levels skipped on a path) and is traversable from
- * either end. Handles its own loading/empty/error states and a non-fatal banner
- * for soft-degraded rows.
+ * The access expansion map screen: an interactive node/edge graph. The grid
+ * (`matrix.graph`) shows every user plus each review item's directly-held
+ * role / access profile / entitlement, at ZERO role / access-profile /
+ * entitlement / source API cost (see `useAccessMatrix`'s doc). Drilling into a
+ * user is "selecting them for processing": it calls `matrix.resolveUser`,
+ * which is the only thing that calls those four APIs, and only for that one
+ * user's items. The canvas shows that user's first-level items immediately
+ * from `matrix.graph` while the full composition (nested lineage, sources)
+ * resolves, then swaps it in from `matrix.userDetails` once ready. Handles its
+ * own empty state and a non-fatal banner, scoped to the user currently
+ * drilled into, for any of their rows that soft-degraded.
  */
 export function AccessMatrixView({
   campaignName,
@@ -45,6 +49,13 @@ export function AccessMatrixView({
     setHeaderSlot(document.getElementById('vc-header-slot'))
     setTitleNav(document.getElementById('vc-title-nav'))
   }, [])
+
+  // The currently drilled-into user's lazy resolution, reported by the canvas
+  // (which owns the selection state) so the non-fatal "unresolved" banner can
+  // be scoped to THAT user rather than the whole campaign — there is no
+  // campaign-wide resolution any more to have a count for. `null` outside a
+  // drill-down, or before `resolveUser` has been called for the viewed user.
+  const [activeUserDetail, setActiveUserDetail] = useState<UserDetailState | null>(null)
 
   // Leave the map, and (in a user's drill-down) go back to the all-users grid.
   // Portaled beside the application title so the row doesn't sit above the graph.
@@ -70,48 +81,45 @@ export function AccessMatrixView({
           outline for screen-reader users at zero space cost. */}
       <h2 className="vc-matrix-sr-heading">All access paths</h2>
 
-      {matrix.status === 'loading' && (
+      {matrix.status === 'idle' && (
         <LoadingState message="Building the access map…" />
       )}
 
-      {matrix.status === 'error' && (
-        <ErrorState
-          title="We couldn't build the access map"
-          message={
-            matrix.error ??
-            "Something went wrong while expanding access. Please try again."
-          }
-          onRetry={matrix.reload}
-        />
-      )}
-
-      {matrix.status === 'ready' && matrix.rows.length === 0 && (
+      {matrix.status === 'ready' && matrix.graph.nodes.length === 0 && (
         <EmptyState
           title="No access to map"
           message="There's no reviewable access to expand into a map for this review."
         />
       )}
 
-      {matrix.status === 'ready' && matrix.rows.length > 0 && (
+      {matrix.status === 'ready' && matrix.graph.nodes.length > 0 && (
         <>
-          {matrix.unresolvedCount > 0 &&
+          {activeUserDetail?.status === 'ready' &&
+            activeUserDetail.unresolvedCount > 0 &&
             headerSlot &&
             createPortal(
               <div className="vc-banner vc-matrix-unresolved" role="status">
                 <span>
-                  {matrix.unresolvedCount}{' '}
-                  {matrix.unresolvedCount === 1
+                  {activeUserDetail.unresolvedCount}{' '}
+                  {activeUserDetail.unresolvedCount === 1
                     ? 'access path couldn’t'
                     : 'access paths couldn’t'}{' '}
-                  be fully resolved and{' '}
-                  {matrix.unresolvedCount === 1 ? 'is' : 'are'} marked
+                  be fully resolved for this user and{' '}
+                  {activeUserDetail.unresolvedCount === 1 ? 'is' : 'are'} marked
                   Unresolved.
                 </span>
               </div>,
               headerSlot,
             )}
 
-          <AccessGraphCanvas graph={matrix.graph} backSlot={backSlot} />
+          <AccessGraphCanvas
+            graph={matrix.graph}
+            backSlot={backSlot}
+            userDetails={matrix.userDetails}
+            identities={matrix.identities}
+            onUserSelected={matrix.resolveUser}
+            onUserDetailChange={setActiveUserDetail}
+          />
         </>
       )}
     </section>

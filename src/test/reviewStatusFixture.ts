@@ -230,9 +230,14 @@ export function fixtureResolver(): AccessCompositionResolver {
     entitlement: (id) => Promise.resolve(ents[id] ?? null),
     entitlementByName: (name) => Promise.resolve(entsByName[name] ?? null),
     source: (id) => Promise.resolve(sources[id] ?? null),
-    identity: () =>
+    identity: (id) =>
       Promise.resolve(
         emptyResolvedIdentity({
+          // Only Alice carries a parsed name. Every identity shares this
+          // canned record, and a first/last name replaces the review-item
+          // display name, so the other users must keep theirs.
+          firstName: id === 'u-a' ? 'Alice' : '',
+          lastName: id === 'u-a' ? 'Adams' : '',
           department: 'Finance',
           location: 'Austin',
           country: 'USA',

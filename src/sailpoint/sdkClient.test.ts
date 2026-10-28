@@ -82,6 +82,14 @@ describe('initPlugin', () => {
     expect(runtime.rolesApi).toBeDefined()
     expect(runtime.accessProfilesApi).toBeDefined()
     expect(runtime.entitlementsApi).toBeDefined()
+    // The single, session-long composition resolver: created once here, never
+    // per campaign (see the PluginRuntime field doc).
+    expect(runtime.accessCompositionResolver).toBeDefined()
+    expect(runtime.accessCompositionResolver.role).toBeInstanceOf(Function)
+    expect(runtime.accessCompositionResolver.accessProfile).toBeInstanceOf(Function)
+    expect(runtime.accessCompositionResolver.entitlement).toBeInstanceOf(Function)
+    expect(runtime.accessCompositionResolver.source).toBeInstanceOf(Function)
+    expect(runtime.accessCompositionResolver.identity).toBeInstanceOf(Function)
   })
 
   it('rejects when the handshake origin cannot be trusted', async () => {

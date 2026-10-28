@@ -1,47 +1,8 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
-import { deriveAccessGraph } from '../domain/accessGraph'
-import type {
-  AccessMatrixRowVM,
-  CampaignVM,
-  ReviewItemVM,
-} from '../sailpoint/types'
-import type { AccessMatrixState } from '../state/useAccessMatrix'
+import type { CampaignVM, ReviewItemVM } from '../sailpoint/types'
 import { CampaignDashboard } from './CampaignDashboard'
-
-/** A minimal AccessMatrixState for the composition-count cards. */
-function matrixState(
-  overrides: Partial<AccessMatrixState> = {},
-): AccessMatrixState {
-  return {
-    status: 'ready',
-    rows: [],
-    graph: { nodes: [], edges: [] },
-    unresolvedCount: 0,
-    error: null,
-    reload: vi.fn(),
-    ...overrides,
-  }
-}
-
-function matrixRow(overrides: Partial<AccessMatrixRowVM>): AccessMatrixRowVM {
-  return {
-    id: 'r',
-    userId: 'u1',
-    user: 'User One',
-    role: '',
-    roleId: null,
-    accessProfile: '',
-    accessProfileId: null,
-    entitlement: '',
-    entitlementId: null,
-    source: '',
-    sourceId: null,
-    unresolved: false,
-    ...overrides,
-  }
-}
 
 const campaign: CampaignVM = {
   id: 'c1',
@@ -110,7 +71,7 @@ describe('CampaignDashboard', () => {
     ).toBeInTheDocument()
   })
 
-  it('shows the reassigned count as its own metric card', () => {
+  it('keeps reassigned in the decision chart and does not give it its own card', () => {
     const mixed: ReviewItemVM[] = [
       reviewItem({ id: '1', completed: true, decision: 'APPROVE' }),
       reviewItem({ id: '2', completed: true, decision: 'REVOKE' }),
@@ -125,10 +86,10 @@ describe('CampaignDashboard', () => {
         now={now}
       />,
     )
-    const reassignedCard = screen.getByText('Reassigned').closest('.vc-metric')
-    expect(reassignedCard).not.toBeNull()
-    expect(reassignedCard).toHaveTextContent('1')
-    // The decision chart summary covers the third outcome too.
+    const labels = [...document.querySelectorAll('.vc-metric-label')].map(
+      (el) => el.textContent,
+    )
+    expect(labels).not.toContain('Reassigned')
     expect(
       screen.getByText(/1 kept, 1 removed, 1 reassigned\./i),
     ).toBeInTheDocument()
@@ -150,7 +111,7 @@ describe('CampaignDashboard', () => {
     expect(onStart).toHaveBeenCalledOnce()
   })
 
-  it('does not render the access-count cards without a matrix prop', () => {
+  it('never shows a Sources metric: that requires the role/AP/entitlement/source APIs', () => {
     render(
       <CampaignDashboard
         campaign={campaign}
@@ -159,66 +120,50 @@ describe('CampaignDashboard', () => {
         now={now}
       />,
     )
-    expect(screen.queryByText('Users')).not.toBeInTheDocument()
-    expect(screen.queryByText('Access items')).not.toBeInTheDocument()
     expect(screen.queryByText('Sources')).not.toBeInTheDocument()
   })
 
-  it('shows a placeholder on the graph-derived cards while the matrix resolves, but Access items is known from the review items', () => {
-    render(
+  it('puts Users first and counts them as distinct identities on the loaded items', () => {
+    const { container } = render(
       <CampaignDashboard
         campaign={campaign}
-        items={items}
-        matrix={matrixState({ status: 'loading' })}
+        items={[
+          reviewItem({ id: '1', identityId: 'u1' }),
+          reviewItem({ id: '2', identityId: 'u1' }),
+          reviewItem({ id: '3', identityId: 'u2' }),
+        ]}
         onStartReviewing={vi.fn()}
         now={now}
       />,
     )
-    // Users and Sources come from the expanded graph, which isn't ready yet.
-    expect(screen.getByText('Users').closest('.vc-metric')).toHaveTextContent('—')
-    expect(screen.getByText('Sources').closest('.vc-metric')).toHaveTextContent('—')
-    // Access items is the number of first-level review items (3 in `items`), so
-    // it shows immediately and does not wait on the matrix.
-    const accessItemsCard = screen.getByText('Access items').closest('.vc-metric')
-    expect(accessItemsCard).toHaveTextContent('3')
-    expect(accessItemsCard).not.toHaveTextContent('—')
+    const labels = [...container.querySelectorAll('.vc-metric-label')].map(
+      (el) => el.textContent,
+    )
+    expect(labels[0]).toBe('Users')
+    expect(labels).toEqual([
+      'Users',
+      'Access items',
+      'Still to review',
+      'Reviewed',
+      'Kept',
+      'Removed',
+    ])
+    // Three review items, two identities: a user with several items counts once.
+    expect(screen.getByText('Access items').closest('.vc-metric')).toHaveTextContent('3')
+    expect(screen.getByText('Users').closest('.vc-metric')).toHaveTextContent('2')
   })
 
-  it('shows a placeholder on Access items until the review items load', () => {
+  it('shows a placeholder on Access items and Users until the review items load', () => {
     render(
       <CampaignDashboard
         campaign={campaign}
         items={null}
-        matrix={matrixState({ status: 'loading' })}
         onStartReviewing={vi.fn()}
         now={now}
       />,
     )
     expect(screen.getByText('Access items').closest('.vc-metric')).toHaveTextContent('—')
-  })
-
-  it('counts Access items as first-level review items, not the expanded leaf entitlements', () => {
-    // The expanded graph holds 3 leaf entitlements (e1, e2, e3) across 2 users
-    // and 2 sources, but only 2 review items exist: those are the first-level
-    // items the reviewer can act on. Access items must read 2, not 3.
-    const graph = deriveAccessGraph([
-      matrixRow({ id: '1', userId: 'u1', user: 'User One', role: 'Role A', roleId: 'ra', accessProfile: 'foo', accessProfileId: 'af', entitlement: 'read', entitlementId: 'e1', source: 'engr db', sourceId: 's1' }),
-      matrixRow({ id: '2', userId: 'u1', user: 'User One', entitlement: 'call', entitlementId: 'e2', source: 'phone app', sourceId: 's2' }),
-      matrixRow({ id: '3', userId: 'u2', user: 'User Two', role: 'Role A', roleId: 'ra', accessProfile: 'foo', accessProfileId: 'af', entitlement: 'write', entitlementId: 'e3', source: 'engr db', sourceId: 's1' }),
-    ])
-    const twoItems = items.slice(0, 2)
-    render(
-      <CampaignDashboard
-        campaign={campaign}
-        items={twoItems}
-        matrix={matrixState({ status: 'ready', graph })}
-        onStartReviewing={vi.fn()}
-        now={now}
-      />,
-    )
-    expect(screen.getByText('Users').closest('.vc-metric')).toHaveTextContent('2')
-    expect(screen.getByText('Access items').closest('.vc-metric')).toHaveTextContent('2')
-    expect(screen.getByText('Sources').closest('.vc-metric')).toHaveTextContent('2')
+    expect(screen.getByText('Users').closest('.vc-metric')).toHaveTextContent('—')
   })
 
   it('shows a done message and hides the CTA when everything is decided', () => {

@@ -94,13 +94,15 @@ export interface AccessScene {
 export const NODE_WIDTH = 200
 export const NODE_HEIGHT = 64
 /**
- * The user node is taller than the others so its card can show extra identity
- * lines (title, department, location / country) beneath the name. Only the user
- * kind uses this height; every other kind stays {@link NODE_HEIGHT}. The user
- * always sits alone in its own rank, so the extra height only affects that
- * lane's own cross-axis spacing, never the other lanes.
+ * The user node is taller than the others so its card can show the identity
+ * lines an operator needs before choosing who to review: name, title,
+ * department, location, and country, plus the completion row along the bottom.
+ * Only the user kind uses this height; every other kind stays
+ * {@link NODE_HEIGHT}. The user always sits alone in its own rank, so the
+ * extra height only affects that lane's own cross-axis spacing, never the
+ * other lanes.
  */
-export const NODE_USER_HEIGHT = 128
+export const NODE_USER_HEIGHT = 160
 
 /** The laid-out box height for a node of the given kind. */
 export function nodeHeightFor(kind: AccessGraphNodeKind): number {

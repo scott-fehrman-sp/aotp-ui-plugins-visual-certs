@@ -32,6 +32,130 @@ const KIND_LABEL: Record<AccessGraphNodeKind, string> = {
   source: 'Source',
 }
 
+/**
+ * Letters and digits only, lowercased. "FIRST NAME", "firstName", and
+ * "first_name" all become "firstname", so spelling variants compare equal.
+ */
+function compactKey(key: string): string {
+  return key.toLowerCase().replace(/[^a-z0-9]/g, '')
+}
+
+/**
+ * Attribute names that mean one of the fields the panel already labels.
+ * Compact form → the curated field's compact name. "jobTitle" and "TITLE"
+ * are both a title; "givenName" is a first name.
+ */
+const ATTRIBUTE_ALIASES: Record<string, string> = {
+  givenname: 'firstname',
+  familyname: 'lastname',
+  surname: 'lastname',
+  jobtitle: 'title',
+  emailaddress: 'email',
+  workphone: 'phone',
+  telephone: 'phone',
+  telephonenumber: 'phone',
+  phonenumber: 'phone',
+  mobilephone: 'phone',
+  mobile: 'phone',
+  departmentname: 'department',
+  dept: 'department',
+  city: 'location',
+  region: 'location',
+  locality: 'location',
+  worklocation: 'location',
+  countryname: 'country',
+  countrycode: 'country',
+  identitystatus: 'identitystate',
+}
+
+/** The curated user-row label for each field that attributes must not repeat. */
+const CURATED_FIELD_KEY: Record<string, string> = {
+  'First name': 'firstname',
+  'Last name': 'lastname',
+  Title: 'title',
+  Email: 'email',
+  Phone: 'phone',
+  Department: 'department',
+  Location: 'location',
+  Country: 'country',
+  Manager: 'manager',
+  'Is manager': 'ismanager',
+  'Lifecycle state': 'lifecyclestate',
+  'Identity state': 'identitystate',
+  'Identity ID': 'identityid',
+}
+
+/** One comparable name for an attribute key, after alias folding. */
+function canonicalKey(key: string): string {
+  const compact = compactKey(key)
+  return ATTRIBUTE_ALIASES[compact] ?? compact
+}
+
+/**
+ * Prefer a camelCase key over a spaced one, and a spaced one over a single
+ * all-caps token, so the surviving duplicate has the clearest label.
+ */
+function preferAttributeKey(candidate: string, current: string): boolean {
+  const score = (key: string) =>
+    (/[a-z]/.test(key) && /[A-Z]/.test(key) ? 2 : 0) + (/[\s_-]/.test(key) ? 1 : 0)
+  return score(candidate) > score(current)
+}
+
+/**
+ * A readable label for a raw identity-attribute key. camelCase, spaced, and
+ * snake/kebab keys become words ("employeeNumber" → "Employee number",
+ * "START DATE" → "Start date"). A single all-caps token has no word boundary
+ * (IBMIUSERNAME) and is shown as stored.
+ */
+function attributeLabel(key: string): string {
+  const hasBoundary = /[\s_-]/.test(key) || (/[a-z]/.test(key) && /[A-Z]/.test(key))
+  if (!hasBoundary && !/[a-z]/.test(key)) return key
+  const words = key
+    .replace(/[_-]+/g, ' ')
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .trim()
+  if (!words) return key
+  return words.charAt(0).toUpperCase() + words.slice(1).toLowerCase()
+}
+
+/**
+ * One row per fact. Attributes that repeat a curated field (first name, last
+ * name, title / job title, and the same field under a different spelling)
+ * are dropped. When the curated row is blank, the attribute's value fills it
+ * so the fact still appears once. Remaining attributes collapse too:
+ * "EMPLOYEE NUMBER" and "employeeNumber" become a single row.
+ */
+function dedupeUserDetail(
+  rows: Array<[string, string, boolean]>,
+  attributes: Array<[string, string]>,
+): { rows: Array<[string, string, boolean]>; attributes: Array<[string, string]> } {
+  const byCanonical = new Map<string, [string, string]>()
+  for (const [key, value] of attributes) {
+    if (!value.trim()) continue
+    const canonical = canonicalKey(key)
+    const existing = byCanonical.get(canonical)
+    if (!existing || preferAttributeKey(key, existing[0])) {
+      byCanonical.set(canonical, [key, value])
+    }
+  }
+
+  const used = new Set<string>()
+  const nextRows = rows.map(([label, value, always]): [string, string, boolean] => {
+    const canonical = CURATED_FIELD_KEY[label]
+    if (!canonical) return [label, value, always]
+    const match = byCanonical.get(canonical)
+    if (!match) return [label, value, always]
+    used.add(canonical)
+    return [label, value.trim() ? value : match[1], always]
+  })
+
+  const nextAttributes = [...byCanonical.entries()]
+    .filter(([canonical]) => !used.has(canonical))
+    .map(([, pair]) => pair)
+
+  return { rows: nextRows, attributes: nextAttributes }
+}
+
 /** Review-status caption (mirrors AccessNode's STATUS_ICON_LABEL). */
 const STATUS_LABEL: Record<NonNullable<AccessSceneNodeData['reviewStatus']>, string> = {
   needsReview: 'Needs review',
@@ -76,6 +200,8 @@ export function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps) {
   // anchor the panel even when blank).
   const d = node?.detail ?? {}
   const userRows: Array<[string, string, boolean]> = [
+    ['First name', d.firstName ?? '', false],
+    ['Last name', d.lastName ?? '', false],
     ['Title', d.title ?? '', false],
     ['Email', d.email ?? '', false],
     ['Phone', d.phone ?? '', false],
@@ -88,9 +214,13 @@ export function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps) {
     ['Identity state', d.identityState ?? '', false],
     ['Identity ID', d.identityId ?? '', false],
   ]
+  // Named rows and the attribute list overlap (First name and firstName,
+  // Title and jobTitle, FIRST NAME and FIRSTNAME). Collapse those to one row.
+  const deduped = dedupeUserDetail(userRows, d.attributes ?? [])
   // Keep a field when it has a value or is one of the always-shown anchors
   // (Department / Location anchor the user panel even when blank).
-  const visibleUserRows = userRows.filter(([, value, always]) => always || value)
+  const visibleUserRows = deduped.rows.filter(([, value, always]) => always || value)
+  const userAttributes = deduped.attributes
 
   // The primary field set for an access-item node (role, access profile,
   // entitlement), in a fixed per-kind order mirroring the ISC detail panels. A
@@ -237,18 +367,33 @@ export function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps) {
           ) : null}
 
           {isUser ? (
-            <dl className="vc-graph-detail-fields">
-              {visibleUserRows.map(([label, value]) => (
-                <div key={label} className="vc-graph-detail-row">
-                  <dt>{label}</dt>
-                  <dd>
-                    {value || (
-                      <span className="vc-graph-detail-unset">not set</span>
-                    )}
-                  </dd>
-                </div>
-              ))}
-            </dl>
+            <>
+              <dl className="vc-graph-detail-fields">
+                {visibleUserRows.map(([label, value]) => (
+                  <div key={label} className="vc-graph-detail-row">
+                    <dt>{label}</dt>
+                    <dd>
+                      {value || (
+                        <span className="vc-graph-detail-unset">not set</span>
+                      )}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+              {userAttributes.length > 0 ? (
+                <>
+                  <p className="vc-graph-detail-subhead">Attributes</p>
+                  <dl className="vc-graph-detail-fields">
+                    {userAttributes.map(([key, value]) => (
+                      <div key={key} className="vc-graph-detail-row">
+                        <dt>{attributeLabel(key)}</dt>
+                        <dd>{value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </>
+              ) : null}
+            </>
           ) : isAccessItem ? (
             <>
               <dl className="vc-graph-detail-fields">

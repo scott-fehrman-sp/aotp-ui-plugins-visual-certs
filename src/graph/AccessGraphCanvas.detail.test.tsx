@@ -357,6 +357,8 @@ describe('AccessGraphCanvas node detail panel', () => {
     expect(within(details).getByText('User')).toBeInTheDocument()
     // The org-graph-style identity fields render with their values.
     for (const [label, value] of [
+      ['First name', 'Alice'],
+      ['Last name', 'Adams'],
       ['Title', 'Staff Engineer'],
       ['Email', 'alice.adams@example.com'],
       ['Phone', '+1 555 0100'],

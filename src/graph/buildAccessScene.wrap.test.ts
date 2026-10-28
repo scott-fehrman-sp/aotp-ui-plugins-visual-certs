@@ -306,8 +306,8 @@ describe('lane wrap past MAX_ITEMS_PER_LANE', () => {
       expect(subs[0].nodes.map((n) => n.position.y)).toEqual([-280, -168, -56, 56, 168, 280])
       expect(subs[1].nodes.map((n) => n.position.y)).toEqual([-224, -112, 0, 112, 224])
       // The taller user card is lifted by half its extra height so its center
-      // stays on the lane axis (top-left y = 0 - (128 - 64) / 2 = -32).
-      expect(scene.nodes.find((n) => n.data.kind === 'user')!.position).toEqual({ x: 24, y: -32 })
+      // stays on the lane axis (top-left y = 0 - (160 - 64) / 2 = -48).
+      expect(scene.nodes.find((n) => n.data.kind === 'user')!.position).toEqual({ x: 24, y: -48 })
       expect(lane(scene, 'source')[0].position.x).toBe(1304 + 240)
     })
     it('TB: rows 104 apart, axes swapped, source shifted by one step', () => {

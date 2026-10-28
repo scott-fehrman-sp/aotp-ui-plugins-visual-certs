@@ -538,7 +538,7 @@ describe('buildAccessScene', () => {
     { nodes: Record<string, [number, number]>; edges: string[] }
   > = {
   'worked-LR': {
-    nodes: { 'user:u1': [24, -32], 'role:role-a': [344, 0], 'accessProfile:ap-foo': [664, 56], 'entitlement:e1': [984, -168], 'source:s1': [1304, 0], 'entitlement:e2': [984, 280], 'entitlement:e3': [984, -280], 'accessProfile:ap-bar': [664, -56], 'entitlement:e4': [984, -56], 'source:s2': [1304, -112], 'entitlement:e5': [984, 168], 'entitlement:e6': [984, 56], 'source:s3': [1304, 112] },
+    nodes: { 'user:u1': [24, -48], 'role:role-a': [344, 0], 'accessProfile:ap-foo': [664, 56], 'entitlement:e1': [984, -168], 'source:s1': [1304, 0], 'entitlement:e2': [984, 280], 'entitlement:e3': [984, -280], 'accessProfile:ap-bar': [664, -56], 'entitlement:e4': [984, -56], 'source:s2': [1304, -112], 'entitlement:e5': [984, 168], 'entitlement:e6': [984, 56], 'source:s3': [1304, 112] },
     edges: ['e:user:u1:role:role-a', 'e:role:role-a:accessProfile:ap-foo', 'e:accessProfile:ap-foo:entitlement:e1', 'e:entitlement:e1:source:s1', 'e:accessProfile:ap-foo:entitlement:e2', 'e:entitlement:e2:source:s1', 'e:role:role-a:entitlement:e3', 'e:entitlement:e3:source:s1', 'e:user:u1:accessProfile:ap-bar', 'e:accessProfile:ap-bar:entitlement:e4', 'e:entitlement:e4:source:s2', 'e:accessProfile:ap-bar:entitlement:e5', 'e:entitlement:e5:source:s2', 'e:user:u1:entitlement:e6', 'e:entitlement:e6:source:s3'],
   },
   'worked-TB': {
@@ -546,7 +546,7 @@ describe('buildAccessScene', () => {
     edges: ['e:user:u1:role:role-a', 'e:role:role-a:accessProfile:ap-foo', 'e:accessProfile:ap-foo:entitlement:e1', 'e:entitlement:e1:source:s1', 'e:accessProfile:ap-foo:entitlement:e2', 'e:entitlement:e2:source:s1', 'e:role:role-a:entitlement:e3', 'e:entitlement:e3:source:s1', 'e:user:u1:accessProfile:ap-bar', 'e:accessProfile:ap-bar:entitlement:e4', 'e:entitlement:e4:source:s2', 'e:accessProfile:ap-bar:entitlement:e5', 'e:entitlement:e5:source:s2', 'e:user:u1:entitlement:e6', 'e:entitlement:e6:source:s3'],
   },
   'nested-LR': {
-    nodes: { 'user:u1': [24, -32], 'role:role-a': [344, 0], 'accessProfile:ap-foo': [664, 0], 'entitlement:e1': [984, 0], 'source:s1': [1304, 0] },
+    nodes: { 'user:u1': [24, -48], 'role:role-a': [344, 0], 'accessProfile:ap-foo': [664, 0], 'entitlement:e1': [984, 0], 'source:s1': [1304, 0] },
     edges: ['e:user:u1:role:role-a', 'e:role:role-a:accessProfile:ap-foo', 'e:accessProfile:ap-foo:entitlement:e1', 'e:entitlement:e1:source:s1', 'e:user:u1:entitlement:e1'],
   },
   'nested-TB': {
@@ -554,7 +554,7 @@ describe('buildAccessScene', () => {
     edges: ['e:user:u1:role:role-a', 'e:role:role-a:accessProfile:ap-foo', 'e:accessProfile:ap-foo:entitlement:e1', 'e:entitlement:e1:source:s1', 'e:user:u1:entitlement:e1'],
   },
   'mixed-LR': {
-    nodes: { 'user:u1': [24, -32], 'role:r': [344, 0], 'accessProfile:ap': [664, 0], 'entitlement:l1': [984, 112], 'source:s': [1304, 0], 'entitlement:l2': [984, 224], 'entitlement:d1': [984, -224], 'entitlement:d2': [984, -112], 'entitlement:d3': [984, 0] },
+    nodes: { 'user:u1': [24, -48], 'role:r': [344, 0], 'accessProfile:ap': [664, 0], 'entitlement:l1': [984, 112], 'source:s': [1304, 0], 'entitlement:l2': [984, 224], 'entitlement:d1': [984, -224], 'entitlement:d2': [984, -112], 'entitlement:d3': [984, 0] },
     edges: ['e:user:u1:role:r', 'e:role:r:accessProfile:ap', 'e:accessProfile:ap:entitlement:l1', 'e:entitlement:l1:source:s', 'e:accessProfile:ap:entitlement:l2', 'e:entitlement:l2:source:s', 'e:user:u1:entitlement:d1', 'e:entitlement:d1:source:s', 'e:user:u1:entitlement:d2', 'e:entitlement:d2:source:s', 'e:user:u1:entitlement:d3', 'e:entitlement:d3:source:s'],
   },
   'mixed-TB': {

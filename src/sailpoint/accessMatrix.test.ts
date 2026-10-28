@@ -6,7 +6,7 @@ import type {
   RolesApi,
   SourcesApi,
 } from 'sailpoint-api-client'
-import { createAccessCompositionResolver, resolveMatrix } from './accessMatrix'
+import { createAccessCompositionResolver, resolveMatrix, shallowRow } from './accessMatrix'
 import type {
   AccessCompositionResolver,
   ResolvedAccessProfile,
@@ -14,6 +14,7 @@ import type {
   ResolvedRole,
   ResolvedSource,
 } from './accessMatrix'
+import { deriveAccessGraph } from '../domain/accessGraph'
 import { emptyResolvedIdentity } from './identities'
 import type { ReviewItemVM } from './types'
 
@@ -663,6 +664,69 @@ describe('resolveMatrix', () => {
       accessItemKind: 'role',
       accessItemId: 'role-empty',
     })
+  })
+})
+
+describe('shallowRow', () => {
+  it('carries only the user and the held item, with no composition fields', () => {
+    const row = shallowRow(
+      item({ id: 'rev-role', accessKind: 'role', accessId: 'role-a', accessName: 'Role A' }),
+    )
+    expect(row).toMatchObject({
+      userId: 'u1',
+      user: 'User One',
+      role: '',
+      accessProfile: '',
+      entitlement: '',
+      source: '',
+      sourceId: null,
+      unresolved: false,
+      accessItemKind: 'role',
+      accessItemId: 'role-a',
+      accessItemName: 'Role A',
+    })
+  })
+
+  it.each([
+    ['role' as const, 'roleId' as const],
+    ['accessProfile' as const, 'accessProfileId' as const],
+    ['entitlement' as const, 'entitlementId' as const],
+  ])(
+    'threads the item id onto %s\'s own id slot (%s), leaving the other two null',
+    (kind, idField) => {
+      const row = shallowRow(
+        item({ accessKind: kind, accessId: 'the-id', accessName: 'The Name' }),
+      )
+      expect(row[idField]).toBe('the-id')
+      const others = (['roleId', 'accessProfileId', 'entitlementId'] as const).filter(
+        (f) => f !== idField,
+      )
+      for (const other of others) expect(row[other]).toBeNull()
+    },
+  )
+
+  it('carries no id at all for the generic "access" fallback kind', () => {
+    const row = shallowRow(item({ accessKind: 'access', accessId: null }))
+    expect(row.accessItemKind).toBeUndefined()
+    expect(row.roleId).toBeNull()
+    expect(row.accessProfileId).toBeNull()
+    expect(row.entitlementId).toBeNull()
+  })
+
+  it('produces a graph node id identical to the one the deep-resolved row for the same item would produce', async () => {
+    const roleItem = item({
+      id: 'rev-role',
+      accessKind: 'role',
+      accessId: 'role-a',
+      accessName: 'Role A',
+    })
+    const deepRows = await resolveMatrix([roleItem], stubResolver())
+    const shallowGraph = deriveAccessGraph([shallowRow(roleItem)])
+    const deepGraph = deriveAccessGraph(deepRows)
+    const shallowRoleNode = shallowGraph.nodes.find((n) => n.kind === 'role')
+    const deepRoleNode = deepGraph.nodes.find((n) => n.kind === 'role')
+    expect(shallowRoleNode?.id).toBe(deepRoleNode?.id)
+    expect(shallowRoleNode?.id).toBe('role:role-a')
   })
 })
 

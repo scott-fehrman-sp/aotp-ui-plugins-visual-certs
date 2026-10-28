@@ -133,6 +133,12 @@ export interface ResolvedIdentity {
   identityState: string
   /** The identity's own id. */
   identityId: string
+  /**
+   * Every entry in the identity's `attributes` map that has a non-empty value,
+   * as ordered `[key, value]` pairs. Empty strings, blanks, nulls, and empty
+   * lists are left out. Keys stay as the tenant stored them.
+   */
+  attributes: Array<[string, string]>
 }
 
 /**
@@ -157,8 +163,51 @@ export function emptyResolvedIdentity(
     lifecycleState: '',
     identityState: '',
     identityId: '',
+    attributes: [],
     ...overrides,
   }
+}
+
+/**
+ * A display string for one identity-attribute value. Blank when the value
+ * carries nothing a reviewer could read: null, undefined, whitespace, or an
+ * empty list. Numbers (including 0) and booleans are kept. Lists join their
+ * non-empty items.
+ */
+function displayAttributeValue(value: unknown): string {
+  if (value === null || value === undefined) return ''
+  if (typeof value === 'string') return value.trim()
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value)
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => displayAttributeValue(item))
+      .filter(Boolean)
+      .join(', ')
+  }
+  if (typeof value === 'object') {
+    try {
+      const text = JSON.stringify(value)
+      return text === '{}' ? '' : text
+    } catch {
+      return ''
+    }
+  }
+  return ''
+}
+
+/**
+ * The identity's attribute map, restricted to entries with a non-empty value
+ * and ordered by key so the detail panel is stable across loads.
+ */
+function identityAttributeRows(
+  attributes: Record<string, unknown>,
+): Array<[string, string]> {
+  return Object.keys(attributes)
+    .sort((a, b) => a.localeCompare(b))
+    .flatMap((key) => {
+      const value = displayAttributeValue(attributes[key])
+      return value ? ([[key, value]] as Array<[string, string]>) : []
+    })
 }
 
 /** Title lives under `attributes` and is tenant-mapped; probe a few key names. */
@@ -242,6 +291,7 @@ export async function fetchIdentityDetail(
       lifecycleState,
       identityState,
       identityId: firstString(identity, ['id']) || identityId,
+      attributes: identityAttributeRows(attributes),
     }
   } catch {
     // Soft-degrade: a failed identity fetch must never blank a matrix row.

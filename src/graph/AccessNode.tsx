@@ -214,16 +214,11 @@ function CardKindMark({
 }
 
 /**
- * The custom React Flow node for the access graph: a small accessible card
- * showing the node's label and a per-kind caption, with a left-border accent
- * driven by the `kind-<kind>` class. Mirrors org-graph's `PersonNode` shape
- * (8-handle a11y card, per-kind accent) trimmed to a read-only label — the
- * access graph has no per-node actions.
- */
-/**
- * The inside of a card: the name line plus, for a USER node, extra identity
- * lines (title, department, and a combined location / country line) whenever
- * the detail carries them. The name is struck through when the identity's
+ * The inside of a card: the name line plus, for a USER node, the identity
+ * lines an operator uses to choose who to review — title, department,
+ * location, and country — whenever the detail carries them. The name is
+ * "First Last" once the identity lookup has filled those fields, and the
+ * review item's display name until then. The name is struck through when the identity's
  * LIFECYCLE STATE is set and is anything other than "active" (case-insensitive),
  * signalling an inactive / terminated identity. Non-user cards and users without
  * extra detail render exactly the bare name line as before.
@@ -239,12 +234,11 @@ function CardBody({ data }: { data: AccessSceneNode['data'] }) {
   // unset state leaves the name untouched (we cannot assert it is inactive).
   const inactive = isUser && lifecycle !== '' && lifecycle.toLowerCase() !== 'active'
 
-  // The combined "Location / Country" line: join whichever are present.
-  const locationCountry = isUser
-    ? [detail?.location, detail?.country].filter((part): part is string => Boolean(part)).join(' / ')
-    : ''
+  const name = isUser
+    ? [detail?.firstName, detail?.lastName].filter(Boolean).join(' ') || data.label
+    : data.label
   const infoLines: string[] = isUser
-    ? [detail?.title ?? '', detail?.department ?? '', locationCountry].filter(Boolean)
+    ? [detail?.title ?? '', detail?.department ?? '', detail?.location ?? '', detail?.country ?? ''].filter(Boolean)
     : []
 
   return (
@@ -252,7 +246,7 @@ function CardBody({ data }: { data: AccessSceneNode['data'] }) {
       <strong
         className={`vc-graph-card-label${inactive ? ' vc-graph-card-label-inactive' : ''}`}
       >
-        {data.label}
+        {name}
       </strong>
       {infoLines.map((line, index) => (
         <span key={index} className="vc-graph-card-info">

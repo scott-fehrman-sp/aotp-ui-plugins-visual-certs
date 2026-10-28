@@ -203,7 +203,7 @@
   text-decoration-thickness: 1.5px;
 }
 
-/* The extra identity lines on a user card (title, department, location /
+/* The extra identity lines on a user card (title, department, location,
    country). Smaller and muted beneath the name, each clipped to one line. */
 .vc-graph-card-info {
   display: block;

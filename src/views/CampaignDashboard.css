@@ -39,19 +39,13 @@
 
 .vc-metrics-row {
   display: grid;
-  /* Five metric cards (Still to review, Reviewed, Kept, Removed, Reassigned)
-   * in a single row. */
-  grid-template-columns: repeat(5, 1fr);
+  /* Six metric cards (Users, Access items, Still to review, Reviewed, Kept,
+   * Removed) in a single row. Users and Access items both come from the review
+   * items already loaded for this certification — see CampaignDashboard. */
+  grid-template-columns: repeat(6, 1fr);
   gap: 12px;
   margin-bottom: 20px;
 }
-
-/* The "what's in this review" composition row has three cards (Users, Access
- * items, Sources), so it gets its own three-column track. */
-.vc-metrics-row-access {
-  grid-template-columns: repeat(3, 1fr);
-}
-
 .vc-charts-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

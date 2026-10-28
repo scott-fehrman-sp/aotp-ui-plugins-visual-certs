@@ -456,9 +456,9 @@ export interface NodeDetail {
   /** The entitlement's own id. */
   entitlementId?: string
   /**
-   * The free-form source attributes as ordered `[key, value]` pairs, rendered
-   * under an "Additional attributes" heading (mirrors the ISC panel). Omitted
-   * when the entitlement carried none.
+   * Free-form attributes as ordered `[key, value]` pairs. On an entitlement,
+   * the source attributes under "Additional attributes". On a user, every
+   * identity attribute that has a non-empty value. Omitted when there are none.
    */
   attributes?: Array<[string, string]>
   // --- role / access-profile attribute fields --------------------------------

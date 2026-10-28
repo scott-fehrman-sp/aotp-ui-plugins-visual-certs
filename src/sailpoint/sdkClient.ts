@@ -31,6 +31,8 @@ import {
   SearchApi,
   SourcesApi,
 } from 'sailpoint-api-client'
+import { createAccessCompositionResolver } from './accessMatrix'
+import type { AccessCompositionResolver } from './accessMatrix'
 import type { CurrentUser } from './types'
 
 /** Everything the app needs after a successful connection. */
@@ -56,6 +58,15 @@ export interface PluginRuntime {
   sourcesApi: SourcesApi
   /** Resolves a user's full identity detail for the access-graph detail panel. */
   identitiesApi: IdentitiesApi
+  /**
+   * The SINGLE access-composition resolver for the whole plugin session: one
+   * per-id cache each for roles, access profiles, entitlements, sources and
+   * identities, created ONCE here (not per campaign, not per user) so a role /
+   * access profile / entitlement / source already fetched while processing one
+   * user — or one certification — is never re-fetched while processing
+   * another. `useAccessMatrix` reads from this cache; it never creates its own.
+   */
+  accessCompositionResolver: AccessCompositionResolver
 }
 
 /** Options for {@link initPlugin}, mainly to support testing. */
@@ -169,6 +180,15 @@ export async function initPlugin(
   // Configuration; identity read is covered by the manifest's existing
   // `sp:scopes:all`, so no manifest change.
   const identitiesApi = new IdentitiesApi(configuration)
+  // Created once, here, for the plugin's whole session (every campaign the
+  // signed-in user opens reuses it) — see the field doc on PluginRuntime.
+  const accessCompositionResolver = createAccessCompositionResolver(
+    rolesApi,
+    accessProfilesApi,
+    entitlementsApi,
+    sourcesApi,
+    identitiesApi,
+  )
 
   return {
     sdk,
@@ -184,5 +204,6 @@ export async function initPlugin(
     entitlementsApi,
     sourcesApi,
     identitiesApi,
+    accessCompositionResolver,
   }
 }

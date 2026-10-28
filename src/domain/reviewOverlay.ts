@@ -96,3 +96,43 @@ export function applyReviewStatus(
     }),
   }
 }
+
+/**
+ * Copies live first-level review status from `source` onto the matching
+ * first-level edges of `target`, joined by `reviewKey`. `nodes` keeps
+ * `target`'s array reference.
+ *
+ * The lazily resolved per-user graph is structural only (`deriveAccessGraph`).
+ * Status already lives on the shallow overview graph and changes with every
+ * decision, so the drill-down copies it across instead of resolving again.
+ * `userSubgraph` then stamps that edge status onto the first-level nodes.
+ * Without this copy, the default "hide reference" filter treats every access
+ * item as reference-only (no status) and the drill-down goes blank once
+ * resolution finishes — cards and the "X% (Y of Z)" completion with them.
+ */
+export function copyFirstLevelStatus(
+  target: AccessGraphData,
+  source: AccessGraphData,
+): AccessGraphData {
+  const byKey = new Map<
+    string,
+    { reviewStatus: AccessReviewStatus; reviewMixed?: boolean }
+  >()
+  for (const edge of source.edges) {
+    if (!edge.firstLevel || edge.reviewKey === undefined || !edge.reviewStatus) continue
+    byKey.set(edge.reviewKey, {
+      reviewStatus: edge.reviewStatus,
+      reviewMixed: edge.reviewMixed,
+    })
+  }
+  if (byKey.size === 0) return target
+  return {
+    nodes: target.nodes,
+    edges: target.edges.map((edge) => {
+      if (!edge.firstLevel || edge.reviewKey === undefined) return edge
+      const status = byKey.get(edge.reviewKey)
+      if (!status) return edge
+      return { ...edge, reviewStatus: status.reviewStatus, reviewMixed: status.reviewMixed }
+    }),
+  }
+}

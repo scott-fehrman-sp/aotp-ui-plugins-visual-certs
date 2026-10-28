@@ -2,10 +2,37 @@ import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { deriveAccessGraph } from '../domain/accessGraph'
+import { applyReviewStatus } from '../domain/reviewOverlay'
 import { buildAccessScene } from '../graph/buildAccessScene'
-import type { AccessMatrixState } from '../state/useAccessMatrix'
-import type { AccessMatrixRowVM } from '../sailpoint/types'
+import { shallowRow } from '../sailpoint/accessMatrix'
+import type { AccessMatrixRowVM, ReviewItemVM } from '../sailpoint/types'
+import type { AccessMatrixState, UserDetailState } from '../state/useAccessMatrix'
 import { AccessMatrixView } from './AccessMatrixView'
+
+function item(overrides: Partial<ReviewItemVM>): ReviewItemVM {
+  return {
+    id: 'r1',
+    identityId: 'u1',
+    completed: false,
+    decision: null,
+    reassigned: false,
+    comments: null,
+    personName: 'User One',
+    accessName: 'access',
+    accessKind: 'role',
+    accessId: 'role-a',
+    accessDescription: null,
+    sourceName: null,
+    isNewAccess: false,
+    isPrivileged: false,
+    isCloudGoverned: false,
+    dataImpact: null,
+    usageDays: null,
+    aiRecommendation: null,
+    revocable: true,
+    ...overrides,
+  }
+}
 
 function row(overrides: Partial<AccessMatrixRowVM>): AccessMatrixRowVM {
   return {
@@ -25,28 +52,45 @@ function row(overrides: Partial<AccessMatrixRowVM>): AccessMatrixRowVM {
   }
 }
 
-function workedExample(): AccessMatrixRowVM[] {
-  return [
-    row({ id: '1', role: 'Role A', roleId: 'role-a', accessProfile: 'foo', accessProfileId: 'ap-foo', entitlement: 'read', entitlementId: 'e1', source: 'engr db', sourceId: 's1' }),
-    row({ id: '2', role: 'Role A', roleId: 'role-a', accessProfile: 'foo', accessProfileId: 'ap-foo', entitlement: 'write', entitlementId: 'e2', source: 'engr db', sourceId: 's1' }),
-    row({ id: '3', role: 'Role A', roleId: 'role-a', accessProfile: '', entitlement: 'delete', entitlementId: 'e3', source: 'engr db', sourceId: 's1' }),
-    row({ id: '4', accessProfile: 'bar', accessProfileId: 'ap-bar', entitlement: 'read', entitlementId: 'e4', source: 'accounting db', sourceId: 's2' }),
-    row({ id: '5', accessProfile: 'bar', accessProfileId: 'ap-bar', entitlement: 'search', entitlementId: 'e5', source: 'accounting db', sourceId: 's2' }),
-    row({ id: '6', entitlement: 'read', entitlementId: 'e6', source: 'phone app', sourceId: 's3' }),
-  ]
+/** User One, directly holding Role A (one review item). */
+const roleItem = item({ id: '1', accessKind: 'role', accessId: 'role-a', accessName: 'Role A' })
+
+/** The overview-grid graph `useAccessMatrix` would build for `roleItem`: zero
+ * role/AP/entitlement/source API calls, just the user + their held role. */
+function overviewGraph() {
+  return applyReviewStatus(deriveAccessGraph([shallowRow(roleItem)]), [roleItem])
 }
 
-function readyState(
-  rows: AccessMatrixRowVM[],
-  overrides: Partial<AccessMatrixState> = {},
-): AccessMatrixState {
+/** Role A's full composition once lazily resolved for User One. */
+function deepGraph() {
+  return applyReviewStatus(
+    deriveAccessGraph([
+      row({
+        id: '1',
+        role: 'Role A',
+        roleId: 'role-a',
+        accessProfile: 'foo',
+        accessProfileId: 'ap-foo',
+        entitlement: 'read',
+        entitlementId: 'e1',
+        source: 'engr db',
+        sourceId: 's1',
+        accessItemKind: 'role',
+        accessItemId: 'role-a',
+        accessItemName: 'Role A',
+      }),
+    ]),
+    [roleItem],
+  )
+}
+
+function matrixState(overrides: Partial<AccessMatrixState> = {}): AccessMatrixState {
   return {
     status: 'ready',
-    rows,
-    graph: deriveAccessGraph(rows),
-    unresolvedCount: 0,
-    error: null,
-    reload: vi.fn(),
+    graph: overviewGraph(),
+    userDetails: {},
+    identities: {},
+    resolveUser: vi.fn(),
     ...overrides,
   }
 }
@@ -57,14 +101,10 @@ describe('AccessMatrixView', () => {
     document.getElementById('vc-header-slot')?.remove()
   })
 
-  it('renders the graph surface with the preserved chrome for the worked example', () => {
-    const matrix = readyState(workedExample())
+  it('renders the graph surface with the preserved chrome', () => {
+    const matrix = matrixState()
     const { container } = render(
-      <AccessMatrixView
-        campaignName="Q3 review"
-        matrix={matrix}
-        onBack={vi.fn()}
-      />,
+      <AccessMatrixView campaignName="Q3 review" matrix={matrix} onBack={vi.fn()} />,
     )
 
     // Preserved chrome: the back button and the title.
@@ -78,37 +118,65 @@ describe('AccessMatrixView', () => {
     // The React Flow surface mounts (DOM only — test.css is false so no layout).
     expect(container.querySelector('.react-flow')).not.toBeNull()
 
-    // The scene the canvas builds carries every graph node as a labeled node.
+    // The overview graph carries the user and their directly-held role.
     const scene = buildAccessScene(matrix.graph, 'LR')
     const labels = scene.nodes.map((node) => node.data.label)
     expect(labels).toContain('User One')
-    expect(labels).toContain('Role A')
-    expect(labels).toContain('engr db')
-    expect(labels).toContain('read')
   })
 
-  it('defaults to the user grid and reveals a user’s node labels on drill-down', () => {
+  it('defaults to the user grid, drills in, and calls resolveUser for that user', () => {
+    const resolveUser = vi.fn()
     render(
       <AccessMatrixView
         campaignName="Q3 review"
-        matrix={readyState(workedExample())}
+        matrix={matrixState({ resolveUser })}
         onBack={vi.fn()}
       />,
     )
-    // Default (grid) mode: only the user card shows; role/source nodes do not.
+    // Default (grid) mode: only the user card shows; the role node does not.
     expect(
       screen.getByRole('button', { name: 'Show access for User One' }),
     ).toBeInTheDocument()
-    expect(screen.queryByLabelText('Role: Role A')).not.toBeInTheDocument()
+    expect(screen.queryByText('Role A')).not.toBeInTheDocument()
 
-    // Drilling into the user reveals that user's role/source node labels.
+    // Drilling into the user reveals that user's directly-held role — which
+    // is "selecting them for processing": resolveUser is called for them.
     fireEvent.click(
       screen.getByRole('button', { name: 'Show access for User One' }),
     )
-    // reference starts hidden by default; show it so the status-less role/source nodes appear
+    expect(screen.getByText('Role A')).toBeInTheDocument()
+    expect(resolveUser).toHaveBeenCalledExactlyOnceWith('u1')
+  })
+
+  it("shows the resolved user's full composition once resolveUser's result lands in userDetails", () => {
+    // The SAME graph object across both renders: the overview graph only
+    // changes reference on a real structural change, never because a user's
+    // lazy resolution completed (mirrors the real useAccessMatrix).
+    const graph = overviewGraph()
+    const { rerender } = render(
+      <AccessMatrixView campaignName="Q3 review" matrix={matrixState({ graph })} onBack={vi.fn()} />,
+    )
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Show access for User One' }),
+    )
     fireEvent.click(screen.getByRole('button', { name: 'Show reference nodes and links' }))
-    expect(screen.getByLabelText('Role: Role A')).toBeInTheDocument()
-    expect(screen.getByLabelText('Source: engr db')).toBeInTheDocument()
+    expect(screen.queryByText('engr db')).not.toBeInTheDocument()
+
+    const ready: UserDetailState = {
+      userId: 'u1',
+      status: 'ready',
+      graph: deepGraph(),
+      unresolvedCount: 0,
+      error: null,
+    }
+    rerender(
+      <AccessMatrixView
+        campaignName="Q3 review"
+        matrix={matrixState({ graph, userDetails: { u1: ready } })}
+        onBack={vi.fn()}
+      />,
+    )
+    expect(screen.getByText('engr db')).toBeInTheDocument()
   })
 
   it('puts "Back to all users" in the title bar next to "Back to overview", outside the graph', () => {
@@ -116,11 +184,7 @@ describe('AccessMatrixView', () => {
     titleNav.id = 'vc-title-nav'
     document.body.appendChild(titleNav)
     const { container } = render(
-      <AccessMatrixView
-        campaignName="Q3 review"
-        matrix={readyState(workedExample())}
-        onBack={vi.fn()}
-      />,
+      <AccessMatrixView campaignName="Q3 review" matrix={matrixState()} onBack={vi.fn()} />,
     )
     const nav = screen.getByRole('navigation', { name: /access map navigation/i })
     expect(titleNav).toContainElement(nav)
@@ -149,16 +213,10 @@ describe('AccessMatrixView', () => {
 
   it('"Back to all users" in the nav row returns to the user grid', () => {
     render(
-      <AccessMatrixView
-        campaignName="Q3 review"
-        matrix={readyState(workedExample())}
-        onBack={vi.fn()}
-      />,
+      <AccessMatrixView campaignName="Q3 review" matrix={matrixState()} onBack={vi.fn()} />,
     )
     fireEvent.click(screen.getByRole('button', { name: 'Show access for User One' }))
-    // reference starts hidden by default; show it so the status-less Role A node appears
-    fireEvent.click(screen.getByRole('button', { name: 'Show reference nodes and links' }))
-    expect(screen.getByLabelText('Role: Role A')).toBeInTheDocument()
+    expect(screen.getByText('Role A')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: /back to all users/i }))
 
@@ -167,18 +225,14 @@ describe('AccessMatrixView', () => {
     expect(
       screen.getByRole('button', { name: 'Show access for User One' }),
     ).toBeInTheDocument()
-    expect(screen.queryByLabelText('Role: Role A')).toBeNull()
+    expect(screen.queryByText('Role A')).toBeNull()
     expect(screen.queryByRole('button', { name: /back to all users/i })).toBeNull()
   })
 
   it('leaves "Back to overview" working in drill-down too', async () => {
     const onBack = vi.fn()
     render(
-      <AccessMatrixView
-        campaignName="Q3 review"
-        matrix={readyState(workedExample())}
-        onBack={onBack}
-      />,
+      <AccessMatrixView campaignName="Q3 review" matrix={matrixState()} onBack={onBack} />,
     )
     fireEvent.click(screen.getByRole('button', { name: 'Show access for User One' }))
     await userEvent.click(screen.getByRole('button', { name: /back to overview/i }))
@@ -187,11 +241,7 @@ describe('AccessMatrixView', () => {
 
   it('keeps the "All access paths" heading only as a visually hidden heading', () => {
     const { container } = render(
-      <AccessMatrixView
-        campaignName="Q3 review"
-        matrix={readyState(workedExample())}
-        onBack={vi.fn()}
-      />,
+      <AccessMatrixView campaignName="Q3 review" matrix={matrixState()} onBack={vi.fn()} />,
     )
     // Still in the accessibility tree for screen readers...
     const heading = screen.getByRole('heading', { name: 'All access paths' })
@@ -204,11 +254,7 @@ describe('AccessMatrixView', () => {
 
   it('marks the section so the page shell can hand it the remaining height', () => {
     const { container } = render(
-      <AccessMatrixView
-        campaignName="Q3 review"
-        matrix={readyState(workedExample())}
-        onBack={vi.fn()}
-      />,
+      <AccessMatrixView campaignName="Q3 review" matrix={matrixState()} onBack={vi.fn()} />,
     )
     const section = container.querySelector('section.vc-matrix-view')
     expect(section).not.toBeNull()
@@ -219,11 +265,7 @@ describe('AccessMatrixView', () => {
   it('calls onBack when the back button is clicked', async () => {
     const onBack = vi.fn()
     render(
-      <AccessMatrixView
-        campaignName="Q3 review"
-        matrix={readyState(workedExample())}
-        onBack={onBack}
-      />,
+      <AccessMatrixView campaignName="Q3 review" matrix={matrixState()} onBack={onBack} />,
     )
     await userEvent.click(
       screen.getByRole('button', { name: /back to overview/i }),
@@ -231,47 +273,29 @@ describe('AccessMatrixView', () => {
     expect(onBack).toHaveBeenCalledOnce()
   })
 
-  it('shows the loading state', () => {
+  it('shows the loading state while items have not loaded yet', () => {
     render(
       <AccessMatrixView
         campaignName="Q3 review"
-        matrix={readyState([], { status: 'loading' })}
+        matrix={matrixState({ status: 'idle', graph: { nodes: [], edges: [] } })}
         onBack={vi.fn()}
       />,
     )
     expect(screen.getByText('Building the access map…')).toBeInTheDocument()
   })
 
-  it('shows the empty state when ready with zero rows', () => {
+  it('shows the empty state when ready with zero users', () => {
     render(
       <AccessMatrixView
         campaignName="Q3 review"
-        matrix={readyState([])}
+        matrix={matrixState({ graph: { nodes: [], edges: [] } })}
         onBack={vi.fn()}
       />,
     )
     expect(screen.getByText('No access to map')).toBeInTheDocument()
   })
 
-  it('shows the error state with a retry', async () => {
-    const reload = vi.fn()
-    render(
-      <AccessMatrixView
-        campaignName="Q3 review"
-        matrix={readyState([], {
-          status: 'error',
-          error: 'It broke',
-          reload,
-        })}
-        onBack={vi.fn()}
-      />,
-    )
-    expect(screen.getByText('It broke')).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: /try again/i }))
-    expect(reload).toHaveBeenCalledOnce()
-  })
-
-  it('portals a non-fatal unresolved notice into the app header slot', () => {
+  it('portals a per-user "unresolved" notice into the app header slot once that user resolves with soft-degraded rows', () => {
     // The real App renders this slot in its header; the view portals the notice
     // into it so it sits inline with the "Access Review" title, not above the
     // graph. Provide the slot here to mirror that structure.
@@ -279,20 +303,33 @@ describe('AccessMatrixView', () => {
     headerSlot.id = 'vc-header-slot'
     document.body.appendChild(headerSlot)
 
-    const rows = [
-      row({ id: 'x', role: 'Role A', roleId: 'role-a', unresolved: true }),
-    ]
+    const ready: UserDetailState = {
+      userId: 'u1',
+      status: 'ready',
+      graph: deepGraph(),
+      unresolvedCount: 1,
+      error: null,
+    }
     render(
       <AccessMatrixView
         campaignName="Q3 review"
-        matrix={readyState(rows, { unresolvedCount: 1 })}
+        matrix={matrixState({ userDetails: { u1: ready } })}
         onBack={vi.fn()}
       />,
     )
+    // Not shown in the grid — only once a user is drilled into.
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show access for User One' }))
+
     const banner = screen.getByRole('status')
     expect(banner).toHaveTextContent(/1 access path/i)
-    expect(banner).toHaveTextContent(/Unresolved/i)
+    expect(banner).toHaveTextContent(/unresolved/i)
     // It lands in the header slot, not inside the matrix view / above the graph.
     expect(headerSlot).toContainElement(banner)
+
+    // Leaving the drill-down drops the notice.
+    fireEvent.click(screen.getByRole('button', { name: /back to all users/i }))
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
   })
 })

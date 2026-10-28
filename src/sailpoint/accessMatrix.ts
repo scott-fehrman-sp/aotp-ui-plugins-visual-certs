@@ -715,6 +715,20 @@ function accessProfileEnrichment(ap: ResolvedAccessProfile): Partial<RowTuple> {
 }
 
 /**
+ * The KIND of a review item's directly-held access (role / access profile /
+ * entitlement), or `undefined` for the generic `access` fallback kind, which
+ * has no composition node. Shared by `expandItem` (deep expansion, below) and
+ * `shallowRow` (the no-API-calls row, further down).
+ */
+function heldKind(item: ReviewItemVM): AccessGraphNodeKind | undefined {
+  return item.accessKind === 'role' ||
+    item.accessKind === 'accessProfile' ||
+    item.accessKind === 'entitlement'
+    ? item.accessKind
+    : undefined
+}
+
+/**
  * Expands a single review item into zero-or-more raw row tuples by fetching its
  * composition through the resolver. Pure wrt its inputs aside from the resolver
  * calls (which are cached). Degrades unresolved pieces to `unresolved` tuples
@@ -734,14 +748,7 @@ async function expandItem(
   // into `base` and let it land on EVERY row — exactly like department/location.
   // Review STATUS is deliberately not stamped here: it is a live overlay applied
   // after resolution (`domain/reviewOverlay.ts`) so a decision never re-resolves.
-  // The generic `access` fallback has no composition node, so it carries no
-  // access-item kind and nothing downstream is treated as a review hop.
-  const accessItemKind: AccessGraphNodeKind | undefined =
-    item.accessKind === 'role' ||
-    item.accessKind === 'accessProfile' ||
-    item.accessKind === 'entitlement'
-      ? item.accessKind
-      : undefined
+  const accessItemKind = heldKind(item)
   const base = {
     userId: item.identityId,
     user: item.personName,
@@ -977,4 +984,46 @@ export async function resolveMatrix(
     }
   }
   return [...byKey.values()]
+}
+
+/**
+ * Builds a matrix row for one review item with NO composition resolved: only
+ * the user and the item's own directly-held kind/id/name. Calls no role /
+ * access-profile / entitlement / source API — `resolveMatrix` (above) is the
+ * only thing that does, and the application only calls it for a specific
+ * user's items once that user is selected for processing (see
+ * `useAccessMatrix`'s `resolveUser`). Feeding `items.map(shallowRow)` to
+ * `deriveAccessGraph` builds the all-users overview grid and each user's
+ * completion count at zero API cost beyond the review items already in hand.
+ *
+ * The item's own id is threaded onto the MATCHING composition-id slot
+ * (`roleId` / `accessProfileId` / `entitlementId`, whichever `accessKind`
+ * selects) rather than left null, so the node id `deriveAccessGraph` derives
+ * for this item (e.g. `role:<id>`) is IDENTICAL to the one a deep-resolved row
+ * for the same item produces. The shallow grid node and the drill-down's deep
+ * node for a user's directly-held item are therefore always the SAME graph
+ * node, never two that have to be reconciled.
+ */
+export function shallowRow(item: ReviewItemVM): AccessMatrixRowVM {
+  const kind = heldKind(item)
+  const accessId = item.accessId ?? null
+  return {
+    id: item.id,
+    userId: item.identityId,
+    user: item.personName,
+    role: '',
+    roleId: kind === 'role' ? accessId : null,
+    accessProfile: '',
+    accessProfileId: kind === 'accessProfile' ? accessId : null,
+    entitlement: '',
+    entitlementId: kind === 'entitlement' ? accessId : null,
+    source: '',
+    sourceId: null,
+    // Nothing was attempted, so nothing has "failed to resolve" — this is a
+    // row that simply carries no composition yet, not an unresolved one.
+    unresolved: false,
+    accessItemKind: kind,
+    accessItemId: accessId,
+    accessItemName: item.accessName,
+  }
 }

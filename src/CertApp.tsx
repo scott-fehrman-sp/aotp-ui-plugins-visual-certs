@@ -151,11 +151,7 @@ function CampaignRoute({
     searchApi,
     accessRequestsApi,
     identityHistoryApi,
-    rolesApi,
-    accessProfilesApi,
-    entitlementsApi,
-    sourcesApi,
-    identitiesApi,
+    accessCompositionResolver,
   } = runtime
   const campaignState = useCampaign(certificationsApi, campaignId)
   const review = useReviewItems(certificationsApi, campaignId)
@@ -168,17 +164,12 @@ function CampaignRoute({
     review.items,
   )
   // The access matrix piggybacks on the already-loaded review items, so it
-  // never triggers a second item fetch. It resolves composition lazily and
-  // gates its own screen on `status === 'ready'`.
-  const matrix = useAccessMatrix(
-    rolesApi,
-    accessProfilesApi,
-    entitlementsApi,
-    sourcesApi,
-    identitiesApi,
-    campaignId,
-    review.items,
-  )
+  // never triggers a second item fetch. Its overview `graph` costs zero role /
+  // access-profile / entitlement / source API calls (see useAccessMatrix's
+  // doc); those are only ever called, per user, through `matrix.resolveUser`.
+  // `accessCompositionResolver` is the single, session-long resolver on
+  // `PluginRuntime`, so its per-id caches persist across every campaign.
+  const matrix = useAccessMatrix(accessCompositionResolver, campaignId, review.items)
   const [step, setStep] = useState<CampaignStep>('dashboard')
 
   const decisions = useDecisions({
@@ -282,7 +273,6 @@ function CampaignRoute({
           <CampaignDashboard
             campaign={campaign}
             items={review.items}
-            matrix={matrix}
             onStartReviewing={() => setStep('review')}
             onViewMatrix={() => setStep('matrix')}
           />

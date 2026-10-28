@@ -12,9 +12,13 @@ import {
   type NodeMouseHandler,
 } from '@xyflow/react'
 import type { AccessGraphData, AccessSceneNodeData, RankDir } from '../sailpoint/types'
+import type { UserDetailState } from '../state/useAccessMatrix'
 import { buildAccessScene, type AccessSceneNode } from './buildAccessScene'
 import { buildUserGridScene } from './buildUserGridScene'
+import { copyFirstLevelStatus } from '../domain/reviewOverlay'
+import type { ResolvedIdentity } from '../sailpoint/identities'
 import { userSubgraph } from './userSubgraph'
+import { withUserIdentities } from './userIdentity'
 import { withoutReference } from './referenceFilter'
 import { userCompletion, withoutCompleted } from './completedFilter'
 import { computeFitPadding, measureOverlays, planFit, toFitViewPadding } from './fitPadding'
@@ -60,10 +64,51 @@ interface AccessGraphCanvasProps {
    * off). Hosts have no reason to set it.
    */
   motionMs?: number
+  /**
+   * Each user's lazily-resolved full composition, keyed by BARE identity id
+   * (e.g. `"u1"`, not the namespaced graph node id `"user:u1"`). Supplying
+   * this (even as `{}`) switches the drill-down to LAZY mode: `graph` is
+   * assumed to carry only each user's directly-held first-level items (no
+   * deeper lineage), drilling into a user calls `onUserSelected` so the host
+   * can resolve that user's full composition on demand, and the drill-down
+   * shows that user's SHALLOW first-level items immediately while the full
+   * composition is loading, swapping in the resolved `graph` from this map's
+   * entry once it is `'ready'`.
+   *
+   * Omitting this prop (the default) keeps the original, non-lazy behavior:
+   * `graph` is assumed to already carry everyone's full composition, and the
+   * drill-down is simply `userSubgraph(graph, id)`.
+   */
+  userDetails?: Record<string, UserDetailState>
+  /**
+   * Called with a user's BARE identity id (not the namespaced node id) when
+   * they are selected for processing (their grid card is clicked / drilled
+   * into). Only meaningful together with `userDetails`; a non-lazy caller has
+   * no reason to pass it.
+   */
+  onUserSelected?: (userId: string) => void
+  /**
+   * Fired with the currently-viewed user's `userDetails` entry (looked up by
+   * the canvas itself from `selectedUserId`), or `null` outside a drill-down
+   * or before `onUserSelected` has been called for the viewed user. Lets a
+   * host that needs to react to that state (e.g. a per-user "unresolved"
+   * banner rendered outside the canvas) without owning the selection itself.
+   */
+  onUserDetailChange?: (detail: UserDetailState | null) => void
+  /**
+   * Identity detail for users already looked up, keyed by bare identity id.
+   * The host loads this for EVERY user when the map opens (see
+   * `useAccessMatrix`) so the grid cards can show name, title, department,
+   * location, country, and the manager mark before anyone is selected. Merged
+   * onto the user nodes for display only; it does not replace `graph.nodes`.
+   */
+  identities?: Record<string, ResolvedIdentity>
 }
 
 /** Shared empty lineage, so "nothing selected" keeps a stable context value. */
 const NO_LINEAGE: ReadonlySet<string> = new Set()
+/** The `user:<id>` node-id namespace prefix (see `domain/accessGraph.ts`). */
+const USER_ID_PREFIX = 'user:'
 
 /** Zoom range of the canvas (also the bounds planFit clamps to). */
 const MIN_ZOOM = 0.15
@@ -138,7 +183,15 @@ const MINIMAP_COLOR: Record<string, string> = {
  * renders a read-only graph (no dragging, no connecting) with a minimap and
  * controls. When the graph has no users it renders an `EmptyState` instead.
  */
-export function AccessGraphCanvas({ graph, backSlot, motionMs }: AccessGraphCanvasProps) {
+export function AccessGraphCanvas({
+  graph,
+  backSlot,
+  motionMs,
+  userDetails,
+  onUserSelected,
+  onUserDetailChange,
+  identities,
+}: AccessGraphCanvasProps) {
   const hasUsers = useMemo(
     () => graph.nodes.some((node) => node.kind === 'user'),
     [graph],
@@ -155,7 +208,15 @@ export function AccessGraphCanvas({ graph, backSlot, motionMs }: AccessGraphCanv
 
   return (
     <ReactFlowProvider>
-      <CanvasSurface graph={graph} backSlot={backSlot} motionMs={motionMs} />
+      <CanvasSurface
+        graph={graph}
+        backSlot={backSlot}
+        motionMs={motionMs}
+        userDetails={userDetails}
+        onUserSelected={onUserSelected}
+        onUserDetailChange={onUserDetailChange}
+        identities={identities}
+      />
     </ReactFlowProvider>
   )
 }
@@ -289,7 +350,15 @@ function FitOnSceneChange({
   return null
 }
 
-function CanvasSurface({ graph, backSlot, motionMs: motionMsProp }: AccessGraphCanvasProps) {
+function CanvasSurface({
+  graph,
+  backSlot,
+  motionMs: motionMsProp,
+  userDetails,
+  onUserSelected,
+  onUserDetailChange,
+  identities: prefetchedIdentities,
+}: AccessGraphCanvasProps) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const motionMs = useMotionMs(motionMsProp, wrapRef)
   // `motion-on` is applied one frame after mount so the first display does not
@@ -352,10 +421,66 @@ function CanvasSurface({ graph, backSlot, motionMs: motionMsProp }: AccessGraphC
     [graph],
   )
 
-  const subgraph = useMemo(
-    () => (selectedUserId ? userSubgraph(graph, selectedUserId) : null),
-    [graph, selectedUserId],
+  // This user's first-level items straight from `graph`: in LAZY mode `graph`
+  // only ever carries that much (see `userDetails`' doc), so this is cheap and
+  // always available the instant a user is drilled into, even before (or if)
+  // their full composition resolves. In non-lazy mode `graph` already carries
+  // everyone's full composition, so this already IS the whole drill-down.
+  // Prefetched identities (every user, loaded with the map) plus any identity
+  // recorded on a selected user's detail. Applied onto the cards without
+  // replacing `graph.nodes` (that reference is what tells a real campaign
+  // change from a status-only refresh).
+  const identities = useMemo(() => {
+    const byId: Record<string, ResolvedIdentity> = { ...prefetchedIdentities }
+    if (!userDetails) return byId
+    for (const [id, detail] of Object.entries(userDetails)) {
+      if (detail.identity) byId[id] = detail.identity
+    }
+    return byId
+  }, [prefetchedIdentities, userDetails])
+  const graphWithIdentity = useMemo(
+    () => withUserIdentities(graph, identities),
+    [graph, identities],
   )
+
+  const shallowSubgraph = useMemo(
+    () => (selectedUserId ? userSubgraph(graphWithIdentity, selectedUserId) : null),
+    [graphWithIdentity, selectedUserId],
+  )
+  const lazy = userDetails !== undefined
+  const selectedIdentityId = selectedUserId
+    ? selectedUserId.slice(USER_ID_PREFIX.length)
+    : null
+  const selectedUserDetail =
+    lazy && selectedIdentityId ? userDetails[selectedIdentityId] ?? null : null
+  // Lazy mode: swap in the user's fully-resolved composition once it is
+  // ready. That graph is structural only, so the live review status is copied
+  // from the shallow subgraph (same reviewKey) and then stamped onto the
+  // first-level nodes by `userSubgraph`. Skipping either step makes the
+  // default "hide reference" filter drop every access item — the drill-down
+  // goes blank, and the pinned card's "X% (Y of Z)" drops to 0 of 0, the
+  // moment resolution finishes. Until then (not yet requested, loading, or
+  // errored) — and always in non-lazy mode — `shallowSubgraph` is everything
+  // there is to show.
+  const subgraph = useMemo(() => {
+    if (!selectedUserId || !shallowSubgraph) return shallowSubgraph
+    if (selectedUserDetail?.status !== 'ready') return shallowSubgraph
+    return userSubgraph(
+      withUserIdentities(
+        copyFirstLevelStatus(selectedUserDetail.graph, shallowSubgraph),
+        identities,
+      ),
+      selectedUserId,
+    )
+  }, [selectedUserId, selectedUserDetail, shallowSubgraph, identities])
+
+  // Report the viewed user's lazy-resolution state upward on every change
+  // (entering/leaving a drill-down, or that resolution progressing), so a host
+  // that renders its own chrome around the canvas (e.g. a per-user
+  // "unresolved" banner) can track it without owning the selection itself.
+  useEffect(() => {
+    onUserDetailChange?.(selectedUserDetail ?? null)
+  }, [selectedUserDetail, onUserDetailChange])
 
   // Always computed (even while completed items are shown) so the hidden count
   // is known for the button label and the announcement.
@@ -376,7 +501,7 @@ function CanvasSurface({ graph, backSlot, motionMs: motionMsProp }: AccessGraphC
   const scene = useMemo(() => {
     if (selectedUserId === null) {
       return buildUserGridScene(
-        graph,
+        graphWithIdentity,
         width || window.innerWidth,
         setSelectedUserId,
       )
@@ -391,7 +516,7 @@ function CanvasSurface({ graph, backSlot, motionMs: motionMsProp }: AccessGraphC
     return buildAccessScene(visibleGraph ?? { nodes: [], edges: [] }, rankdir, {
       completion: userCompletion(subgraph?.edges ?? [], selectedUserId),
     })
-  }, [graph, selectedUserId, visibleGraph, subgraph, rankdir, width])
+  }, [graphWithIdentity, selectedUserId, visibleGraph, subgraph, rankdir, width])
 
   // The drill-down shows one user, so the hop from that user to each access
   // item adds no path information. Review status stays on the access-item
@@ -576,14 +701,31 @@ function CanvasSurface({ graph, backSlot, motionMs: motionMsProp }: AccessGraphC
     !isDegenerate &&
     (completedResult?.graph.nodes.every((node) => node.kind === 'user') ?? false)
 
+  // Lazy mode only: the reference toggle reveals nested lineage / sources,
+  // which only exist once the user's full composition has resolved. While it
+  // is loading (or errored) the reference toggle would otherwise look like it
+  // did nothing (no reference nodes to show yet, rather than none existing).
+  const referencePending =
+    lazy &&
+    inDrilldown &&
+    showReference &&
+    !isDegenerate &&
+    selectedUserDetail?.status !== 'ready'
+  const retryUserDetail = () => {
+    if (selectedIdentityId) onUserSelected?.(selectedIdentityId)
+  }
+
   // Mouse convenience: in grid mode, clicking a card also drills in; in
   // drill-down, clicking a first-level card selects / deselects it.
   const onNodeClick: NodeMouseHandler<AccessSceneNode> = (_event, node) => {
     if (selectedUserId === null) {
-      // Grid mode: clicking a user card drills into that user. The detail
-      // target is set in the drill-down scene (below) once the user is open;
-      // setting it here would be dropped by the scene-change reset anyway.
+      // Grid mode: clicking a user card drills into that user — "selecting
+      // them for processing" — so in lazy mode this is also exactly the one
+      // place their full composition is requested. The detail target is set
+      // in the drill-down scene (below) once the user is open; setting it
+      // here would be dropped by the scene-change reset anyway.
       setSelectedUserId(node.id)
+      onUserSelected?.(node.id.slice(USER_ID_PREFIX.length))
       return
     }
     // Drill-down: the click both drives the detail fly-out (any node kind) and,
@@ -769,6 +911,21 @@ function CanvasSurface({ graph, backSlot, motionMs: motionMsProp }: AccessGraphC
             <p className="vc-graph-note">
               All access items are complete. Show completed items to see them.
             </p>
+          </Panel>
+        )}
+        {referencePending && selectedUserDetail?.status === 'error' && (
+          <Panel position="top-center">
+            <p className="vc-graph-note">
+              Couldn&rsquo;t load this user&rsquo;s full access details.{' '}
+              <button type="button" className="vc-link-btn" onClick={retryUserDetail}>
+                Try again
+              </button>
+            </p>
+          </Panel>
+        )}
+        {referencePending && selectedUserDetail?.status !== 'error' && (
+          <Panel position="top-center">
+            <p className="vc-graph-note">Loading this user&rsquo;s full access details…</p>
           </Panel>
         )}
       </ReactFlow>

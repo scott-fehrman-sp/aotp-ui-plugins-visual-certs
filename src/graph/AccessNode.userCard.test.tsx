@@ -7,7 +7,7 @@ import { AccessGraphCanvas } from './AccessGraphCanvas'
 
 // jsdom cannot drive React Flow's d3-zoom, so clicks are fired on the cards'
 // own React handlers. These assert the USER card's extra info lines (title,
-// department, location / country) and the inactive strike-through, in both the
+// department, location, country) and the inactive strike-through, in both the
 // grid overview and a user's drill-down.
 
 function row(overrides: Partial<StatusRow>): StatusRow {
@@ -62,11 +62,11 @@ const drillIn = (user = 'User One') =>
   fireEvent.click(screen.getByRole('button', { name: `Show access for ${user}` }))
 
 describe('AccessNode user card', () => {
-  it('shows title, department and a combined location / country line in the grid', () => {
+  it('shows title, department, location, and country in the grid', () => {
     render(<AccessGraphCanvas graph={activeUser()} />)
     const grid = userCard()
     expect(label(grid)).toHaveTextContent('User One')
-    expect(infoLines(grid)).toEqual(['Staff Engineer', 'Platform', 'Austin / USA'])
+    expect(infoLines(grid)).toEqual(['Staff Engineer', 'Platform', 'Austin', 'USA'])
   })
 
   it('shows the same info lines on the user node in drill-down', () => {
@@ -74,16 +74,15 @@ describe('AccessNode user card', () => {
     drillIn()
     const node = userCard()
     expect(label(node)).toHaveTextContent('User One')
-    expect(infoLines(node)).toEqual(['Staff Engineer', 'Platform', 'Austin / USA'])
+    expect(infoLines(node)).toEqual(['Staff Engineer', 'Platform', 'Austin', 'USA'])
   })
 
-  it('omits an info line that is not set and joins only the present location/country', () => {
+  it('omits an info line that is not set', () => {
     render(
       <AccessGraphCanvas
         graph={activeUser({ userTitle: '', userCountry: '' })}
       />,
     )
-    // Title gone; the location/country line is just the location (no " / ").
     expect(infoLines(userCard())).toEqual(['Platform', 'Austin'])
   })
 

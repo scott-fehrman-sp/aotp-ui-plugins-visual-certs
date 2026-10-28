@@ -9,7 +9,7 @@ import {
   reviewItem,
 } from '../test/reviewStatusFixture'
 import { deriveAccessGraph } from './accessGraph'
-import { applyReviewStatus, buildReviewIndex, reviewKey } from './reviewOverlay'
+import { applyReviewStatus, buildReviewIndex, copyFirstLevelStatus, reviewKey } from './reviewOverlay'
 
 const edgeOf = (graph: AccessGraphData, from: string, to: string) =>
   graph.edges.find((e) => e.from === from && e.to === to)
@@ -166,5 +166,41 @@ describe('reviewOverlay', () => {
     expect(JSON.stringify(structural)).toBe(snapshot)
     expect(applied.nodes).toBe(structural.nodes)
     expect(applied.edges).not.toBe(structural.edges)
+  })
+
+  it('copyFirstLevelStatus copies status by reviewKey and leaves other edges alone', () => {
+    const target: AccessGraphData = {
+      nodes: [],
+      edges: [
+        {
+          from: 'user:u1',
+          to: 'role:role-a',
+          pathCount: 1,
+          firstLevel: true,
+          reviewKey: 'u1|role|role-a',
+        },
+        { from: 'role:role-a', to: 'entitlement:e1', pathCount: 1 },
+      ],
+    }
+    const source: AccessGraphData = {
+      nodes: [],
+      edges: [
+        {
+          from: 'user:u1',
+          to: 'role:role-a',
+          pathCount: 1,
+          firstLevel: true,
+          reviewKey: 'u1|role|role-a',
+          reviewStatus: 'approved',
+          reviewMixed: false,
+        },
+      ],
+    }
+    const copied = copyFirstLevelStatus(target, source)
+    expect(copied.nodes).toBe(target.nodes)
+    expect(copied.edges[0].reviewStatus).toBe('approved')
+    expect(copied.edges[1].reviewStatus).toBeUndefined()
+    // The structural target is not mutated.
+    expect(target.edges[0].reviewStatus).toBeUndefined()
   })
 })
