@@ -26,7 +26,7 @@
 import type { CSSProperties } from 'react'
 import type { Edge } from '@xyflow/react'
 import { NODE_HEIGHT, NODE_WIDTH, type AccessSceneNode } from './buildAccessScene'
-import { highlightEdges, type HighlightOptions } from './selectEdges'
+import { highlightSelection, type HighlightOptions } from './selectEdges'
 
 /** Gap between consecutive cards of the grid cascade, capped by REVEAL_SPAN_MS. */
 export const REVEAL_STEP_MS = 70
@@ -499,20 +499,21 @@ export function isFramePlaced(
  * Hover / selection restyle of the frame's edges. Leaving (`exiting`) edges are
  * not part of the live graph: they are neither restyled nor walked as lineage,
  * so they keep fading out untouched. With none leaving this is exactly
- * `highlightEdges`.
+ * `highlightSelection`. `selectedId` is one node, or several when more than one
+ * needs-review item is selected.
  */
 export function highlightFrameEdges(
   frameEdges: Edge[],
-  selectedId: string | null,
+  selectedId: string | readonly string[] | null,
   emphasisId: string | null,
   options?: HighlightOptions,
 ): Edge[] {
   if (!frameEdges.some((edge) => hasClassToken(edge.className, EXITING_CLASS))) {
-    return highlightEdges(frameEdges, selectedId, emphasisId, options)
+    return highlightSelection(frameEdges, selectedId, emphasisId, options)
   }
   const live = frameEdges.filter((edge) => !hasClassToken(edge.className, EXITING_CLASS))
   const leaving = frameEdges.filter((edge) => hasClassToken(edge.className, EXITING_CLASS))
-  return [...highlightEdges(live, selectedId, emphasisId, options), ...leaving]
+  return [...highlightSelection(live, selectedId, emphasisId, options), ...leaving]
 }
 
 /* --------------------------------------------------------------- motion duration */

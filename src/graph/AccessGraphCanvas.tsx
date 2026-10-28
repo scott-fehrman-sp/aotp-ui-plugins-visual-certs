@@ -23,9 +23,14 @@ import { withoutReference } from './referenceFilter'
 import { userCompletion, withoutCompleted } from './completedFilter'
 import { computeFitPadding, measureOverlays, planFit, toFitViewPadding } from './fitPadding'
 import { EmphasisContext } from './EmphasisContext'
-import { SelectionContext, type SelectionState } from './SelectionContext'
+import { EMPTY_SELECTION, SelectionContext, type SelectionState } from './SelectionContext'
 import { hasReviewStatus } from './emphasizeEdges'
-import { connectedNodeIds, isSelectableNodeData, lineageNodeIds } from './selectEdges'
+import {
+  connectedNodeIds,
+  isNeedsReviewItem,
+  isSelectableNodeData,
+  lineageNodeIds,
+} from './selectEdges'
 import { highlightFrameEdges, isFramePlaced } from './graphTransition'
 import { useGraphTransition } from './useGraphTransition'
 import { useMotionMs } from './useMotionMs'
@@ -109,6 +114,29 @@ interface AccessGraphCanvasProps {
 
 /** Shared empty lineage, so "nothing selected" keeps a stable context value. */
 const NO_LINEAGE: ReadonlySet<string> = new Set()
+/** Stable empty selection list. `setState` of this same array bails out. */
+const EMPTY_IDS: string[] = []
+
+function allNeedReview(ids: readonly string[], nodes: readonly AccessSceneNode[]): boolean {
+  return ids.every((id) => {
+    const data = nodes.find((node) => node.id === id)?.data
+    return data !== undefined && isNeedsReviewItem(data)
+  })
+}
+
+function selectionAnnouncement(
+  label: string,
+  count: number,
+  change: 'add' | 'remove' | 'replace',
+): string {
+  if (count === 0) return 'Selection cleared.'
+  if (change === 'replace' || (change === 'add' && count === 1)) {
+    return `Highlighting the links for ${label}. Press Escape to clear.`
+  }
+  const items = count === 1 ? 'item' : 'items'
+  const verb = change === 'remove' ? 'removed from' : 'added to'
+  return `${label} ${verb} the selection. ${count} ${items} selected. Press Escape to clear.`
+}
 /** The `user:<id>` node-id namespace prefix (see `domain/accessGraph.ts`). */
 const USER_ID_PREFIX = 'user:'
 
@@ -164,20 +192,21 @@ const MINIMAP_COLOR: Record<string, string> = {
  *    is not part of that layout: it is pinned in the upper left, beside the
  *    control panel, and stays there while the access items pan and zoom.
  *
- * SELECTION (drill-down only). Clicking a first-level card (role, access
- * profile or directly-held entitlement), or pressing Enter / Space on it,
- * selects it; doing it again deselects. One item at a time. The selected item's
- * associated edges (its user -> item edge plus every visible edge downstream to
- * the sources) are highlighted in its status color and all other edges dim; see
- * `highlightEdges`. Reference-only cards are not selectable. The selection is
- * cleared by clicking the same card, clicking the empty pane, or Escape (the
- * first Escape clears the selection, only a second one returns to the grid),
- * and by drilling into another user, going back, or a new node set. It survives
- * the layout, reference, completed and minimap toggles and a status-only
- * refresh, except that hiding completed items clears the selection when the
- * selected item gets hidden. Selecting
- * is a cheap edge restyle: the scene, the node objects and the fit are
- * untouched, exactly like hover.
+ * SELECTION (drill-down only). Clicking any card except the user, or pressing
+ * Enter / Space on it, selects it. Access items that still need review
+ * accumulate: each click adds or removes that item and the other needs-review
+ * items stay selected. A completed item or a reference-only card replaces the
+ * selection with just that card, and clicking it again clears it. Each
+ * selected item's associated edges (its user -> item edge plus every visible
+ * edge downstream to the sources) are highlighted in that item's status color
+ * and all other edges dim; see `highlightSelection`. The selection is cleared
+ * by clicking the empty pane or Escape (the first Escape clears the selection,
+ * only a second one returns to the grid), and by drilling into another user,
+ * going back, or a new node set. It survives the layout, reference, completed
+ * and minimap toggles and a status-only refresh, except that hiding completed
+ * items drops a selected item that gets hidden. Selecting is a cheap edge
+ * restyle: the scene, the node objects and the fit are untouched, exactly
+ * like hover.
  *
  * Every fit (drill-down entry, user switch, reference/layout/minimap toggle,
  * window resize) is overlay-aware: it pads the viewport by the measured size of
@@ -414,12 +443,12 @@ function CanvasSurface({
   const closeMenu = useCallback(() => setMenu(null), [])
   const [announcement, setAnnouncement] = useState('')
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
-  // The selected first-level item (node id) whose edges are highlighted.
-  const [selectedItemId, setSelectedItemId] = useState<string | null>(null)
+  // Selected node ids whose edges are highlighted. Needs-review access items
+  // may share this list; every other selectable node is alone in it.
+  const [selectedIds, setSelectedIds] = useState<string[]>(EMPTY_IDS)
   // The node whose details the fly-out panel describes. Independent of the
   // edge-highlight selection above: ANY node kind (including the user node,
-  // deeper hops and reference-only nodes) can be the detail target, whereas
-  // `selectedItemId` is restricted to first-level reviewable items.
+  // deeper hops and reference-only nodes) can be the detail target.
   const [detailNodeId, setDetailNodeId] = useState<string | null>(null)
   const colorMode = useColorMode()
   const width = useStore((state) => state.width)
@@ -434,17 +463,17 @@ function CanvasSurface({
   if (prevNodes !== graph.nodes) {
     setPrevNodes(graph.nodes)
     setSelectedUserId(null)
-    setSelectedItemId(null)
+    setSelectedIds(EMPTY_IDS)
     setDetailNodeId(null)
   }
 
-  // The selected item belongs to one user's drill-down: drilling into another
-  // user, going back to the grid or Escape-to-grid all drop it. (Layout,
-  // reference and minimap toggles and status-only refreshes keep it.)
+  // The selected items belong to one user's drill-down: drilling into another
+  // user, going back to the grid or Escape-to-grid all drop them. (Layout,
+  // reference and minimap toggles and status-only refreshes keep them.)
   const [prevUserId, setPrevUserId] = useState(selectedUserId)
   if (prevUserId !== selectedUserId) {
     setPrevUserId(selectedUserId)
-    setSelectedItemId(null)
+    setSelectedIds(EMPTY_IDS)
     // Entering, leaving or switching a user's drill-down shows a different node
     // set, so a detail target from the previous scene no longer applies.
     setDetailNodeId(null)
@@ -613,27 +642,28 @@ function CanvasSurface({
   // Pointer wins; a keyboard-focused card stays emphasized once the pointer
   // leaves another card. Purely an edge restyle: no layout or refit input.
   const emphasisId = hoverId ?? focusId
-  // Any non-user node of the current scene can be the active selection. A
-  // reference node highlights the path through it; a first-level item highlights
-  // its status edge and downstream lineage.
-  const activeNode = useMemo(() => {
-    if (!inDrilldown || selectedItemId === null) return null
-    const node = scene.nodes.find((candidate) => candidate.id === selectedItemId)
-    return node && isSelectableNodeData(node.data) ? node : null
-  }, [inDrilldown, selectedItemId, scene.nodes])
-  const activeItemId = activeNode?.id ?? null
-  const referenceSelection = activeNode?.data.reference === true
-  // A selection whose item was hidden by the completed filter is dropped (not
-  // merely inert), so it cannot silently come back when completed items are
-  // shown again. Selecting a still-visible item is untouched.
-  if (inDrilldown && !showCompleted && selectedItemId !== null && activeItemId === null) {
-    setSelectedItemId(null)
+  // Any non-user node of the current scene can be selected. Several
+  // needs-review access items can be selected together. A reference node
+  // highlights the path through it; a first-level item highlights its status
+  // edge and downstream lineage.
+  const selectedNodes = useMemo(() => {
+    if (!inDrilldown || selectedIds.length === 0) return []
+    return selectedIds.flatMap((id) => {
+      const node = scene.nodes.find((candidate) => candidate.id === id)
+      return node && isSelectableNodeData(node.data) ? [node] : []
+    })
+  }, [inDrilldown, selectedIds, scene.nodes])
+  const hasSelection = selectedNodes.length > 0
+  // A selected item hidden by the completed filter is dropped (not merely
+  // inert), so it cannot silently come back when completed items are shown
+  // again. Items that are still visible stay selected.
+  if (inDrilldown && !showCompleted && selectedNodes.length !== selectedIds.length) {
+    setSelectedIds(selectedNodes.length === 0 ? EMPTY_IDS : selectedNodes.map((node) => node.id))
   }
   // The data of the node the detail fly-out describes, resolved against the
   // CURRENT scene so a node hidden by the reference / completed filter (or gone
   // after a layout / mode change) simply yields `null` rather than stale data.
-  // Any kind qualifies — unlike `selectedItemId` this is not limited to
-  // first-level reviewable items.
+  // Any kind qualifies — the detail target is independent of the edge selection.
   const detailNode = useMemo(
     () => scene.nodes.find((candidate) => candidate.id === detailNodeId)?.data ?? null,
     [scene.nodes, detailNodeId],
@@ -643,51 +673,92 @@ function CanvasSurface({
   if (detailNodeId !== null && detailNode === null) {
     setDetailNodeId(null)
   }
-  // Selection composes with the hover emphasis inside `highlightEdges`; with
-  // nothing selected this is exactly `emphasizeEdges`.
-  const displayEdges = useMemo(
-    () =>
-      highlightFrameEdges(
-        frame.edges,
-        inDrilldown ? activeItemId : null,
-        inDrilldown ? emphasisId : null,
-        referenceSelection
-          ? { reference: true }
-          : activeNode?.data.reviewStatus
-            ? { reviewStatus: activeNode.data.reviewStatus }
-            : undefined,
-      ),
-    [frame.edges, activeItemId, emphasisId, inDrilldown, referenceSelection, activeNode],
-  )
-  const lineage = useMemo(
-    () =>
-      activeItemId === null
-        ? NO_LINEAGE
-        : referenceSelection
-          ? connectedNodeIds(scene.edges, activeItemId)
-          : lineageNodeIds(scene.edges, activeItemId),
-    [scene.edges, activeItemId, referenceSelection],
-  )
+  // Selection composes with the hover emphasis inside `highlightSelection`;
+  // with nothing selected this is exactly `emphasizeEdges`.
+  const displayEdges = useMemo(() => {
+    const sole = selectedNodes.length === 1 ? selectedNodes[0] : null
+    const highlighted =
+      !inDrilldown || selectedNodes.length === 0
+        ? null
+        : sole
+          ? sole.id
+          : selectedNodes.map((node) => node.id)
+    const options =
+      selectedNodes.length > 1
+        ? {
+            reviewStatuses: Object.fromEntries(
+              selectedNodes.flatMap((node) =>
+                node.data.reviewStatus ? [[node.id, node.data.reviewStatus] as const] : [],
+              ),
+            ),
+          }
+        : sole?.data.reference
+          ? { reference: true as const }
+          : sole?.data.reviewStatus
+            ? { reviewStatus: sole.data.reviewStatus }
+            : undefined
+    return highlightFrameEdges(
+      frame.edges,
+      highlighted,
+      inDrilldown ? emphasisId : null,
+      options,
+    )
+  }, [frame.edges, selectedNodes, emphasisId, inDrilldown])
+  const lineage = useMemo(() => {
+    if (selectedNodes.length === 0) return NO_LINEAGE
+    if (selectedNodes.length === 1 && selectedNodes[0].data.reference) {
+      return connectedNodeIds(scene.edges, selectedNodes[0].id)
+    }
+    const ids = new Set<string>()
+    for (const node of selectedNodes) {
+      for (const related of lineageNodeIds(scene.edges, node.id)) ids.add(related)
+    }
+    return ids
+  }, [scene.edges, selectedNodes])
+  const selectedIdSet = useMemo(() => {
+    if (selectedNodes.length === 0) return EMPTY_SELECTION
+    return new Set(selectedNodes.map((node) => node.id))
+  }, [selectedNodes])
 
   const clearSelection = useCallback(() => {
-    setSelectedItemId(null)
+    setSelectedIds(EMPTY_IDS)
     setAnnouncement('Selection cleared.')
   }, [])
   const toggleSelection = useCallback(
     (id: string) => {
-      if (id === activeItemId) {
-        clearSelection()
+      const data = scene.nodes.find((node) => node.id === id)?.data
+      if (!data || !isSelectableNodeData(data)) return
+      const label = data.label
+      if (isNeedsReviewItem(data)) {
+        if (selectedIds.includes(id)) {
+          const next = selectedIds.filter((existing) => existing !== id)
+          setSelectedIds(next.length === 0 ? EMPTY_IDS : next)
+          setAnnouncement(selectionAnnouncement(label, next.length, 'remove'))
+          return
+        }
+        if (selectedIds.length > 0 && !allNeedReview(selectedIds, scene.nodes)) {
+          setSelectedIds([id])
+          setAnnouncement(selectionAnnouncement(label, 1, 'replace'))
+          return
+        }
+        const next = [...selectedIds, id]
+        setSelectedIds(next)
+        setAnnouncement(selectionAnnouncement(label, next.length, 'add'))
         return
       }
-      const label = scene.nodes.find((node) => node.id === id)?.data.label ?? ''
-      setSelectedItemId(id)
-      setAnnouncement(`Highlighting the links for ${label}. Press Escape to clear.`)
+      if (selectedIds.length === 1 && selectedIds[0] === id) {
+        setSelectedIds(EMPTY_IDS)
+        setAnnouncement('Selection cleared.')
+        return
+      }
+      setSelectedIds([id])
+      setAnnouncement(selectionAnnouncement(label, 1, 'replace'))
     },
-    [activeItemId, scene.nodes, clearSelection],
+    [scene.nodes, selectedIds],
   )
   const selection = useMemo<SelectionState>(
-    () => ({ selectedId: activeItemId, lineageNodeIds: lineage, toggle: toggleSelection }),
-    [activeItemId, lineage, toggleSelection],
+    () => ({ selectedIds: selectedIdSet, lineageNodeIds: lineage, toggle: toggleSelection }),
+    [selectedIdSet, lineage, toggleSelection],
   )
 
   // Escape: the first press clears a selection; only with nothing selected does
@@ -704,7 +775,7 @@ function CanvasSurface({
           target.tagName === 'SELECT' ||
           target.isContentEditable)
       if (typing) return
-      if (activeItemId !== null) {
+      if (hasSelection) {
         clearSelection()
         return
       }
@@ -712,7 +783,7 @@ function CanvasSurface({
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [selectedUserId, activeItemId, clearSelection])
+  }, [selectedUserId, hasSelection, clearSelection])
 
   // Outcome of the latest refit, used by the scroll hint. Keyed by fitKey so a
   // stale outcome from a previous scene never shows.
@@ -758,7 +829,8 @@ function CanvasSurface({
   }
 
   // Mouse convenience: in grid mode, clicking a card also drills in; in
-  // drill-down, clicking a first-level card selects / deselects it.
+  // drill-down, clicking a card selects or deselects it. Needs-review access
+  // items accumulate; other cards replace the selection.
   const onNodeClick: NodeMouseHandler<AccessSceneNode> = (_event, node) => {
     if (selectedUserId === null) {
       // Grid mode: clicking a user card drills into that user — "selecting
@@ -778,7 +850,7 @@ function CanvasSurface({
   // Clicking the empty pane (never a card) clears the selection and the detail
   // target.
   const onPaneClick = () => {
-    if (activeItemId !== null) clearSelection()
+    if (hasSelection) clearSelection()
     setDetailNodeId(null)
   }
   // Right-click. The pane handler only runs when the event target is the pane

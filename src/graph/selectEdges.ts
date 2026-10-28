@@ -34,6 +34,11 @@
  * positions, layout or the viewport, so selecting never refits. Deterministic
  * and non-mutating; with nothing selected it returns exactly what
  * `emphasizeEdges` returns, so today's hover/focus behavior is unchanged.
+ *
+ * Several access items that still need review can be selected together.
+ * `highlightSelection` highlights each of their lineages in that item's own
+ * status color and dims everything else. A single selected node takes the
+ * same path as `highlightEdges`.
  */
 import type { Edge } from '@xyflow/react'
 import type { AccessReviewStatus, AccessSceneNodeData } from '../sailpoint/types'
@@ -74,6 +79,27 @@ export function isSelectableNodeData(
   data: Pick<AccessSceneNodeData, 'kind' | 'reference'>,
 ): boolean {
   return data.kind !== 'user'
+}
+
+const MULTI_SELECT_KINDS = new Set<AccessSceneNodeData['kind']>([
+  'role',
+  'accessProfile',
+  'entitlement',
+])
+
+/**
+ * An access item still awaiting a decision. These are the only cards that
+ * accumulate in one selection. Completed items and reference-only nodes stay
+ * one at a time.
+ */
+export function isNeedsReviewItem(
+  data: Pick<AccessSceneNodeData, 'kind' | 'reference' | 'reviewStatus'>,
+): boolean {
+  return (
+    !data.reference &&
+    data.reviewStatus === 'needsReview' &&
+    MULTI_SELECT_KINDS.has(data.kind)
+  )
 }
 
 /**
@@ -225,6 +251,12 @@ export interface HighlightOptions {
    * when the user -> item edge is not in `edges`.
    */
   reviewStatus?: AccessReviewStatus
+  /**
+   * Status of each selected item when more than one is selected. Each
+   * lineage is colored with its own item's status. The first selected item
+   * that reaches a shared edge decides that edge's color.
+   */
+  reviewStatuses?: Readonly<Record<string, AccessReviewStatus>>
 }
 
 /**
@@ -269,4 +301,64 @@ export function highlightEdges(
     if (edge === preview) return raiseEdge(edge)
     return dimEdge(edge)
   })
+}
+
+/**
+ * Restyle for several selected first-level items at once. Each item's
+ * downstream lineage uses that item's status. An edge reached by more than
+ * one item keeps the color of the earliest selected item.
+ */
+function highlightManyEdges(
+  edges: Edge[],
+  selectedIds: readonly string[],
+  emphasisId: string | null,
+  reviewStatuses: Readonly<Record<string, AccessReviewStatus>> | undefined,
+): Edge[] {
+  const selected = new Set(selectedIds)
+  const selectedEdgeIds = new Set<string>()
+  const lineageStatus = new Map<string, AccessReviewStatus>()
+  for (const id of selectedIds) {
+    const status = reviewStatuses?.[id]
+    if (!status) continue
+    const incoming = incomingStatusEdge(edges, id)
+    if (incoming) selectedEdgeIds.add(incoming.id)
+    const lineage = lineageEdgeIds(edges, id)
+    if (incoming) lineage.delete(incoming.id)
+    for (const edgeId of lineage) {
+      if (!lineageStatus.has(edgeId)) lineageStatus.set(edgeId, status)
+    }
+  }
+  if (selectedEdgeIds.size === 0 && lineageStatus.size === 0) {
+    return emphasizeEdges(edges, emphasisId)
+  }
+  const preview =
+    emphasisId !== null && !selected.has(emphasisId)
+      ? incomingStatusEdge(edges, emphasisId)
+      : undefined
+  return edges.map((edge) => {
+    if (selectedEdgeIds.has(edge.id)) return raiseEdge(edge, { className: SELECTED_EDGE_CLASS })
+    const status = lineageStatus.get(edge.id)
+    if (status) return lineageEdge(edge, status)
+    if (preview && edge === preview) return raiseEdge(edge)
+    return dimEdge(edge)
+  })
+}
+
+/**
+ * Selection restyle for one node or several. An empty list and a single id
+ * are exactly `highlightEdges`, so one selected card looks the same as before.
+ */
+export function highlightSelection(
+  edges: Edge[],
+  selectedId: string | readonly string[] | null,
+  emphasisId: string | null,
+  options?: HighlightOptions,
+): Edge[] {
+  if (selectedId === null || typeof selectedId === 'string') {
+    return highlightEdges(edges, selectedId, emphasisId, options)
+  }
+  if (selectedId.length <= 1) {
+    return highlightEdges(edges, selectedId[0] ?? null, emphasisId, options)
+  }
+  return highlightManyEdges(edges, selectedId, emphasisId, options?.reviewStatuses)
 }

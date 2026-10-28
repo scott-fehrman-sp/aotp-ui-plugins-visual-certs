@@ -280,7 +280,7 @@ function AccessNodeView({
   onActivate?: () => void
 }) {
   const { setHover, setFocus } = useContext(EmphasisContext)
-  const { selectedId, lineageNodeIds, toggle } = useContext(SelectionContext)
+  const { selectedIds, lineageNodeIds, toggle } = useContext(SelectionContext)
   const statusIconId = useId()
   const progressId = useId()
   const countId = useId()
@@ -349,13 +349,14 @@ function AccessNodeView({
 
   // Selection (see `highlightEdges`): every card except the user is a toggle
   // button. Mouse selection goes through the canvas's node click; the keyboard
-  // is handled here. Reference cards on the highlighted path are shown at full
-  // strength, the other reference cards are muted. The selected card itself is
-  // never muted.
-  const selected = selectable && selectedId === id
+  // is handled here. Needs-review access items can be pressed together; other
+  // cards are pressed one at a time. Reference cards on a highlighted path are
+  // shown at full strength, the other reference cards are muted. A selected
+  // card itself is never muted.
+  const selected = selectable && selectedIds.has(id)
   const inLineage = data.reference && lineageNodeIds.has(id)
   const referenceDimmed =
-    data.reference && selectedId !== null && selectedId !== id && !inLineage
+    data.reference && selectedIds.size > 0 && !selectedIds.has(id) && !inLineage
   const selectionClass =
     (selectable ? ' vc-graph-card-selectable' : '') +
     (selected ? ' vc-graph-card-selected' : '') +

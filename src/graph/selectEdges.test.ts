@@ -21,6 +21,8 @@ import {
   connectedEdgeIds,
   connectedNodeIds,
   highlightEdges,
+  highlightSelection,
+  isNeedsReviewItem,
   isSelectableNodeData,
   lineageEdgeIds,
   lineageNodeIds,
@@ -74,6 +76,68 @@ describe('isSelectableNodeData', () => {
     expect(isSelectableNodeData({ kind: 'entitlement', reference: true })).toBe(true)
     expect(isSelectableNodeData({ kind: 'attribute', reference: true })).toBe(true)
     expect(isSelectableNodeData({ kind: 'source', reference: true })).toBe(true)
+  })
+})
+
+describe('isNeedsReviewItem', () => {
+  it('is true only for a role, access profile, or entitlement that still needs review', () => {
+    expect(isNeedsReviewItem({ kind: 'role', reference: false, reviewStatus: 'needsReview' })).toBe(true)
+    expect(isNeedsReviewItem({ kind: 'accessProfile', reference: false, reviewStatus: 'needsReview' })).toBe(
+      true,
+    )
+    expect(isNeedsReviewItem({ kind: 'entitlement', reference: false, reviewStatus: 'needsReview' })).toBe(
+      true,
+    )
+    expect(isNeedsReviewItem({ kind: 'role', reference: false, reviewStatus: 'approved' })).toBe(false)
+    expect(isNeedsReviewItem({ kind: 'entitlement', reference: false, reviewStatus: 'revoked' })).toBe(false)
+    expect(isNeedsReviewItem({ kind: 'entitlement', reference: false, reviewStatus: 'reassigned' })).toBe(
+      false,
+    )
+    expect(isNeedsReviewItem({ kind: 'entitlement', reference: true, reviewStatus: 'needsReview' })).toBe(
+      false,
+    )
+    expect(isNeedsReviewItem({ kind: 'source', reference: true })).toBe(false)
+    expect(isNeedsReviewItem({ kind: 'user', reference: false })).toBe(false)
+    expect(isNeedsReviewItem({ kind: 'attribute', reference: true, reviewStatus: 'needsReview' })).toBe(
+      false,
+    )
+  })
+})
+
+describe('highlightSelection', () => {
+  it('treats an empty list and a single id like highlightEdges', () => {
+    const edges = [edge('role:role-a', 'source:s1')]
+    const options = { reviewStatus: 'needsReview' as const }
+    expect(highlightSelection(edges, [], null)).toBe(edges)
+    expect(highlightSelection(edges, null, null)).toBe(edges)
+    expect(highlightSelection(edges, ['role:role-a'], null, options)).toEqual(
+      highlightEdges(edges, 'role:role-a', null, options),
+    )
+    expect(highlightSelection(edges, 'role:role-a', null, options)).toEqual(
+      highlightEdges(edges, 'role:role-a', null, options),
+    )
+  })
+
+  it('colors each selected lineage with that item’s status and dims the rest', () => {
+    const edges = [
+      edge('role:role-a', 'entitlement:e1'),
+      edge('entitlement:e-vpn', 'source:s5'),
+      edge('entitlement:e-login', 'source:s2'),
+    ]
+    const out = highlightSelection(edges, ['role:role-a', 'entitlement:e-vpn'], null, {
+      reviewStatuses: {
+        'role:role-a': 'needsReview',
+        'entitlement:e-vpn': 'approved',
+      },
+    })
+    const roleEdge = out.find((item) => item.id === eid('role:role-a', 'entitlement:e1'))!
+    const vpnEdge = out.find((item) => item.id === eid('entitlement:e-vpn', 'source:s5'))!
+    const other = out.find((item) => item.id === eid('entitlement:e-login', 'source:s2'))!
+    expect(roleEdge.className).toContain(LINEAGE_EDGE_CLASS)
+    expect(roleEdge.style?.stroke).toBe(STATUS_STROKE.needsReview)
+    expect(vpnEdge.style?.stroke).toBe(STATUS_STROKE.approved)
+    expect(other.style?.opacity).toBe(DIM_REFERENCE_OPACITY)
+    expect(other.className ?? '').not.toContain(LINEAGE_EDGE_CLASS)
   })
 })
 

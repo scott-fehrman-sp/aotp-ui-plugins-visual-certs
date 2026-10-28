@@ -668,3 +668,143 @@ describe('AccessGraphCanvas selection with the completed filter', () => {
     expect(pressed()).toHaveLength(0)
   })
 })
+
+/**
+ * User One holds two items that need review (Role A and vpn) plus one approved
+ * entitlement. Only the needs-review pair may be selected together.
+ */
+function needsReviewPair(): AccessGraphData {
+  return statusGraph([
+    row({ id: '1', role: 'Role A', roleId: 'role-a', accessProfile: 'foo', accessProfileId: 'ap-foo', entitlement: 'read', entitlementId: 'e1', source: 'engr db', sourceId: 's1', reviewStatus: 'needsReview', accessItemKind: 'role', accessItemId: 'role-a', accessItemName: 'Role A' }),
+    row({ id: '5', entitlement: 'vpn', entitlementId: 'e5', source: 'vpn gw', sourceId: 's5', reviewStatus: 'needsReview', accessItemKind: 'entitlement', accessItemId: 'e5', accessItemName: 'vpn' }),
+    row({ id: '2', entitlement: 'login', entitlementId: 'e2', source: 'phone app', sourceId: 's2', reviewStatus: 'approved', accessItemKind: 'entitlement', accessItemId: 'e2', accessItemName: 'login' }),
+  ])
+}
+
+const pressedLabels = () => pressed().map((el) => el.getAttribute('aria-label')).sort()
+
+describe('AccessGraphCanvas needs-review multi-select', () => {
+  beforeEach(() => {
+    spies.fitView.mockClear()
+    spies.setViewport.mockClear()
+  })
+
+  it('keeps every needs-review item selected and highlights each lineage', () => {
+    render(<AccessGraphCanvas graph={needsReviewPair()} />)
+    drillIn()
+    fireEvent.click(btn('Show reference nodes and links'))
+    fireEvent.click(btn(/^Show completed items/))
+    fireEvent.click(card('Role A'))
+    fireEvent.click(card('vpn'))
+
+    expect(pressedLabels()).toEqual(['Entitlement: vpn', 'Role: Role A'])
+    expect(card('login')).toHaveAttribute('aria-pressed', 'false')
+    expect(lineageEdges().map((e) => e.id).sort()).toEqual(
+      [
+        eid('role:role-a', 'accessProfile:ap-foo'),
+        eid('accessProfile:ap-foo', 'entitlement:e1'),
+        eid('entitlement:e1', 'source:s1'),
+        eid('entitlement:e5', 'source:s5'),
+      ].sort(),
+    )
+    for (const edge of lineageEdges()) {
+      expect(edge.style?.stroke).toBe(STATUS_STROKE.needsReview)
+    }
+    expect(edges().find((e) => e.id === eid('entitlement:e2', 'source:s2'))?.style?.opacity).toBe(
+      DIM_REFERENCE_OPACITY,
+    )
+    expect(liveText()).toContain('vpn added to the selection. 2 items selected. Press Escape to clear.')
+
+    fireEvent.click(card('Role A'))
+    expect(pressedLabels()).toEqual(['Entitlement: vpn'])
+    expect(lineageEdges().map((e) => e.id)).toEqual([eid('entitlement:e5', 'source:s5')])
+    expect(liveText()).toContain('Role A removed from the selection. 1 item selected. Press Escape to clear.')
+  })
+
+  it('adds a needs-review item from the keyboard and removes it with Space', () => {
+    render(<AccessGraphCanvas graph={needsReviewPair()} />)
+    drillIn()
+    fireEvent.click(card('Role A'))
+    const vpn = card('vpn')
+    expect(fireEvent.keyDown(vpn, { key: 'Enter' })).toBe(false)
+    expect(pressedLabels()).toEqual(['Entitlement: vpn', 'Role: Role A'])
+    expect(fireEvent.keyDown(card('Role A'), { key: ' ' })).toBe(false)
+    expect(pressedLabels()).toEqual(['Entitlement: vpn'])
+  })
+
+  it('lets a completed item or a reference node replace the needs-review set', () => {
+    render(<AccessGraphCanvas graph={needsReviewPair()} />)
+    drillIn()
+    fireEvent.click(btn('Show reference nodes and links'))
+    fireEvent.click(btn(/^Show completed items/))
+    fireEvent.click(card('Role A'))
+    fireEvent.click(card('vpn'))
+    fireEvent.click(card('login'))
+    expect(pressedLabels()).toEqual(['Entitlement: login'])
+
+    fireEvent.click(card('Role A'))
+    expect(pressedLabels()).toEqual(['Role: Role A'])
+    fireEvent.click(card('vpn'))
+    fireEvent.click(card('engr db'))
+    expect(pressedLabels()).toEqual(['Source: engr db'])
+  })
+
+  it('clears every selected needs-review item on Escape and on a pane click', () => {
+    const { container } = render(<AccessGraphCanvas graph={needsReviewPair()} />)
+    drillIn()
+    fireEvent.click(card('Role A'))
+    fireEvent.click(card('vpn'))
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(pressed()).toHaveLength(0)
+    expect(screen.getByRole('button', { name: '← All Users' })).toBeInTheDocument()
+
+    fireEvent.click(card('Role A'))
+    fireEvent.click(card('vpn'))
+    fireEvent.click(container.querySelector('.react-flow__pane')!)
+    expect(pressed()).toHaveLength(0)
+    expect(screen.getByRole('button', { name: '← All Users' })).toBeInTheDocument()
+  })
+
+  it('drops only the item a refresh completes while completed items are hidden', () => {
+    const base = needsReviewPair()
+    const { rerender } = render(<AccessGraphCanvas graph={base} />)
+    drillIn()
+    fireEvent.click(card('Role A'))
+    fireEvent.click(card('vpn'))
+    expect(pressed()).toHaveLength(2)
+    const refreshed: AccessGraphData = {
+      nodes: base.nodes,
+      edges: base.edges.map((e) =>
+        e.to === 'role:role-a' ? { ...e, reviewStatus: 'approved' as const } : e,
+      ),
+    }
+    rerender(<AccessGraphCanvas graph={refreshed} />)
+    expect(screen.queryByText('Role A')).toBeNull()
+    expect(pressedLabels()).toEqual(['Entitlement: vpn'])
+    fireEvent.click(btn(/^Show completed items/))
+    expect(pressedLabels()).toEqual(['Entitlement: vpn'])
+    expect(card('Role A')).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  it('keeps both items selected when a refresh changes one status and completed items stay visible', () => {
+    const base = needsReviewPair()
+    const { rerender } = render(<AccessGraphCanvas graph={base} />)
+    drillIn()
+    fireEvent.click(btn('Show reference nodes and links'))
+    fireEvent.click(btn(/^Show completed items/))
+    fireEvent.click(card('Role A'))
+    fireEvent.click(card('vpn'))
+    const refreshed: AccessGraphData = {
+      nodes: base.nodes,
+      edges: base.edges.map((e) =>
+        e.to === 'role:role-a' ? { ...e, reviewStatus: 'approved' as const } : e,
+      ),
+    }
+    rerender(<AccessGraphCanvas graph={refreshed} />)
+    expect(pressedLabels()).toEqual(['Entitlement: vpn', 'Role: Role A'])
+    const roleEdge = edges().find((e) => e.id === eid('role:role-a', 'accessProfile:ap-foo'))!
+    const vpnEdge = edges().find((e) => e.id === eid('entitlement:e5', 'source:s5'))!
+    expect(roleEdge.style?.stroke).toBe(STATUS_STROKE.approved)
+    expect(vpnEdge.style?.stroke).toBe(STATUS_STROKE.needsReview)
+  })
+})
