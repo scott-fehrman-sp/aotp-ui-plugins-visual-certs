@@ -1,0 +1,77 @@
+/*
+ * Right-click menu for the access canvas. Portaled to document.body, so these
+ * rules are not nested under `.vc-graph-wrap` (that overflow would clip it).
+ * Tokens come from tokens.css on :root, same as the control panel.
+ */
+.vc-graph-menu {
+  position: fixed;
+  z-index: 1100;
+  width: max-content;
+  min-width: 200px;
+  max-width: min(360px, calc(100vw - 16px));
+  margin: 0;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel, var(--control));
+  color: var(--ink);
+  box-shadow: var(--shadow);
+  font-family: var(--sans);
+  font-size: 13px;
+}
+
+.vc-graph-menu:focus {
+  outline: none;
+}
+
+.vc-graph-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin: 0;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: 1.2;
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.vc-graph-menu-item:hover:not(:disabled),
+.vc-graph-menu-item:focus-visible {
+  background: var(--accent-soft);
+  outline: none;
+}
+
+.vc-graph-menu-item:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.vc-graph-menu-separator {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--line);
+}
+
+.vc-graph-menu .vc-graph-control-icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+/* Status glyphs are absolutely positioned on a card. In the menu they sit
+   inline, ahead of the action label, at the same 16px as the control icons. */
+.vc-graph-menu .vc-graph-status-icon {
+  position: static;
+  bottom: auto;
+  right: auto;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}

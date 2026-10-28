@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react'
 import {
   Controls,
   MiniMap,
@@ -31,6 +31,8 @@ import { useGraphTransition } from './useGraphTransition'
 import { useMotionMs } from './useMotionMs'
 import { ScrollHint } from './ScrollHint'
 import { GraphControls } from './GraphControls'
+import { GraphContextMenu, type GraphContextMenuState } from './GraphContextMenu'
+import { graphControlItems } from './graphControlItems'
 import { GraphLegend } from './GraphLegend'
 import { NodeDetailPanel } from './NodeDetailPanel'
 import { AccessNode, PinnedAccessCard } from './AccessNode'
@@ -114,6 +116,29 @@ const USER_ID_PREFIX = 'user:'
 const MIN_ZOOM = 0.15
 const MAX_ZOOM = 1.8
 
+/** Kinds a reviewer can approve, revoke, or reassign. Reference copies are excluded. */
+const DECISION_KINDS = new Set<AccessSceneNodeData['kind']>([
+  'role',
+  'accessProfile',
+  'entitlement',
+])
+
+/**
+ * A reviewable access item in drill-down gets the decision menu. User cards
+ * (including the user grid) and reference-only nodes do not.
+ */
+function showsDecisionMenu(
+  data: Pick<AccessSceneNodeData, 'kind' | 'reference'>,
+  inDrilldown: boolean,
+): boolean {
+  return inDrilldown && !data.reference && DECISION_KINDS.has(data.kind)
+}
+
+function suppressContextMenu(event: { preventDefault(): void; stopPropagation(): void }) {
+  event.preventDefault()
+  event.stopPropagation()
+}
+
 /** Minimap dot color per layer, matched to the card accents. */
 const MINIMAP_COLOR: Record<string, string> = {
   user: '#0b4f8a',
@@ -165,6 +190,13 @@ const MINIMAP_COLOR: Record<string, string> = {
  * and grid/drill-down. The completed toggle (drill-down only) hides the
  * first-level items whose status is approved / revoked / reassigned plus any
  * lineage left orphaned (`withoutCompleted`), re-lays out and refits once.
+ *
+ * CONTEXT MENUS. Right-click on the canvas background opens a menu with the
+ * same actions as the control panel for the current mode, then zoom in, zoom
+ * out, and fit. Right-click on a user card (grid or the pinned drill-down
+ * card) or on a reference-only node does nothing. Right-click on a reviewable
+ * access item (role, access profile, or entitlement) offers Approve, Revoke,
+ * and Reassign; those actions are disabled until a decision flow is connected.
  *
  * TRANSITIONS. Scene updates (grid <-> drill-down, hide completed / reference,
  * layout, lane wrapping) animate like org-graph's: the scene builders still
@@ -378,6 +410,8 @@ function CanvasSurface({
   const [showMinimap, setShowMinimap] = useState(false)
   const [showLegend, setShowLegend] = useState(false)
   const [showDetail, setShowDetail] = useState(false)
+  const [menu, setMenu] = useState<GraphContextMenuState | null>(null)
+  const closeMenu = useCallback(() => setMenu(null), [])
   const [announcement, setAnnouncement] = useState('')
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   // The selected first-level item (node id) whose edges are highlighted.
@@ -527,6 +561,14 @@ function CanvasSurface({
   )
 
   const inDrilldown = selectedUserId !== null
+  // A menu opened in one mode describes that mode's controls (or that scene's
+  // nodes). Entering, leaving, or switching a drill-down closes it.
+  const menuScope = inDrilldown ? selectedUserId ?? '' : 'grid'
+  const [seenMenuScope, setSeenMenuScope] = useState(menuScope)
+  if (seenMenuScope !== menuScope) {
+    setSeenMenuScope(menuScope)
+    setMenu(null)
+  }
   // The drilled-in user is pinned beside the controls (see the panel below),
   // so it is not a flow node: the layout still reserves its lane, but the
   // camera frames only the access items.
@@ -739,6 +781,29 @@ function CanvasSurface({
     if (activeItemId !== null) clearSelection()
     setDetailNodeId(null)
   }
+  // Right-click. The pane handler only runs when the event target is the pane
+  // itself (React Flow ignores bubbled context menus), so a card never opens
+  // the canvas menu. Cards and edges still suppress the browser menu.
+  const onPaneContextMenu = (event: ReactMouseEvent | MouseEvent) => {
+    event.preventDefault()
+    setMenu({ kind: 'canvas', x: event.clientX, y: event.clientY })
+  }
+  const onNodeContextMenu: NodeMouseHandler<AccessSceneNode> = (event, node) => {
+    suppressContextMenu(event)
+    if (showsDecisionMenu(node.data, inDrilldown)) {
+      setMenu({ kind: 'decision', x: event.clientX, y: event.clientY })
+      return
+    }
+    setMenu(null)
+  }
+  const onEdgeContextMenu = (event: ReactMouseEvent) => {
+    suppressContextMenu(event)
+    setMenu(null)
+  }
+  const onPinnedContextMenu = (event: ReactMouseEvent) => {
+    suppressContextMenu(event)
+    setMenu(null)
+  }
 
   const toggleLayout = () => {
     const next: RankDir = rankdir === 'LR' ? 'TB' : 'LR'
@@ -775,6 +840,22 @@ function CanvasSurface({
     setShowDetail(!showDetail)
     setAnnouncement(showDetail ? 'Details panel hidden.' : 'Details panel shown.')
   }
+  const controlItems = graphControlItems({
+    inDrilldown,
+    rankdir,
+    onToggleLayout: toggleLayout,
+    showReference,
+    onToggleReference: toggleReference,
+    showCompleted,
+    onToggleCompleted: toggleCompleted,
+    hiddenCompletedCount: completedResult ? completedResult.hiddenCount : null,
+    showMinimap,
+    onToggleMinimap: toggleMinimap,
+    showLegend,
+    onToggleLegend: toggleLegend,
+    showDetail,
+    onToggleDetail: toggleDetail,
+  })
 
   return (
     <div className="vc-graph-wrap" ref={wrapRef}>
@@ -802,6 +883,9 @@ function CanvasSurface({
         maxZoom={MAX_ZOOM}
         onNodeClick={onNodeClick}
         onPaneClick={onPaneClick}
+        onPaneContextMenu={onPaneContextMenu}
+        onNodeContextMenu={onNodeContextMenu}
+        onEdgeContextMenu={onEdgeContextMenu}
       >
         {showMinimap && (
           <MiniMap
@@ -852,6 +936,7 @@ function CanvasSurface({
             <PinnedAccessCard
               id={pinnedUser.id}
               data={pinnedUser.data}
+              onContextMenu={onPinnedContextMenu}
               onActivate={() =>
                 setDetailNodeId((current) =>
                   current === pinnedUser.id ? null : pinnedUser.id,
@@ -927,6 +1012,14 @@ function CanvasSurface({
           <Panel position="top-center">
             <p className="vc-graph-note">Loading this user&rsquo;s full access details…</p>
           </Panel>
+        )}
+        {menu && (
+          <GraphContextMenu
+            menu={menu}
+            items={controlItems}
+            motionMs={motionMs}
+            onClose={closeMenu}
+          />
         )}
       </ReactFlow>
       </SelectionContext.Provider>

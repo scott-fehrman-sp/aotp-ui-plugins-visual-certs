@@ -1,4 +1,12 @@
-import { useContext, useEffect, useId, useRef, type KeyboardEvent, type ReactNode } from 'react'
+import {
+  useContext,
+  useEffect,
+  useId,
+  useRef,
+  type KeyboardEvent,
+  type MouseEvent,
+  type ReactNode,
+} from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import type { AccessGraphNodeKind, AccessReviewStatus } from '../sailpoint/types'
 import { NODE_USER_HEIGHT, NODE_WIDTH, type AccessSceneNode } from './buildAccessScene'
@@ -425,10 +433,13 @@ export function PinnedAccessCard({
   id,
   data,
   onActivate,
+  onContextMenu,
 }: {
   id: string
   data: AccessSceneNode['data']
   onActivate: () => void
+  /** Right-click on the pinned user. The canvas uses this to suppress the menu. */
+  onContextMenu?: (event: MouseEvent) => void
 }) {
   const frameRef = useRef<HTMLDivElement>(null)
   // The grid card that was focused is marked inert as it leaves, which drops
@@ -441,6 +452,7 @@ export function PinnedAccessCard({
       ref={frameRef}
       className="vc-graph-user-pin-frame"
       style={{ width: NODE_WIDTH, height: NODE_USER_HEIGHT }}
+      onContextMenu={onContextMenu}
     >
       <AccessNodeView id={id} data={data} showHandles={false} onActivate={onActivate} />
     </div>

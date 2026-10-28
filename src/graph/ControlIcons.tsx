@@ -67,9 +67,19 @@ const paths = {
       <path d="M16.5 9H18M16.5 12H18M16.5 15H18" {...stroke} />
     </>
   ),
+  // Plus, minus, and four corners: the canvas zoom actions (in, out, fit).
+  zoomIn: <path d="M12 5.5v13M5.5 12h13" {...stroke} />,
+  zoomOut: <path d="M5.5 12h13" {...stroke} />,
+  fit: (
+    <>
+      <path d="M4 9.5V4.5H9M15 4.5h5v5M20 14.5v5h-5M9 19.5H4v-5" {...stroke} />
+    </>
+  ),
 }
 
-export function ControlIcon({ name }: { name: keyof typeof paths }) {
+export type ControlIconName = keyof typeof paths
+
+export function ControlIcon({ name }: { name: ControlIconName }) {
   return (
     <svg
       className="vc-graph-control-icon"
