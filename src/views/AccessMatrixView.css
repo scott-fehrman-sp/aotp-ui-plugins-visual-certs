@@ -1,5 +1,6 @@
-/* One row for both back controls: "Back to overview" (always) and, while a
-   user is drilled into, "Back to all users" (portaled in by the graph canvas).
+/* One row of back links, highest level first: "All Reviews" (when the
+   campaign list is a real stop), "Overview" (always), and, while a
+   user is drilled into, "All Users" (portaled in by the graph canvas).
    In the app this row is portaled into the title bar; the margin only applies
    when it has to fall back into the page, above the graph. */
 .vc-matrix-nav {

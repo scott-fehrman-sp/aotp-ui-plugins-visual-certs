@@ -346,13 +346,13 @@ describe('AccessGraphCanvas item selection', () => {
     // across user switches) so the `login` card is available to select
     fireEvent.click(btn(/^Show completed items/))
     fireEvent.click(card('login'))
-    fireEvent.click(screen.getByRole('button', { name: /back to all users/i }))
+    fireEvent.click(screen.getByRole('button', { name: '← All Users' }))
     drillIn()
     expect(pressed()).toHaveLength(0)
     expect(selectedEdges()).toHaveLength(0)
 
     fireEvent.click(card('login'))
-    fireEvent.click(screen.getByRole('button', { name: /back to all users/i }))
+    fireEvent.click(screen.getByRole('button', { name: '← All Users' }))
     drillIn('User Two')
     expect(pressed()).toHaveLength(0)
     expect(selectedEdges()).toHaveLength(0)

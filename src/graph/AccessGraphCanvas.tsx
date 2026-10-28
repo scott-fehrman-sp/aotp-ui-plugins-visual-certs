@@ -867,7 +867,7 @@ function CanvasSurface({
               className="vc-graph-toggle"
               onClick={() => setSelectedUserId(null)}
             >
-              ← Back to all users
+              ← All Users
             </button>
           </Panel>
         )}
@@ -880,7 +880,7 @@ function CanvasSurface({
                 className="vc-link-btn"
                 onClick={() => setSelectedUserId(null)}
               >
-                ← Back to all users
+                ← All Users
               </button>,
               backSlot,
             )

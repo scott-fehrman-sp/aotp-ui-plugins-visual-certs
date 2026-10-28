@@ -95,7 +95,7 @@ describe('AccessGraphCanvas', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Show reference nodes and links' }))
     expect(screen.getByText('Role A')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: /back to all users/i }))
+    fireEvent.click(screen.getByRole('button', { name: '← All Users' }))
 
     // Grid is back: user cards present, non-user labels gone.
     expect(screen.getByRole('button', { name: 'Show access for User One' })).toBeInTheDocument()
@@ -119,7 +119,7 @@ describe('AccessGraphCanvas', () => {
 
       fireEvent.click(screen.getByRole('button', { name: 'Show access for User One' }))
 
-      const back = within(host).getByRole('button', { name: /back to all users/i })
+      const back = within(host).getByRole('button', { name: '← All Users' })
       expect(back).toBeInTheDocument()
       // Not drawn inside the graph, and no in-canvas nav panel.
       expect(container.querySelector('.react-flow')!.contains(back)).toBe(false)
@@ -135,7 +135,7 @@ describe('AccessGraphCanvas', () => {
       const host = slot()
       render(<AccessGraphCanvas graph={deriveAccessGraph(twoUsers())} backSlot={host} />)
       fireEvent.click(screen.getByRole('button', { name: 'Show access for User One' }))
-      expect(within(host).getByRole('button', { name: /back to all users/i })).toBeInTheDocument()
+      expect(within(host).getByRole('button', { name: '← All Users' })).toBeInTheDocument()
 
       fireEvent.keyDown(window, { key: 'Escape' })
 
@@ -152,7 +152,7 @@ describe('AccessGraphCanvas', () => {
       // reference starts hidden by default; show it so the status-less Role A appears
       fireEvent.click(screen.getByRole('button', { name: 'Show reference nodes and links' }))
       expect(screen.getByText('Role A')).toBeInTheDocument()
-      expect(screen.queryByRole('button', { name: /back to all users/i })).toBeNull()
+      expect(screen.queryByRole('button', { name: '← All Users' })).toBeNull()
       expect(container.querySelector('.vc-graph-nav-panel')).toBeNull()
     })
 
@@ -160,7 +160,7 @@ describe('AccessGraphCanvas', () => {
       const { container } = render(<AccessGraphCanvas graph={deriveAccessGraph(twoUsers())} />)
       fireEvent.click(screen.getByRole('button', { name: 'Show access for User One' }))
       const nav = container.querySelector('.vc-graph-nav-panel') as HTMLElement
-      expect(within(nav).getByRole('button', { name: /back to all users/i })).toBeInTheDocument()
+      expect(within(nav).getByRole('button', { name: '← All Users' })).toBeInTheDocument()
     })
   })
 
@@ -329,7 +329,7 @@ describe('AccessGraphCanvas', () => {
     expect(legendGroup()).toBeInTheDocument()
     expect(toggle()).toHaveAttribute('aria-pressed', 'true')
 
-    fireEvent.click(screen.getByRole('button', { name: /back to all users/i }))
+    fireEvent.click(screen.getByRole('button', { name: '← All Users' }))
     expect(legendGroup()).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /legend/i })).not.toBeInTheDocument()
   })
@@ -511,9 +511,9 @@ describe('AccessGraphCanvas', () => {
       render(<AccessGraphCanvas graph={referenceGraph()} />)
       drillIn()
       const nav = document.querySelector('.vc-graph-nav-panel')!
-      expect(within(nav as HTMLElement).getByRole('button', { name: /back to all users/i })).toBeInTheDocument()
+      expect(within(nav as HTMLElement).getByRole('button', { name: '← All Users' })).toBeInTheDocument()
       expect(within(nav as HTMLElement).queryByRole('button', { name: /^Layout/ })).toBeNull()
-      fireEvent.click(btn(/back to all users/i))
+      fireEvent.click(btn('← All Users'))
       expect(screen.getByRole('button', { name: 'Show access for User One' })).toBeInTheDocument()
     })
 
@@ -592,7 +592,7 @@ describe('AccessGraphCanvas', () => {
       // reference starts hidden by default, so the nested `read` is already gone
       expect(screen.queryByText('read')).toBeNull()
 
-      fireEvent.click(btn(/back to all users/i))
+      fireEvent.click(btn('← All Users'))
       // The reference control is drill-down only; the preference is kept.
       expect(screen.queryByRole('button', { name: /^Reference nodes/ })).not.toBeInTheDocument()
       drillIn('User Two')
@@ -613,7 +613,7 @@ describe('AccessGraphCanvas', () => {
       drillIn('User One')
       // layout now starts in TB; switch to horizontal (LR) to set a non-default preference
       fireEvent.click(btn('Layout: horizontal'))
-      fireEvent.click(btn(/back to all users/i))
+      fireEvent.click(btn('← All Users'))
       drillIn('User Two')
       // the LR preference survives: the button now reads "Layout: vertical"
       expect(btn('Layout: vertical')).toBeInTheDocument()
@@ -798,14 +798,14 @@ describe('AccessGraphCanvas', () => {
         drillIn()
         // completed items start hidden by default, so the hidden preference is
         // already in effect before navigating between users
-        fireEvent.click(btn(/back to all users/i))
+        fireEvent.click(btn('← All Users'))
         // Grid: the completed control is absent, and all users are present.
         expect(screen.queryByRole('button', { name: /completed items/i })).not.toBeInTheDocument()
         expect(screen.getByRole('button', { name: 'Show access for User Two' })).toBeInTheDocument()
         drillIn('User Two')
         expect(btn('Show completed items (2 hidden)')).toHaveAttribute('aria-pressed', 'false')
         expect(label('Role X')).toBeNull()
-        fireEvent.click(btn(/back to all users/i))
+        fireEvent.click(btn('← All Users'))
         drillIn('User One')
         expect(label('Role A')).toBeNull()
         expect(label('Role B')).toBeInTheDocument()

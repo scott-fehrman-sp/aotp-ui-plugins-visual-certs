@@ -33,6 +33,12 @@
   display: none;
 }
 
+/* A back link portaled beside the title should not keep the standalone
+   button's bottom margin, or it sits lower than the title. */
+.vc-title-nav .vc-link-btn {
+  margin-bottom: 0;
+}
+
 /* Right side of the header: the portal slot plus the theme toggle, kept
    together and pushed to the trailing edge. */
 .vc-header-actions {

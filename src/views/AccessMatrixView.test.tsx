@@ -109,7 +109,7 @@ describe('AccessMatrixView', () => {
 
     // Preserved chrome: the back button and the title.
     expect(
-      screen.getByRole('button', { name: /back to overview/i }),
+      screen.getByRole('button', { name: '← Overview' }),
     ).toBeInTheDocument()
     expect(
       screen.getByRole('heading', { name: 'All access paths' }),
@@ -191,24 +191,56 @@ describe('AccessMatrixView', () => {
     expect(container.querySelector('section.vc-matrix-view')).not.toContainElement(nav)
 
     // Grid mode: only "Back to overview" is there; there is no per-user back.
-    expect(screen.queryByRole('button', { name: /back to all users/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: '← All Users' })).toBeNull()
     expect(
-      within(nav).getByRole('button', { name: /back to overview/i }),
+      within(nav).getByRole('button', { name: '← Overview' }),
     ).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Show access for User One' }))
 
     // Drill-down: both back controls live together in the title bar...
-    const backToUsers = within(nav).getByRole('button', { name: /back to all users/i })
+    const backToUsers = within(nav).getByRole('button', { name: '← All Users' })
     expect(backToUsers).toBeInTheDocument()
     const labels = within(nav)
       .getAllByRole('button')
       .map((b) => b.textContent?.trim())
-    expect(labels).toEqual(['← Back to overview', '← Back to all users'])
+    expect(labels).toEqual(['← Overview', '← All Users'])
 
     // ...and NOT inside the graph canvas (no top-left nav panel either).
     expect(container.querySelector('.react-flow')!.contains(backToUsers)).toBe(false)
     expect(container.querySelector('.vc-graph-nav-panel')).toBeNull()
+  })
+
+  it('stacks a back link for each level, so a drilled-in user can jump to any earlier screen', () => {
+    const onBack = vi.fn()
+    const onBackToReviews = vi.fn()
+    render(
+      <AccessMatrixView
+        campaignName="Q3 review"
+        matrix={matrixState()}
+        onBack={onBack}
+        onBackToReviews={onBackToReviews}
+      />,
+    )
+    const labels = () =>
+      within(screen.getByRole('navigation', { name: /access map navigation/i }))
+        .getAllByRole('button')
+        .map((button) => button.textContent?.trim())
+
+    // User grid: the two screens above this one.
+    expect(labels()).toEqual(['← All Reviews', '← Overview'])
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show access for User One' }))
+    // User graph: the grid is added, and the earlier stops stay.
+    expect(labels()).toEqual([
+      '← All Reviews',
+      '← Overview',
+      '← All Users',
+    ])
+
+    fireEvent.click(screen.getByRole('button', { name: '← All Reviews' }))
+    expect(onBackToReviews).toHaveBeenCalledOnce()
+    expect(onBack).not.toHaveBeenCalled()
   })
 
   it('"Back to all users" in the nav row returns to the user grid', () => {
@@ -218,7 +250,7 @@ describe('AccessMatrixView', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Show access for User One' }))
     expect(screen.getByText('Role A')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: /back to all users/i }))
+    fireEvent.click(screen.getByRole('button', { name: '← All Users' }))
 
     // Back on the grid: the user card is back, lineage is gone, and the
     // per-user back control has left the nav row.
@@ -226,7 +258,7 @@ describe('AccessMatrixView', () => {
       screen.getByRole('button', { name: 'Show access for User One' }),
     ).toBeInTheDocument()
     expect(screen.queryByText('Role A')).toBeNull()
-    expect(screen.queryByRole('button', { name: /back to all users/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: '← All Users' })).toBeNull()
   })
 
   it('leaves "Back to overview" working in drill-down too', async () => {
@@ -235,7 +267,7 @@ describe('AccessMatrixView', () => {
       <AccessMatrixView campaignName="Q3 review" matrix={matrixState()} onBack={onBack} />,
     )
     fireEvent.click(screen.getByRole('button', { name: 'Show access for User One' }))
-    await userEvent.click(screen.getByRole('button', { name: /back to overview/i }))
+    await userEvent.click(screen.getByRole('button', { name: '← Overview' }))
     expect(onBack).toHaveBeenCalledOnce()
   })
 
@@ -268,7 +300,7 @@ describe('AccessMatrixView', () => {
       <AccessMatrixView campaignName="Q3 review" matrix={matrixState()} onBack={onBack} />,
     )
     await userEvent.click(
-      screen.getByRole('button', { name: /back to overview/i }),
+      screen.getByRole('button', { name: '← Overview' }),
     )
     expect(onBack).toHaveBeenCalledOnce()
   })
@@ -329,7 +361,7 @@ describe('AccessMatrixView', () => {
     expect(headerSlot).toContainElement(banner)
 
     // Leaving the drill-down drops the notice.
-    fireEvent.click(screen.getByRole('button', { name: /back to all users/i }))
+    fireEvent.click(screen.getByRole('button', { name: '← All Users' }))
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
   })
 })

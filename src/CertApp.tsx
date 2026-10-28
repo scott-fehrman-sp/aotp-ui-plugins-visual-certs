@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { EmptyState } from './components/EmptyState'
 import { ErrorState } from './components/ErrorState'
 import { LoadingState } from './components/LoadingState'
@@ -121,6 +122,32 @@ export function CertApp({ runtime }: CertAppProps) {
   return <CampaignPicker campaigns={campaigns} onSelect={goToDashboard} />
 }
 
+/**
+ * A back link that belongs beside the application title. When the app shell's
+ * title slot is present the link is portaled into it (the same place the
+ * access map and the review graph put their back links). Before that lookup
+ * finishes nothing is rendered, so the link never flashes under the title.
+ * Without the shell it stays in the page flow.
+ */
+export function TitleBackLink({
+  slot,
+  onClick,
+  children,
+}: {
+  slot: HTMLElement | null | undefined
+  onClick: () => void
+  children: string
+}) {
+  const button = (
+    <button type="button" className="vc-link-btn" onClick={onClick}>
+      {children}
+    </button>
+  )
+  if (slot === undefined) return null
+  if (slot) return createPortal(button, slot)
+  return button
+}
+
 interface CampaignRouteProps {
   runtime: PluginRuntime
   campaignId: string
@@ -171,6 +198,15 @@ function CampaignRoute({
   // `PluginRuntime`, so its per-id caches persist across every campaign.
   const matrix = useAccessMatrix(accessCompositionResolver, campaignId, review.items)
   const [step, setStep] = useState<CampaignStep>('dashboard')
+  // The slot beside the application title. `undefined` until the lookup runs,
+  // then the element or `null` when this view is rendered without the app shell.
+  const [titleNav, setTitleNav] = useState<HTMLElement | null | undefined>(undefined)
+  useEffect(() => {
+    // The slot is owned by the app shell, outside this view, so it can only be
+    // read after mount — the same lookup the access map uses for its back links.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setTitleNav(document.getElementById('vc-title-nav'))
+  }, [])
 
   const decisions = useDecisions({
     api: certificationsApi,
@@ -238,6 +274,7 @@ function CampaignRoute({
           campaignName={campaign.name}
           matrix={matrix}
           onBack={() => setStep('dashboard')}
+          onBackToReviews={showBack ? onBack : undefined}
         />
       ) : step === 'signoff' ? (
         <SignOffView
@@ -264,11 +301,11 @@ function CampaignRoute({
           onSignOff={() => setStep('signoff')}
         />
       ) : (
-        <div>
+        <>
           {showBack && (
-            <button type="button" className="vc-link-btn" onClick={onBack}>
-              ← Back to all reviews
-            </button>
+            <TitleBackLink slot={titleNav} onClick={onBack}>
+              ← All Reviews
+            </TitleBackLink>
           )}
           <CampaignDashboard
             campaign={campaign}
@@ -276,7 +313,7 @@ function CampaignRoute({
             onStartReviewing={() => setStep('review')}
             onViewMatrix={() => setStep('matrix')}
           />
-        </div>
+        </>
       )}
 
       {decisions.pending && (

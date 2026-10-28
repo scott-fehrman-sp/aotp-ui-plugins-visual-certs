@@ -217,7 +217,7 @@ describe('AccessGraphCanvas lazy mode (userDetails + onUserSelected)', () => {
     expect(screen.getByText('Role A')).toBeInTheDocument()
     expect(screen.getByRole('img', { name: 'Manager' })).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: /back to all users/i }))
+    fireEvent.click(screen.getByRole('button', { name: '← All Users' }))
     // The grid card keeps the mark after the identity is known.
     expect(screen.getByRole('img', { name: 'Manager' })).toBeInTheDocument()
   })

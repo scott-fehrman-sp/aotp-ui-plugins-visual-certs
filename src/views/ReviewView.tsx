@@ -46,7 +46,7 @@ export function ReviewView({
   return (
     <section aria-label={`Review items for ${campaignName}`}>
       <button type="button" className="vc-link-btn" onClick={onBack}>
-        ← Back to overview
+        ← Overview
       </button>
 
       <div className="vc-review-head">

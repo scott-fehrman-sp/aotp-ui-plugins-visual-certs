@@ -12,6 +12,13 @@ interface AccessMatrixViewProps {
   matrix: AccessMatrixState
   /** Back to the campaign dashboard. */
   onBack: () => void
+  /**
+   * Back to the campaign list. Passed only when that list is a real stop
+   * (more than one review). Shown ahead of the closer back links so the row
+   * grows as the operator goes deeper: all reviews, then overview, then —
+   * once a user is open — all users.
+   */
+  onBackToReviews?: () => void
 }
 
 /**
@@ -31,6 +38,7 @@ export function AccessMatrixView({
   campaignName,
   matrix,
   onBack,
+  onBackToReviews,
 }: AccessMatrixViewProps) {
   // The element the canvas portals its drill-down "Back to all users" button
   // into. Held in state (via a callback ref) so the canvas re-renders once the
@@ -59,10 +67,16 @@ export function AccessMatrixView({
 
   // Leave the map, and (in a user's drill-down) go back to the all-users grid.
   // Portaled beside the application title so the row doesn't sit above the graph.
+  // Higher-level stops come first, and each deeper screen adds the next link.
   const mapNav = (
     <nav className="vc-matrix-nav" aria-label="Access map navigation">
+      {onBackToReviews && (
+        <button type="button" className="vc-link-btn" onClick={onBackToReviews}>
+          ← All Reviews
+        </button>
+      )}
       <button type="button" className="vc-link-btn" onClick={onBack}>
-        ← Back to overview
+        ← Overview
       </button>
       <span ref={setBackSlot} className="vc-matrix-nav-slot" />
     </nav>

@@ -92,7 +92,7 @@ describe('AccessGraphCanvas overlay-aware fit', () => {
     await expectOneMore()
     fireEvent.click(btn('Hide completed items'))
     await expectOneMore()
-    fireEvent.click(screen.getByRole('button', { name: /back to all users/i }))
+    fireEvent.click(screen.getByRole('button', { name: '← All Users' }))
     await expectOneMore()
   })
 

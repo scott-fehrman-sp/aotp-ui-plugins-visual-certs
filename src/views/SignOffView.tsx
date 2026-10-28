@@ -92,7 +92,7 @@ export function SignOffView({
   return (
     <section aria-label="Finish and sign off" className="vc-signoff">
       <button type="button" className="vc-link-btn" onClick={onBack}>
-        ← Back to review
+        ← Review
       </button>
 
       <h2 className="vc-signoff-title">Finish your review</h2>

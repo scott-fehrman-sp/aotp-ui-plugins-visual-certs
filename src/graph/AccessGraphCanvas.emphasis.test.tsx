@@ -205,7 +205,7 @@ describe('AccessGraphCanvas hover / focus edge emphasis', () => {
     fireEvent.click(btn(/^Show completed items/))
 
     fireEvent.mouseEnter(card('admin'))
-    fireEvent.click(screen.getByRole('button', { name: /back to all users/i }))
+    fireEvent.click(screen.getByRole('button', { name: '← All Users' }))
     fireEvent.click(btn('Show access for User One'))
     expect(emphasized()).toHaveLength(0)
     expect(edges().some((e) => e.source === 'user:u1')).toBe(false)

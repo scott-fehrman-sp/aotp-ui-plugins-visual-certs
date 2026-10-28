@@ -233,7 +233,7 @@ describe('AccessGraphCanvas readable zoom for long graphs', () => {
     drillIn()
     await sizeCanvas(container, 968, 490)
     expect(screen.getByRole('status')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: /back to all users/i }))
+    fireEvent.click(screen.getByRole('button', { name: '← All Users' }))
     expect(screen.queryByRole('status')).toBeNull()
   })
 
