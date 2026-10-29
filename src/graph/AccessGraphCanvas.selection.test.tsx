@@ -532,7 +532,7 @@ describe('AccessGraphCanvas item selection', () => {
     expect(edges()).toHaveLength(0)
   })
 
-  it('selects a card and shows no hover tooltip (the panel carries that info)', () => {
+  it('selects a card and shows its description tooltip on hover', () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
     // completed items start hidden by default; show them so the `login` card appears
@@ -541,7 +541,7 @@ describe('AccessGraphCanvas item selection', () => {
     fireEvent.click(login)
     fireEvent.mouseEnter(login)
     expect(login).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.queryByRole('tooltip')).toBeNull()
+    expect(screen.getByRole('tooltip')).toHaveTextContent('Description not set')
   })
 })
 

@@ -273,11 +273,11 @@ describe('AccessGraphCanvas lane wrapping', () => {
       fireEvent.mouseLeave(target)
     })
 
-    it('opens no hover tooltip (the detail panel carries that info)', () => {
+    it('opens the description tooltip on a wrapped access item', () => {
       open()
       const target = card(last)
       fireEvent.mouseEnter(target)
-      expect(screen.queryByRole('tooltip')).toBeNull()
+      expect(screen.getByRole('tooltip')).toHaveTextContent('Description not set')
     })
   })
 

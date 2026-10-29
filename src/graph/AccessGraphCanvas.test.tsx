@@ -424,13 +424,25 @@ describe('AccessGraphCanvas', () => {
     expect(screen.getByRole('button', { name: 'Show access for User One' })).toBeInTheDocument()
   })
 
-  it('shows no hover/focus tooltip on cards (the detail panel carries that info)', () => {
-    // The node hover tooltip was removed; the right-side detail panel surfaces
-    // the kind / full label / detail / status instead. The card keeps its full
-    // untruncated name via its accessible name.
+  it('shows a description tooltip on access item cards, and none on user or reference-only cards', () => {
     const longRole = 'Enterprise Data Platform Administrator (Production)'
     const graph = deriveAccessGraph([
-      row({ id: '1', userId: 'u1', user: 'User One', role: longRole, roleId: 'r1', accessProfile: 'foo', accessProfileId: 'ap1', entitlement: 'read', entitlementId: 'e1', source: 'engr db', sourceId: 's1' }),
+      row({
+        id: '1',
+        userId: 'u1',
+        user: 'User One',
+        role: longRole,
+        roleId: 'r1',
+        roleDescription: 'Administers the production data platform',
+        accessProfile: 'foo',
+        accessProfileId: 'ap1',
+        accessProfileDescription: '   ',
+        entitlement: 'read',
+        entitlementId: 'e1',
+        source: 'engr db',
+        sourceId: 's1',
+        sourceDescription: 'Engineering database',
+      }),
     ])
     render(<AccessGraphCanvas graph={graph} />)
 
@@ -441,13 +453,37 @@ describe('AccessGraphCanvas', () => {
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
     fireEvent.mouseLeave(userCard)
 
-    // Drill in; the long role card still never opens a tooltip, but its full
-    // name is its accessible name (the card carries it via aria-label).
     fireEvent.click(userCard)
-    // reference starts hidden by default; show it so the status-less role card appears
+    // reference starts hidden by default; show it so the status-less access
+    // items and the source card are present
     fireEvent.click(screen.getByRole('button', { name: 'Show reference nodes and links' }))
     const roleCard = screen.getByLabelText(`Role: ${longRole}`)
+    expect(roleCard).toHaveAccessibleName(`Role: ${longRole}`)
     fireEvent.mouseEnter(roleCard)
+    const tip = screen.getByRole('tooltip')
+    expect(tip).toHaveTextContent('Administers the production data platform')
+    expect(roleCard).toHaveAttribute('aria-describedby', tip.id)
+    fireEvent.mouseLeave(roleCard)
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
+
+    fireEvent.focus(roleCard)
+    expect(screen.getByRole('tooltip')).toHaveTextContent('Administers the production data platform')
+    fireEvent.blur(roleCard)
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
+
+    const profile = screen.getByLabelText('Access profile: foo')
+    fireEvent.mouseEnter(profile)
+    expect(screen.getByRole('tooltip')).toHaveTextContent('Description not set')
+    fireEvent.mouseLeave(profile)
+
+    const entitlement = screen.getByLabelText('Entitlement: read')
+    fireEvent.mouseEnter(entitlement)
+    expect(screen.getByRole('tooltip')).toHaveTextContent('Description not set')
+    fireEvent.mouseLeave(entitlement)
+
+    fireEvent.mouseEnter(screen.getByLabelText('Source: engr db'))
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
+    fireEvent.mouseEnter(screen.getByLabelText('User: User One'))
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
   })
 

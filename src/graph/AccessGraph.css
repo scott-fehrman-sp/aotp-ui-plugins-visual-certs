@@ -215,6 +215,25 @@
   white-space: nowrap;
 }
 
+/* Description shown while an access-item card is hovered or focused.
+   Portaled to the document, so it is not clipped by the canvas. */
+.vc-graph-card-tip {
+  position: fixed;
+  z-index: 1000;
+  max-width: 280px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel, var(--control));
+  color: var(--ink);
+  box-shadow: var(--shadow);
+  font-family: var(--sans);
+  font-size: 12px;
+  line-height: 1.4;
+  pointer-events: none;
+  overflow-wrap: anywhere;
+}
+
 /* The taller user card packs several lines, so anchor its content to the top
    (the shorter cards keep their vertical centering from `.vc-graph-card`). */
 .vc-graph-card.kind-user {

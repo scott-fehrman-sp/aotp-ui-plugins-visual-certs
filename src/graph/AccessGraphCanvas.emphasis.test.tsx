@@ -219,22 +219,23 @@ describe('AccessGraphCanvas hover / focus edge emphasis', () => {
     expect(edges()).toHaveLength(0)
   })
 
-  it('emphasizes on hover and on keyboard focus (no hover tooltip)', () => {
+  it('emphasizes on hover and on keyboard focus, and shows the description tooltip', () => {
     render(<AccessGraphCanvas graph={graph()} />)
     drillIn()
     // completed items start hidden by default; show them so login/admin cards appear
     fireEvent.click(btn(/^Show completed items/))
     const login = card('login')
     fireEvent.mouseEnter(login)
-    // The hover tooltip was removed, and the user link is not drawn.
-    expect(screen.queryByRole('tooltip')).toBeNull()
+    expect(screen.getByRole('tooltip')).toHaveTextContent('Description not set')
+    // The user link is not drawn.
     expect(emphasized()).toHaveLength(0)
     expect(edges().some((e) => e.source === 'user:u1')).toBe(false)
     fireEvent.mouseLeave(login)
+    expect(screen.queryByRole('tooltip')).toBeNull()
 
     const admin = card('admin')
     fireEvent.focus(admin)
-    expect(screen.queryByRole('tooltip')).toBeNull()
+    expect(screen.getByRole('tooltip')).toHaveTextContent('Description not set')
     expect(emphasized()).toHaveLength(0)
   })
 })

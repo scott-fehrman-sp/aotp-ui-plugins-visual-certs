@@ -2,11 +2,15 @@ import {
   useContext,
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
+  useState,
   type KeyboardEvent,
   type MouseEvent,
   type ReactNode,
+  type RefObject,
 } from 'react'
+import { createPortal } from 'react-dom'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import type { AccessGraphNodeKind, AccessReviewStatus } from '../sailpoint/types'
 import { NODE_USER_HEIGHT, NODE_WIDTH, type AccessSceneNode } from './buildAccessScene'
@@ -14,6 +18,66 @@ import { EmphasisContext } from './EmphasisContext'
 import { SelectionContext } from './SelectionContext'
 import { isSelectableNodeData } from './selectEdges'
 import { KindIcon } from './kindIcons'
+
+/** Kinds a reviewer treats as access items. User, attribute, and source cards are not. */
+const ACCESS_ITEM_KINDS = new Set<AccessGraphNodeKind>(['role', 'accessProfile', 'entitlement'])
+
+const DESCRIPTION_UNSET = 'Description not set'
+
+/** The item's description, or a fixed line when that value was never set. */
+function accessItemDescription(description: string | undefined): string {
+  const text = description?.trim() ?? ''
+  return text.length > 0 ? text : DESCRIPTION_UNSET
+}
+
+/**
+ * Hover/focus description for one access-item card. Portaled to `document.body`
+ * so the canvas' `overflow: hidden` cannot clip it. Sits just below the card
+ * and stays out of the pointer so it never steals the hover from the card.
+ */
+function AccessItemTooltip({
+  anchor,
+  id,
+  text,
+}: {
+  anchor: RefObject<HTMLElement | null>
+  id: string
+  text: string
+}) {
+  const tipRef = useRef<HTMLDivElement>(null)
+  const [point, setPoint] = useState({ left: 0, top: 0 })
+
+  useLayoutEffect(() => {
+    const card = anchor.current
+    const tip = tipRef.current
+    if (!card || !tip) return
+    const cardRect = card.getBoundingClientRect()
+    const tipRect = tip.getBoundingClientRect()
+    const gap = 8
+    const margin = 8
+    let left = cardRect.left + cardRect.width / 2 - tipRect.width / 2
+    let top = cardRect.bottom + gap
+    const maxLeft = window.innerWidth - tipRect.width - margin
+    const maxTop = window.innerHeight - tipRect.height - margin
+    left = Math.max(margin, Math.min(left, maxLeft))
+    if (top > maxTop) top = cardRect.top - tipRect.height - gap
+    top = Math.max(margin, Math.min(top, maxTop))
+    setPoint((prev) => (prev.left === left && prev.top === top ? prev : { left, top }))
+  }, [anchor, text])
+
+  return createPortal(
+    <div
+      ref={tipRef}
+      id={id}
+      role="tooltip"
+      className="vc-graph-card-tip"
+      style={{ left: point.left, top: point.top }}
+    >
+      {text}
+    </div>,
+    document.body,
+  )
+}
 
 /** Human-readable caption for each layer. Used for the card's accessible name
  * and the detail panel; the card itself shows a per-kind icon instead of this
@@ -284,6 +348,9 @@ function AccessNodeView({
   const statusIconId = useId()
   const progressId = useId()
   const countId = useId()
+  const tipId = useId()
+  const cardRef = useRef<HTMLElement>(null)
+  const [showTip, setShowTip] = useState(false)
   const kindLabel = KIND_LABEL[data.kind]
   const completionDescribedBy =
     data.kind === 'user' && data.completion ? progressId : undefined
@@ -297,9 +364,8 @@ function AccessNodeView({
     (data.reference ? ' vc-graph-card-reference' : '')
 
   // Grid mode: the card is an activatable control that drills into the user.
-  // The hover tooltip was removed (the right-side detail panel now carries the
-  // kind / full label / detail / status), so the card renders bare; its full
-  // untruncated name stays available to assistive tech via `aria-label`.
+  // User cards have no description tooltip. The full untruncated name stays
+  // available to assistive tech via `aria-label`.
   if (data.interactive) {
     const activate = () => data.onSelect?.()
     return (
@@ -338,12 +404,25 @@ function AccessNodeView({
   // `emphasizeEdges`). Leave/blur only clear their own id so a quick move from
   // one card to the next never wipes the newer emphasis.
   const selectable = isSelectableNodeData(data)
+  const isAccessItem = ACCESS_ITEM_KINDS.has(data.kind)
   const emphasisHandlers = selectable
     ? {
-        onMouseEnter: () => setHover(id),
-        onMouseLeave: () => setHover((cur) => (cur === id ? null : cur)),
-        onFocus: () => setFocus(id),
-        onBlur: () => setFocus((cur) => (cur === id ? null : cur)),
+        onMouseEnter: () => {
+          setHover(id)
+          if (isAccessItem) setShowTip(true)
+        },
+        onMouseLeave: () => {
+          setHover((cur) => (cur === id ? null : cur))
+          if (isAccessItem) setShowTip(false)
+        },
+        onFocus: () => {
+          setFocus(id)
+          if (isAccessItem) setShowTip(true)
+        },
+        onBlur: () => {
+          setFocus((cur) => (cur === id ? null : cur))
+          if (isAccessItem) setShowTip(false)
+        },
       }
     : {}
 
@@ -366,9 +445,6 @@ function AccessNodeView({
     ? {
         role: 'button',
         'aria-pressed': selected,
-        // role=button replaces the card's child semantics, so point at the
-        // corner icon to keep the review status announced.
-        'aria-describedby': status ? statusIconId : undefined,
         onKeyDown: (event: KeyboardEvent) => {
           if (event.key === 'Enter' || event.key === ' ') {
             // Space would otherwise scroll the pane.
@@ -379,13 +455,22 @@ function AccessNodeView({
       }
     : {}
 
-  // Drill-down mode: the read-only card markup and a11y; first-level cards are
-  // also toggle buttons. The hover tooltip was removed (the detail panel now
-  // carries the kind / full label / detail / status); the card keeps its full
+  // Drill-down: first-level cards are also toggle buttons. Access items show
+  // their description on hover and keyboard focus. The card keeps its full
   // untruncated name via `aria-label` and its hover/focus edge emphasis.
+  const describedBy =
+    [
+      status ? statusIconId : null,
+      showTip ? tipId : null,
+      completionDescribedBy,
+      countDescribedBy,
+    ]
+      .filter((value) => value)
+      .join(' ') || undefined
   return (
     <>
       <article
+        ref={cardRef}
         className={`vc-graph-card kind-${data.kind}${statusClass}${selectionClass}`}
         tabIndex={0}
         aria-label={`${kindLabel}: ${data.label}`}
@@ -403,8 +488,7 @@ function AccessNodeView({
               },
             }
           : {})}
-        {...(completionDescribedBy ? { 'aria-describedby': completionDescribedBy } : {})}
-        {...(countDescribedBy ? { 'aria-describedby': countDescribedBy } : {})}
+        aria-describedby={describedBy}
       >
         <CardBody data={data} />
         <CardKindMark data={data} progressId={progressId} />
@@ -414,6 +498,13 @@ function AccessNodeView({
         {status ? <StatusIcon status={status} id={statusIconId} /> : null}
         {isManagerUser(data) ? <ManagerIcon /> : null}
       </article>
+      {showTip ? (
+        <AccessItemTooltip
+          anchor={cardRef}
+          id={tipId}
+          text={accessItemDescription(data.detail?.description)}
+        />
+      ) : null}
       {/* Sibling of the card, not a child: see `Handles`. */}
       {showHandles ? <Handles /> : null}
     </>
