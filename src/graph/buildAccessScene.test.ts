@@ -636,27 +636,27 @@ describe('buildAccessScene', () => {
     { nodes: Record<string, [number, number]>; edges: string[] }
   > = {
   'worked-LR': {
-    nodes: { 'user:u1': [24, -48], 'role:role-a': [344, 0], 'accessProfile:ap-foo': [664, 56], 'entitlement:e1': [984, -168], 'source:s1': [1304, 0], 'entitlement:e2': [984, 280], 'entitlement:e3': [984, -280], 'accessProfile:ap-bar': [664, -56], 'entitlement:e4': [984, -56], 'source:s2': [1304, -112], 'entitlement:e5': [984, 168], 'entitlement:e6': [984, 56], 'source:s3': [1304, 112] },
+    nodes: { 'user:u1': [24, -48], 'role:role-a': [344, -8], 'accessProfile:ap-foo': [664, 48], 'entitlement:e1': [984, -176], 'source:s1': [1304, 0], 'entitlement:e2': [984, 272], 'entitlement:e3': [984, -288], 'accessProfile:ap-bar': [664, -64], 'entitlement:e4': [984, -64], 'source:s2': [1304, -112], 'entitlement:e5': [984, 160], 'entitlement:e6': [984, 48], 'source:s3': [1304, 112] },
     edges: ['e:user:u1:role:role-a', 'e:role:role-a:accessProfile:ap-foo', 'e:accessProfile:ap-foo:entitlement:e1', 'e:entitlement:e1:source:s1', 'e:accessProfile:ap-foo:entitlement:e2', 'e:entitlement:e2:source:s1', 'e:role:role-a:entitlement:e3', 'e:entitlement:e3:source:s1', 'e:user:u1:accessProfile:ap-bar', 'e:accessProfile:ap-bar:entitlement:e4', 'e:entitlement:e4:source:s2', 'e:accessProfile:ap-bar:entitlement:e5', 'e:entitlement:e5:source:s2', 'e:user:u1:entitlement:e6', 'e:entitlement:e6:source:s3'],
   },
   'worked-TB': {
-    nodes: { 'user:u1': [0, 24], 'role:role-a': [0, 208], 'accessProfile:ap-foo': [124, 392], 'entitlement:e1': [-372, 576], 'source:s1': [0, 760], 'entitlement:e2': [620, 576], 'entitlement:e3': [-620, 576], 'accessProfile:ap-bar': [-124, 392], 'entitlement:e4': [-124, 576], 'source:s2': [-248, 760], 'entitlement:e5': [372, 576], 'entitlement:e6': [124, 576], 'source:s3': [248, 760] },
+    nodes: { 'user:u1': [0, 24], 'role:role-a': [0, 200], 'accessProfile:ap-foo': [124, 384], 'entitlement:e1': [-372, 568], 'source:s1': [0, 760], 'entitlement:e2': [620, 568], 'entitlement:e3': [-620, 568], 'accessProfile:ap-bar': [-124, 384], 'entitlement:e4': [-124, 568], 'source:s2': [-248, 760], 'entitlement:e5': [372, 568], 'entitlement:e6': [124, 568], 'source:s3': [248, 760] },
     edges: ['e:user:u1:role:role-a', 'e:role:role-a:accessProfile:ap-foo', 'e:accessProfile:ap-foo:entitlement:e1', 'e:entitlement:e1:source:s1', 'e:accessProfile:ap-foo:entitlement:e2', 'e:entitlement:e2:source:s1', 'e:role:role-a:entitlement:e3', 'e:entitlement:e3:source:s1', 'e:user:u1:accessProfile:ap-bar', 'e:accessProfile:ap-bar:entitlement:e4', 'e:entitlement:e4:source:s2', 'e:accessProfile:ap-bar:entitlement:e5', 'e:entitlement:e5:source:s2', 'e:user:u1:entitlement:e6', 'e:entitlement:e6:source:s3'],
   },
   'nested-LR': {
-    nodes: { 'user:u1': [24, -48], 'role:role-a': [344, 0], 'accessProfile:ap-foo': [664, 0], 'entitlement:e1': [984, 0], 'source:s1': [1304, 0] },
+    nodes: { 'user:u1': [24, -48], 'role:role-a': [344, -8], 'accessProfile:ap-foo': [664, -8], 'entitlement:e1': [984, -8], 'source:s1': [1304, 0] },
     edges: ['e:user:u1:role:role-a', 'e:role:role-a:accessProfile:ap-foo', 'e:accessProfile:ap-foo:entitlement:e1', 'e:entitlement:e1:source:s1', 'e:user:u1:entitlement:e1'],
   },
   'nested-TB': {
-    nodes: { 'user:u1': [0, 24], 'role:role-a': [0, 208], 'accessProfile:ap-foo': [0, 392], 'entitlement:e1': [0, 576], 'source:s1': [0, 760] },
+    nodes: { 'user:u1': [0, 24], 'role:role-a': [0, 200], 'accessProfile:ap-foo': [0, 384], 'entitlement:e1': [0, 568], 'source:s1': [0, 760] },
     edges: ['e:user:u1:role:role-a', 'e:role:role-a:accessProfile:ap-foo', 'e:accessProfile:ap-foo:entitlement:e1', 'e:entitlement:e1:source:s1', 'e:user:u1:entitlement:e1'],
   },
   'mixed-LR': {
-    nodes: { 'user:u1': [24, -48], 'role:r': [344, 0], 'accessProfile:ap': [664, 0], 'entitlement:l1': [984, 112], 'source:s': [1304, 0], 'entitlement:l2': [984, 224], 'entitlement:d1': [984, -224], 'entitlement:d2': [984, -112], 'entitlement:d3': [984, 0] },
+    nodes: { 'user:u1': [24, -48], 'role:r': [344, -8], 'accessProfile:ap': [664, -8], 'entitlement:l1': [984, 104], 'source:s': [1304, 0], 'entitlement:l2': [984, 216], 'entitlement:d1': [984, -232], 'entitlement:d2': [984, -120], 'entitlement:d3': [984, -8] },
     edges: ['e:user:u1:role:r', 'e:role:r:accessProfile:ap', 'e:accessProfile:ap:entitlement:l1', 'e:entitlement:l1:source:s', 'e:accessProfile:ap:entitlement:l2', 'e:entitlement:l2:source:s', 'e:user:u1:entitlement:d1', 'e:entitlement:d1:source:s', 'e:user:u1:entitlement:d2', 'e:entitlement:d2:source:s', 'e:user:u1:entitlement:d3', 'e:entitlement:d3:source:s'],
   },
   'mixed-TB': {
-    nodes: { 'user:u1': [0, 24], 'role:r': [0, 208], 'accessProfile:ap': [0, 392], 'entitlement:l1': [248, 576], 'source:s': [0, 760], 'entitlement:l2': [496, 576], 'entitlement:d1': [-496, 576], 'entitlement:d2': [-248, 576], 'entitlement:d3': [0, 576] },
+    nodes: { 'user:u1': [0, 24], 'role:r': [0, 200], 'accessProfile:ap': [0, 384], 'entitlement:l1': [248, 568], 'source:s': [0, 760], 'entitlement:l2': [496, 568], 'entitlement:d1': [-496, 568], 'entitlement:d2': [-248, 568], 'entitlement:d3': [0, 568] },
     edges: ['e:user:u1:role:r', 'e:role:r:accessProfile:ap', 'e:accessProfile:ap:entitlement:l1', 'e:entitlement:l1:source:s', 'e:accessProfile:ap:entitlement:l2', 'e:entitlement:l2:source:s', 'e:user:u1:entitlement:d1', 'e:entitlement:d1:source:s', 'e:user:u1:entitlement:d2', 'e:entitlement:d2:source:s', 'e:user:u1:entitlement:d3', 'e:entitlement:d3:source:s'],
   },
   }
@@ -782,7 +782,10 @@ describe('buildAccessScene', () => {
             const crosses = scene.nodes
               .filter((x) => x.data.kind !== 'user')
               .map((x) => crossOf(x, rankdir))
-            const laneMid = (Math.min(...crosses) + Math.max(...crosses) + extent) / 2
+            // Access items reserve the flag row and are centered on the slot,
+            // so the lane midpoint uses that box in LR. TB's cross axis is width.
+            const box = rankdir === 'LR' ? NODE_HEIGHT + NODE_FLAG_EXTRA : extent
+            const laneMid = (Math.min(...crosses) + Math.max(...crosses) + box) / 2
             // The user card's CENTER sits on the lane midpoint. In LR the user
             // card is taller (its cross axis is Y), so use its own cross extent;
             // in TB the cross axis is width, unchanged from the others.
@@ -867,7 +870,7 @@ describe('buildAccessScene', () => {
     }
   })
 
-  it('grows a flagged access item and keeps it centered on the standard card axis', () => {
+  it('gives every access item the flag-row height and keeps it centered on the lane axis', () => {
     const graph = {
       nodes: [
         { id: 'user:u', kind: 'user' as const, label: 'User' },
@@ -887,27 +890,25 @@ describe('buildAccessScene', () => {
         { from: 'entitlement:flagged', to: 'source:s', pathCount: 1 },
       ],
     }
-    // Lane gap used by the layout (NODE_SEP). Centers of the two entitlement
-    // cards stay one stride apart after the flagged card grows.
+    // Lane gap used by the layout (NODE_SEP). Both entitlements are the same
+    // height, so their tops stay one stride apart.
     const stride = NODE_HEIGHT + 48
+    const accessHeight = NODE_HEIGHT + NODE_FLAG_EXTRA
     for (const rankdir of ['LR', 'TB'] as const) {
       const scene = buildAccessScene(graph, rankdir)
       const flagged = scene.nodes.find((n) => n.id === 'entitlement:flagged')!
       const plain = scene.nodes.find((n) => n.id === 'entitlement:plain')!
       const source = scene.nodes.find((n) => n.id === 'source:s')!
-      expect(flagged.height).toBe(NODE_HEIGHT + NODE_FLAG_EXTRA)
-      expect(plain.height).toBe(NODE_HEIGHT)
+      expect(flagged.height).toBe(accessHeight)
+      expect(plain.height).toBe(accessHeight)
       expect(source.height).toBe(NODE_HEIGHT)
-      // Same rank in TB (shared vertical center). Stacked in LR, where the
-      // flagged card is lifted by half its extra height so the stride between
-      // the standard-box slots is unchanged.
+      // Same rank in TB (shared vertical center). Stacked in LR, lifted by
+      // half the flag row so the stride between the standard-box slots is
+      // unchanged.
       if (rankdir === 'TB') {
-        expect(flagged.position.y + (flagged.height ?? 0) / 2).toBe(
-          plain.position.y + NODE_HEIGHT / 2,
-        )
+        expect(flagged.position.y + accessHeight / 2).toBe(plain.position.y + accessHeight / 2)
       } else {
-        const flaggedSlot = flagged.position.y + NODE_FLAG_EXTRA / 2
-        expect(Math.abs(flaggedSlot - plain.position.y)).toBe(stride)
+        expect(Math.abs(flagged.position.y - plain.position.y)).toBe(stride)
       }
     }
   })

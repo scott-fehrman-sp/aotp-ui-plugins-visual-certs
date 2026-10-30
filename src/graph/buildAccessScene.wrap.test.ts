@@ -11,6 +11,7 @@ import {
   buildAccessScene,
   CARD_Z_INDEX,
   MAX_ITEMS_PER_LANE,
+  NODE_FLAG_EXTRA,
   NODE_HEIGHT,
   NODE_USER_HEIGHT,
   NODE_WIDTH,
@@ -178,7 +179,10 @@ describe('lane wrap past MAX_ITEMS_PER_LANE', () => {
           .map((n) => crossOf(n, d))
           .sort((a, b) => a - b)
         expect(sizes(ten, 'entitlement', d)).toEqual([10])
-        expect(crosses[0]).toBe(-(9 * CROSS_STRIDE(d)) / 2)
+        // LR centers the taller access-item card on the slot, so the top sits
+        // half a flag row above the single-lane formula.
+        const lift = d === 'LR' ? NODE_FLAG_EXTRA / 2 : 0
+        expect(crosses[0]).toBe(-(9 * CROSS_STRIDE(d)) / 2 - lift)
         crosses.forEach((c, i) => expect(c).toBe(crosses[0] + i * CROSS_STRIDE(d)))
         expect(sizes(sceneOf(ents(11), d), 'entitlement', d)).toEqual([6, 5])
       })
@@ -216,9 +220,12 @@ describe('lane wrap past MAX_ITEMS_PER_LANE', () => {
           crosses.forEach((c, j) => {
             if (j > 0) expect(c - crosses[j - 1]).toBe(CROSS_STRIDE(d))
           })
-          const extent = d === 'LR' ? NODE_HEIGHT : NODE_WIDTH
+          // Access items are taller than the lane slot and centered on it, so
+          // the midpoint of their boxes sits on the standard card's center.
+          const extent = d === 'LR' ? (sub.nodes[0].height ?? NODE_HEIGHT) : NODE_WIDTH
+          const axis = d === 'LR' ? NODE_HEIGHT / 2 : NODE_WIDTH / 2
           const mid = (crosses[0] + crosses[crosses.length - 1] + extent) / 2
-          expect(mid).toBeCloseTo(extent / 2, 9)
+          expect(mid).toBeCloseTo(axis, 9)
         })
       })
 
@@ -270,8 +277,8 @@ describe('lane wrap past MAX_ITEMS_PER_LANE', () => {
           const rects = scene.nodes.map((n) => ({
             x0: n.position.x,
             y0: n.position.y,
-            x1: n.position.x + NODE_WIDTH,
-            y1: n.position.y + NODE_HEIGHT,
+            x1: n.position.x + (n.width ?? NODE_WIDTH),
+            y1: n.position.y + (n.height ?? NODE_HEIGHT),
           }))
           for (let i = 0; i < rects.length; i++) {
             for (let j = i + 1; j < rects.length; j++) {
@@ -282,15 +289,21 @@ describe('lane wrap past MAX_ITEMS_PER_LANE', () => {
             }
           }
           const kinds: AccessGraphNodeKind[] = ['user', 'role', 'accessProfile', 'entitlement', 'source']
+          const accessItem = new Set<AccessGraphNodeKind>(['role', 'accessProfile', 'entitlement'])
           let prevEnd: number | null = null
           for (const kind of kinds) {
             const subs = subLanes(scene, kind, d)
             if (subs.length === 0) continue
-            if (prevEnd !== null) expect(subs[0].rank - prevEnd).toBeGreaterThanOrEqual(RANK_SEP)
+            // In TB the card top of an access item is half a flag row above
+            // its slot. Gaps are measured between those slots.
+            const lift = d === 'TB' && accessItem.has(kind) ? NODE_FLAG_EXTRA / 2 : 0
+            if (prevEnd !== null) {
+              expect(subs[0].rank + lift - prevEnd).toBeGreaterThanOrEqual(RANK_SEP)
+            }
             subs.forEach((s, i) => {
               if (i > 0) expect(s.rank - (subs[i - 1].rank + extent)).toBe(WRAP_GAP)
             })
-            prevEnd = subs[subs.length - 1].rank + extent
+            prevEnd = subs[subs.length - 1].rank + lift + extent
           }
         }
       })
@@ -303,8 +316,8 @@ describe('lane wrap past MAX_ITEMS_PER_LANE', () => {
       const scene = sceneOf(rows, 'LR')
       const subs = subLanes(scene, 'entitlement', 'LR')
       expect(subs.map((s) => s.rank)).toEqual([984, 1224])
-      expect(subs[0].nodes.map((n) => n.position.y)).toEqual([-280, -168, -56, 56, 168, 280])
-      expect(subs[1].nodes.map((n) => n.position.y)).toEqual([-224, -112, 0, 112, 224])
+      expect(subs[0].nodes.map((n) => n.position.y)).toEqual([-288, -176, -64, 48, 160, 272])
+      expect(subs[1].nodes.map((n) => n.position.y)).toEqual([-232, -120, -8, 104, 216])
       // The taller user card is lifted by half its extra height so its center
       // stays on the lane axis (top-left y = 0 - (160 - 64) / 2 = -48).
       expect(scene.nodes.find((n) => n.data.kind === 'user')!.position).toEqual({ x: 24, y: -48 })
@@ -313,7 +326,7 @@ describe('lane wrap past MAX_ITEMS_PER_LANE', () => {
     it('TB: rows 104 apart, axes swapped, source shifted by one step', () => {
       const scene = sceneOf(rows, 'TB')
       const subs = subLanes(scene, 'entitlement', 'TB')
-      expect(subs.map((s) => s.rank)).toEqual([576, 680])
+      expect(subs.map((s) => s.rank)).toEqual([568, 672])
       expect(subs[0].nodes.map((n) => n.position.x)).toEqual([-620, -372, -124, 124, 372, 620])
       expect(subs[1].nodes.map((n) => n.position.x)).toEqual([-496, -248, 0, 248, 496])
       expect(scene.nodes.find((n) => n.data.kind === 'user')!.position).toEqual({ x: 0, y: 24 })
@@ -323,13 +336,13 @@ describe('lane wrap past MAX_ITEMS_PER_LANE', () => {
       const lr = sceneOf(ents(10), 'LR')
       expect(
         lane(lr, 'entitlement').map((n) => n.position.y).sort((a, b) => a - b),
-      ).toEqual([-504, -392, -280, -168, -56, 56, 168, 280, 392, 504])
+      ).toEqual([-512, -400, -288, -176, -64, 48, 160, 272, 384, 496])
       expect(new Set(lane(lr, 'entitlement').map((n) => n.position.x))).toEqual(new Set([984]))
       const tb = sceneOf(ents(10), 'TB')
       expect(
         lane(tb, 'entitlement').map((n) => n.position.x).sort((a, b) => a - b),
       ).toEqual([-1116, -868, -620, -372, -124, 124, 372, 620, 868, 1116])
-      expect(new Set(lane(tb, 'entitlement').map((n) => n.position.y))).toEqual(new Set([576]))
+      expect(new Set(lane(tb, 'entitlement').map((n) => n.position.y))).toEqual(new Set([568]))
     })
   })
 
@@ -350,9 +363,9 @@ describe('lane wrap past MAX_ITEMS_PER_LANE', () => {
     it('TB: same fixture on the y axis', () => {
       const scene = sceneOf([...roles(11), ...aps(1), ...ents(12)], 'TB')
       expect(ranks(scene, 'user', 'TB')).toEqual([24])
-      expect(ranks(scene, 'role', 'TB')).toEqual([208, 312])
-      expect(ranks(scene, 'accessProfile', 'TB')).toEqual([392 + 104])
-      expect(ranks(scene, 'entitlement', 'TB')).toEqual([576 + 104, 680 + 104])
+      expect(ranks(scene, 'role', 'TB')).toEqual([200, 304])
+      expect(ranks(scene, 'accessProfile', 'TB')).toEqual([384 + 104])
+      expect(ranks(scene, 'entitlement', 'TB')).toEqual([568 + 104, 672 + 104])
       expect(ranks(scene, 'source', 'TB')).toEqual([760 + 208])
     })
     for (const d of DIRS) {
@@ -422,7 +435,8 @@ describe('lane wrap past MAX_ITEMS_PER_LANE', () => {
           expect(node.data.reviewStatus).toBe(src.reviewStatus)
           expect(node.data.reviewMixed).toBe(src.reviewMixed)
           expect(node.width).toBe(NODE_WIDTH)
-          // The user card is taller; every other kind keeps NODE_HEIGHT.
+          // The user card is taller. Access items reserve the flag row.
+          // Attributes and sources keep NODE_HEIGHT.
           expect(node.height).toBe(nodeHeightFor(src.kind))
           expect(node.sourcePosition).toBe(d === 'LR' ? Position.Right : Position.Bottom)
           expect(node.targetPosition).toBe(d === 'LR' ? Position.Left : Position.Top)

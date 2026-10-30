@@ -459,10 +459,11 @@
  * Access flags sit in a row at the top of a role, access profile, or
  * entitlement card, clear of the kind mark (bottom left) and the status icon
  * (bottom right). One attention color; each flag is a different shape.
- * The row is 5px from the top and 14px tall. A card that shows flags
- * (`.vc-graph-card-has-flags`) starts the name below that row, and
+ * The row is 5px from the top and 14px tall. Every access item reserves that
+ * row (`padding-top` below), whether or not it has flags, and
  * `NODE_FLAG_EXTRA` in buildAccessScene makes the card tall enough for the
- * kind glyph to stay inside.
+ * kind glyph to stay inside. Cards with no flags leave the row empty so the
+ * name still starts at the same place.
  */
 .vc-graph-card-flags {
   position: absolute;
@@ -475,7 +476,9 @@
   pointer-events: none;
 }
 
-.vc-graph-card-has-flags {
+.vc-graph-card.kind-role,
+.vc-graph-card.kind-accessProfile,
+.vc-graph-card.kind-entitlement {
   padding-top: 28px;
 }
 
@@ -601,13 +604,15 @@
 }
 
 /*
- * Selected card. Two cues, so selection does not rely on color alone: a quiet
- * fill (--card-selected, a light tint in light mode and a slightly lighter
- * card in dark mode) and a neutral outer ring (--ink, never one of the four
- * status colors) outside the status ring, separated by a --canvas gap. The
- * label, icons, left stripe and status ring stay as they are on an unselected
- * card. The transparent fallback keeps the ink ring when a reference card has
- * no status color. Specificity beats the status :hover rule.
+ * Selected card. Two cues, so selection does not rely on color alone: a fill
+ * (--card-selected: a light blue tint in light mode, a saturated blue in dark
+ * mode) and a neutral outer ring (--ink, never one of the four status colors)
+ * outside the status ring, separated by a --canvas gap. The label, icons, left
+ * stripe and status ring stay as they are on an unselected card. The
+ * transparent fallback keeps the ink ring when a reference card has no status
+ * color. Specificity beats the status :hover rule. Dark mode thickens that
+ * ring and adds a soft light halo, because a 2px ring vanishes when the graph
+ * is zoomed out and the dark card and canvas are close in value.
  */
 .vc-graph-card-selectable {
   cursor: pointer;
@@ -620,6 +625,16 @@
     0 0 0 2px var(--vc-graph-status, transparent),
     0 0 0 5px var(--canvas),
     0 0 0 7px var(--ink),
+    var(--shadow);
+}
+
+:root[data-theme='dark'] .vc-graph-card.vc-graph-card-selected,
+:root[data-theme='dark'] .vc-graph-card.vc-graph-card-selected:hover {
+  box-shadow:
+    0 0 0 2px var(--vc-graph-status, transparent),
+    0 0 0 5px var(--canvas),
+    0 0 0 8px var(--ink),
+    0 0 12px 1px rgba(231, 238, 246, 0.45),
     var(--shadow);
 }
 

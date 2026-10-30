@@ -216,27 +216,32 @@ export interface AccessScene {
 export const NODE_WIDTH = 200
 export const NODE_HEIGHT = 64
 /**
- * Extra height for a role, access profile, or entitlement that shows flag
- * icons. The icons sit in their own row above the name (see
- * `.vc-graph-card-has-flags`); this keeps the kind glyph inside the card.
- * The card stays centered on the standard box, so the extra 8px above and
- * below fits in the existing lane gap.
+ * Extra height reserved on every role, access profile, and entitlement, so a
+ * card with flag icons and a card without them are the same height. The icons
+ * sit in their own row above the name; an item with no flags leaves that row
+ * empty. The card stays centered on the standard box, so the extra 8px above
+ * and below fits in the existing lane gap. Attributes and sources do not show
+ * flags and stay {@link NODE_HEIGHT}.
  */
 export const NODE_FLAG_EXTRA = 16
 /**
  * The user node is taller than the others so its card can show the identity
  * lines an operator needs before choosing who to review: name, title,
  * department, location, and country, plus the completion row along the bottom.
- * Only the user kind uses this height; every other kind stays
- * {@link NODE_HEIGHT}, plus {@link NODE_FLAG_EXTRA} when it shows flags.
- * The user always sits alone in its own rank, so the extra height only
- * affects that lane's own cross-axis spacing, never the other lanes.
+ * Access items add {@link NODE_FLAG_EXTRA} on top of {@link NODE_HEIGHT}.
+ * Attributes and sources stay {@link NODE_HEIGHT}. The user always sits alone
+ * in its own rank, so its extra height only affects that lane's own
+ * cross-axis spacing, never the other lanes.
  */
 export const NODE_USER_HEIGHT = 160
 
 /** The laid-out box height for a node of the given kind. */
 export function nodeHeightFor(kind: AccessGraphNodeKind): number {
-  return kind === 'user' ? NODE_USER_HEIGHT : NODE_HEIGHT
+  if (kind === 'user') return NODE_USER_HEIGHT
+  if (kind === 'role' || kind === 'accessProfile' || kind === 'entitlement') {
+    return NODE_HEIGHT + NODE_FLAG_EXTRA
+  }
+  return NODE_HEIGHT
 }
 
 /**
@@ -495,12 +500,9 @@ export function buildAccessScene(
     const { rank: rankCoord, cross } = placements.get(node.id) ?? { rank: MARGIN, cross: 0 }
     const flags = mergeAccessFlags(node.flags, node.reviewFlags)
     const flagNotes = node.reviewFlagNotes
-    // Flags render only on access items. Grow those cards so the name can sit
-    // below the icon row; a user, attribute, or source never shows them.
-    const showsFlags =
-      flags.length > 0 &&
-      (node.kind === 'role' || node.kind === 'accessProfile' || node.kind === 'entitlement')
-    const height = nodeHeightFor(node.kind) + (showsFlags ? NODE_FLAG_EXTRA : 0)
+    // Every access item reserves the flag row, flagged or not, so those cards
+    // share one height. A user, attribute, or source never shows flags.
+    const height = nodeHeightFor(node.kind)
     // Rank-axis from the node's band; cross-axis from the de-overlapped lane.
     const x = vertical ? cross : rankCoord
     let y = vertical ? rankCoord : cross
@@ -509,11 +511,11 @@ export function buildAccessScene(
     // lifted by half its extra height so its vertical CENTER still sits on the
     // lane axis (and lines up with the role lane beside it). In TB the user's
     // extra height is on the rank axis and grows into the inter-rank gap, so
-    // that card is not nudged. A flagged access item is only slightly taller
-    // and shares its rank with standard cards, so it is centered in both
-    // directions.
+    // that card is not nudged. Access items are a little taller than the
+    // standard box and share a rank with nothing else of a different height,
+    // so they are centered in both directions.
     if (!vertical) y -= (height - NODE_HEIGHT) / 2
-    else if (showsFlags) y -= NODE_FLAG_EXTRA / 2
+    else if (isAccessItemKind(node.kind)) y -= NODE_FLAG_EXTRA / 2
     return {
       id: node.id,
       type: 'access',

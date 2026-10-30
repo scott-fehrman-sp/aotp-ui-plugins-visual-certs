@@ -60,8 +60,10 @@
   --meta: #d7e4f0;
   --card: #2c4256;
   --card-focus: #35506a;
-  /* Selected node fill: a quiet step lighter than the card, still a dark card. */
-  --card-selected: #3a5670;
+  /* Selected node fill: a saturated blue, the dark-mode counterpart of the
+     light tint. The unselected card is a dull blue-gray, so a lightness-only
+     step disappears; this keeps the light label readable (about 4.6:1). */
+  --card-selected: #2b6cb0;
   --line: #6e8ba3;
   --accent: #8eb6ff;
   --accent-ink: #0d1722;
