@@ -234,6 +234,10 @@
   overflow-wrap: anywhere;
 }
 
+.vc-graph-card-tip-flags {
+  display: block;
+}
+
 /* The taller user card packs several lines, so anchor its content to the top
    (the shorter cards keep their vertical centering from `.vc-graph-card`). */
 .vc-graph-card.kind-user {

@@ -32,15 +32,11 @@ function accessItemDescription(description: string | undefined): string {
   return text.length > 0 ? text : DESCRIPTION_UNSET
 }
 
-/** Hover text: the description, then the flag names when the card carries any. */
-function accessItemTooltipText(
-  description: string | undefined,
-  flags: readonly AccessFlag[] | undefined,
-): string {
-  const text = accessItemDescription(description)
-  if (!flags || flags.length === 0) return text
+/** Flag names for the hover tooltip, on their own line. Null when the card has none. */
+function accessItemFlagLine(flags: readonly AccessFlag[] | undefined): string | null {
+  if (!flags || flags.length === 0) return null
   const names = flags.map((flag) => ACCESS_FLAG_LABEL[flag]).join(', ')
-  return `${text} Flags: ${names}.`
+  return `Flags: ${names}.`
 }
 
 /** Flag marks along the top of an access-item card. */
@@ -67,11 +63,13 @@ function CardFlags({ flags, id }: { flags: readonly AccessFlag[]; id: string }) 
 function AccessItemTooltip({
   anchor,
   id,
-  text,
+  description,
+  flagLine,
 }: {
   anchor: RefObject<HTMLElement | null>
   id: string
-  text: string
+  description: string
+  flagLine: string | null
 }) {
   const tipRef = useRef<HTMLDivElement>(null)
   const [point, setPoint] = useState({ left: 0, top: 0 })
@@ -92,7 +90,7 @@ function AccessItemTooltip({
     if (top > maxTop) top = cardRect.top - tipRect.height - gap
     top = Math.max(margin, Math.min(top, maxTop))
     setPoint((prev) => (prev.left === left && prev.top === top ? prev : { left, top }))
-  }, [anchor, text])
+  }, [anchor, description, flagLine])
 
   return createPortal(
     <div
@@ -102,7 +100,8 @@ function AccessItemTooltip({
       className="vc-graph-card-tip"
       style={{ left: point.left, top: point.top }}
     >
-      {text}
+      {description}
+      {flagLine ? <span className="vc-graph-card-tip-flags">{flagLine}</span> : null}
     </div>,
     document.body,
   )
@@ -536,7 +535,8 @@ function AccessNodeView({
         <AccessItemTooltip
           anchor={cardRef}
           id={tipId}
-          text={accessItemTooltipText(data.detail?.description, flags)}
+          description={accessItemDescription(data.detail?.description)}
+          flagLine={accessItemFlagLine(flags)}
         />
       ) : null}
       {/* Sibling of the card, not a child: see `Handles`. */}

@@ -189,6 +189,15 @@ describe('AccessGraphCanvas node detail panel', () => {
     }
     expect(admin.querySelector('.sr-only')?.textContent).toMatch(/New Access/)
 
+    fireEvent.mouseEnter(admin)
+    const tip = screen.getByRole('tooltip')
+    const flagLine = tip.querySelector('.vc-graph-card-tip-flags')
+    expect(flagLine).toHaveTextContent(
+      'Flags: New Access, High Privilege (Overridden), Timebound Access, Comments, Cloud Enabled, Critical Data Access.',
+    )
+    expect(tip.textContent?.replace(flagLine?.textContent ?? '', '').trim()).toBe('Full admin')
+    fireEvent.mouseLeave(admin)
+
     openDetail()
     fireEvent.click(admin)
     const details = panel()!
