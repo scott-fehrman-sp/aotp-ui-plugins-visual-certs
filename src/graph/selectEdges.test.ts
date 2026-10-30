@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest'
 import type { Edge } from '@xyflow/react'
-import { buildFixtureGraph, statusGraph } from '../test/reviewStatusFixture'
+import { buildFixtureGraph, statusGraph, statusSubgraph } from '../test/reviewStatusFixture'
 import type { StatusRow } from '../test/reviewStatusFixture'
 import type { AccessGraphData, AccessReviewStatus } from '../sailpoint/types'
 import { userSubgraph } from './userSubgraph'
@@ -493,5 +493,127 @@ describe('reference-node selection', () => {
     expect(connectedEdgeIds(edges, 'source:s-erp').has(eid('user:u1', 'entitlement:e-login'))).toBe(
       false,
     )
+  })
+})
+
+describe('access-item → attribute edge color', () => {
+  // Role A (reassigned) contains read, also held directly (approved), and write,
+  // which is only nested. admin is a separate direct entitlement (revoked).
+  // All three entitlements share one attribute, which then reaches the source.
+  const scene = buildAccessScene(
+    statusSubgraph([
+      row({
+        id: '1',
+        role: 'Role A',
+        roleId: 'role-a',
+        accessProfile: 'foo',
+        accessProfileId: 'ap-foo',
+        entitlement: 'read',
+        entitlementId: 'e-read',
+        entitlementAttribute: 'memberOf',
+        source: 'ERP',
+        sourceId: 's-erp',
+        reviewStatus: 'reassigned',
+        accessItemKind: 'role',
+        accessItemId: 'role-a',
+        accessItemName: 'Role A',
+      }),
+      row({
+        id: '2',
+        role: 'Role A',
+        roleId: 'role-a',
+        accessProfile: 'foo',
+        accessProfileId: 'ap-foo',
+        entitlement: 'write',
+        entitlementId: 'e-write',
+        entitlementAttribute: 'memberOf',
+        source: 'ERP',
+        sourceId: 's-erp',
+        reviewStatus: 'reassigned',
+        accessItemKind: 'role',
+        accessItemId: 'role-a',
+        accessItemName: 'Role A',
+      }),
+      row({
+        id: '3',
+        entitlement: 'read',
+        entitlementId: 'e-read',
+        entitlementAttribute: 'memberOf',
+        source: 'ERP',
+        sourceId: 's-erp',
+        reviewStatus: 'approved',
+        accessItemKind: 'entitlement',
+        accessItemId: 'e-read',
+        accessItemName: 'read',
+      }),
+      row({
+        id: '4',
+        entitlement: 'admin',
+        entitlementId: 'e-admin',
+        entitlementAttribute: 'memberOf',
+        source: 'ERP',
+        sourceId: 's-erp',
+        reviewStatus: 'revoked',
+        accessItemKind: 'entitlement',
+        accessItemId: 'e-admin',
+        accessItemName: 'admin',
+      }),
+    ]),
+    'LR',
+  )
+  const strokeOf = (edges: Edge[], from: string, to: string) =>
+    edges.find((edge) => edge.id === eid(from, to))?.style?.stroke
+
+  it('uses each access item’s color when the attribute is selected', () => {
+    const out = highlightEdges(scene.edges, 'attribute:s-erp:memberOf', null, { reference: true })
+    expect(strokeOf(out, 'entitlement:e-read', 'attribute:s-erp:memberOf')).toBe(STATUS_STROKE.approved)
+    expect(strokeOf(out, 'entitlement:e-admin', 'attribute:s-erp:memberOf')).toBe(STATUS_STROKE.revoked)
+    expect(strokeOf(out, 'entitlement:e-write', 'attribute:s-erp:memberOf')).toBe(
+      STATUS_STROKE.reassigned,
+    )
+    // The link from the access item through the reference nodes uses that item,
+    // not the muted hairline. read is itself reviewed, so the hop that arrives
+    // at it uses read. write is only nested, so its hop uses the role.
+    expect(strokeOf(out, 'role:role-a', 'accessProfile:ap-foo')).toBe(STATUS_STROKE.reassigned)
+    expect(strokeOf(out, 'accessProfile:ap-foo', 'entitlement:e-read')).toBe(STATUS_STROKE.approved)
+    expect(strokeOf(out, 'accessProfile:ap-foo', 'entitlement:e-write')).toBe(
+      STATUS_STROKE.reassigned,
+    )
+    // The attribute → source hop is the one highlighted edge that stays muted.
+    expect(strokeOf(out, 'attribute:s-erp:memberOf', 'source:s-erp')).toBe('var(--edge)')
+    const readHop = out.find((edge) => edge.id === eid('entitlement:e-read', 'attribute:s-erp:memberOf'))!
+    expect(readHop.className).toContain(LINEAGE_EDGE_CLASS)
+    expect(readHop.style?.opacity).toBe(1)
+  })
+
+  it('keeps the access item’s color when an ancestor is selected', () => {
+    const out = highlightEdges(scene.edges, 'role:role-a', null)
+    // read is reviewed itself, so its hop stays approved rather than the role’s reassigned.
+    expect(strokeOf(out, 'entitlement:e-read', 'attribute:s-erp:memberOf')).toBe(STATUS_STROKE.approved)
+    // write has no review of its own, so the hop uses the role that contains it.
+    expect(strokeOf(out, 'entitlement:e-write', 'attribute:s-erp:memberOf')).toBe(
+      STATUS_STROKE.reassigned,
+    )
+    // Links that leave the role, and reference links under it, use the role.
+    // The hop that arrives at read uses read. Attribute → source stays muted.
+    expect(strokeOf(out, 'role:role-a', 'accessProfile:ap-foo')).toBe(STATUS_STROKE.reassigned)
+    expect(strokeOf(out, 'accessProfile:ap-foo', 'entitlement:e-write')).toBe(
+      STATUS_STROKE.reassigned,
+    )
+    expect(strokeOf(out, 'accessProfile:ap-foo', 'entitlement:e-read')).toBe(STATUS_STROKE.approved)
+    expect(strokeOf(out, 'attribute:s-erp:memberOf', 'source:s-erp')).toBe('var(--edge)')
+    // admin is not on the role’s path, so its hop is dimmed and keeps the hairline.
+    const admin = out.find((edge) => edge.id === eid('entitlement:e-admin', 'attribute:s-erp:memberOf'))!
+    expect(admin.style?.opacity).toBe(DIM_REFERENCE_OPACITY)
+    expect(admin.style?.stroke).toBe('var(--edge)')
+  })
+
+  it('uses the access item’s color when the user → item edge is not drawn', () => {
+    const drawn = scene.edges.filter((edge) => !isStatus(edge))
+    const out = highlightEdges(drawn, 'attribute:s-erp:memberOf', null, { reference: true })
+    expect(strokeOf(out, 'entitlement:e-read', 'attribute:s-erp:memberOf')).toBe(STATUS_STROKE.approved)
+    expect(strokeOf(out, 'entitlement:e-admin', 'attribute:s-erp:memberOf')).toBe(STATUS_STROKE.revoked)
+    expect(strokeOf(out, 'role:role-a', 'accessProfile:ap-foo')).toBe(STATUS_STROKE.reassigned)
+    expect(strokeOf(out, 'attribute:s-erp:memberOf', 'source:s-erp')).toBe('var(--edge)')
   })
 })

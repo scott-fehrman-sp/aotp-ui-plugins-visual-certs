@@ -570,9 +570,54 @@ describe('AccessGraphCanvas selection: an item both first-level and nested', () 
         eid('attribute:s-erp:memberOf', 'source:s-erp'),
       ].sort(),
     )
-    expect(lineageEdges()[0].style?.stroke).toBe(STATUS_STROKE.approved)
+    expect(
+      edges().find((edge) => edge.id === eid('entitlement:e-read', 'attribute:s-erp:memberOf'))
+        ?.style?.stroke,
+    ).toBe(STATUS_STROKE.approved)
+    expect(
+      edges().find((edge) => edge.id === eid('attribute:s-erp:memberOf', 'source:s-erp'))?.style
+        ?.stroke,
+    ).toBe('var(--edge)')
     const upstream = edges().find((e) => e.id === eid('accessProfile:ap-foo', 'entitlement:e-read'))!
     expect(upstream.style?.opacity).toBe(DIM_REFERENCE_OPACITY)
+  })
+
+  it('colors every access-item → attribute edge with that access item when the attribute is selected', async () => {
+    render(<AccessGraphCanvas graph={await buildFixtureGraph()} />)
+    fireEvent.click(btn('Show access for Alice Adams'))
+    fireEvent.click(btn(/^Show completed items/))
+    fireEvent.click(btn('Show reference nodes and links'))
+
+    const attribute = document.querySelector(
+      '[data-id="attribute:s-erp:memberOf"] .vc-graph-card',
+    )
+    expect(attribute).toBeTruthy()
+    fireEvent.click(attribute!)
+
+    const strokeOf = (from: string, to: string) =>
+      edges().find((edge) => edge.id === eid(from, to))?.style?.stroke
+    // Read is reviewed itself (approved), so its hop stays green even though
+    // Role A, which also contains it, is reassigned.
+    expect(strokeOf('entitlement:e-read', 'attribute:s-erp:memberOf')).toBe(STATUS_STROKE.approved)
+    // Pay is only reached through Billing, which still needs review.
+    expect(strokeOf('entitlement:e-pay', 'attribute:s-erp:memberOf')).toBe(STATUS_STROKE.needsReview)
+    // Write and Delete have no review of their own; they take Role A’s color.
+    expect(strokeOf('entitlement:e-write', 'attribute:s-erp:memberOf')).toBe(
+      STATUS_STROKE.reassigned,
+    )
+    expect(strokeOf('entitlement:e-del', 'attribute:s-erp:memberOf')).toBe(STATUS_STROKE.reassigned)
+    // The next hop, from each access item to the reference node, uses that item.
+    expect(strokeOf('accessProfile:ap-bill', 'entitlement:e-pay')).toBe(STATUS_STROKE.needsReview)
+    expect(strokeOf('role:role-a', 'accessProfile:ap-foo')).toBe(STATUS_STROKE.reassigned)
+    expect(strokeOf('role:role-a', 'entitlement:e-del')).toBe(STATUS_STROKE.reassigned)
+    expect(strokeOf('accessProfile:ap-foo', 'entitlement:e-write')).toBe(STATUS_STROKE.reassigned)
+    expect(strokeOf('accessProfile:ap-foo', 'entitlement:e-read')).toBe(STATUS_STROKE.approved)
+    // The hop out of the attribute is the only highlighted edge that stays muted.
+    expect(strokeOf('attribute:s-erp:memberOf', 'source:s-erp')).toBe('var(--edge)')
+    expect(
+      edges().find((edge) => edge.id === eid('entitlement:e-read', 'attribute:s-erp:memberOf'))
+        ?.className,
+    ).toContain(LINEAGE_EDGE_CLASS)
   })
 })
 

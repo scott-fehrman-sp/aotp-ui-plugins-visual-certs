@@ -268,7 +268,105 @@ describe('buildAccessScene', () => {
     expect(nested?.style?.strokeWidth).toBe(2)
     expect(nested?.style?.strokeDasharray).toBeUndefined()
     expect(Number(nested?.style?.opacity)).toBeLessThan(1)
-    expect(nested?.data).toEqual({ reference: true })
+    // Resting stroke stays the hairline. The edge also remembers that it
+    // arrives at the directly reviewed entitlement, for selection coloring.
+    expect(nested?.data).toEqual({ reference: true, accessItemStatus: 'approved' })
+  })
+
+  it('stamps the access item’s review color on the hop to an attribute', () => {
+    // Role A (reassigned) contains read, which is also held directly (approved),
+    // and write, which is only nested. admin is a separate direct entitlement
+    // (revoked) on the same attribute. The attribute → source hop has no item.
+    const scene = buildAccessScene(
+      statusSubgraph([
+        row({
+          id: '1',
+          role: 'Role A',
+          roleId: 'role-a',
+          accessProfile: 'foo',
+          accessProfileId: 'ap-foo',
+          entitlement: 'read',
+          entitlementId: 'e-read',
+          entitlementAttribute: 'memberOf',
+          source: 'ERP',
+          sourceId: 's-erp',
+          reviewStatus: 'reassigned',
+          accessItemKind: 'role',
+          accessItemId: 'role-a',
+          accessItemName: 'Role A',
+        }),
+        row({
+          id: '2',
+          role: 'Role A',
+          roleId: 'role-a',
+          accessProfile: 'foo',
+          accessProfileId: 'ap-foo',
+          entitlement: 'write',
+          entitlementId: 'e-write',
+          entitlementAttribute: 'memberOf',
+          source: 'ERP',
+          sourceId: 's-erp',
+          reviewStatus: 'reassigned',
+          accessItemKind: 'role',
+          accessItemId: 'role-a',
+          accessItemName: 'Role A',
+        }),
+        row({
+          id: '3',
+          entitlement: 'read',
+          entitlementId: 'e-read',
+          entitlementAttribute: 'memberOf',
+          source: 'ERP',
+          sourceId: 's-erp',
+          reviewStatus: 'approved',
+          accessItemKind: 'entitlement',
+          accessItemId: 'e-read',
+          accessItemName: 'read',
+        }),
+        row({
+          id: '4',
+          entitlement: 'admin',
+          entitlementId: 'e-admin',
+          entitlementAttribute: 'memberOf',
+          source: 'ERP',
+          sourceId: 's-erp',
+          reviewStatus: 'revoked',
+          accessItemKind: 'entitlement',
+          accessItemId: 'e-admin',
+          accessItemName: 'admin',
+        }),
+      ]),
+      'LR',
+    )
+    const dataOf = (from: string, to: string) =>
+      scene.edges.find((edge) => edge.source === from && edge.target === to)?.data as
+        | { accessItemStatus?: string; reviewStatus?: string }
+        | undefined
+    // A directly reviewed item keeps its own color, even when a parent differs.
+    expect(dataOf('entitlement:e-read', 'attribute:s-erp:memberOf')?.accessItemStatus).toBe(
+      'approved',
+    )
+    expect(dataOf('entitlement:e-admin', 'attribute:s-erp:memberOf')?.accessItemStatus).toBe(
+      'revoked',
+    )
+    // A nested item with no review of its own takes the containing item's color.
+    expect(dataOf('entitlement:e-write', 'attribute:s-erp:memberOf')?.accessItemStatus).toBe(
+      'reassigned',
+    )
+    // Links that leave an access item, or arrive at one, carry that item.
+    expect(dataOf('role:role-a', 'accessProfile:ap-foo')?.accessItemStatus).toBe('reassigned')
+    expect(dataOf('accessProfile:ap-foo', 'entitlement:e-read')?.accessItemStatus).toBe('approved')
+    expect(dataOf('accessProfile:ap-foo', 'entitlement:e-write')?.accessItemStatus).toBe(
+      'reassigned',
+    )
+    // The attribute → source hop is the one edge that stays plain.
+    expect(dataOf('attribute:s-erp:memberOf', 'source:s-erp')?.accessItemStatus).toBeUndefined()
+    // At rest the hop is still a muted reference hairline. Selection paints it.
+    const readHop = scene.edges.find(
+      (edge) => edge.source === 'entitlement:e-read' && edge.target === 'attribute:s-erp:memberOf',
+    )
+    expect(readHop?.style?.stroke).toBe('var(--edge)')
+    expect(readHop?.className).toBe('vc-graph-edge-reference')
   })
 
   it('marks nested-only nodes reference and first-level nodes not', () => {

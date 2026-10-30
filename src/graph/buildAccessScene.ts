@@ -37,12 +37,15 @@
 import { Position, type Edge, type Node } from '@xyflow/react'
 import type {
   AccessGraphData,
+  AccessGraphEdge,
   AccessGraphNodeKind,
+  AccessReviewStatus,
   AccessSceneNodeData,
   RankDir,
   UserCompletion,
 } from '../sailpoint/types'
 import { mergeAccessFlags } from '../domain/accessFlags'
+import { aggregateReviewStatus } from '../domain/metrics'
 import { isReferenceNode, isStatusEdge } from './referenceFilter'
 
 /**
@@ -76,6 +79,124 @@ function kindRank(kind: AccessGraphNodeKind, attributeLane: boolean): number {
 
 function hasAttributeLane(graph: AccessGraphData): boolean {
   return graph.nodes.some((node) => node.kind === 'attribute')
+}
+
+const ACCESS_ITEM_KINDS = new Set<AccessGraphNodeKind>(['role', 'accessProfile', 'entitlement'])
+
+function isAccessItemKind(kind: AccessGraphNodeKind | undefined): boolean {
+  return kind !== undefined && ACCESS_ITEM_KINDS.has(kind)
+}
+
+/** The attribute → source hop. It is the one reference edge that stays muted. */
+function isAttributeSourceHop(
+  edge: Pick<AccessGraphEdge, 'from' | 'to'>,
+  kindOf: ReadonlyMap<string, AccessGraphNodeKind>,
+): boolean {
+  const from = kindOf.get(edge.from)
+  const to = kindOf.get(edge.to)
+  return (from === 'attribute' && to === 'source') || (from === 'source' && to === 'attribute')
+}
+
+/**
+ * Review color of one node: the status stamped on the node, or the status of
+ * an incoming edge when the scene is built before that stamp (the full graph
+ * keeps status on the user → item edge only).
+ */
+function statusAt(
+  nodeId: string,
+  nodeStatus: ReadonlyMap<string, AccessReviewStatus>,
+  incoming: ReadonlyMap<string, readonly AccessGraphEdge[]>,
+): AccessReviewStatus | undefined {
+  const onNode = nodeStatus.get(nodeId)
+  if (onNode) return onNode
+  const statuses = (incoming.get(nodeId) ?? [])
+    .map((edge) => edge.reviewStatus)
+    .filter((status): status is AccessReviewStatus => status !== undefined)
+  return aggregateReviewStatus(statuses)?.status
+}
+
+/**
+ * Review color of the access item that owns `nodeId`. The node's own status
+ * wins. A reference node with none walks upstream to the reviewed access item
+ * that contains it (several disagreeing ancestors collapse with the same rank
+ * as the rest of the review overlay).
+ */
+function resolveAccessItemStatus(
+  itemId: string,
+  nodeStatus: ReadonlyMap<string, AccessReviewStatus>,
+  incoming: ReadonlyMap<string, readonly AccessGraphEdge[]>,
+): AccessReviewStatus | undefined {
+  const own = statusAt(itemId, nodeStatus, incoming)
+  if (own) return own
+  const found: AccessReviewStatus[] = []
+  const seen = new Set<string>([itemId])
+  const queue: string[] = []
+  for (const edge of incoming.get(itemId) ?? []) queue.push(edge.from)
+  for (let head = 0; head < queue.length; head += 1) {
+    const id = queue[head]
+    if (seen.has(id)) continue
+    seen.add(id)
+    const status = statusAt(id, nodeStatus, incoming)
+    if (status) {
+      found.push(status)
+      continue
+    }
+    for (const edge of incoming.get(id) ?? []) queue.push(edge.from)
+  }
+  return aggregateReviewStatus(found)?.status
+}
+
+/**
+ * Review color for one reference edge.
+ *
+ * A link that leaves an access item uses that item. A link that arrives at an
+ * access item (the source is reference-only) uses the item it arrives at. A
+ * link between reference nodes uses the access item upstream of its source.
+ * The attribute → source hop has no access-item color.
+ */
+function edgeAccessItemStatus(
+  edge: AccessGraphEdge,
+  kindOf: ReadonlyMap<string, AccessGraphNodeKind>,
+  nodeStatus: ReadonlyMap<string, AccessReviewStatus>,
+  incoming: ReadonlyMap<string, readonly AccessGraphEdge[]>,
+): AccessReviewStatus | undefined {
+  if (isAttributeSourceHop(edge, kindOf)) return undefined
+  if (isAccessItemKind(kindOf.get(edge.from))) {
+    const fromStatus = statusAt(edge.from, nodeStatus, incoming)
+    if (fromStatus) return fromStatus
+  }
+  if (isAccessItemKind(kindOf.get(edge.to))) {
+    const toStatus = statusAt(edge.to, nodeStatus, incoming)
+    if (toStatus) return toStatus
+  }
+  return resolveAccessItemStatus(edge.from, nodeStatus, incoming)
+}
+
+/**
+ * `from|to` → the access item's review status, for every reference edge except
+ * the attribute → source hop. At rest the edge stays a muted hairline;
+ * selection paints a highlighted edge with this status. The attribute → source
+ * hop is omitted so it stays muted.
+ */
+function accessItemEdgeStatuses(graph: AccessGraphData): Map<string, AccessReviewStatus> {
+  const kindOf = new Map(graph.nodes.map((node) => [node.id, node.kind]))
+  const nodeStatus = new Map<string, AccessReviewStatus>()
+  for (const node of graph.nodes) {
+    if (node.reviewStatus) nodeStatus.set(node.id, node.reviewStatus)
+  }
+  const incoming = new Map<string, AccessGraphEdge[]>()
+  for (const edge of graph.edges) {
+    const list = incoming.get(edge.to)
+    if (list) list.push(edge)
+    else incoming.set(edge.to, [edge])
+  }
+  const result = new Map<string, AccessReviewStatus>()
+  for (const edge of graph.edges) {
+    if (isStatusEdge(edge) && edge.reviewStatus) continue
+    const status = edgeAccessItemStatus(edge, kindOf, nodeStatus, incoming)
+    if (status) result.set(`${edge.from}|${edge.to}`, status)
+  }
+  return result
 }
 
 /** A positioned React Flow node whose `data` is our small scene payload. */
@@ -456,6 +577,11 @@ export function buildAccessScene(
         return { stroke: 'var(--vc-accent)', strokeWidth: 3, strokeDasharray: '2 3' }
     }
   }
+  // Reference edges remember the access item's review color so a highlighted
+  // link from an access item through reference nodes uses that item's color.
+  // The attribute → source hop is left unset and stays the muted hairline.
+  // Every edge stays a muted hairline until it is part of a selection.
+  const hopStatus = accessItemEdgeStatuses(graph)
   const edges: Edge[] = graph.edges.map((edge) => {
     const base: Edge = {
       id: `e:${edge.from}:${edge.to}`,
@@ -475,10 +601,11 @@ export function buildAccessScene(
       }
     }
     // Reference edge: every other hop, a thin muted neutral hairline.
+    const accessItemStatus = hopStatus.get(`${edge.from}|${edge.to}`)
     return {
       ...base,
       className: 'vc-graph-edge-reference',
-      data: { reference: true },
+      data: accessItemStatus ? { reference: true, accessItemStatus } : { reference: true },
       style: { stroke: 'var(--edge)', strokeWidth: 2, opacity: 0.45 },
       zIndex: 0,
     }

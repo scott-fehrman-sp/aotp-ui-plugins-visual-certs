@@ -17,12 +17,19 @@
  * lineage is derived from the edges that are actually in the scene, hiding
  * reference content leaves no edge, and showing it again restores the path.
  *
+ * A highlighted reference edge takes the access item's review color
+ * (`data.accessItemStatus`, stamped by `buildAccessScene`): a link that
+ * leaves an access item uses that item, a link that arrives at one uses that
+ * item, and a link between reference nodes uses the access item upstream.
+ * The attribute → source hop is the one exception and keeps the muted
+ * hairline, whether the selected node is the access item, the attribute, or
+ * the source.
+ *
  * A reference-only node (a nested item, an attribute, or a source) has no
  * status edge. Selecting it highlights every visible edge on a directed path
  * through it — upstream toward the user and downstream toward the source —
- * keeping each edge's own stroke, and dims the rest. A source therefore lights
- * the links that reach it, and an attribute lights both the entitlements that
- * use it and its source.
+ * and dims the rest. A source therefore lights the links that reach it, and
+ * an attribute lights both the entitlements that use it and its source.
  *
  * Upstream edges are NOT associated: when an entitlement is both held directly
  * AND nested under a held role, selecting the entitlement does not highlight
@@ -176,12 +183,30 @@ export function connectedNodeIds(edges: Edge[], nodeId: string): Set<string> {
   return new Set([...downstream.nodeIds, ...upstream.nodeIds])
 }
 
+const REVIEW_STATUSES = new Set<AccessReviewStatus>([
+  'needsReview',
+  'approved',
+  'revoked',
+  'reassigned',
+])
+
 /**
- * A full-opacity, raised edge in the selected item's status color. The dash
- * pattern is left to CSS (`.vc-graph-edge-lineage`): the highlighted path
- * marches source → target. Forcing `strokeDasharray` here would freeze it.
+ * Review color of the access item on an access-item → attribute hop, stamped
+ * by `buildAccessScene`. Absent on every other edge.
  */
-function lineageEdge(edge: Edge, status: AccessReviewStatus): Edge {
+function accessItemStatusOf(edge: Edge): AccessReviewStatus | undefined {
+  const status = (edge.data as { accessItemStatus?: unknown } | undefined)?.accessItemStatus
+  return typeof status === 'string' && REVIEW_STATUSES.has(status as AccessReviewStatus)
+    ? (status as AccessReviewStatus)
+    : undefined
+}
+
+/**
+ * A full-opacity, raised edge. The dash pattern is left to CSS
+ * (`.vc-graph-edge-lineage`): the highlighted path marches source → target.
+ * Forcing `strokeDasharray` here would freeze it.
+ */
+function raisedLineage(edge: Edge, stroke: string): Edge {
   return {
     ...edge,
     zIndex: EMPHASIS_EDGE_Z_INDEX,
@@ -189,7 +214,32 @@ function lineageEdge(edge: Edge, status: AccessReviewStatus): Edge {
     className: `${edge.className ?? ''} ${LINEAGE_EDGE_CLASS}`.trim(),
     style: {
       ...edge.style,
-      stroke: STATUS_STROKE[status],
+      stroke,
+      strokeWidth: LINEAGE_STROKE_WIDTH,
+      opacity: 1,
+    },
+  }
+}
+
+/** The attribute → source hop. It stays the muted hairline even when highlighted. */
+function isAttributeSourceEdge(edge: Edge): boolean {
+  const fromAttribute = edge.source.startsWith('attribute:') || edge.target.startsWith('attribute:')
+  const fromSource = edge.source.startsWith('source:') || edge.target.startsWith('source:')
+  return fromAttribute && fromSource
+}
+
+/**
+ * Raises a reference edge without changing its stroke. Used for the
+ * attribute → source hop and for a reference edge that has no access-item color.
+ */
+function raisedMuted(edge: Edge): Edge {
+  return {
+    ...edge,
+    zIndex: EMPHASIS_EDGE_Z_INDEX,
+    interactionWidth: 0,
+    className: `${edge.className ?? ''} ${LINEAGE_EDGE_CLASS}`.trim(),
+    style: {
+      ...edge.style,
       strokeWidth: LINEAGE_STROKE_WIDTH,
       opacity: 1,
     },
@@ -197,24 +247,28 @@ function lineageEdge(edge: Edge, status: AccessReviewStatus): Edge {
 }
 
 /**
+ * Lineage edge in the selected item's status color. An edge that already
+ * carries an access item's color keeps that color. The attribute → source hop
+ * stays muted.
+ */
+function lineageEdge(edge: Edge, status: AccessReviewStatus): Edge {
+  if (isAttributeSourceEdge(edge)) return raisedMuted(edge)
+  return raisedLineage(edge, STATUS_STROKE[accessItemStatusOf(edge) ?? status])
+}
+
+/**
  * Raises one edge of a reference-node selection. A status edge keeps its color
- * and dash and is thickened like a hover; a reference hairline keeps its stroke
- * and is drawn at full opacity. Either way it sits above the cards and, with
- * the lineage class, marches source → target.
+ * and dash and is thickened like a hover. An edge with an access-item color
+ * uses that color. The attribute → source hop, and any other reference
+ * hairline with no access-item color, keeps its stroke. Either way it sits
+ * above the cards and, with the lineage class, marches source → target.
  */
 function highlightConnectedEdge(edge: Edge): Edge {
+  if (isAttributeSourceEdge(edge)) return raisedMuted(edge)
+  const itemStatus = accessItemStatusOf(edge)
+  if (itemStatus) return raisedLineage(edge, STATUS_STROKE[itemStatus])
   if (hasReviewStatus(edge)) return raiseEdge(edge, { className: LINEAGE_EDGE_CLASS })
-  return {
-    ...edge,
-    zIndex: EMPHASIS_EDGE_Z_INDEX,
-    interactionWidth: 0,
-    className: `${edge.className ?? ''} ${LINEAGE_EDGE_CLASS}`.trim(),
-    style: {
-      ...edge.style,
-      strokeWidth: LINEAGE_STROKE_WIDTH,
-      opacity: 1,
-    },
-  }
+  return raisedMuted(edge)
 }
 
 /**
@@ -268,7 +322,8 @@ export interface HighlightOptions {
  *   status color and every other edge is dimmed. A user -> item edge, when one
  *   is still in the list, is raised too.
  * - A reference node (`options.reference`): every edge on a path through it is
- *   raised, keeping its own stroke, and every other edge is dimmed.
+ *   raised. Edges that carry an access item's color use it; the attribute →
+ *   source hop stays the muted hairline. Every other edge is dimmed.
  * Hovering or focusing a DIFFERENT first-level item additionally raises that
  * item's user -> item edge as a preview; the selected item adds nothing.
  */
