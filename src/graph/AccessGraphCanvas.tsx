@@ -30,6 +30,7 @@ import {
   isNeedsReviewItem,
   isSelectableNodeData,
   lineageNodeIds,
+  needsReviewItemIdsUpstream,
 } from './selectEdges'
 import { highlightFrameEdges, isFramePlaced } from './graphTransition'
 import { useGraphTransition } from './useGraphTransition'
@@ -137,6 +138,18 @@ function selectionAnnouncement(
   const verb = change === 'remove' ? 'removed from' : 'added to'
   return `${label} ${verb} the selection. ${count} ${items} selected. Press Escape to clear.`
 }
+
+/** Live text when an attribute or source selects the items upstream of it. */
+function upstreamSelectionAnnouncement(anchor: string, count: number, itemLabel: string): string {
+  if (count <= 1) return selectionAnnouncement(itemLabel, 1, 'replace')
+  return `${count} items that need review selected for ${anchor}. Press Escape to clear.`
+}
+
+function sameIdSet(left: readonly string[], right: readonly string[]): boolean {
+  if (left.length !== right.length) return false
+  const ids = new Set(left)
+  return right.every((id) => ids.has(id))
+}
 /** The `user:<id>` node-id namespace prefix (see `domain/accessGraph.ts`). */
 const USER_ID_PREFIX = 'user:'
 
@@ -197,8 +210,12 @@ const MINIMAP_COLOR: Record<string, string> = {
  * card, and activating it again clears it. Access items that still need review
  * can be selected together: after the first is selected, Shift-click (or
  * Shift+Enter / Shift+Space) adds or removes another needs-review item and
- * the others stay selected. A completed item or a reference-only card always
- * replaces the selection with just that card. Each selected item's associated
+ * the others stay selected. Selecting an attribute or a source selects every
+ * needs-review role, access profile, and entitlement upstream of it, and
+ * activating that node again clears them. When nothing upstream still needs
+ * review, the attribute or source is selected by itself. Any other completed
+ * item or reference-only card replaces the selection with just that card.
+ * Each selected item's associated
  * edges (its user -> item edge plus every visible edge downstream to the
  * sources) are highlighted in that item's status color and all other edges
  * dim; see `highlightSelection`. The selection is cleared by clicking the
@@ -644,9 +661,10 @@ function CanvasSurface({
   // leaves another card. Purely an edge restyle: no layout or refit input.
   const emphasisId = hoverId ?? focusId
   // Any non-user node of the current scene can be selected. Several
-  // needs-review access items can be selected together. A reference node
-  // highlights the path through it; a first-level item highlights its status
-  // edge and downstream lineage.
+  // needs-review access items can be selected together, including every one
+  // upstream of a selected attribute or source. A reference node highlights
+  // the path through it; a first-level item highlights its status edge and
+  // downstream lineage.
   const selectedNodes = useMemo(() => {
     if (!inDrilldown || selectedIds.length === 0) return []
     return selectedIds.flatMap((id) => {
@@ -730,6 +748,24 @@ function CanvasSurface({
       const data = scene.nodes.find((node) => node.id === id)?.data
       if (!data || !isSelectableNodeData(data)) return
       const label = data.label
+      // An attribute or source selects every needs-review access item that
+      // reaches it. Activating it again clears that set. With none upstream,
+      // the node itself is selected, same as any other reference card.
+      if (data.kind === 'attribute' || data.kind === 'source') {
+        const related = needsReviewItemIdsUpstream(scene.nodes, scene.edges, id)
+        if (related.length > 0) {
+          if (sameIdSet(selectedIds, related)) {
+            setSelectedIds(EMPTY_IDS)
+            setAnnouncement('Selection cleared.')
+            return
+          }
+          const itemLabel =
+            scene.nodes.find((node) => node.id === related[0])?.data.label ?? label
+          setSelectedIds(related)
+          setAnnouncement(upstreamSelectionAnnouncement(label, related.length, itemLabel))
+          return
+        }
+      }
       // Shift extends a needs-review set: add the item, or remove it if it is
       // already in that set. A plain activation, and Shift on any other card,
       // selects only that card (or clears it when it was the only one).
@@ -757,7 +793,7 @@ function CanvasSurface({
       setSelectedIds([id])
       setAnnouncement(selectionAnnouncement(label, 1, 'replace'))
     },
-    [scene.nodes, selectedIds],
+    [scene.nodes, scene.edges, selectedIds],
   )
   const selection = useMemo<SelectionState>(
     () => ({ selectedIds: selectedIdSet, lineageNodeIds: lineage, toggle: toggleSelection }),
@@ -833,7 +869,9 @@ function CanvasSurface({
 
   // Mouse convenience: in grid mode, clicking a card also drills in; in
   // drill-down, clicking a card selects or deselects it. Needs-review access
-  // items accumulate only while Shift is held; other cards replace the selection.
+  // items accumulate only while Shift is held. An attribute or a source
+  // selects every needs-review access item upstream of it. Other cards
+  // replace the selection.
   const onNodeClick: NodeMouseHandler<AccessSceneNode> = (event, node) => {
     if (selectedUserId === null) {
       // Grid mode: clicking a user card drills into that user — "selecting

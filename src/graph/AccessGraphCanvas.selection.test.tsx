@@ -239,23 +239,20 @@ describe('AccessGraphCanvas item selection', () => {
     expect(edges()).toBe(edgesBefore)
     expect(pressed()).toHaveLength(0)
 
-    fireEvent.click(card('engr db'))
-    expect(pressed()).toEqual([card('engr db')])
+    // phone app has only completed items upstream, so the source itself is selected.
+    fireEvent.click(card('phone app'))
+    expect(pressed()).toEqual([card('phone app')])
     expect(lineageEdges().map((e) => e.id).sort()).toEqual(
-      [
-        eid('role:role-a', 'accessProfile:ap-foo'),
-        eid('accessProfile:ap-foo', 'entitlement:e1'),
-        eid('entitlement:e1', 'source:s1'),
-      ].sort(),
+      [eid('entitlement:e2', 'source:s2'), eid('entitlement:e3', 'source:s2')].sort(),
     )
-    // The unrelated login → phone app link is dimmed, not highlighted.
-    expect(edges().find((e) => e.id === eid('entitlement:e2', 'source:s2'))?.style?.opacity).toBe(
+    // The unrelated Role A → engr db link is dimmed, not highlighted.
+    expect(edges().find((e) => e.id === eid('entitlement:e1', 'source:s1'))?.style?.opacity).toBe(
       DIM_REFERENCE_OPACITY,
     )
-    expect(card('foo').className).toContain('vc-graph-card-lineage')
-    expect(card('phone app').className).toContain('vc-graph-card-reference-dim')
+    expect(card('foo').className).toContain('vc-graph-card-reference-dim')
+    expect(card('engr db').className).toContain('vc-graph-card-reference-dim')
 
-    fireEvent.click(card('engr db'))
+    fireEvent.click(card('phone app'))
     expect(pressed()).toHaveLength(0)
     expect(lineageEdges()).toHaveLength(0)
 
@@ -582,42 +579,37 @@ describe('AccessGraphCanvas selection: an item both first-level and nested', () 
     expect(upstream.style?.opacity).toBe(DIM_REFERENCE_OPACITY)
   })
 
-  it('colors every access-item → attribute edge with that access item when the attribute is selected', async () => {
+  it('colors every access-item → attribute edge with that access item when the attribute has nothing left to review', async () => {
     render(<AccessGraphCanvas graph={await buildFixtureGraph()} />)
     fireEvent.click(btn('Show access for Alice Adams'))
     fireEvent.click(btn(/^Show completed items/))
     fireEvent.click(btn('Show reference nodes and links'))
 
-    const attribute = document.querySelector(
-      '[data-id="attribute:s-erp:memberOf"] .vc-graph-card',
+    // Directory's memberOf has only completed items (Login approved, Admin
+    // revoked), so the attribute itself stays selected and colors its path.
+    const attribute = document.querySelector<HTMLElement>(
+      '[data-id="attribute:s-dir:memberOf"] .vc-graph-card',
     )
     expect(attribute).toBeTruthy()
     fireEvent.click(attribute!)
+    expect(attribute).toHaveAttribute('aria-pressed', 'true')
+    expect(card('Billing')).toHaveAttribute('aria-pressed', 'false')
 
     const strokeOf = (from: string, to: string) =>
       edges().find((edge) => edge.id === eid(from, to))?.style?.stroke
-    // Read is reviewed itself (approved), so its hop stays green even though
-    // Role A, which also contains it, is reassigned.
-    expect(strokeOf('entitlement:e-read', 'attribute:s-erp:memberOf')).toBe(STATUS_STROKE.approved)
-    // Pay is only reached through Billing, which still needs review.
-    expect(strokeOf('entitlement:e-pay', 'attribute:s-erp:memberOf')).toBe(STATUS_STROKE.needsReview)
-    // Write and Delete have no review of their own; they take Role A’s color.
-    expect(strokeOf('entitlement:e-write', 'attribute:s-erp:memberOf')).toBe(
-      STATUS_STROKE.reassigned,
-    )
-    expect(strokeOf('entitlement:e-del', 'attribute:s-erp:memberOf')).toBe(STATUS_STROKE.reassigned)
-    // The next hop, from each access item to the reference node, uses that item.
-    expect(strokeOf('accessProfile:ap-bill', 'entitlement:e-pay')).toBe(STATUS_STROKE.needsReview)
-    expect(strokeOf('role:role-a', 'accessProfile:ap-foo')).toBe(STATUS_STROKE.reassigned)
-    expect(strokeOf('role:role-a', 'entitlement:e-del')).toBe(STATUS_STROKE.reassigned)
-    expect(strokeOf('accessProfile:ap-foo', 'entitlement:e-write')).toBe(STATUS_STROKE.reassigned)
-    expect(strokeOf('accessProfile:ap-foo', 'entitlement:e-read')).toBe(STATUS_STROKE.approved)
+    expect(strokeOf('entitlement:e-login', 'attribute:s-dir:memberOf')).toBe(STATUS_STROKE.approved)
+    expect(strokeOf('entitlement:e-admin', 'attribute:s-dir:memberOf')).toBe(STATUS_STROKE.revoked)
     // The hop out of the attribute is the only highlighted edge that stays muted.
-    expect(strokeOf('attribute:s-erp:memberOf', 'source:s-erp')).toBe('var(--edge)')
+    expect(strokeOf('attribute:s-dir:memberOf', 'source:s-dir')).toBe('var(--edge)')
     expect(
-      edges().find((edge) => edge.id === eid('entitlement:e-read', 'attribute:s-erp:memberOf'))
+      edges().find((edge) => edge.id === eid('entitlement:e-login', 'attribute:s-dir:memberOf'))
         ?.className,
     ).toContain(LINEAGE_EDGE_CLASS)
+    // Billing still needs review, but it reaches ERP, not this attribute.
+    expect(
+      edges().find((edge) => edge.id === eid('entitlement:e-pay', 'attribute:s-erp:memberOf'))
+        ?.style?.opacity,
+    ).toBe(DIM_REFERENCE_OPACITY)
   })
 })
 
@@ -803,8 +795,8 @@ describe('AccessGraphCanvas needs-review multi-select', () => {
     fireEvent.click(card('Role A'))
     expect(pressedLabels()).toEqual(['Role: Role A'])
     shiftClick(card('vpn'))
-    fireEvent.click(card('engr db'))
-    expect(pressedLabels()).toEqual(['Source: engr db'])
+    fireEvent.click(card('foo'))
+    expect(pressedLabels()).toEqual(['Access profile: foo'])
   })
 
   it('clears every selected needs-review item on Escape and on a pane click', () => {
@@ -864,5 +856,115 @@ describe('AccessGraphCanvas needs-review multi-select', () => {
     const vpnEdge = edges().find((e) => e.id === eid('entitlement:e5', 'source:s5'))!
     expect(roleEdge.style?.stroke).toBe(STATUS_STROKE.approved)
     expect(vpnEdge.style?.stroke).toBe(STATUS_STROKE.needsReview)
+  })
+})
+
+/**
+ * Role A, Billing and vpn need review and use memberOf on engr db. pay needs
+ * review on the same source but a different attribute. audit is approved on
+ * memberOf. login is approved on phone app.
+ */
+function sharedSource(): AccessGraphData {
+  return statusGraph([
+    row({ id: '1', role: 'Role A', roleId: 'role-a', accessProfile: 'foo', accessProfileId: 'ap-foo', entitlement: 'read', entitlementId: 'e1', entitlementAttribute: 'memberOf', source: 'engr db', sourceId: 's1', reviewStatus: 'needsReview', accessItemKind: 'role', accessItemId: 'role-a', accessItemName: 'Role A' }),
+    row({ id: '7', accessProfile: 'Billing', accessProfileId: 'ap-bill', entitlement: 'invoice', entitlementId: 'e7', entitlementAttribute: 'memberOf', source: 'engr db', sourceId: 's1', reviewStatus: 'needsReview', accessItemKind: 'accessProfile', accessItemId: 'ap-bill', accessItemName: 'Billing' }),
+    row({ id: '5', entitlement: 'vpn', entitlementId: 'e5', entitlementAttribute: 'memberOf', source: 'engr db', sourceId: 's1', reviewStatus: 'needsReview', accessItemKind: 'entitlement', accessItemId: 'e5', accessItemName: 'vpn' }),
+    row({ id: '6', entitlement: 'pay', entitlementId: 'e6', entitlementAttribute: 'groups', source: 'engr db', sourceId: 's1', reviewStatus: 'needsReview', accessItemKind: 'entitlement', accessItemId: 'e6', accessItemName: 'pay' }),
+    row({ id: '8', entitlement: 'audit', entitlementId: 'e8', entitlementAttribute: 'memberOf', source: 'engr db', sourceId: 's1', reviewStatus: 'approved', accessItemKind: 'entitlement', accessItemId: 'e8', accessItemName: 'audit' }),
+    row({ id: '2', entitlement: 'login', entitlementId: 'e2', source: 'phone app', sourceId: 's2', reviewStatus: 'approved', accessItemKind: 'entitlement', accessItemId: 'e2', accessItemName: 'login' }),
+  ])
+}
+
+const MEMBER_OF = ['Access profile: Billing', 'Entitlement: vpn', 'Role: Role A']
+const ON_SOURCE = ['Access profile: Billing', 'Entitlement: pay', 'Entitlement: vpn', 'Role: Role A']
+
+describe('AccessGraphCanvas attribute and source select related needs-review items', () => {
+  beforeEach(() => {
+    spies.fitView.mockClear()
+    spies.setViewport.mockClear()
+  })
+
+  const open = () => {
+    render(<AccessGraphCanvas graph={sharedSource()} />)
+    drillIn()
+    fireEvent.click(btn('Show reference nodes and links'))
+    fireEvent.click(btn(/^Show completed items/))
+  }
+
+  it('selects every needs-review item that reaches a source, and clears them on a second click', () => {
+    open()
+    fireEvent.click(card('engr db'))
+
+    expect(pressedLabels()).toEqual(ON_SOURCE)
+    expect(card('audit')).toHaveAttribute('aria-pressed', 'false')
+    expect(card('login')).toHaveAttribute('aria-pressed', 'false')
+    expect(card('engr db')).toHaveAttribute('aria-pressed', 'false')
+    expect(card('engr db').className).toContain('vc-graph-card-lineage')
+    expect(lineageEdges().map((e) => e.id)).toEqual(
+      expect.arrayContaining([
+        eid('role:role-a', 'accessProfile:ap-foo'),
+        eid('entitlement:e5', 'attribute:s1:memberOf'),
+        eid('entitlement:e6', 'attribute:s1:groups'),
+        eid('accessProfile:ap-bill', 'entitlement:e7'),
+      ]),
+    )
+    expect(edges().find((e) => e.id === eid('entitlement:e8', 'attribute:s1:memberOf'))?.style?.opacity).toBe(
+      DIM_REFERENCE_OPACITY,
+    )
+    expect(edges().find((e) => e.id === eid('entitlement:e2', 'source:s2'))?.style?.opacity).toBe(
+      DIM_REFERENCE_OPACITY,
+    )
+    expect(liveText()).toContain(
+      '4 items that need review selected for engr db. Press Escape to clear.',
+    )
+
+    fireEvent.click(card('engr db'))
+    expect(pressed()).toHaveLength(0)
+    expect(liveText()).toContain('Selection cleared.')
+  })
+
+  it('selects only the needs-review items that use the clicked attribute', () => {
+    open()
+    fireEvent.click(card('memberOf'))
+
+    expect(pressedLabels()).toEqual(MEMBER_OF)
+    expect(card('pay')).toHaveAttribute('aria-pressed', 'false')
+    expect(card('audit')).toHaveAttribute('aria-pressed', 'false')
+    expect(card('memberOf').className).toContain('vc-graph-card-lineage')
+    expect(lineageEdges().map((e) => e.id)).not.toContain(eid('entitlement:e6', 'attribute:s1:groups'))
+    expect(liveText()).toContain(
+      '3 items that need review selected for memberOf. Press Escape to clear.',
+    )
+  })
+
+  it('replaces a partial selection with the full related set, including from the keyboard', () => {
+    open()
+    fireEvent.click(card('Role A'))
+    fireEvent.keyDown(card('engr db'), { key: 'Enter' })
+    expect(pressedLabels()).toEqual(ON_SOURCE)
+    expect(liveText()).toContain(
+      '4 items that need review selected for engr db. Press Escape to clear.',
+    )
+  })
+
+  it('selects a source by itself when every upstream item is already reviewed', () => {
+    open()
+    fireEvent.click(card('phone app'))
+    expect(pressedLabels()).toEqual(['Source: phone app'])
+    expect(liveText()).toContain('Highlighting the links for phone app. Press Escape to clear.')
+  })
+
+  it('selects the one needs-review item upstream of a source', () => {
+    render(<AccessGraphCanvas graph={needsReviewPair()} />)
+    drillIn()
+    fireEvent.click(btn('Show reference nodes and links'))
+    fireEvent.click(card('engr db'))
+    expect(pressedLabels()).toEqual(['Role: Role A'])
+    expect(card('vpn')).toHaveAttribute('aria-pressed', 'false')
+    expect(liveText()).toContain('Highlighting the links for Role A. Press Escape to clear.')
+    expect(lineageEdges().map((e) => e.id)).toEqual(
+      expect.arrayContaining([eid('entitlement:e1', 'source:s1')]),
+    )
+    expect(lineageEdges().map((e) => e.id)).not.toContain(eid('entitlement:e5', 'source:s5'))
   })
 })

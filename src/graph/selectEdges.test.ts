@@ -26,6 +26,7 @@ import {
   isSelectableNodeData,
   lineageEdgeIds,
   lineageNodeIds,
+  needsReviewItemIdsUpstream,
 } from './selectEdges'
 
 function row(overrides: Partial<StatusRow>): StatusRow {
@@ -615,5 +616,111 @@ describe('access-item → attribute edge color', () => {
     expect(strokeOf(out, 'entitlement:e-admin', 'attribute:s-erp:memberOf')).toBe(STATUS_STROKE.revoked)
     expect(strokeOf(out, 'role:role-a', 'accessProfile:ap-foo')).toBe(STATUS_STROKE.reassigned)
     expect(strokeOf(out, 'attribute:s-erp:memberOf', 'source:s-erp')).toBe('var(--edge)')
+  })
+})
+
+describe('needsReviewItemIdsUpstream', () => {
+  const scene = buildAccessScene(
+    statusSubgraph([
+      row({
+        id: '1',
+        role: 'Role A',
+        roleId: 'role-a',
+        accessProfile: 'foo',
+        accessProfileId: 'ap-foo',
+        entitlement: 'read',
+        entitlementId: 'e1',
+        entitlementAttribute: 'memberOf',
+        source: 'engr db',
+        sourceId: 's1',
+        reviewStatus: 'needsReview',
+        accessItemKind: 'role',
+        accessItemId: 'role-a',
+        accessItemName: 'Role A',
+      }),
+      row({
+        id: '5',
+        entitlement: 'vpn',
+        entitlementId: 'e5',
+        entitlementAttribute: 'memberOf',
+        source: 'engr db',
+        sourceId: 's1',
+        reviewStatus: 'needsReview',
+        accessItemKind: 'entitlement',
+        accessItemId: 'e5',
+        accessItemName: 'vpn',
+      }),
+      row({
+        id: '6',
+        entitlement: 'pay',
+        entitlementId: 'e6',
+        entitlementAttribute: 'groups',
+        source: 'engr db',
+        sourceId: 's1',
+        reviewStatus: 'needsReview',
+        accessItemKind: 'entitlement',
+        accessItemId: 'e6',
+        accessItemName: 'pay',
+      }),
+      row({
+        id: '7',
+        accessProfile: 'Billing',
+        accessProfileId: 'ap-bill',
+        entitlement: 'invoice',
+        entitlementId: 'e7',
+        entitlementAttribute: 'memberOf',
+        source: 'engr db',
+        sourceId: 's1',
+        reviewStatus: 'needsReview',
+        accessItemKind: 'accessProfile',
+        accessItemId: 'ap-bill',
+        accessItemName: 'Billing',
+      }),
+      row({
+        id: '8',
+        entitlement: 'audit',
+        entitlementId: 'e8',
+        entitlementAttribute: 'memberOf',
+        source: 'engr db',
+        sourceId: 's1',
+        reviewStatus: 'approved',
+        accessItemKind: 'entitlement',
+        accessItemId: 'e8',
+        accessItemName: 'audit',
+      }),
+      row({
+        id: '2',
+        entitlement: 'login',
+        entitlementId: 'e2',
+        source: 'phone app',
+        sourceId: 's2',
+        reviewStatus: 'approved',
+        accessItemKind: 'entitlement',
+        accessItemId: 'e2',
+        accessItemName: 'login',
+      }),
+    ]),
+    'LR',
+  )
+
+  it('collects every needs-review role, access profile and entitlement upstream of a source', () => {
+    expect(sorted(needsReviewItemIdsUpstream(scene.nodes, scene.edges, 'source:s1'))).toEqual(
+      sorted(['role:role-a', 'accessProfile:ap-bill', 'entitlement:e5', 'entitlement:e6']),
+    )
+  })
+
+  it('keeps an attribute to the items that use it, skipping a sibling attribute and completed items', () => {
+    expect(sorted(needsReviewItemIdsUpstream(scene.nodes, scene.edges, 'attribute:s1:memberOf'))).toEqual(
+      sorted(['role:role-a', 'accessProfile:ap-bill', 'entitlement:e5']),
+    )
+  })
+
+  it('excludes nested copies and is empty when nothing upstream still needs review', () => {
+    const memberOf = needsReviewItemIdsUpstream(scene.nodes, scene.edges, 'attribute:s1:memberOf')
+    expect(memberOf).not.toContain('accessProfile:ap-foo')
+    expect(memberOf).not.toContain('entitlement:e1')
+    expect(memberOf).not.toContain('entitlement:e8')
+    expect(needsReviewItemIdsUpstream(scene.nodes, scene.edges, 'source:s2')).toEqual([])
+    expect(needsReviewItemIdsUpstream(scene.nodes, scene.edges, 'source:missing')).toEqual([])
   })
 })

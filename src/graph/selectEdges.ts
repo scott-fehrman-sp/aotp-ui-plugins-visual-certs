@@ -47,6 +47,11 @@
  * `highlightSelection` highlights each of their lineages in that item's own
  * status color and dims everything else. A single selected node takes the
  * same path as `highlightEdges`.
+ *
+ * Selecting an attribute or a source is the shortcut for that group: every
+ * needs-review role, access profile, and entitlement upstream of it is
+ * selected together. A source therefore gathers every such item that reaches
+ * it; an attribute gathers only the items that use that attribute.
  */
 import type { Edge } from '@xyflow/react'
 import type { AccessReviewStatus, AccessSceneNodeData } from '../sailpoint/types'
@@ -98,7 +103,9 @@ const MULTI_SELECT_KINDS = new Set<AccessSceneNodeData['kind']>([
 /**
  * An access item still awaiting a decision. These are the only cards that
  * can share one selection: Shift-click (or Shift+Enter / Shift+Space) adds
- * another. Completed items and reference-only nodes stay one at a time.
+ * another, and selecting an attribute or a source selects every one of them
+ * upstream of that node. Completed items and other reference-only nodes stay
+ * one at a time.
  */
 export function isNeedsReviewItem(
   data: Pick<AccessSceneNodeData, 'kind' | 'reference' | 'reviewStatus'>,
@@ -182,6 +189,27 @@ export function connectedNodeIds(edges: Edge[], nodeId: string): Set<string> {
   const downstream = walk(edges, nodeId, 'out')
   const upstream = walk(edges, nodeId, 'in')
   return new Set([...downstream.nodeIds, ...upstream.nodeIds])
+}
+
+/**
+ * Ids of the needs-review access items (role, access profile, entitlement)
+ * that can reach `nodeId` by walking edges backward. Used when an attribute
+ * or a source is selected, so the operator gets every related item that still
+ * needs a decision. Nested reference copies are excluded. Order follows
+ * `nodes`. An unknown id, or a node with no such item upstream, gives `[]`.
+ */
+export function needsReviewItemIdsUpstream(
+  nodes: readonly {
+    id: string
+    data: Pick<AccessSceneNodeData, 'kind' | 'reference' | 'reviewStatus'>
+  }[],
+  edges: Edge[],
+  nodeId: string,
+): string[] {
+  const upstream = walk(edges, nodeId, 'in').nodeIds
+  return nodes
+    .filter((node) => upstream.has(node.id) && isNeedsReviewItem(node.data))
+    .map((node) => node.id)
 }
 
 const REVIEW_STATUSES = new Set<AccessReviewStatus>([

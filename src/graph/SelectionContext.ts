@@ -14,9 +14,11 @@ export interface SelectionState {
   lineageNodeIds: ReadonlySet<string>
   /**
    * Selects `id`. A plain activation selects only that node, or clears it
-   * when it was the only one. Pass `extend` (Shift-click, Shift+Enter, or
-   * Shift+Space) to add or remove a needs-review access item while the other
-   * needs-review items stay selected.
+   * when it was the only one. An attribute or a source selects every
+   * needs-review access item upstream of it (or just that node when none
+   * are), and activating it again clears that set. Pass `extend`
+   * (Shift-click, Shift+Enter, or Shift+Space) to add or remove a
+   * needs-review access item while the other needs-review items stay selected.
    */
   toggle: (id: string, extend?: boolean) => void
 }
