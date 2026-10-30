@@ -101,6 +101,74 @@ describe('toReviewItemVM', () => {
     expect(vm.dataImpact).toBeNull()
     // No identitySummary.identityId on the DTO -> empty join key.
     expect(vm.identityId).toBe('')
+    expect(vm.isBirthright).toBe(false)
+    expect(vm.accessEndDate).toBeNull()
+    expect(vm.hasCriticalData).toBe(false)
+  })
+
+  it('reads birthright, an end date, nested privilege, and critical data', () => {
+    const vm = toReviewItemVM({
+      id: 'r3',
+      comments: 'Granted by joiner',
+      accessSummary: {
+        access: { type: 'ROLE', id: 'role-1', name: 'Employee' },
+        role: {
+          id: 'role-1',
+          name: 'Employee',
+          revocable: false,
+          endDate: '2027-06-01T00:00:00.000Z',
+          entitlements: [
+            {
+              id: 'e1',
+              name: 'Payroll admin',
+              privileged: true,
+              cloudGoverned: true,
+              containsDataAccess: true,
+            },
+          ],
+        },
+      },
+    })
+
+    expect(vm).toMatchObject({
+      accessKind: 'role',
+      isBirthright: true,
+      accessEndDate: '2027-06-01T00:00:00.000Z',
+      isPrivileged: true,
+      isCloudGoverned: true,
+      hasCriticalData: true,
+    })
+  })
+
+  it('treats a manual high privilege override as overridden, and a criteria level as not', () => {
+    const overridden = toReviewItemVM({
+      id: 'r4',
+      accessSummary: {
+        access: { type: 'ENTITLEMENT', id: 'e1', name: 'Admin' },
+        entitlement: {
+          id: 'e1',
+          name: 'Admin',
+          privileged: true,
+          privilegeLevel: { effective: 'HIGH', setByType: 'OVERRIDE' },
+        } as never,
+      },
+    })
+    const criteria = toReviewItemVM({
+      id: 'r5',
+      accessSummary: {
+        access: { type: 'ENTITLEMENT', id: 'e2', name: 'Ops' },
+        entitlement: {
+          id: 'e2',
+          name: 'Ops',
+          privilegeLevel: { effective: 'HIGH', setByType: 'CUSTOM_CRITERIA' },
+        } as never,
+      },
+    })
+
+    expect(overridden.privilegeOverridden).toBe(true)
+    expect(overridden.isPrivileged).toBe(true)
+    expect(criteria.privilegeOverridden).toBe(false)
+    expect(criteria.isPrivileged).toBe(true)
   })
 })
 

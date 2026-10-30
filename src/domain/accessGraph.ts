@@ -6,6 +6,7 @@
  * lossless, deterministic transform of the rows — no I/O, no input mutation.
  */
 import type {
+  AccessFlag,
   AccessGraphData,
   AccessGraphEdge,
   AccessGraphNode,
@@ -13,6 +14,7 @@ import type {
   AccessMatrixRowVM,
   NodeDetail,
 } from '../sailpoint/types'
+import { mergeAccessFlags } from './accessFlags'
 import { withAttributeEntitlementCounts } from './attributeEntitlementCounts'
 import { reviewKey } from './reviewOverlay'
 
@@ -36,6 +38,34 @@ interface Level {
   label: string
   /** Extra detail for this node (user identity fields, or a description). */
   detail?: NodeDetail
+  /**
+   * Catalog flags this row contributes to the node. Merged across rows so a
+   * role picks up "contains privileged" from whichever leaf is privileged.
+   */
+  flags?: AccessFlag[]
+}
+
+/**
+ * Catalog flags for one node on this row. An entitlement shows a manual
+ * high-privilege override and cloud. A role or access profile shows that it
+ * contains privileged access (a privileged leaf, or a role whose own privilege
+ * level is high) and cloud when a leaf is cloud-enabled. Assignment flags are
+ * not derived here.
+ */
+function catalogFlags(kind: AccessGraphNodeKind, row: AccessMatrixRowVM): AccessFlag[] {
+  const privilegedLeaf =
+    row.entitlementPrivileged === true || row.entitlementPrivilegeOverridden === true
+  const cloudLeaf = row.entitlementCloudGoverned === true
+  const flags: AccessFlag[] = []
+  if (kind === 'entitlement') {
+    if (row.entitlementPrivilegeOverridden === true) flags.push('highPrivilege')
+    if (cloudLeaf) flags.push('cloudEnabled')
+  } else if (kind === 'role' || kind === 'accessProfile') {
+    const roleHigh = kind === 'role' && (row.rolePrivilegeLevel ?? '').toUpperCase() === 'HIGH'
+    if (privilegedLeaf || roleHigh) flags.push('containsPrivileged')
+    if (cloudLeaf) flags.push('cloudEnabled')
+  }
+  return flags
 }
 
 /**
@@ -220,17 +250,22 @@ export function deriveAccessGraph(
   const edges = new Map<string, AccessGraphEdge>()
 
   const addNode = (level: Level): void => {
-    if (!nodes.has(level.id)) {
-      // First-wins: the first row to introduce a node id sets its label AND
-      // detail; later rows for the same node do not overwrite.
+    const existing = nodes.get(level.id)
+    // Label and detail stay first-wins. Flags merge, so a later row can add
+    // "contains privileged" to a role the first row introduced without one.
+    const flags = mergeAccessFlags(existing?.flags, level.flags)
+    if (!existing) {
       const node: AccessGraphNode = {
         id: level.id,
         kind: level.kind,
         label: level.label,
       }
       if (level.detail) node.detail = level.detail
+      if (flags.length > 0) node.flags = flags
       nodes.set(level.id, node)
+      return
     }
+    if (flags.length > 0) existing.flags = flags
   }
 
   for (const row of rows) {
@@ -262,6 +297,7 @@ export function deriveAccessGraph(
         kind: 'role',
         label,
         detail: detailFor('role', row),
+        flags: catalogFlags('role', row),
       })
     }
     if (row.accessProfile !== '' || heldKind === 'accessProfile') {
@@ -275,6 +311,7 @@ export function deriveAccessGraph(
         kind: 'accessProfile',
         label,
         detail: detailFor('accessProfile', row),
+        flags: catalogFlags('accessProfile', row),
       })
     }
 
@@ -289,6 +326,7 @@ export function deriveAccessGraph(
         kind: 'entitlement',
         label: heldLabel('entitlement', row.entitlement),
         detail: detailFor('entitlement', row),
+        flags: catalogFlags('entitlement', row),
       })
     }
     // A schema attribute on this entitlement becomes its own node, shared by

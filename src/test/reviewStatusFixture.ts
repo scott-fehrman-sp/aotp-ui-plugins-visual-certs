@@ -262,8 +262,36 @@ export async function buildFixtureGraph(
   return applyReviewStatus(deriveAccessGraph(rows), items)
 }
 
-/** A matrix row plus the review status its review item should carry (test sugar). */
-export type StatusRow = AccessMatrixRowVM & { reviewStatus?: AccessReviewStatus }
+/** A matrix row plus the review status and access flags its review item should carry. */
+export type StatusRow = AccessMatrixRowVM & { reviewStatus?: AccessReviewStatus } & Partial<
+    Pick<
+      ReviewItemVM,
+      | 'isNewAccess'
+      | 'isPrivileged'
+      | 'isCloudGoverned'
+      | 'isBirthright'
+      | 'accessEndDate'
+      | 'hasCriticalData'
+      | 'privilegeOverridden'
+      | 'dataImpact'
+      | 'comments'
+    >
+  >
+
+/** Flag inputs a status row may carry, copied onto the synthesized review item. */
+function flagFields(row: StatusRow): Partial<ReviewItemVM> {
+  const fields: Partial<ReviewItemVM> = {}
+  if (row.isNewAccess !== undefined) fields.isNewAccess = row.isNewAccess
+  if (row.isPrivileged !== undefined) fields.isPrivileged = row.isPrivileged
+  if (row.isCloudGoverned !== undefined) fields.isCloudGoverned = row.isCloudGoverned
+  if (row.isBirthright !== undefined) fields.isBirthright = row.isBirthright
+  if (row.accessEndDate !== undefined) fields.accessEndDate = row.accessEndDate
+  if (row.hasCriticalData !== undefined) fields.hasCriticalData = row.hasCriticalData
+  if (row.privilegeOverridden !== undefined) fields.privilegeOverridden = row.privilegeOverridden
+  if (row.dataImpact !== undefined) fields.dataImpact = row.dataImpact
+  if (row.comments !== undefined) fields.comments = row.comments
+  return fields
+}
 
 const STATUS_FIELDS: Record<AccessReviewStatus, Partial<ReviewItemVM>> = {
   needsReview: {},
@@ -289,6 +317,7 @@ export function statusGraph(rows: StatusRow[]): AccessGraphData {
             accessKind: r.accessItemKind as ReviewItemVM['accessKind'],
             accessId: r.accessItemId ?? null,
             accessName: r.accessItemName ?? '',
+            ...flagFields(r),
             ...STATUS_FIELDS[r.reviewStatus],
           }),
         ]

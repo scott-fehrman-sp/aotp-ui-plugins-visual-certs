@@ -103,6 +103,13 @@ export interface ResolvedEntitlement {
   objectType: string
   /** True if the entitlement is marked privileged by its privilege level. */
   privileged: boolean
+  /**
+   * True when the privilege level was manually overridden to high
+   * (`setByType === 'OVERRIDE'` and the effective level is high). A high level
+   * chosen by criteria is privileged without being an override. Omitted by
+   * fixtures that predate the field; treated as not overridden.
+   */
+  privilegeOverridden?: boolean
   /** True if the entitlement is cloud governed. */
   cloudGoverned: boolean
   /** True if the entitlement can be directly requested. */
@@ -389,10 +396,16 @@ export function createAccessCompositionResolver(
   ): Promise<ResolvedEntitlement> => {
     const sourceId = ent.source?.id ?? null
     const resolvedSource = sourceId ? await source(sourceId) : null
-    // The SDK models `privileged` inside `privilegeLevel`; treat the presence
-    // of a truthy privilege indicator as "privileged". Guard with optional
-    // chaining so a missing block degrades to false rather than throwing.
-    const privilege = ent.privilegeLevel as { privileged?: boolean } | undefined
+    // Effective HIGH is privileged. A manual override
+    // (`setByType === 'OVERRIDE'`) is the certification "High Privilege
+    // (Overridden)" flag. Older payloads put a `privileged` boolean on the
+    // level block; that still counts as privileged, and as an override only
+    // when setByType says so.
+    const level = ent.privilegeLevel as
+      | { effective?: string; setByType?: string | null; privileged?: boolean }
+      | undefined
+    const legacyPrivileged = level?.privileged === true
+    const high = (level?.effective ?? '').toUpperCase() === 'HIGH' || legacyPrivileged
     return {
       id: ent.id ?? fallbackId ?? '',
       name: ent.name ?? '',
@@ -403,7 +416,8 @@ export function createAccessCompositionResolver(
       attribute: ent.attribute ?? '',
       value: ent.value ?? '',
       objectType: ent.sourceSchemaObjectType ?? '',
-      privileged: privilege?.privileged ?? false,
+      privileged: high,
+      privilegeOverridden: level?.setByType === 'OVERRIDE' && high,
       cloudGoverned: ent.cloudGoverned ?? false,
       requestable: ent.requestable ?? false,
       owner: ent.owner?.name ?? '',
@@ -524,6 +538,8 @@ interface RowTuple {
   entitlementObjectType?: string
   /** Resolved entitlement privileged flag, on a resolved leaf row. */
   entitlementPrivileged?: boolean
+  /** Resolved entitlement privilege-override flag, on a resolved leaf row. */
+  entitlementPrivilegeOverridden?: boolean
   /** Resolved entitlement cloud-governed flag, on a resolved leaf row. */
   entitlementCloudGoverned?: boolean
   /** Resolved entitlement requestable flag, on a resolved leaf row. */
@@ -602,6 +618,7 @@ async function resolveLeaf(
   entitlementValue?: string
   entitlementObjectType?: string
   entitlementPrivileged?: boolean
+  entitlementPrivilegeOverridden?: boolean
   entitlementCloudGoverned?: boolean
   entitlementRequestable?: boolean
   entitlementOwner?: string
@@ -655,6 +672,7 @@ async function resolveLeaf(
     entitlementValue: resolved.value,
     entitlementObjectType: resolved.objectType,
     entitlementPrivileged: resolved.privileged,
+    entitlementPrivilegeOverridden: resolved.privilegeOverridden,
     entitlementCloudGoverned: resolved.cloudGoverned,
     entitlementRequestable: resolved.requestable,
     entitlementOwner: resolved.owner,

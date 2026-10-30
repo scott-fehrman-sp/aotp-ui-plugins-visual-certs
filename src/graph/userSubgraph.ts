@@ -84,10 +84,20 @@ export function userSubgraph(
       const copy = { ...node }
       delete copy.reviewStatus
       delete copy.reviewMixed
+      // Assignment flags are per user. Drop any that a previous copy left, then
+      // take them from this user's first-level edge. Catalog `flags` stay.
+      delete copy.reviewFlags
+      delete copy.reviewFlagNotes
       const edge = edgeByTarget.get(node.id)
       if (edge?.reviewStatus) {
         copy.reviewStatus = edge.reviewStatus
         copy.reviewMixed = edge.reviewMixed
+      }
+      if (edge?.reviewFlags?.length) {
+        copy.reviewFlags = edge.reviewFlags
+        if (edge.reviewFlagNotes && Object.keys(edge.reviewFlagNotes).length > 0) {
+          copy.reviewFlagNotes = edge.reviewFlagNotes
+        }
       }
       return copy
     })

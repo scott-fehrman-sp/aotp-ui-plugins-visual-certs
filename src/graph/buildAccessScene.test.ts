@@ -3,7 +3,7 @@ import { deriveAccessGraph } from '../domain/accessGraph'
 import type { AccessMatrixRowVM } from '../sailpoint/types'
 import { statusSubgraph } from '../test/reviewStatusFixture'
 import type { StatusRow } from '../test/reviewStatusFixture'
-import { buildAccessScene, NODE_USER_HEIGHT } from './buildAccessScene'
+import { buildAccessScene, NODE_FLAG_EXTRA, NODE_HEIGHT, NODE_USER_HEIGHT } from './buildAccessScene'
 import { withoutReference } from './referenceFilter'
 
 function row(overrides: Partial<StatusRow>): StatusRow {
@@ -766,6 +766,51 @@ describe('buildAccessScene', () => {
     expect(user?.data.completion).toEqual(completion)
     for (const node of scene.nodes) {
       if (node.data.kind !== 'user') expect(node.data.completion).toBeUndefined()
+    }
+  })
+
+  it('grows a flagged access item and keeps it centered on the standard card axis', () => {
+    const graph = {
+      nodes: [
+        { id: 'user:u', kind: 'user' as const, label: 'User' },
+        {
+          id: 'entitlement:flagged',
+          kind: 'entitlement' as const,
+          label: 'Flagged',
+          reviewFlags: ['newAccess' as const],
+        },
+        { id: 'entitlement:plain', kind: 'entitlement' as const, label: 'Plain' },
+        // Flags on a non-access-item never render, so the card stays standard.
+        { id: 'source:s', kind: 'source' as const, label: 'Src', flags: ['cloudEnabled' as const] },
+      ],
+      edges: [
+        { from: 'user:u', to: 'entitlement:flagged', pathCount: 1 },
+        { from: 'user:u', to: 'entitlement:plain', pathCount: 1 },
+        { from: 'entitlement:flagged', to: 'source:s', pathCount: 1 },
+      ],
+    }
+    // Lane gap used by the layout (NODE_SEP). Centers of the two entitlement
+    // cards stay one stride apart after the flagged card grows.
+    const stride = NODE_HEIGHT + 48
+    for (const rankdir of ['LR', 'TB'] as const) {
+      const scene = buildAccessScene(graph, rankdir)
+      const flagged = scene.nodes.find((n) => n.id === 'entitlement:flagged')!
+      const plain = scene.nodes.find((n) => n.id === 'entitlement:plain')!
+      const source = scene.nodes.find((n) => n.id === 'source:s')!
+      expect(flagged.height).toBe(NODE_HEIGHT + NODE_FLAG_EXTRA)
+      expect(plain.height).toBe(NODE_HEIGHT)
+      expect(source.height).toBe(NODE_HEIGHT)
+      // Same rank in TB (shared vertical center). Stacked in LR, where the
+      // flagged card is lifted by half its extra height so the stride between
+      // the standard-box slots is unchanged.
+      if (rankdir === 'TB') {
+        expect(flagged.position.y + (flagged.height ?? 0) / 2).toBe(
+          plain.position.y + NODE_HEIGHT / 2,
+        )
+      } else {
+        const flaggedSlot = flagged.position.y + NODE_FLAG_EXTRA / 2
+        expect(Math.abs(flaggedSlot - plain.position.y)).toBe(stride)
+      }
     }
   })
 })

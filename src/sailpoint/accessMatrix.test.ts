@@ -812,6 +812,7 @@ describe('createAccessCompositionResolver entitlementByName', () => {
       value: 'cn=readers',
       objectType: 'group',
       privileged: true,
+      privilegeOverridden: false,
       cloudGoverned: true,
       requestable: true,
       owner: 'Dana Owner',

@@ -452,6 +452,38 @@
 }
 
 /*
+ * Access flags sit in a row at the top of a role, access profile, or
+ * entitlement card, clear of the kind mark (bottom left) and the status icon
+ * (bottom right). One attention color; each flag is a different shape.
+ * The row is 5px from the top and 14px tall. A card that shows flags
+ * (`.vc-graph-card-has-flags`) starts the name below that row, and
+ * `NODE_FLAG_EXTRA` in buildAccessScene makes the card tall enough for the
+ * kind glyph to stay inside.
+ */
+.vc-graph-card-flags {
+  position: absolute;
+  top: 5px;
+  right: 8px;
+  left: 8px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 3px;
+  pointer-events: none;
+}
+
+.vc-graph-card-has-flags {
+  padding-top: 28px;
+}
+
+.vc-graph-flag-icon {
+  width: 14px;
+  height: 14px;
+  display: block;
+  flex: none;
+  color: var(--vc-warn);
+}
+
+/*
  * Manager badge on a USER card: an amber pill in the bottom-right corner holding
  * the org-chart "reports" glyph, replicating org-graph's `.manager-mark` (same
  * 22px circle, amber fill, dark glyph, subtle inner ring). The user's kind glyph
@@ -599,7 +631,7 @@
 }
 
 /*
- * Drill-down node legend: a Types column and a Status column, split by a
+ * Drill-down node legend: Types, Status, and Flags columns, each split by a
  * vertical rule. The panel is bottom-left, shifted right of the zoom controls
  * (26px button, 1px border each side, 15px panel margin) so the two sit side
  * by side on the same bottom edge. The user grid does not mount this panel.
@@ -654,6 +686,12 @@
 .vc-graph-legend-row .vc-graph-status-icon {
   position: static;
   flex: 0 0 auto;
+}
+
+/* Flag glyphs are 14px on a card. In the legend they match the 16px kind icons. */
+.vc-graph-legend-row .vc-graph-flag-icon {
+  width: 16px;
+  height: 16px;
 }
 
 .vc-graph-legend-icon {

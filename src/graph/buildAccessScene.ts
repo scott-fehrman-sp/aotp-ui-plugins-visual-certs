@@ -42,6 +42,7 @@ import type {
   RankDir,
   UserCompletion,
 } from '../sailpoint/types'
+import { mergeAccessFlags } from '../domain/accessFlags'
 import { isReferenceNode, isStatusEdge } from './referenceFilter'
 
 /**
@@ -94,13 +95,21 @@ export interface AccessScene {
 export const NODE_WIDTH = 200
 export const NODE_HEIGHT = 64
 /**
+ * Extra height for a role, access profile, or entitlement that shows flag
+ * icons. The icons sit in their own row above the name (see
+ * `.vc-graph-card-has-flags`); this keeps the kind glyph inside the card.
+ * The card stays centered on the standard box, so the extra 8px above and
+ * below fits in the existing lane gap.
+ */
+export const NODE_FLAG_EXTRA = 16
+/**
  * The user node is taller than the others so its card can show the identity
  * lines an operator needs before choosing who to review: name, title,
  * department, location, and country, plus the completion row along the bottom.
  * Only the user kind uses this height; every other kind stays
- * {@link NODE_HEIGHT}. The user always sits alone in its own rank, so the
- * extra height only affects that lane's own cross-axis spacing, never the
- * other lanes.
+ * {@link NODE_HEIGHT}, plus {@link NODE_FLAG_EXTRA} when it shows flags.
+ * The user always sits alone in its own rank, so the extra height only
+ * affects that lane's own cross-axis spacing, never the other lanes.
  */
 export const NODE_USER_HEIGHT = 160
 
@@ -363,16 +372,27 @@ export function buildAccessScene(
 
   const nodes: AccessSceneNode[] = graph.nodes.map((node) => {
     const { rank: rankCoord, cross } = placements.get(node.id) ?? { rank: MARGIN, cross: 0 }
-    const height = nodeHeightFor(node.kind)
+    const flags = mergeAccessFlags(node.flags, node.reviewFlags)
+    const flagNotes = node.reviewFlagNotes
+    // Flags render only on access items. Grow those cards so the name can sit
+    // below the icon row; a user, attribute, or source never shows them.
+    const showsFlags =
+      flags.length > 0 &&
+      (node.kind === 'role' || node.kind === 'accessProfile' || node.kind === 'entitlement')
+    const height = nodeHeightFor(node.kind) + (showsFlags ? NODE_FLAG_EXTRA : 0)
     // Rank-axis from the node's band; cross-axis from the de-overlapped lane.
     const x = vertical ? cross : rankCoord
     let y = vertical ? rankCoord : cross
     // In LR the cross axis is Y and a lane is centered on its cross midpoint.
     // The placement centers the STANDARD card box; a taller user card must be
     // lifted by half its extra height so its vertical CENTER still sits on the
-    // lane axis (and lines up with the role lane beside it). In TB the extra
-    // height is on the rank axis and grows into the inter-rank gap, so no nudge.
+    // lane axis (and lines up with the role lane beside it). In TB the user's
+    // extra height is on the rank axis and grows into the inter-rank gap, so
+    // that card is not nudged. A flagged access item is only slightly taller
+    // and shares its rank with standard cards, so it is centered in both
+    // directions.
     if (!vertical) y -= (height - NODE_HEIGHT) / 2
+    else if (showsFlags) y -= NODE_FLAG_EXTRA / 2
     return {
       id: node.id,
       type: 'access',
@@ -383,6 +403,10 @@ export function buildAccessScene(
         detail: node.detail,
         reviewStatus: node.reviewStatus,
         reviewMixed: node.reviewMixed,
+        ...(flags.length > 0 ? { flags } : {}),
+        ...(flags.length > 0 && flagNotes && Object.keys(flagNotes).length > 0
+          ? { flagNotes }
+          : {}),
         // A non-user node without a status is reference-only: it is shown to
         // explain how access derives, but is not itself reviewed.
         reference: isReferenceNode(node),

@@ -17,8 +17,10 @@
  * Styling matches the legend panel (`.vc-graph-legend`) — a bordered, shadowed
  * card using the graph tokens — mounted inside a React Flow `top-right` panel.
  */
+import { ACCESS_FLAG_DEFINITION, ACCESS_FLAG_LABEL } from '../domain/accessFlags'
 import type { AccessGraphNodeKind, AccessSceneNodeData } from '../sailpoint/types'
 import { StatusIcon } from './AccessNode'
+import { FlagIcon } from './flagIcons'
 import { KindIcon } from './kindIcons'
 import './NodeDetailPanel.css'
 
@@ -297,6 +299,8 @@ export function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps) {
               ? sourceRows
               : []
   const visiblePrimaryRows = primaryRows.filter(([, value]) => value)
+  const flags = isAccessItem ? (node?.flags ?? []) : []
+  const flagNotes = node?.flagNotes
   // The free-form source attributes shown under an "Additional attributes"
   // heading, mirroring the ISC panel. Empty when the entitlement carried none.
   const additionalAttributes = e.attributes ?? []
@@ -396,6 +400,29 @@ export function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps) {
             </>
           ) : isAccessItem ? (
             <>
+              {flags.length > 0 ? (
+                <div className="vc-graph-detail-flags" role="list" aria-label="Flags">
+                  {flags.map((flag) => {
+                    const note = flagNotes?.[flag]
+                    return (
+                      <div key={flag} className="vc-graph-detail-flag" role="listitem">
+                        <FlagIcon flag={flag} />
+                        <span className="vc-graph-detail-flag-text">
+                          <span className="vc-graph-detail-flag-name">
+                            {ACCESS_FLAG_LABEL[flag]}
+                          </span>
+                          <span className="vc-graph-detail-flag-def">
+                            {ACCESS_FLAG_DEFINITION[flag]}
+                          </span>
+                          {note ? (
+                            <span className="vc-graph-detail-flag-note">{note}</span>
+                          ) : null}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : null}
               <dl className="vc-graph-detail-fields">
                 {visiblePrimaryRows.length > 0 ? (
                   visiblePrimaryRows.map(([label, value]) => (

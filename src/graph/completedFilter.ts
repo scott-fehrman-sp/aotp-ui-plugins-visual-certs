@@ -142,6 +142,11 @@ export function withoutCompleted(graph: AccessGraphData): CompletedFilterResult 
       const copy = { ...node }
       delete copy.reviewStatus
       delete copy.reviewMixed
+      // Assignment flags belong to the review hop. Once the item is only
+      // lineage, those flags no longer describe a decision on this node.
+      // Catalog flags on `flags` stay.
+      delete copy.reviewFlags
+      delete copy.reviewFlagNotes
       return copy
     })
 

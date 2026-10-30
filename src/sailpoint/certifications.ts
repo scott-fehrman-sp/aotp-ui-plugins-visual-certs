@@ -10,6 +10,9 @@ import type {
   CampaignReference,
   CertificationsApi,
   IdentityCertificationDto,
+  ReviewableAccessProfile,
+  ReviewableEntitlement,
+  ReviewableRole,
   ReviewDecision,
   ReviewReassign,
 } from 'sailpoint-api-client/certifications/api'
@@ -255,9 +258,180 @@ function describeAccess(item: AccessReviewItem): {
   }
 }
 
+/**
+ * Privilege-level block the certification payload may carry on an entitlement.
+ * The generated client types `privileged` as a boolean and does not declare
+ * this block, so it is read defensively. `setByType === 'OVERRIDE'` is the
+ * manual change the "High Privilege (Overridden)" flag describes.
+ */
+interface PrivilegeLevelShape {
+  effective?: string
+  setByType?: string | null
+  privileged?: boolean
+}
+
+function privilegeLevelOf(value: unknown): PrivilegeLevelShape | undefined {
+  if (!value || typeof value !== 'object') return undefined
+  return value as PrivilegeLevelShape
+}
+
+/**
+ * Whether an entitlement is privileged, and whether that level was a manual
+ * override. `overridden` stays `undefined` when the payload never says how the
+ * level was chosen — the certification boolean alone then still raises the
+ * high-privilege flag.
+ */
+function entitlementPrivilege(ent: {
+  privileged?: boolean
+  privilegeLevel?: unknown
+}): { privileged: boolean; overridden: boolean | undefined } {
+  const level = privilegeLevelOf(ent.privilegeLevel)
+  const effective = level?.effective?.toUpperCase()
+  const legacy = level?.privileged === true
+  const privileged = ent.privileged === true || effective === 'HIGH' || legacy
+  if (level?.setByType) {
+    const overridden =
+      level.setByType === 'OVERRIDE' &&
+      (effective === 'HIGH' || legacy || ent.privileged === true)
+    return { privileged, overridden }
+  }
+  return { privileged, overridden: undefined }
+}
+
+function entitlementHasCriticalData(ent: ReviewableEntitlement | null | undefined): boolean {
+  if (!ent) return false
+  if (ent.containsDataAccess === true) return true
+  const data = ent.dataAccess
+  if (!data) return false
+  if (data.impactScore?.value) return true
+  if ((data.policies?.length ?? 0) > 0) return true
+  if ((data.categories?.length ?? 0) > 0) return true
+  return false
+}
+
+/** Every entitlement the review item names: the item itself, and those nested in a role or access profile. */
+function relatedEntitlements(item: AccessReviewItem): ReviewableEntitlement[] {
+  const list: ReviewableEntitlement[] = []
+  const summary = item.accessSummary
+  if (summary?.entitlement) list.push(summary.entitlement)
+  const pushProfile = (profile: ReviewableAccessProfile | null | undefined) => {
+    for (const ent of profile?.entitlements ?? []) list.push(ent)
+  }
+  pushProfile(summary?.accessProfile)
+  const role = summary?.role
+  if (role) {
+    for (const ent of role.entitlements ?? []) list.push(ent)
+    for (const profile of role.accessProfiles ?? []) pushProfile(profile)
+  }
+  return list
+}
+
+function profileIsCloud(profile: ReviewableAccessProfile | null | undefined): boolean {
+  if (!profile) return false
+  if (profile.cloudGoverned === true) return true
+  return (profile.entitlements ?? []).some((ent) => ent.cloudGoverned === true)
+}
+
+/** A non-empty end date, or null. Whitespace and a missing value are no end date. */
+function nonemptyDate(value: string | null | undefined): string | null {
+  const text = value?.trim() ?? ''
+  return text || null
+}
+
+/**
+ * Birthright access is granted by automated rules (lifecycle states, or a role
+ * assigned because the person matches membership criteria). The certification
+ * item may say so directly. A role that cannot be revoked is the API's signal
+ * for a membership assignment, which the review UI treats as birthright.
+ */
+function readBirthright(item: AccessReviewItem): boolean {
+  const raw = item as AccessReviewItem & { birthright?: boolean }
+  if (raw.birthright === true) return true
+  const role = item.accessSummary?.role as
+    | (ReviewableRole & {
+        birthright?: boolean
+        assignmentSource?: string
+        roleAssignmentSource?: string
+      })
+    | null
+    | undefined
+  if (role) {
+    if (role.birthright === true) return true
+    if (role.revocable === false) return true
+    const source = role.assignmentSource ?? role.roleAssignmentSource ?? ''
+    if (/birthright|lifecycle|role_membership/i.test(source)) return true
+  }
+  const profile = item.accessSummary?.accessProfile as { birthright?: boolean } | undefined
+  if (profile?.birthright === true) return true
+  const entitlement = item.accessSummary?.entitlement as { birthright?: boolean } | null | undefined
+  return entitlement?.birthright === true
+}
+
+function readEndDate(item: AccessReviewItem): string | null {
+  const summary = item.accessSummary
+  const entitlement = summary?.entitlement as { endDate?: string | null } | null | undefined
+  return (
+    nonemptyDate(summary?.role?.endDate) ??
+    nonemptyDate(summary?.accessProfile?.endDate) ??
+    nonemptyDate(entitlement?.endDate)
+  )
+}
+
+/**
+ * Flag inputs that `describeAccess` does not cover: nested entitlements inside
+ * a role or access profile, an end date, birthright, a manual privilege
+ * override, and critical data that has no impact score.
+ */
+function reviewFlagSignals(
+  item: AccessReviewItem,
+  access: {
+    accessKind: AccessKind
+    isPrivileged: boolean
+    isCloudGoverned: boolean
+    dataImpact: PriorityLevel | null
+  },
+): {
+  isPrivileged: boolean
+  isCloudGoverned: boolean
+  isBirthright: boolean
+  accessEndDate: string | null
+  hasCriticalData: boolean
+  privilegeOverridden: boolean | undefined
+} {
+  const entitlements = relatedEntitlements(item)
+  const nestedPrivileged = entitlements.some((ent) => entitlementPrivilege(ent).privileged)
+  const role = item.accessSummary?.role
+  const cloud =
+    access.isCloudGoverned ||
+    entitlements.some((ent) => ent.cloudGoverned === true) ||
+    profileIsCloud(item.accessSummary?.accessProfile) ||
+    (role?.accessProfiles ?? []).some((profile) => profileIsCloud(profile)) ||
+    (role?.entitlements ?? []).some((ent) => ent.cloudGoverned === true)
+  const critical =
+    access.dataImpact != null || entitlements.some((ent) => entitlementHasCriticalData(ent))
+
+  let isPrivileged = access.isPrivileged || nestedPrivileged
+  let privilegeOverridden: boolean | undefined
+  if (access.accessKind === 'entitlement' && item.accessSummary?.entitlement) {
+    const held = entitlementPrivilege(item.accessSummary.entitlement)
+    isPrivileged = held.privileged
+    privilegeOverridden = held.overridden
+  }
+
+  return {
+    isPrivileged,
+    isCloudGoverned: cloud,
+    isBirthright: readBirthright(item),
+    accessEndDate: readEndDate(item),
+    hasCriticalData: critical,
+    privilegeOverridden,
+  }
+}
+
 /** Converts one access review item DTO into a {@link ReviewItemVM}. */
 export function toReviewItemVM(item: AccessReviewItem): ReviewItemVM {
   const access = describeAccess(item)
+  const signals = reviewFlagSignals(item, access)
   return {
     id: item.id ?? '',
     // Join key for provenance lookups; empty when the API omitted it.
@@ -272,6 +446,14 @@ export function toReviewItemVM(item: AccessReviewItem): ReviewItemVM {
     isNewAccess: item.newAccess === true,
     aiRecommendation: null, // IAI recommendation is attached at decision time; see note below.
     ...access,
+    isPrivileged: signals.isPrivileged,
+    isCloudGoverned: signals.isCloudGoverned,
+    isBirthright: signals.isBirthright,
+    accessEndDate: signals.accessEndDate,
+    hasCriticalData: signals.hasCriticalData,
+    ...(signals.privilegeOverridden !== undefined
+      ? { privilegeOverridden: signals.privilegeOverridden }
+      : {}),
   }
 }
 

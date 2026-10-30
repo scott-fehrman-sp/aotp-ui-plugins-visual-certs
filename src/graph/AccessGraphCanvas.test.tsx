@@ -281,16 +281,17 @@ describe('AccessGraphCanvas', () => {
     expect(controls).not.toBe(panel)
   })
 
-  it('legend lists type and status columns separated by a vertical rule', () => {
+  it('legend lists type, status, and flag columns separated by vertical rules', () => {
     render(<AccessGraphCanvas graph={referenceGraph()} />)
     fireEvent.click(screen.getByRole('button', { name: 'Show access for User One' }))
     fireEvent.click(screen.getByRole('button', { name: 'Show legend' }))
     const legend = screen.getByRole('group', { name: /node legend/i })
     const columns = legend.querySelectorAll('.vc-graph-legend-col')
-    expect(columns).toHaveLength(2)
+    expect(columns).toHaveLength(3)
     expect(columns[0]).toHaveTextContent('Types')
     expect(columns[1]).toHaveTextContent('Status')
-    expect(legend.querySelector('.vc-graph-legend-sep')).not.toBeNull()
+    expect(columns[2]).toHaveTextContent('Flags')
+    expect(legend.querySelectorAll('.vc-graph-legend-sep')).toHaveLength(2)
     const kinds = ['User', 'Role', 'Access profile', 'Entitlement', 'Attribute', 'Source']
     for (const label of kinds) expect(within(columns[0] as HTMLElement).getByText(label)).toBeInTheDocument()
     expect(
@@ -305,6 +306,31 @@ describe('AccessGraphCanvas', () => {
         icon.getAttribute('data-review-status'),
       ),
     ).toEqual(['needsReview', 'approved', 'revoked', 'reassigned'])
+    const flags = [
+      'New Access',
+      'Birthright Access',
+      'High Privilege (Overridden)',
+      'Contains Privileged Access',
+      'Timebound Access',
+      'Comments',
+      'Cloud Enabled',
+      'Critical Data Access',
+    ]
+    for (const label of flags) expect(within(columns[2] as HTMLElement).getByText(label)).toBeInTheDocument()
+    expect(
+      Array.from(columns[2].querySelectorAll('.vc-graph-flag-icon')).map((icon) =>
+        icon.getAttribute('data-flag'),
+      ),
+    ).toEqual([
+      'newAccess',
+      'birthright',
+      'highPrivilege',
+      'containsPrivileged',
+      'timebound',
+      'comments',
+      'cloudEnabled',
+      'criticalData',
+    ])
   })
 
   it('legend toggle hides and restores the legend panel in drill-down and omits it on the user grid', () => {

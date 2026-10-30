@@ -9,6 +9,8 @@ import {
   reviewItem,
 } from '../test/reviewStatusFixture'
 import { deriveAccessGraph } from './accessGraph'
+import { buildAccessScene } from '../graph/buildAccessScene'
+import { userSubgraph } from '../graph/userSubgraph'
 import { applyReviewStatus, buildReviewIndex, copyFirstLevelStatus, reviewKey } from './reviewOverlay'
 
 const edgeOf = (graph: AccessGraphData, from: string, to: string) =>
@@ -134,13 +136,13 @@ describe('reviewOverlay', () => {
       make('1', { completed: true, decision: 'APPROVE' }),
       make('2', {}),
     ])
-    expect(mixed.get(key)).toEqual({ status: 'needsReview', mixed: true })
+    expect(mixed.get(key)).toEqual({ status: 'needsReview', mixed: true, flags: [] })
 
     const uniform = buildReviewIndex([
       make('1', { completed: true, decision: 'APPROVE' }),
       make('2', { completed: true, decision: 'APPROVE' }),
     ])
-    expect(uniform.get(key)).toEqual({ status: 'approved', mixed: false })
+    expect(uniform.get(key)).toEqual({ status: 'approved', mixed: false, flags: [] })
   })
 
   it("skips 'access'-kind items and keeps users apart", () => {
@@ -199,8 +201,49 @@ describe('reviewOverlay', () => {
     const copied = copyFirstLevelStatus(target, source)
     expect(copied.nodes).toBe(target.nodes)
     expect(copied.edges[0].reviewStatus).toBe('approved')
+    expect(copied.edges[0].reviewFlags).toBeUndefined()
     expect(copied.edges[1].reviewStatus).toBeUndefined()
     // The structural target is not mutated.
     expect(target.edges[0].reviewStatus).toBeUndefined()
+  })
+
+  it('carries access flags from the review item onto the edge, the node, and the scene', async () => {
+    const items = [
+      reviewItem({
+        accessKind: 'entitlement',
+        accessId: 'e-login',
+        accessName: 'Login',
+        isNewAccess: true,
+        isPrivileged: true,
+        isCloudGoverned: true,
+        comments: 'Check this',
+        accessEndDate: '2027-01-15T00:00:00.000Z',
+        dataImpact: 'high',
+        completed: true,
+        decision: 'APPROVE',
+      }),
+    ]
+    const graph = await buildFixtureGraph(items)
+    const edge = edgeOf(graph, 'user:u-a', 'entitlement:e-login')
+    expect(edge?.reviewFlags).toEqual([
+      'newAccess',
+      'highPrivilege',
+      'timebound',
+      'comments',
+      'cloudEnabled',
+      'criticalData',
+    ])
+    expect(edge?.reviewFlagNotes?.comments).toBe('Check this')
+    expect(edge?.reviewFlagNotes?.timebound).toBe('Ends Jan 15, 2027')
+    expect(edge?.reviewFlagNotes?.criticalData).toBe('Impact: High')
+
+    const node = userSubgraph(graph, 'user:u-a').nodes.find(
+      (candidate) => candidate.id === 'entitlement:e-login',
+    )
+    expect(node?.reviewFlags).toEqual(edge?.reviewFlags)
+    const scene = buildAccessScene(userSubgraph(graph, 'user:u-a'), 'LR')
+    const card = scene.nodes.find((candidate) => candidate.id === 'entitlement:e-login')
+    expect(card?.data.flags).toEqual(edge?.reviewFlags)
+    expect(card?.data.flagNotes?.comments).toBe('Check this')
   })
 })

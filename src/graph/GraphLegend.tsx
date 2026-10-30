@@ -1,10 +1,13 @@
 /**
- * The drill-down node legend. Two columns, divided by a vertical rule: Types
- * (one row per graph layer, using the card's kind glyph) and Status (the four
- * review-status icons). The user grid does not mount it.
+ * The drill-down node legend. Three columns — Types, Status, and Flags — with a
+ * vertical rule between them. Types is one row per graph layer, Status is the
+ * four review-status icons, and Flags is each certification access flag with
+ * its short name. The user grid does not mount it.
  */
+import { ACCESS_FLAG_LABEL, ACCESS_FLAG_ORDER } from '../domain/accessFlags'
 import type { AccessGraphNodeKind, AccessReviewStatus } from '../sailpoint/types'
 import { StatusIcon } from './AccessNode'
+import { FlagIcon } from './flagIcons'
 import { KindIcon } from './kindIcons'
 
 /** Layer order, user → source, matching the access-graph lanes. */
@@ -44,6 +47,16 @@ export function GraphLegend() {
           <span className="vc-graph-legend-row" key={status}>
             <StatusIcon status={status} decorative />
             {label}
+          </span>
+        ))}
+      </div>
+      <div className="vc-graph-legend-sep" aria-hidden="true" />
+      <div className="vc-graph-legend-col">
+        <p className="vc-graph-legend-heading">Flags</p>
+        {ACCESS_FLAG_ORDER.map((flag) => (
+          <span className="vc-graph-legend-row" key={flag}>
+            <FlagIcon flag={flag} />
+            {ACCESS_FLAG_LABEL[flag]}
           </span>
         ))}
       </div>

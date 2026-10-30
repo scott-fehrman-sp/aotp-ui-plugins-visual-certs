@@ -16,11 +16,13 @@
  * Pure: no React, no I/O, no input mutation.
  */
 import type {
+  AccessFlag,
   AccessGraphData,
   AccessGraphNodeKind,
   AccessReviewStatus,
   ReviewItemVM,
 } from '../sailpoint/types'
+import { accessFlagDetails, accessFlagNotes, mergeAccessFlags, mergeFlagNotes } from './accessFlags'
 import { aggregateReviewStatus, reviewStatusOf } from './metrics'
 
 /**
@@ -42,6 +44,16 @@ export interface ReviewIndexEntry {
   status: AccessReviewStatus
   /** True when the underlying review items do not all share one status. */
   mixed: boolean
+  /**
+   * Union of the access flags on the review items for this key, in display
+   * order. Empty when none of the items carry a flag.
+   */
+  flags: AccessFlag[]
+  /**
+   * Extra text for a flag (end date, comment, impact). The first non-empty
+   * note for each flag wins. Omitted when no flag has extra text.
+   */
+  flagNotes?: Partial<Record<AccessFlag, string>>
 }
 
 /**
@@ -52,7 +64,7 @@ export interface ReviewIndexEntry {
 export function buildReviewIndex(
   items: ReviewItemVM[],
 ): Map<string, ReviewIndexEntry> {
-  const grouped = new Map<string, AccessReviewStatus[]>()
+  const grouped = new Map<string, ReviewItemVM[]>()
   for (const item of items) {
     if (item.accessKind === 'access') continue
     const key = reviewKey(
@@ -62,14 +74,21 @@ export function buildReviewIndex(
       item.accessName,
     )
     const list = grouped.get(key)
-    if (list) list.push(reviewStatusOf(item))
-    else grouped.set(key, [reviewStatusOf(item)])
+    if (list) list.push(item)
+    else grouped.set(key, [item])
   }
 
   const index = new Map<string, ReviewIndexEntry>()
-  for (const [key, statuses] of grouped) {
-    const aggregate = aggregateReviewStatus(statuses)
-    if (aggregate) index.set(key, aggregate)
+  for (const [key, group] of grouped) {
+    const aggregate = aggregateReviewStatus(group.map(reviewStatusOf))
+    if (!aggregate) continue
+    const flags = mergeAccessFlags(...group.map((item) => accessFlagDetails(item).map((detail) => detail.flag)))
+    const flagNotes = mergeFlagNotes(...group.map(accessFlagNotes))
+    index.set(key, {
+      ...aggregate,
+      flags,
+      ...(Object.keys(flagNotes).length > 0 ? { flagNotes } : {}),
+    })
   }
   return index
 }
@@ -92,7 +111,17 @@ export function applyReviewStatus(
       if (!edge.firstLevel || edge.reviewKey === undefined) return edge
       const entry = index.get(edge.reviewKey)
       if (!entry) return edge
-      return { ...edge, reviewStatus: entry.status, reviewMixed: entry.mixed }
+      return {
+        ...edge,
+        reviewStatus: entry.status,
+        reviewMixed: entry.mixed,
+        ...(entry.flags.length > 0
+          ? {
+              reviewFlags: entry.flags,
+              ...(entry.flagNotes ? { reviewFlagNotes: entry.flagNotes } : {}),
+            }
+          : {}),
+      }
     }),
   }
 }
@@ -116,13 +145,20 @@ export function copyFirstLevelStatus(
 ): AccessGraphData {
   const byKey = new Map<
     string,
-    { reviewStatus: AccessReviewStatus; reviewMixed?: boolean }
+    {
+      reviewStatus: AccessReviewStatus
+      reviewMixed?: boolean
+      reviewFlags?: AccessFlag[]
+      reviewFlagNotes?: Partial<Record<AccessFlag, string>>
+    }
   >()
   for (const edge of source.edges) {
     if (!edge.firstLevel || edge.reviewKey === undefined || !edge.reviewStatus) continue
     byKey.set(edge.reviewKey, {
       reviewStatus: edge.reviewStatus,
       reviewMixed: edge.reviewMixed,
+      reviewFlags: edge.reviewFlags,
+      reviewFlagNotes: edge.reviewFlagNotes,
     })
   }
   if (byKey.size === 0) return target
@@ -132,7 +168,17 @@ export function copyFirstLevelStatus(
       if (!edge.firstLevel || edge.reviewKey === undefined) return edge
       const status = byKey.get(edge.reviewKey)
       if (!status) return edge
-      return { ...edge, reviewStatus: status.reviewStatus, reviewMixed: status.reviewMixed }
+      return {
+        ...edge,
+        reviewStatus: status.reviewStatus,
+        reviewMixed: status.reviewMixed,
+        ...(status.reviewFlags?.length
+          ? {
+              reviewFlags: status.reviewFlags,
+              ...(status.reviewFlagNotes ? { reviewFlagNotes: status.reviewFlagNotes } : {}),
+            }
+          : {}),
+      }
     }),
   }
 }

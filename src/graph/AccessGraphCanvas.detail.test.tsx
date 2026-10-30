@@ -4,6 +4,7 @@ import { buildFixtureGraph, statusGraph } from '../test/reviewStatusFixture'
 import type { StatusRow } from '../test/reviewStatusFixture'
 import type { AccessGraphData } from '../sailpoint/types'
 import { AccessGraphCanvas } from './AccessGraphCanvas'
+import { NODE_FLAG_EXTRA, NODE_HEIGHT } from './buildAccessScene'
 
 // The detail fly-out is a plain overlay panel (no layout / viewport input), so
 // this asserts the DOM: the control toggle, the per-kind field set, the
@@ -152,6 +153,92 @@ describe('AccessGraphCanvas node detail panel', () => {
     // A reference node is not reviewed, so no status line (and no separator).
     expect(details.querySelector('.vc-graph-detail-status')).toBeNull()
     expect(details.querySelector('.vc-graph-detail-sep')).toBeNull()
+  })
+
+  it('shows access flags on the reviewed item’s card and in its detail panel', () => {
+    const flagged = statusGraph([
+      row({
+        id: '1',
+        entitlement: 'Admin',
+        entitlementId: 'e-admin',
+        entitlementDescription: 'Full admin',
+        source: 'dir',
+        sourceId: 's-dir',
+        reviewStatus: 'needsReview',
+        accessItemKind: 'entitlement',
+        accessItemId: 'e-admin',
+        accessItemName: 'Admin',
+        isNewAccess: true,
+        isPrivileged: true,
+        isCloudGoverned: true,
+        comments: 'Left the team',
+        accessEndDate: '2027-01-15T00:00:00.000Z',
+        dataImpact: 'high',
+      }),
+    ])
+    render(<AccessGraphCanvas graph={flagged} />)
+    drillIn()
+
+    const admin = card('Admin')
+    expect(admin).toHaveClass('vc-graph-card-has-flags')
+    expect(admin.closest<HTMLElement>('.react-flow__node')?.style.height).toBe(
+      `${NODE_HEIGHT + NODE_FLAG_EXTRA}px`,
+    )
+    for (const flag of ['newAccess', 'highPrivilege', 'timebound', 'comments', 'cloudEnabled', 'criticalData']) {
+      expect(admin.querySelector(`[data-flag="${flag}"]`)).not.toBeNull()
+    }
+    expect(admin.querySelector('.sr-only')?.textContent).toMatch(/New Access/)
+
+    openDetail()
+    fireEvent.click(admin)
+    const details = panel()!
+    expect(within(details).getByText('New Access')).toBeInTheDocument()
+    expect(
+      within(details).getByText('The access has not been certified previously.'),
+    ).toBeInTheDocument()
+    expect(within(details).getByText('High Privilege (Overridden)')).toBeInTheDocument()
+    expect(within(details).getByText('Timebound Access')).toBeInTheDocument()
+    expect(within(details).getByText('Ends Jan 15, 2027')).toBeInTheDocument()
+    expect(within(details).getByText('Comments')).toBeInTheDocument()
+    expect(within(details).getByText('Left the team')).toBeInTheDocument()
+    expect(within(details).getByText('Cloud Enabled')).toBeInTheDocument()
+    expect(within(details).getByText('Critical Data Access')).toBeInTheDocument()
+    expect(within(details).getByText('Impact: High')).toBeInTheDocument()
+  })
+
+  it('shows catalog flags on a nested entitlement and on the role that contains it', () => {
+    const flagged = statusGraph([
+      row({
+        id: '1',
+        role: 'Role A',
+        roleId: 'role-a',
+        entitlement: 'Admin',
+        entitlementId: 'e-admin',
+        source: 'dir',
+        sourceId: 's-dir',
+        reviewStatus: 'needsReview',
+        accessItemKind: 'role',
+        accessItemId: 'role-a',
+        accessItemName: 'Role A',
+        entitlementPrivilegeOverridden: true,
+        entitlementCloudGoverned: true,
+      }),
+    ])
+    render(<AccessGraphCanvas graph={flagged} />)
+    drillIn()
+
+    const role = card('Role A')
+    expect(role.querySelector('[data-flag="containsPrivileged"]')).not.toBeNull()
+    expect(role.querySelector('[data-flag="cloudEnabled"]')).not.toBeNull()
+    expect(role.querySelector('[data-flag="newAccess"]')).toBeNull()
+
+    openDetail()
+    fireEvent.click(btn('Show reference nodes and links'))
+    fireEvent.click(card('Admin'))
+    const details = panel()!
+    expect(within(details).getByText('High Privilege (Overridden)')).toBeInTheDocument()
+    expect(within(details).getByText('Cloud Enabled')).toBeInTheDocument()
+    expect(within(details).queryByText('New Access')).not.toBeInTheDocument()
   })
 
   it('shows the source node as its own kind', () => {

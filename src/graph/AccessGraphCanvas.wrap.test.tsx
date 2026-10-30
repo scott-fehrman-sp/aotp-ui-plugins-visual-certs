@@ -310,6 +310,9 @@ describe('AccessGraphCanvas lane wrapping', () => {
       'Approved',
       'Revoked',
       'Reassigned',
+      'Flags',
+      'New Access',
+      'Cloud Enabled',
     ]) {
       expect(within(legend).getByText(text)).toBeInTheDocument()
     }

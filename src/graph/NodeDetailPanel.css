@@ -278,6 +278,47 @@
 /* Sub-heading that introduces the entitlement's free-form source attributes
    ("Additional attributes"), separated from the primary fields by a rule —
    mirrors the ISC entitlement detail panel. */
+/* Certification flags on a role, access profile, or entitlement. The icon
+   matches the mark on the card; the name and definition sit beside it. */
+.vc-graph-detail-flags {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+}
+
+.vc-graph-detail-flag {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.vc-graph-detail-flag .vc-graph-flag-icon {
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  color: var(--vc-warn);
+}
+
+.vc-graph-detail-flag-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.vc-graph-detail-flag-name {
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.vc-graph-detail-flag-def,
+.vc-graph-detail-flag-note {
+  color: var(--muted);
+  line-height: 1.35;
+}
+
 .vc-graph-detail-subhead {
   margin: 0;
   padding-top: 8px;

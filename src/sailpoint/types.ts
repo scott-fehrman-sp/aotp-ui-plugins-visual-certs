@@ -97,10 +97,35 @@ export interface ReviewItemVM {
   isNewAccess: boolean
   /** True when this is elevated/admin ("privileged") access. */
   isPrivileged: boolean
+  /**
+   * Set only for an entitlement, and only when the certification payload says
+   * how the privilege level was chosen. `true` means a person manually overrode
+   * it to high. `false` means the level is high for another reason, so the
+   * "High Privilege (Overridden)" flag must not be shown. Omitted when the
+   * payload only says the entitlement is privileged.
+   */
+  privilegeOverridden?: boolean
+  /**
+   * True when this access was granted by automated rules (a lifecycle state, or
+   * a role assigned by membership criteria). Omitted when unknown; treated as
+   * false.
+   */
+  isBirthright?: boolean
+  /**
+   * When this access stops, as an ISO timestamp, or null when it has no end
+   * date. Omitted on fixtures that predate the field; treated as no end date.
+   */
+  accessEndDate?: string | null
   /** True when the access touches cloud-governed resources. */
   isCloudGoverned: boolean
   /** Impact level of the data this access can reach, if DAS data exists. */
   dataImpact: PriorityLevel | null
+  /**
+   * True when the access carries critical-data (DAS) signals even if no impact
+   * score was scored. Omitted when unknown; `dataImpact` alone is enough to
+   * raise the critical-data flag.
+   */
+  hasCriticalData?: boolean
   /** Days of recorded usage, or null when usage is unknown. */
   usageDays: number | null
   /** SailPoint AI recommendation string, if present (e.g. APPROVE/DENY). */
@@ -216,6 +241,21 @@ export type AccessReviewStatus =
   | 'approved'
   | 'revoked'
   | 'reassigned'
+
+/**
+ * A certification access flag: a fact on a role, access profile, or entitlement
+ * that a reviewer should weigh before keeping or removing the access. The names
+ * and meanings match SailPoint's certification review flags.
+ */
+export type AccessFlag =
+  | 'newAccess'
+  | 'birthright'
+  | 'highPrivilege'
+  | 'containsPrivileged'
+  | 'timebound'
+  | 'comments'
+  | 'cloudEnabled'
+  | 'criticalData'
 
 /**
  * One fully-expanded row of the access matrix: a single path from a user to a
@@ -352,6 +392,12 @@ export interface AccessMatrixRowVM {
   entitlementObjectType?: string
   /** True when the entitlement is privileged. Leaf rows only. */
   entitlementPrivileged?: boolean
+  /**
+   * True when the entitlement's privilege level was manually overridden to
+   * high. Leaf rows only. Distinct from {@link entitlementPrivileged}, which
+   * is also true for a high level chosen by criteria.
+   */
+  entitlementPrivilegeOverridden?: boolean
   /** True when the entitlement is cloud governed. Leaf rows only. */
   entitlementCloudGoverned?: boolean
   /** True when the entitlement is directly requestable. Leaf rows only. */
@@ -570,6 +616,25 @@ export interface AccessGraphNode {
    * Set only by `userSubgraph` alongside `reviewStatus`.
    */
   reviewMixed?: boolean
+  /**
+   * Catalog flags for this object (high privilege override, contains privileged
+   * access, cloud enabled). Set by `deriveAccessGraph` and shared across users,
+   * because they describe the access object rather than one person's grant.
+   * Assignment flags (new, birthright, time-bound, comments, and the review
+   * item's own cloud / critical-data / privilege signals) are NOT stored here.
+   */
+  flags?: AccessFlag[]
+  /**
+   * Assignment flags copied from this user's first-level review edge by
+   * `userSubgraph`. Stripped when a completed item is demoted to reference.
+   * Display merges these with {@link flags}.
+   */
+  reviewFlags?: AccessFlag[]
+  /**
+   * Extra text for an assignment flag (an end date, a comment, an impact
+   * level). Set only by `userSubgraph`, alongside {@link reviewFlags}.
+   */
+  reviewFlagNotes?: Partial<Record<AccessFlag, string>>
 }
 
 /**
@@ -613,6 +678,18 @@ export interface AccessGraphEdge {
    * `applyReviewStatus`.
    */
   reviewMixed?: boolean
+  /**
+   * Assignment flags for this review hop (new access, birthright, time-bound,
+   * comments, and the review item's privilege / cloud / critical-data flags).
+   * Set only by `applyReviewStatus` on a first-level edge that matched a review
+   * item. Empty when the item has no flags, in which case the field is omitted.
+   */
+  reviewFlags?: AccessFlag[]
+  /**
+   * Extra text for a {@link reviewFlags} entry, keyed by flag. An end date, the
+   * comment, or an impact level. Omitted when no flag has extra text.
+   */
+  reviewFlagNotes?: Partial<Record<AccessFlag, string>>
 }
 
 /**
@@ -700,6 +777,17 @@ export interface AccessSceneNodeData extends Record<string, unknown> {
    * (threaded from {@link AccessGraphNode.reviewMixed}).
    */
   reviewMixed?: boolean
+  /**
+   * Access flags to draw on this card and in the detail panel. The scene
+   * builder merges catalog {@link AccessGraphNode.flags} with this user's
+   * {@link AccessGraphNode.reviewFlags}. Omitted when the node has none.
+   */
+  flags?: AccessFlag[]
+  /**
+   * Extra text for a flag (an end date, a comment, an impact level), keyed by
+   * flag. Threaded from {@link AccessGraphNode.reviewFlagNotes}.
+   */
+  flagNotes?: Partial<Record<AccessFlag, string>>
   /**
    * True on a non-user node with no review status: a deeper, reference-only
    * node shown to explain how access derives to a source (not itself reviewed).

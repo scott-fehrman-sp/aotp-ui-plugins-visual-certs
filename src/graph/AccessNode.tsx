@@ -12,9 +12,11 @@ import {
 } from 'react'
 import { createPortal } from 'react-dom'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
-import type { AccessGraphNodeKind, AccessReviewStatus } from '../sailpoint/types'
+import { ACCESS_FLAG_LABEL } from '../domain/accessFlags'
+import type { AccessFlag, AccessGraphNodeKind, AccessReviewStatus } from '../sailpoint/types'
 import { NODE_USER_HEIGHT, NODE_WIDTH, type AccessSceneNode } from './buildAccessScene'
 import { EmphasisContext } from './EmphasisContext'
+import { FlagIcon } from './flagIcons'
 import { SelectionContext } from './SelectionContext'
 import { isSelectableNodeData } from './selectEdges'
 import { KindIcon } from './kindIcons'
@@ -28,6 +30,33 @@ const DESCRIPTION_UNSET = 'Description not set'
 function accessItemDescription(description: string | undefined): string {
   const text = description?.trim() ?? ''
   return text.length > 0 ? text : DESCRIPTION_UNSET
+}
+
+/** Hover text: the description, then the flag names when the card carries any. */
+function accessItemTooltipText(
+  description: string | undefined,
+  flags: readonly AccessFlag[] | undefined,
+): string {
+  const text = accessItemDescription(description)
+  if (!flags || flags.length === 0) return text
+  const names = flags.map((flag) => ACCESS_FLAG_LABEL[flag]).join(', ')
+  return `${text} Flags: ${names}.`
+}
+
+/** Flag marks along the top of an access-item card. */
+function CardFlags({ flags, id }: { flags: readonly AccessFlag[]; id: string }) {
+  if (flags.length === 0) return null
+  const names = flags.map((flag) => ACCESS_FLAG_LABEL[flag]).join(', ')
+  return (
+    <span className="vc-graph-card-flags">
+      {flags.map((flag) => (
+        <FlagIcon key={flag} flag={flag} />
+      ))}
+      <span id={id} className="sr-only">
+        {`Flags: ${names}`}
+      </span>
+    </span>
+  )
 }
 
 /**
@@ -334,7 +363,6 @@ function AccessNodeView({
   data,
   showHandles,
   onActivate,
-  autoFocus = false,
 }: {
   id: string
   data: AccessSceneNode['data']
@@ -349,6 +377,7 @@ function AccessNodeView({
   const progressId = useId()
   const countId = useId()
   const tipId = useId()
+  const flagsId = useId()
   const cardRef = useRef<HTMLElement>(null)
   const [showTip, setShowTip] = useState(false)
   const kindLabel = KIND_LABEL[data.kind]
@@ -458,9 +487,11 @@ function AccessNodeView({
   // Drill-down: first-level cards are also toggle buttons. Access items show
   // their description on hover and keyboard focus. The card keeps its full
   // untruncated name via `aria-label` and its hover/focus edge emphasis.
+  const flags = data.flags ?? []
   const describedBy =
     [
       status ? statusIconId : null,
+      flags.length > 0 ? flagsId : null,
       showTip ? tipId : null,
       completionDescribedBy,
       countDescribedBy,
@@ -471,7 +502,9 @@ function AccessNodeView({
     <>
       <article
         ref={cardRef}
-        className={`vc-graph-card kind-${data.kind}${statusClass}${selectionClass}`}
+        className={`vc-graph-card kind-${data.kind}${statusClass}${selectionClass}${
+          isAccessItem && flags.length > 0 ? ' vc-graph-card-has-flags' : ''
+        }`}
         tabIndex={0}
         aria-label={`${kindLabel}: ${data.label}`}
         data-review-status={status}
@@ -492,6 +525,7 @@ function AccessNodeView({
       >
         <CardBody data={data} />
         <CardKindMark data={data} progressId={progressId} />
+        {isAccessItem ? <CardFlags flags={flags} id={flagsId} /> : null}
         {entitlementCount ? (
           <EntitlementCount count={entitlementCount} id={countId} />
         ) : null}
@@ -502,7 +536,7 @@ function AccessNodeView({
         <AccessItemTooltip
           anchor={cardRef}
           id={tipId}
-          text={accessItemDescription(data.detail?.description)}
+          text={accessItemTooltipText(data.detail?.description, flags)}
         />
       ) : null}
       {/* Sibling of the card, not a child: see `Handles`. */}

@@ -654,6 +654,55 @@ describe('deriveAccessGraph first-level structure (shared fixture)', () => {
     )
   })
 
+  it('puts catalog flags on the entitlement and bubbles them to the role and access profile', () => {
+    const graph = deriveAccessGraph([
+      row({
+        role: 'Role A',
+        roleId: 'role-a',
+        accessProfile: 'Foo',
+        accessProfileId: 'ap-foo',
+        entitlement: 'admin',
+        entitlementId: 'e-admin',
+        source: 'dir',
+        sourceId: 's-dir',
+        entitlementPrivileged: true,
+        entitlementPrivilegeOverridden: true,
+        entitlementCloudGoverned: true,
+      }),
+    ])
+
+    expect(graph.nodes.find((node) => node.kind === 'entitlement')?.flags).toEqual([
+      'highPrivilege',
+      'cloudEnabled',
+    ])
+    expect(graph.nodes.find((node) => node.kind === 'role')?.flags).toEqual([
+      'containsPrivileged',
+      'cloudEnabled',
+    ])
+    expect(graph.nodes.find((node) => node.kind === 'accessProfile')?.flags).toEqual([
+      'containsPrivileged',
+      'cloudEnabled',
+    ])
+  })
+
+  it('does not mark a privileged entitlement as overridden unless the level was manual', () => {
+    const graph = deriveAccessGraph([
+      row({
+        role: 'Role A',
+        roleId: 'role-a',
+        rolePrivilegeLevel: 'HIGH',
+        entitlement: 'admin',
+        entitlementId: 'e-admin',
+        source: 'dir',
+        sourceId: 's-dir',
+        entitlementPrivileged: true,
+      }),
+    ])
+
+    expect(graph.nodes.find((node) => node.kind === 'entitlement')?.flags).toBeUndefined()
+    expect(graph.nodes.find((node) => node.kind === 'role')?.flags).toEqual(['containsPrivileged'])
+  })
+
   it('deeper edges never carry a review status or first-level marker', async () => {
     const rows = await resolveMatrix(fixtureItems(), fixtureResolver())
     const { edges } = deriveAccessGraph(rows)
