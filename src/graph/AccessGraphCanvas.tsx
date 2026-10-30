@@ -193,20 +193,21 @@ const MINIMAP_COLOR: Record<string, string> = {
  *    control panel, and stays there while the access items pan and zoom.
  *
  * SELECTION (drill-down only). Clicking any card except the user, or pressing
- * Enter / Space on it, selects it. Access items that still need review
- * accumulate: each click adds or removes that item and the other needs-review
- * items stay selected. A completed item or a reference-only card replaces the
- * selection with just that card, and clicking it again clears it. Each
- * selected item's associated edges (its user -> item edge plus every visible
- * edge downstream to the sources) are highlighted in that item's status color
- * and all other edges dim; see `highlightSelection`. The selection is cleared
- * by clicking the empty pane or Escape (the first Escape clears the selection,
- * only a second one returns to the grid), and by drilling into another user,
- * going back, or a new node set. It survives the layout, reference, completed
- * and minimap toggles and a status-only refresh, except that hiding completed
- * items drops a selected item that gets hidden. Selecting is a cheap edge
- * restyle: the scene, the node objects and the fit are untouched, exactly
- * like hover.
+ * Enter / Space on it, selects it. A plain click or key selects only that
+ * card, and activating it again clears it. Access items that still need review
+ * can be selected together: after the first is selected, Shift-click (or
+ * Shift+Enter / Shift+Space) adds or removes another needs-review item and
+ * the others stay selected. A completed item or a reference-only card always
+ * replaces the selection with just that card. Each selected item's associated
+ * edges (its user -> item edge plus every visible edge downstream to the
+ * sources) are highlighted in that item's status color and all other edges
+ * dim; see `highlightSelection`. The selection is cleared by clicking the
+ * empty pane or Escape (the first Escape clears the selection, only a second
+ * one returns to the grid), and by drilling into another user, going back, or
+ * a new node set. It survives the layout, reference, completed and minimap
+ * toggles and a status-only refresh, except that hiding completed items drops
+ * a selected item that gets hidden. Selecting is a cheap edge restyle: the
+ * scene, the node objects and the fit are untouched, exactly like hover.
  *
  * Every fit (drill-down entry, user switch, reference/layout/minimap toggle,
  * window resize) is overlay-aware: it pads the viewport by the measured size of
@@ -725,20 +726,22 @@ function CanvasSurface({
     setAnnouncement('Selection cleared.')
   }, [])
   const toggleSelection = useCallback(
-    (id: string) => {
+    (id: string, extend = false) => {
       const data = scene.nodes.find((node) => node.id === id)?.data
       if (!data || !isSelectableNodeData(data)) return
       const label = data.label
-      if (isNeedsReviewItem(data)) {
+      // Shift extends a needs-review set: add the item, or remove it if it is
+      // already in that set. A plain activation, and Shift on any other card,
+      // selects only that card (or clears it when it was the only one).
+      const extendReview =
+        extend &&
+        isNeedsReviewItem(data) &&
+        (selectedIds.length === 0 || allNeedReview(selectedIds, scene.nodes))
+      if (extendReview) {
         if (selectedIds.includes(id)) {
           const next = selectedIds.filter((existing) => existing !== id)
           setSelectedIds(next.length === 0 ? EMPTY_IDS : next)
           setAnnouncement(selectionAnnouncement(label, next.length, 'remove'))
-          return
-        }
-        if (selectedIds.length > 0 && !allNeedReview(selectedIds, scene.nodes)) {
-          setSelectedIds([id])
-          setAnnouncement(selectionAnnouncement(label, 1, 'replace'))
           return
         }
         const next = [...selectedIds, id]
@@ -830,8 +833,8 @@ function CanvasSurface({
 
   // Mouse convenience: in grid mode, clicking a card also drills in; in
   // drill-down, clicking a card selects or deselects it. Needs-review access
-  // items accumulate; other cards replace the selection.
-  const onNodeClick: NodeMouseHandler<AccessSceneNode> = (_event, node) => {
+  // items accumulate only while Shift is held; other cards replace the selection.
+  const onNodeClick: NodeMouseHandler<AccessSceneNode> = (event, node) => {
     if (selectedUserId === null) {
       // Grid mode: clicking a user card drills into that user — "selecting
       // them for processing" — so in lazy mode this is also exactly the one
@@ -845,7 +848,7 @@ function CanvasSurface({
     // Drill-down: the click both drives the detail fly-out (any node kind) and,
     // for every node except the user, toggles the edge-highlight selection.
     setDetailNodeId((current) => (current === node.id ? null : node.id))
-    if (isSelectableNodeData(node.data)) toggleSelection(node.id)
+    if (isSelectableNodeData(node.data)) toggleSelection(node.id, event.shiftKey)
   }
   // Clicking the empty pane (never a card) clears the selection and the detail
   // target.

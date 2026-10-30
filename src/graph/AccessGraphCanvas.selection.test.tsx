@@ -727,6 +727,7 @@ function needsReviewPair(): AccessGraphData {
 }
 
 const pressedLabels = () => pressed().map((el) => el.getAttribute('aria-label')).sort()
+const shiftClick = (el: HTMLElement) => fireEvent.click(el, { shiftKey: true })
 
 describe('AccessGraphCanvas needs-review multi-select', () => {
   beforeEach(() => {
@@ -734,13 +735,13 @@ describe('AccessGraphCanvas needs-review multi-select', () => {
     spies.setViewport.mockClear()
   })
 
-  it('keeps every needs-review item selected and highlights each lineage', () => {
+  it('keeps every shift-clicked needs-review item selected and highlights each lineage', () => {
     render(<AccessGraphCanvas graph={needsReviewPair()} />)
     drillIn()
     fireEvent.click(btn('Show reference nodes and links'))
     fireEvent.click(btn(/^Show completed items/))
     fireEvent.click(card('Role A'))
-    fireEvent.click(card('vpn'))
+    shiftClick(card('vpn'))
 
     expect(pressedLabels()).toEqual(['Entitlement: vpn', 'Role: Role A'])
     expect(card('login')).toHaveAttribute('aria-pressed', 'false')
@@ -760,20 +761,32 @@ describe('AccessGraphCanvas needs-review multi-select', () => {
     )
     expect(liveText()).toContain('vpn added to the selection. 2 items selected. Press Escape to clear.')
 
-    fireEvent.click(card('Role A'))
+    shiftClick(card('Role A'))
     expect(pressedLabels()).toEqual(['Entitlement: vpn'])
     expect(lineageEdges().map((e) => e.id)).toEqual([eid('entitlement:e5', 'source:s5')])
     expect(liveText()).toContain('Role A removed from the selection. 1 item selected. Press Escape to clear.')
   })
 
-  it('adds a needs-review item from the keyboard and removes it with Space', () => {
+  it('a plain click on a second needs-review item replaces the selection', () => {
+    render(<AccessGraphCanvas graph={needsReviewPair()} />)
+    drillIn()
+    fireEvent.click(card('Role A'))
+    fireEvent.click(card('vpn'))
+    expect(pressedLabels()).toEqual(['Entitlement: vpn'])
+    expect(liveText()).toContain('Highlighting the links for vpn. Press Escape to clear.')
+  })
+
+  it('adds a needs-review item with Shift+Enter and removes it with Shift+Space', () => {
     render(<AccessGraphCanvas graph={needsReviewPair()} />)
     drillIn()
     fireEvent.click(card('Role A'))
     const vpn = card('vpn')
     expect(fireEvent.keyDown(vpn, { key: 'Enter' })).toBe(false)
+    expect(pressedLabels()).toEqual(['Entitlement: vpn'])
+    fireEvent.click(card('Role A'))
+    expect(fireEvent.keyDown(vpn, { key: 'Enter', shiftKey: true })).toBe(false)
     expect(pressedLabels()).toEqual(['Entitlement: vpn', 'Role: Role A'])
-    expect(fireEvent.keyDown(card('Role A'), { key: ' ' })).toBe(false)
+    expect(fireEvent.keyDown(card('Role A'), { key: ' ', shiftKey: true })).toBe(false)
     expect(pressedLabels()).toEqual(['Entitlement: vpn'])
   })
 
@@ -783,13 +796,13 @@ describe('AccessGraphCanvas needs-review multi-select', () => {
     fireEvent.click(btn('Show reference nodes and links'))
     fireEvent.click(btn(/^Show completed items/))
     fireEvent.click(card('Role A'))
-    fireEvent.click(card('vpn'))
+    shiftClick(card('vpn'))
     fireEvent.click(card('login'))
     expect(pressedLabels()).toEqual(['Entitlement: login'])
 
     fireEvent.click(card('Role A'))
     expect(pressedLabels()).toEqual(['Role: Role A'])
-    fireEvent.click(card('vpn'))
+    shiftClick(card('vpn'))
     fireEvent.click(card('engr db'))
     expect(pressedLabels()).toEqual(['Source: engr db'])
   })
@@ -798,13 +811,13 @@ describe('AccessGraphCanvas needs-review multi-select', () => {
     const { container } = render(<AccessGraphCanvas graph={needsReviewPair()} />)
     drillIn()
     fireEvent.click(card('Role A'))
-    fireEvent.click(card('vpn'))
+    shiftClick(card('vpn'))
     fireEvent.keyDown(window, { key: 'Escape' })
     expect(pressed()).toHaveLength(0)
     expect(screen.getByRole('button', { name: '← All Users' })).toBeInTheDocument()
 
     fireEvent.click(card('Role A'))
-    fireEvent.click(card('vpn'))
+    shiftClick(card('vpn'))
     fireEvent.click(container.querySelector('.react-flow__pane')!)
     expect(pressed()).toHaveLength(0)
     expect(screen.getByRole('button', { name: '← All Users' })).toBeInTheDocument()
@@ -815,7 +828,7 @@ describe('AccessGraphCanvas needs-review multi-select', () => {
     const { rerender } = render(<AccessGraphCanvas graph={base} />)
     drillIn()
     fireEvent.click(card('Role A'))
-    fireEvent.click(card('vpn'))
+    shiftClick(card('vpn'))
     expect(pressed()).toHaveLength(2)
     const refreshed: AccessGraphData = {
       nodes: base.nodes,
@@ -838,7 +851,7 @@ describe('AccessGraphCanvas needs-review multi-select', () => {
     fireEvent.click(btn('Show reference nodes and links'))
     fireEvent.click(btn(/^Show completed items/))
     fireEvent.click(card('Role A'))
-    fireEvent.click(card('vpn'))
+    shiftClick(card('vpn'))
     const refreshed: AccessGraphData = {
       nodes: base.nodes,
       edges: base.edges.map((e) =>

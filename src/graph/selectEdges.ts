@@ -42,7 +42,8 @@
  * and non-mutating; with nothing selected it returns exactly what
  * `emphasizeEdges` returns, so today's hover/focus behavior is unchanged.
  *
- * Several access items that still need review can be selected together.
+ * Several access items that still need review can be selected together
+ * (Shift-click, or Shift+Enter / Shift+Space, after the first).
  * `highlightSelection` highlights each of their lineages in that item's own
  * status color and dims everything else. A single selected node takes the
  * same path as `highlightEdges`.
@@ -96,8 +97,8 @@ const MULTI_SELECT_KINDS = new Set<AccessSceneNodeData['kind']>([
 
 /**
  * An access item still awaiting a decision. These are the only cards that
- * accumulate in one selection. Completed items and reference-only nodes stay
- * one at a time.
+ * can share one selection: Shift-click (or Shift+Enter / Shift+Space) adds
+ * another. Completed items and reference-only nodes stay one at a time.
  */
 export function isNeedsReviewItem(
   data: Pick<AccessSceneNodeData, 'kind' | 'reference' | 'reviewStatus'>,

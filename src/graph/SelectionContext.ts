@@ -13,11 +13,12 @@ export interface SelectionState {
   /** Reference-only node ids on a highlighted path (not a selected node). */
   lineageNodeIds: ReadonlySet<string>
   /**
-   * Selects `id`. A needs-review access item is added or removed and the
-   * other needs-review items stay selected. Any other node replaces the
-   * selection with just that node, or clears it when it was the only one.
+   * Selects `id`. A plain activation selects only that node, or clears it
+   * when it was the only one. Pass `extend` (Shift-click, Shift+Enter, or
+   * Shift+Space) to add or remove a needs-review access item while the other
+   * needs-review items stay selected.
    */
-  toggle: (id: string) => void
+  toggle: (id: string, extend?: boolean) => void
 }
 
 /** Stable empty selection, so "nothing selected" keeps a stable context value. */

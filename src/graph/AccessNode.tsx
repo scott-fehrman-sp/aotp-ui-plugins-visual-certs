@@ -456,10 +456,10 @@ function AccessNodeView({
 
   // Selection (see `highlightEdges`): every card except the user is a toggle
   // button. Mouse selection goes through the canvas's node click; the keyboard
-  // is handled here. Needs-review access items can be pressed together; other
-  // cards are pressed one at a time. Reference cards on a highlighted path are
-  // shown at full strength, the other reference cards are muted. A selected
-  // card itself is never muted.
+  // is handled here. A plain activation selects one card. Shift+Enter or
+  // Shift+Space adds another needs-review access item. Reference cards on a
+  // highlighted path are shown at full strength, the other reference cards are
+  // muted. A selected card itself is never muted.
   const selected = selectable && selectedIds.has(id)
   const inLineage = data.reference && lineageNodeIds.has(id)
   const referenceDimmed =
@@ -477,7 +477,7 @@ function AccessNodeView({
           if (event.key === 'Enter' || event.key === ' ') {
             // Space would otherwise scroll the pane.
             event.preventDefault()
-            toggle(id)
+            toggle(id, event.shiftKey)
           }
         },
       }
