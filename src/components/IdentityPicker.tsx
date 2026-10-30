@@ -13,6 +13,8 @@ interface IdentityPickerProps {
   onChange: (value: IdentityOption | null) => void
   /** Disable interaction (e.g. while the parent dialog is submitting). */
   disabled?: boolean
+  /** Id for the search field, so a visible label can point at it. */
+  inputId?: string
 }
 
 /** How long to wait after the last keystroke before searching. */
@@ -35,6 +37,7 @@ export function IdentityPicker({
   value,
   onChange,
   disabled = false,
+  inputId,
 }: IdentityPickerProps) {
   const listId = useId()
   const optionIdPrefix = useId()
@@ -154,6 +157,7 @@ export function IdentityPicker({
     } else if (e.key === 'Escape') {
       if (open) {
         e.preventDefault()
+        e.stopPropagation()
         setOpen(false)
       }
     }
@@ -196,6 +200,7 @@ export function IdentityPicker({
   return (
     <div className="vc-picker" ref={rootRef}>
       <input
+        id={inputId}
         type="text"
         className="vc-picker-input"
         role="combobox"

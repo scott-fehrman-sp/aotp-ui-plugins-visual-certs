@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react'
+import type { SearchApi } from 'sailpoint-api-client/search/api'
 import {
   Controls,
   MiniMap,
@@ -11,7 +12,7 @@ import {
   getNodesBounds,
   type NodeMouseHandler,
 } from '@xyflow/react'
-import type { AccessGraphData, AccessSceneNodeData, RankDir } from '../sailpoint/types'
+import type { AccessGraphData, AccessSceneNodeData, CommentRequirement, RankDir } from '../sailpoint/types'
 import type { UserDetailState } from '../state/useAccessMatrix'
 import { buildAccessScene, type AccessSceneNode } from './buildAccessScene'
 import { buildUserGridScene } from './buildUserGridScene'
@@ -38,6 +39,15 @@ import { useMotionMs } from './useMotionMs'
 import { ScrollHint } from './ScrollHint'
 import { GraphControls } from './GraphControls'
 import { GraphContextMenu, type GraphContextMenuState } from './GraphContextMenu'
+import {
+  actionFromMenuStatus,
+  decisionAnnouncement,
+  decisionTargetIds,
+  reviewKeysForNodes,
+  type AccessDecisionAction,
+  type AccessDecisionRequest,
+} from './accessDecision'
+import { AccessDecisionDialog } from '../components/AccessDecisionDialog'
 import { graphControlItems } from './graphControlItems'
 import { GraphLegend } from './GraphLegend'
 import { NodeDetailPanel } from './NodeDetailPanel'
@@ -111,6 +121,19 @@ interface AccessGraphCanvasProps {
    * onto the user nodes for display only; it does not replace `graph.nodes`.
    */
   identities?: Record<string, ResolvedIdentity>
+  /**
+   * The campaign's comment rule. Approve and revoke ask for a reason when
+   * this says so; reassign always does. Defaults to `'none'`.
+   */
+  commentRequirement?: CommentRequirement
+  /** Identity search for the reassign dialog. */
+  searchApi?: SearchApi
+  /**
+   * Records an approve, revoke, or reassign for the access items in the
+   * dialog. The canvas waits for this before closing the dialog, and leaves
+   * the dialog open when it throws.
+   */
+  onAccessDecision?: (request: AccessDecisionRequest) => Promise<void>
 }
 
 /** Shared empty lineage, so "nothing selected" keeps a stable context value. */
@@ -243,7 +266,12 @@ const MINIMAP_COLOR: Record<string, string> = {
  * out, and fit. Right-click on a user card (grid or the pinned drill-down
  * card) or on a reference-only node does nothing. Right-click on a reviewable
  * access item (role, access profile, or entitlement) offers Approve, Revoke,
- * and Reassign; those actions are disabled until a decision flow is connected.
+ * and Reassign. Those actions are enabled for access items that still need
+ * review: a right-click on one of the current selection applies to every
+ * selected needs-review item, and a right-click on a needs-review item that
+ * is not selected applies to that item alone. Completed items keep the
+ * actions disabled. Choosing an action opens a confirmation dialog; confirming
+ * it calls `onAccessDecision`.
  *
  * TRANSITIONS. Scene updates (grid <-> drill-down, hide completed / reference,
  * layout, lane wrapping) animate like org-graph's: the scene builders still
@@ -270,6 +298,9 @@ export function AccessGraphCanvas({
   onUserSelected,
   onUserDetailChange,
   identities,
+  commentRequirement,
+  searchApi,
+  onAccessDecision,
 }: AccessGraphCanvasProps) {
   const hasUsers = useMemo(
     () => graph.nodes.some((node) => node.kind === 'user'),
@@ -295,6 +326,9 @@ export function AccessGraphCanvas({
         onUserSelected={onUserSelected}
         onUserDetailChange={onUserDetailChange}
         identities={identities}
+        commentRequirement={commentRequirement}
+        searchApi={searchApi}
+        onAccessDecision={onAccessDecision}
       />
     </ReactFlowProvider>
   )
@@ -437,6 +471,9 @@ function CanvasSurface({
   onUserSelected,
   onUserDetailChange,
   identities: prefetchedIdentities,
+  commentRequirement = 'none',
+  searchApi,
+  onAccessDecision,
 }: AccessGraphCanvasProps) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const motionMs = useMotionMs(motionMsProp, wrapRef)
@@ -459,6 +496,16 @@ function CanvasSurface({
   const [showDetail, setShowDetail] = useState(false)
   const [menu, setMenu] = useState<GraphContextMenuState | null>(null)
   const closeMenu = useCallback(() => setMenu(null), [])
+  const [pendingAction, setPendingAction] = useState<{
+    action: AccessDecisionAction
+    nodeIds: string[]
+  } | null>(null)
+  const [decisionSubmitting, setDecisionSubmitting] = useState(false)
+  const [decisionError, setDecisionError] = useState<string | null>(null)
+  const cancelDecision = useCallback(() => {
+    setPendingAction(null)
+    setDecisionError(null)
+  }, [])
   const [announcement, setAnnouncement] = useState('')
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   // Selected node ids whose edges are highlighted. Needs-review access items
@@ -615,6 +662,8 @@ function CanvasSurface({
   if (seenMenuScope !== menuScope) {
     setSeenMenuScope(menuScope)
     setMenu(null)
+    setPendingAction(null)
+    setDecisionError(null)
   }
   // The drilled-in user is pinned beside the controls (see the panel below),
   // so it is not a flow node: the layout still reserves its lane, but the
@@ -904,10 +953,46 @@ function CanvasSurface({
   const onNodeContextMenu: NodeMouseHandler<AccessSceneNode> = (event, node) => {
     suppressContextMenu(event)
     if (showsDecisionMenu(node.data, inDrilldown)) {
-      setMenu({ kind: 'decision', x: event.clientX, y: event.clientY })
+      const selectedNeedsReview = selectedNodes
+        .filter((selected) => isNeedsReviewItem(selected.data))
+        .map((selected) => selected.id)
+      setMenu({
+        kind: 'decision',
+        x: event.clientX,
+        y: event.clientY,
+        nodeIds: decisionTargetIds(node.id, isNeedsReviewItem(node.data), selectedNeedsReview) ?? [],
+      })
       return
     }
     setMenu(null)
+  }
+  const confirmAccess = async (comment: string, reassignToId?: string) => {
+    if (!pendingAction || !subgraph || !selectedUserId) return
+    const { action, nodeIds } = pendingAction
+    const reviewKeys = reviewKeysForNodes(subgraph, selectedUserId, nodeIds)
+    setDecisionSubmitting(true)
+    setDecisionError(null)
+    try {
+      if (onAccessDecision) {
+        await onAccessDecision({
+          action,
+          reviewKeys,
+          comment,
+          ...(reassignToId ? { reassignToId } : {}),
+        })
+        setSelectedIds(EMPTY_IDS)
+        setAnnouncement(decisionAnnouncement(action, nodeIds.length))
+      }
+      setPendingAction(null)
+    } catch (err) {
+      setDecisionError(
+        err instanceof Error && err.message
+          ? err.message
+          : "We couldn't save that decision. Please try again.",
+      )
+    } finally {
+      setDecisionSubmitting(false)
+    }
   }
   const onEdgeContextMenu = (event: ReactMouseEvent) => {
     suppressContextMenu(event)
@@ -1132,9 +1217,32 @@ function CanvasSurface({
             items={controlItems}
             motionMs={motionMs}
             onClose={closeMenu}
+            onDecision={(status) => {
+              if (menu.kind !== 'decision' || menu.nodeIds.length === 0) return
+              setDecisionError(null)
+              setPendingAction({
+                action: actionFromMenuStatus(status),
+                nodeIds: menu.nodeIds,
+              })
+            }}
           />
         )}
       </ReactFlow>
+      {pendingAction &&
+        createPortal(
+          <AccessDecisionDialog
+            action={pendingAction.action}
+            count={pendingAction.nodeIds.length}
+            commentRequirement={commentRequirement}
+            submitting={decisionSubmitting}
+            error={decisionError}
+            searchApi={searchApi}
+            onConfirm={(comment) => void confirmAccess(comment)}
+            onConfirmReassign={(identityId, comment) => void confirmAccess(comment, identityId)}
+            onCancel={cancelDecision}
+          />,
+          document.body,
+        )}
       </SelectionContext.Provider>
       </EmphasisContext.Provider>
     </div>

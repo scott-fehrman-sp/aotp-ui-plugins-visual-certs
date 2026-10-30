@@ -1,7 +1,19 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import type { SearchApi } from 'sailpoint-api-client/search/api'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { reviewKey } from '../domain/reviewOverlay'
+import type { IdentityOption } from '../sailpoint/types'
 import { statusGraph, type StatusRow } from '../test/reviewStatusFixture'
 import { AccessGraphCanvas } from './AccessGraphCanvas'
+
+const searchIdentities = vi.fn()
+vi.mock('../sailpoint/identities', async () => {
+  const actual = await vi.importActual<typeof import('../sailpoint/identities')>(
+    '../sailpoint/identities',
+  )
+  return { ...actual, searchIdentities: (...args: unknown[]) => searchIdentities(...args) }
+})
 
 // Separate file so mocking useReactFlow's zoom does not touch the other canvas
 // tests. Everything else in @xyflow/react stays real.
@@ -291,7 +303,7 @@ describe('AccessGraphCanvas context menu', () => {
       }
     })
 
-    it('offers disabled Approve, Revoke, and Reassign on a role, access profile, and entitlement', () => {
+    it('offers Approve, Revoke, and Reassign on a role, access profile, and entitlement that need review', () => {
       render(<AccessGraphCanvas graph={graph()} />)
       drillIn()
       for (const name of ['Role: Role A', 'Access profile: Profile B', 'Entitlement: Login']) {
@@ -306,16 +318,125 @@ describe('AccessGraphCanvas context menu', () => {
           'reassigned',
         ])
         for (const item of items) {
-          expect(item).toBeDisabled()
+          expect(item).toBeEnabled()
           expect(item.firstElementChild?.tagName).toBe('svg')
         }
+        expect(items[0]).toHaveFocus()
         expect(within(menu).queryByRole('separator')).not.toBeInTheDocument()
         expect(card).toHaveAttribute('aria-pressed', 'false')
-        fireEvent.click(items[0])
-        expect(screen.getByRole('menu', { name: 'Review actions' })).toBeInTheDocument()
         fireEvent.pointerDown(document.body)
         expect(screen.queryByRole('menu')).not.toBeInTheDocument()
       }
+    })
+
+    it('approves every selected needs-review item from the menu', async () => {
+      const user = userEvent.setup()
+      const onAccessDecision = vi.fn().mockResolvedValue(undefined)
+      render(<AccessGraphCanvas graph={graph()} onAccessDecision={onAccessDecision} />)
+      drillIn()
+      fireEvent.click(screen.getByRole('button', { name: 'Role: Role A' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Access profile: Profile B' }), {
+        shiftKey: true,
+      })
+      fireEvent.contextMenu(screen.getByRole('button', { name: 'Role: Role A' }))
+      fireEvent.click(screen.getByRole('menuitem', { name: 'Approve' }))
+
+      const dialog = screen.getByRole('dialog', { name: /approve access/i })
+      expect(dialog).toHaveTextContent('2 access items')
+      expect(dialog).toHaveTextContent(/all 2 selected access items will be approved/i)
+      await user.selectOptions(
+        screen.getByLabelText(/reason/i),
+        "Access is still needed for this person's job",
+      )
+      await user.click(screen.getByRole('button', { name: 'Approve Access' }))
+
+      expect(onAccessDecision).toHaveBeenCalledWith({
+        action: 'approve',
+        reviewKeys: [
+          reviewKey('u1', 'role', 'role-a', 'Role A'),
+          reviewKey('u1', 'accessProfile', 'ap-b', 'Profile B'),
+        ],
+        comment: "Access is still needed for this person's job",
+      })
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Role: Role A' })).toHaveAttribute(
+        'aria-pressed',
+        'false',
+      )
+      expect(screen.getByText('Approved 2 access items.')).toBeInTheDocument()
+    })
+
+    it('acts on the right-clicked item when it is not part of the selection', () => {
+      render(<AccessGraphCanvas graph={graph()} />)
+      drillIn()
+      fireEvent.click(screen.getByRole('button', { name: 'Role: Role A' }))
+      fireEvent.contextMenu(screen.getByRole('button', { name: 'Entitlement: Login' }))
+      fireEvent.click(screen.getByRole('menuitem', { name: 'Revoke' }))
+      const dialog = screen.getByRole('dialog', { name: /revoke access/i })
+      expect(dialog).toHaveTextContent('1 access item')
+      expect(dialog).toHaveTextContent(/this access item will be revoked/i)
+      expect(screen.getByRole('button', { name: 'Role: Role A' })).toHaveAttribute(
+        'aria-pressed',
+        'true',
+      )
+    })
+
+    it('keeps the dialog open and shows the error when saving fails', async () => {
+      const user = userEvent.setup()
+      const onAccessDecision = vi.fn().mockRejectedValue(new Error('The server had a problem.'))
+      render(<AccessGraphCanvas graph={graph()} onAccessDecision={onAccessDecision} />)
+      drillIn()
+      fireEvent.contextMenu(screen.getByRole('button', { name: 'Role: Role A' }))
+      fireEvent.click(screen.getByRole('menuitem', { name: 'Approve' }))
+      await user.click(screen.getByRole('button', { name: 'Approve Access' }))
+      expect(await screen.findByRole('alert')).toHaveTextContent('The server had a problem.')
+      expect(screen.getByRole('dialog', { name: /approve access/i })).toBeInTheDocument()
+    })
+
+    it('reassigns the selected item to a person the operator searches for', async () => {
+      const user = userEvent.setup()
+      const onAccessDecision = vi.fn().mockResolvedValue(undefined)
+      const recipient: IdentityOption = {
+        id: 'i9',
+        displayName: 'Pat Ng',
+        email: 'pat@example.com',
+      }
+      searchIdentities.mockResolvedValue([recipient])
+      render(
+        <AccessGraphCanvas
+          graph={graph()}
+          searchApi={{} as SearchApi}
+          onAccessDecision={onAccessDecision}
+        />,
+      )
+      drillIn()
+      fireEvent.contextMenu(screen.getByRole('button', { name: 'Entitlement: Login' }))
+      fireEvent.click(screen.getByRole('menuitem', { name: 'Reassign' }))
+
+      const dialog = screen.getByRole('dialog', { name: /reassign access/i })
+      expect(dialog).toHaveTextContent('1 access item')
+      expect(dialog).toHaveTextContent(/reassigned to the person you choose/i)
+      const confirm = screen.getByRole('button', { name: 'Reassign Access' })
+      expect(confirm).toBeDisabled()
+
+      await user.selectOptions(
+        screen.getByLabelText(/reason/i),
+        'This belongs to another manager.',
+      )
+      expect(confirm).toBeDisabled()
+      await user.type(screen.getByRole('combobox', { name: /assign to/i }), 'pa')
+      await user.click(await screen.findByText('Pat Ng'))
+      expect(confirm).toBeEnabled()
+      await user.click(confirm)
+
+      expect(onAccessDecision).toHaveBeenCalledWith({
+        action: 'reassign',
+        reviewKeys: [reviewKey('u1', 'entitlement', 'e-login', 'Login')],
+        comment: 'This belongs to another manager.',
+        reassignToId: 'i9',
+      })
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      expect(screen.getByText('Reassigned 1 access item.')).toBeInTheDocument()
     })
 
     it('offers the same disabled actions on a completed access item once it is shown', () => {

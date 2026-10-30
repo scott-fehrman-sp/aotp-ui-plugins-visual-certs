@@ -8,7 +8,6 @@ import {
 } from 'react'
 import { createPortal } from 'react-dom'
 import { useReactFlow } from '@xyflow/react'
-import type { AccessReviewStatus } from '../sailpoint/types'
 import { StatusIcon } from './AccessNode'
 import { ControlIcon, type ControlIconName } from './ControlIcons'
 import type { GraphControlItem } from './graphControlItems'
@@ -17,7 +16,17 @@ import './GraphContextMenu.css'
 /** Where a context menu was opened, and which menu that point asked for. */
 export type GraphContextMenuState =
   | { kind: 'canvas'; x: number; y: number }
-  | { kind: 'decision'; x: number; y: number }
+  | {
+      kind: 'decision'
+      x: number
+      y: number
+      /**
+       * Access items the actions will change. Empty when the right-clicked
+       * item does not need review, which leaves Approve, Revoke, and Reassign
+       * disabled.
+       */
+      nodeIds: string[]
+    }
 
 const ZOOM_ITEMS: { id: 'zoom-in' | 'zoom-out' | 'fit'; label: string; icon: ControlIconName }[] = [
   { id: 'zoom-in', label: 'Zoom in', icon: 'zoomIn' },
@@ -25,8 +34,8 @@ const ZOOM_ITEMS: { id: 'zoom-in' | 'zoom-out' | 'fit'; label: string; icon: Con
   { id: 'fit', label: 'Fit', icon: 'fit' },
 ]
 
-/** Review actions on an access item. Present, but not yet wired up. */
-const DECISION_ITEMS: { status: AccessReviewStatus; label: string }[] = [
+/** Review actions on the selected access items that still need a decision. */
+const DECISION_ITEMS: { status: 'approved' | 'revoked' | 'reassigned'; label: string }[] = [
   { status: 'approved', label: 'Approve' },
   { status: 'revoked', label: 'Revoke' },
   { status: 'reassigned', label: 'Reassign' },
@@ -36,14 +45,15 @@ const DECISION_ITEMS: { status: AccessReviewStatus; label: string }[] = [
  * Right-click menu for the access canvas, portaled to `document.body` so the
  * canvas' `overflow: hidden` cannot clip it. The canvas menu lists the same
  * actions as the current control panel, then zoom in / out / fit. The decision
- * menu lists Approve, Revoke, and Reassign; those actions are disabled until
- * a decision flow is connected.
+ * menu lists Approve, Revoke, and Reassign. Those actions are enabled when
+ * `menu.nodeIds` names the access items that still need review.
  */
 export function GraphContextMenu({
   menu,
   items,
   motionMs,
   onClose,
+  onDecision,
 }: {
   menu: GraphContextMenuState
   /** Control-panel actions. Used by the canvas menu; ignored for a decision menu. */
@@ -51,6 +61,8 @@ export function GraphContextMenu({
   /** Duration of a zoom or fit, matching the rest of the canvas motion. */
   motionMs: number
   onClose: () => void
+  /** Opens the confirmation for a review action. Ignored by the canvas menu. */
+  onDecision?: (status: 'approved' | 'revoked' | 'reassigned') => void
 }) {
   const { zoomIn, zoomOut, fitView } = useReactFlow()
   const rootRef = useRef<HTMLDivElement>(null)
@@ -164,18 +176,29 @@ export function GraphContextMenu({
           ))}
         </>
       ) : (
-        DECISION_ITEMS.map((item) => (
-          <button
-            key={item.status}
-            type="button"
-            role="menuitem"
-            className="vc-graph-menu-item"
-            disabled
-          >
-            <StatusIcon status={item.status} decorative />
-            <span>{item.label}</span>
-          </button>
-        ))
+        DECISION_ITEMS.map((item) => {
+          const enabled = menu.nodeIds.length > 0
+          return (
+            <button
+              key={item.status}
+              type="button"
+              role="menuitem"
+              className="vc-graph-menu-item"
+              disabled={!enabled}
+              onClick={
+                enabled
+                  ? () => {
+                      onDecision?.(item.status)
+                      onClose()
+                    }
+                  : undefined
+              }
+            >
+              <StatusIcon status={item.status} decorative />
+              <span>{item.label}</span>
+            </button>
+          )
+        })
       )}
     </div>,
     document.body,

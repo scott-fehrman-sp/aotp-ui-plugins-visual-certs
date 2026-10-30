@@ -46,8 +46,13 @@ export interface DecisionInput {
 export interface ReassignInput {
   /** The certification the item belongs to. */
   certificationId: string
-  /** The review item being handed off. */
+  /** The review item being handed off. Ignored when {@link itemIds} is set. */
   itemId: string
+  /**
+   * Several review items handed off together. When this has any ids, it is
+   * what gets reassigned and `itemId` is ignored.
+   */
+  itemIds?: string[]
   /** The identity id that should review the item instead. */
   reassignToId: string
   /** Why the item is being reassigned (the API requires a reason). */
@@ -577,19 +582,18 @@ export async function signOff(
 }
 
 /**
- * Hands a single review item off to another identity to review. The reason is
- * required by the API; the caller (DecisionDialog) enforces that a comment was
- * provided. Returns the refreshed campaign so progress counts stay in sync.
+ * Hands one or more review items off to another identity to review. The reason
+ * is required by the API; the caller enforces that a comment was provided.
+ * Returns the refreshed campaign so progress counts stay in sync.
  */
 export async function reassignReviewItem(
   api: CertificationsApi,
-  { certificationId, itemId, reassignToId, reason }: ReassignInput,
+  { certificationId, itemId, itemIds, reassignToId, reason }: ReassignInput,
 ): Promise<CampaignVM> {
   try {
+    const ids = itemIds && itemIds.length > 0 ? itemIds : [itemId]
     const reviewReassign: ReviewReassign = {
-      // We only ever reassign one item at a time from the queue; the API takes
-      // an array so a future bulk action can grow this list.
-      reassign: [{ id: itemId, type: ReassignReferenceTypeEnum.Item }],
+      reassign: ids.map((id) => ({ id, type: ReassignReferenceTypeEnum.Item })),
       reassignTo: reassignToId,
       reason,
     }

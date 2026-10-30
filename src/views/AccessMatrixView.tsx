@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
+import type { SearchApi } from 'sailpoint-api-client/search/api'
 import { EmptyState } from '../components/EmptyState'
 import { LoadingState } from '../components/LoadingState'
 import { AccessGraphCanvas } from '../graph/AccessGraphCanvas'
+import type { AccessDecisionRequest } from '../graph/accessDecision'
+import type { CommentRequirement } from '../sailpoint/types'
 import type { AccessMatrixState, UserDetailState } from '../state/useAccessMatrix'
 import './AccessMatrixView.css'
 
@@ -19,6 +22,12 @@ interface AccessMatrixViewProps {
    * once a user is open — all users.
    */
   onBackToReviews?: () => void
+  /** Campaign comment rule for the access-item decision dialogs. */
+  commentRequirement?: CommentRequirement
+  /** Identity search for reassigning selected access items. */
+  searchApi?: SearchApi
+  /** Saves an approve, revoke, or reassign from the access map. */
+  onAccessDecision?: (request: AccessDecisionRequest) => Promise<void>
 }
 
 /**
@@ -39,6 +48,9 @@ export function AccessMatrixView({
   matrix,
   onBack,
   onBackToReviews,
+  commentRequirement,
+  searchApi,
+  onAccessDecision,
 }: AccessMatrixViewProps) {
   // The element the canvas portals its drill-down "Back to all users" button
   // into. Held in state (via a callback ref) so the canvas re-renders once the
@@ -133,6 +145,9 @@ export function AccessMatrixView({
             identities={matrix.identities}
             onUserSelected={matrix.resolveUser}
             onUserDetailChange={setActiveUserDetail}
+            commentRequirement={commentRequirement}
+            searchApi={searchApi}
+            onAccessDecision={onAccessDecision}
           />
         </>
       )}

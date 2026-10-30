@@ -275,6 +275,9 @@ function CampaignRoute({
           matrix={matrix}
           onBack={() => setStep('dashboard')}
           onBackToReviews={showBack ? onBack : undefined}
+          commentRequirement={campaign.commentRequirement}
+          searchApi={searchApi}
+          onAccessDecision={decisions.confirmAccess}
         />
       ) : step === 'signoff' ? (
         <SignOffView

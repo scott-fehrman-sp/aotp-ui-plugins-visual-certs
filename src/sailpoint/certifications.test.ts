@@ -256,6 +256,33 @@ describe('API wrappers', () => {
     expect(vm.id).toBe('c1')
   })
 
+  it('reassignReviewItem sends every id when several items are handed off together', async () => {
+    const reassignIdentityCertificationsV1 = vi
+      .fn()
+      .mockResolvedValue({ data: { id: 'c1', decisionsMade: 2, decisionsTotal: 5 } })
+    const api = fakeApi({ reassignIdentityCertificationsV1 })
+
+    await reassignReviewItem(api, {
+      certificationId: 'c1',
+      itemId: 'r1',
+      itemIds: ['r1', 'r2'],
+      reassignToId: 'identity-9',
+      reason: 'This belongs to another manager.',
+    })
+
+    expect(reassignIdentityCertificationsV1).toHaveBeenCalledWith({
+      id: 'c1',
+      reviewReassign: {
+        reassign: [
+          { id: 'r1', type: 'ITEM' },
+          { id: 'r2', type: 'ITEM' },
+        ],
+        reassignTo: 'identity-9',
+        reason: 'This belongs to another manager.',
+      },
+    })
+  })
+
   it('reassignReviewItem maps HTTP errors to a FriendlyError', async () => {
     const api = fakeApi({
       reassignIdentityCertificationsV1: vi
